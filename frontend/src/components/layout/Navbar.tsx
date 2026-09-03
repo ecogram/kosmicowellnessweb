@@ -28,7 +28,7 @@ export function Navbar() {
 
   const navLinks = [
     { name: 'Shop', path: '/shop' },
-    { name: 'Benefits', path: '/#benefits' },
+    { name: 'Benefits', path: '/benefits' },
     { name: 'Ingredients', path: '/ingredients' },
     { name: 'How It Works', path: '/how-it-works' },
     { name: 'About', path: '/about' },

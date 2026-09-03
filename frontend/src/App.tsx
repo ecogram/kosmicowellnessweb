@@ -18,6 +18,7 @@ import { OrderDetails } from './pages/OrderDetails';
 import { Wishlist } from './pages/Wishlist';
 import { Notifications } from './pages/Notifications';
 import { About } from './pages/About';
+import { BenefitsPage } from './pages/BenefitsPage';
 import { IngredientsPage } from './pages/IngredientsPage';
 import { HowItWorksPage } from './pages/HowItWorksPage';
 import { FaqPage } from './pages/FaqPage';
@@ -93,6 +94,7 @@ function App() {
                   
                   {/* Marketing & Info Pages */}
                   <Route path="/about" element={<About />} />
+                  <Route path="/benefits" element={<BenefitsPage />} />
                   <Route path="/ingredients" element={<IngredientsPage />} />
                   <Route path="/how-it-works" element={<HowItWorksPage />} />
                   <Route path="/faq" element={<FaqPage />} />
