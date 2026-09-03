@@ -52,8 +52,9 @@ export function Navbar() {
 
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center justify-center md:justify-start w-full md:w-auto">
-            <Link to="/" className="font-serif text-2xl font-bold tracking-tight text-primary">
-              Kosmiko Wellness
+            <Link to="/" className="flex items-center gap-2.5 font-serif text-2xl font-bold tracking-tight text-primary">
+              <img src="/logo.png" alt="Kosmico" className="h-8 w-auto object-contain rounded-md" />
+              <span>Kosmiko Wellness</span>
             </Link>
           </div>
 
