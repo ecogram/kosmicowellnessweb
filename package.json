@@ -12,7 +12,7 @@
     "backend": "npm run dev --prefix backend",
     "worker": "npm run worker:dev --prefix backend",
     "dev": "docker-compose -f docker-compose.dev.yml up",
-    "build": "npm run build --prefix frontend",
+    "build": "npm run build --prefix frontend && node -e \"require('fs').cpSync('frontend/dist', 'dist', {recursive: true})\"",
     "lint": "npx eslint .",
     "format": "npx prettier --write ."
   },
