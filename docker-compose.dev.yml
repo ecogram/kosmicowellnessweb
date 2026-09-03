@@ -35,11 +35,12 @@ services:
 
   worker:
     build:
-      context: ./worker
+      context: ./backend
       dockerfile: Dockerfile.dev
     volumes:
-      - ./worker:/app
+      - ./backend:/app
       - /app/node_modules
+    command: nodemon worker.js
     env_file:
       - .env
     environment:

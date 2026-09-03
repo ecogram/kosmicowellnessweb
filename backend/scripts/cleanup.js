@@ -1,7 +1,10 @@
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const mongoose = require('mongoose');
-async function check() {
+
+async function cleanupTestProducts() {
   try {
-    await mongoose.connect('mongodb://127.0.0.1:27017/sweet-monk');
+    const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/sweet-monk';
+    await mongoose.connect(mongoUri);
     const Order = mongoose.model('Order', new mongoose.Schema({ items: Array }), 'orders');
     const Cart = mongoose.model('Cart', new mongoose.Schema({ items: Array }), 'carts');
     
@@ -12,15 +15,16 @@ async function check() {
     console.log('Orders with Test Product:', orders.length);
     console.log('Carts with Test Product:', carts.length);
     
-    if(orders.length === 0 && carts.length === 0) {
+    if (orders.length === 0 && carts.length === 0) {
       const Product = mongoose.model('Product', new mongoose.Schema({}), 'products');
       await Product.deleteMany({ _id: { $in: testIds } });
       console.log('Test Products deleted safely.');
     }
-  } catch(e) {
+  } catch (e) {
     console.error('DB Error:', e.message);
   } finally {
-    mongoose.disconnect();
+    await mongoose.disconnect();
   }
 }
-check();
+
+cleanupTestProducts();

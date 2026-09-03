@@ -1,9 +1,10 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const mongoose = require('mongoose');
-const notificationService = require('./services/notificationService');
+const notificationService = require('../services/notificationService');
 
 async function run() {
-  await mongoose.connect(process.env.MONGODB_URI);
+  const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/sweet-monk';
+  await mongoose.connect(mongoUri);
   console.log('Connected to MongoDB');
   
   // Wait a sec for Redis to be ready
