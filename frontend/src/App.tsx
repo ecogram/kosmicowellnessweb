@@ -100,6 +100,9 @@ function App() {
                   <Route path="/faq" element={<FaqPage />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<PrivacyPolicy />} />
+                  <Route path="/refunds" element={<PrivacyPolicy />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
 
                   {/* Protected User Routes */}
