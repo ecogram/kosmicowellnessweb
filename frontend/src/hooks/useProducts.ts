@@ -21,14 +21,44 @@ export const useProducts = (params: FetchProductsParams) => {
         Object.entries(params).filter(([_, v]) => v !== undefined && v !== '')
       );
 
-      const { data } = await api.get('/products', { params: cleanParams });
+      try {
+        const { data } = await api.get('/products', { params: cleanParams });
+        const fetchedList = data?.data?.products || (Array.isArray(data?.data) ? data.data : []);
+        if (Array.isArray(fetchedList) && fetchedList.length > 0) {
+          return {
+            products: fetchedList,
+            pagination: data.meta || { total: fetchedList.length, page: params.page || 1, pages: 1 }
+          };
+        }
+      } catch (err) {
+        console.warn('Backend API not reachable for products list. Serving catalog fallback.', err);
+      }
+
+      // Filter DEFAULT_PRODUCTS if search/category params applied
+      let filtered = [...DEFAULT_PRODUCTS];
+      if (params.search) {
+        const query = params.search.toLowerCase();
+        filtered = filtered.filter(
+          (p) => p.name.toLowerCase().includes(query) || (p.description && p.description.toLowerCase().includes(query))
+        );
+      }
+      if (params.category) {
+        const cat = params.category;
+        filtered = filtered.filter(
+          (p) =>
+            p.category === cat ||
+            (typeof p.category === 'object' && (p.category as any)?.slug === cat) ||
+            (typeof p.category === 'object' && (p.category as any)?.name?.toLowerCase() === cat.toLowerCase())
+        );
+      }
+
       return {
-        products: data.data || data.data?.products || [],
-        pagination: data.meta || { total: 0, page: params.page || 1, pages: 1 }
+        products: filtered,
+        pagination: { total: filtered.length, page: params.page || 1, pages: 1 }
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2,
+    retry: 1,
   });
 };
 
