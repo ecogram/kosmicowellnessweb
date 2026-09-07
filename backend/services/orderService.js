@@ -47,7 +47,7 @@ class OrderService {
           const product = cartItem.product;
           
           if (!product) {
-            throw new ApiError(400, 'A product in your cart no longer exists.');
+            continue; // Gracefully skip orphaned deleted products
           }
 
           // Authoritative price
@@ -180,7 +180,7 @@ class OrderService {
     try {
       for (const cartItem of cart.items) {
         const product = cartItem.product;
-        if (!product) throw new ApiError(400, 'A product in your cart no longer exists.');
+        if (!product) continue;
 
         let price = product.price;
         if (cartItem.variant && product.variants && product.variants.length > 0) {

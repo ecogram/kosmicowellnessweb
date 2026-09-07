@@ -79,7 +79,7 @@ api.interceptors.response.use(
       } catch (refreshError) {
         processQueue(refreshError, null);
         useAuthStore.getState().logout(); // Clean state
-        return Promise.reject(refreshError);
+        return Promise.reject(new Error('Session expired. Please log in again.'));
       } finally {
         isRefreshing = false;
       }

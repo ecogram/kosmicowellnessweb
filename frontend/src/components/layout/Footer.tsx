@@ -1,35 +1,30 @@
 import { Link } from 'react-router-dom';
 import { Container } from '../ui/Container';
 import { useCategories } from '../../hooks/useProducts';
+import { MapPin, Phone, Mail, Clock } from 'lucide-react';
 
 export function Footer() {
   const { data: categories } = useCategories();
   return (
-    <footer className="bg-primary-dark text-white pt-16 pb-8">
+    <footer className="bg-emerald-950 text-white pt-16 pb-8 border-t border-emerald-900">
       <Container>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-          <div className="col-span-1 md:col-span-1">
-            <h3 className="font-serif text-2xl font-bold text-accent mb-4">Kosmiko Wellness</h3>
-            <p className="text-secondary/80 text-sm leading-relaxed mb-6">
-              The natural, zero-calorie monk fruit sweetener that tastes just like sugar. Pure
-              sweetness, no compromises.
+          
+          {/* Brand Info */}
+          <div className="col-span-1 md:col-span-1 space-y-4">
+            <h3 className="font-serif text-2xl font-bold text-amber-400">Kosmiko Wellness</h3>
+            <p className="text-emerald-100/80 text-xs leading-relaxed">
+              KOSMICO WELLNESS PRIVATE LIMITED — India's leading manufacturer of 100% natural zero-calorie monk fruit sweeteners and Ayurvedic healthcare products.
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-white hover:text-accent transition-colors">
-                Instagram
-              </a>
-              <a href="#" className="text-white hover:text-accent transition-colors">
-                Facebook
-              </a>
-              <a href="#" className="text-white hover:text-accent transition-colors">
-                Twitter
-              </a>
+            <div className="pt-2 text-xs font-semibold text-emerald-200">
+              Ancient Wisdom, Modern Living
             </div>
           </div>
 
+          {/* Shop Column */}
           <div>
-            <h4 className="font-bold text-lg mb-4">Shop</h4>
-            <ul className="space-y-3 text-sm text-secondary/80">
+            <h4 className="font-bold text-sm uppercase tracking-wider text-amber-300 mb-4">Shop</h4>
+            <ul className="space-y-2.5 text-xs text-emerald-100/80">
               <li>
                 <Link to="/shop" className="hover:text-white transition-colors">
                   All Products
@@ -45,12 +40,18 @@ export function Footer() {
             </ul>
           </div>
 
+          {/* Information Column */}
           <div>
-            <h4 className="font-bold text-lg mb-4">Information</h4>
-            <ul className="space-y-3 text-sm text-secondary/80">
+            <h4 className="font-bold text-sm uppercase tracking-wider text-amber-300 mb-4">Information</h4>
+            <ul className="space-y-2.5 text-xs text-emerald-100/80">
               <li>
                 <Link to="/about" className="hover:text-white transition-colors">
-                  Our Story
+                  About Kosmico
+                </Link>
+              </li>
+              <li>
+                <Link to="/care" className="hover:text-white transition-colors">
+                  Care Hub 🩺
                 </Link>
               </li>
               <li>
@@ -69,36 +70,51 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="hover:text-white transition-colors">
-                  Contact Us
+                <Link to="/contact" className="hover:text-white transition-colors font-bold text-amber-200">
+                  Contact Us &rarr;
                 </Link>
               </li>
             </ul>
           </div>
 
-          <div>
-            <h4 className="font-bold text-lg mb-4">Stay in the loop</h4>
-            <p className="text-sm text-secondary/80 mb-4">
-              Sign up for exclusive offers, recipes, and news.
-            </p>
-            <form className="flex flex-col space-y-2">
-              <input
-                type="email"
-                placeholder="Your email address"
-                className="bg-white/10 border border-white/20 rounded-md px-4 py-2 text-sm text-white placeholder-white/50 focus:outline-none focus:border-accent"
-              />
-              <button
-                type="submit"
-                className="bg-accent text-primary-dark font-bold py-2 rounded-md hover:bg-accent-hover transition-colors"
-              >
-                Subscribe
-              </button>
-            </form>
+          {/* Contact Details Column matching App Video */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-sm uppercase tracking-wider text-amber-300 mb-4">Contact Details</h4>
+            
+            <div className="text-xs text-emerald-100/90 space-y-3 leading-relaxed">
+              <div className="flex items-start gap-2.5">
+                <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <span>
+                  1305 &amp; 1307 A, 13th Floor, Tower 3, NX One Tower, Greater Noida (West), UP - 201306
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <Phone className="w-4 h-4 text-amber-400 shrink-0" />
+                <a href="tel:+919793170555" className="font-bold hover:underline text-white">
+                  +91 97931 70555
+                </a>
+              </div>
+
+              <div className="flex items-center gap-2.5">
+                <Mail className="w-4 h-4 text-amber-400 shrink-0" />
+                <a href="mailto:supportkosmicowellness@gmail.com" className="hover:underline text-white truncate">
+                  supportkosmicowellness@gmail.com
+                </a>
+              </div>
+
+              <div className="flex items-center gap-2.5 pt-1 text-[11px] text-emerald-200">
+                <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                <span>Mon - Sat: 11:00 AM - 7:00 PM</span>
+              </div>
+            </div>
           </div>
+
         </div>
 
-        <div className="border-t border-white/20 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-secondary/60">
-          <p>&copy; {new Date().getFullYear()} Kosmiko Wellness. All rights reserved.</p>
+        {/* Footer Bottom */}
+        <div className="border-t border-emerald-900 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-emerald-300/70">
+          <p>&copy; {new Date().getFullYear()} KOSMICO WELLNESS PRIVATE LIMITED. All rights reserved.</p>
           <div className="flex space-x-4 mt-4 md:mt-0">
             <Link to="/privacy" className="hover:text-white">
               Privacy Policy

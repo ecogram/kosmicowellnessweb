@@ -3,13 +3,16 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Menu, Search, X, Bell } from 'lucide-react';
 import { Container } from '../ui/Container';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useCartDrawerStore } from '../../store/useCartDrawerStore';
 import { useCart } from '../../hooks/useCart';
 import { useUnreadCount } from '../../hooks/useNotifications';
+import { PlayStoreModal } from '../ui/PlayStoreModal';
 
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isPlayStoreModalOpen, setIsPlayStoreModalOpen] = useState(false);
   const navigate = useNavigate();
 
   const { user, isAuthenticated } = useAuthStore();
@@ -28,11 +31,9 @@ export function Navbar() {
 
   const navLinks = [
     { name: 'Shop', path: '/shop' },
-    { name: 'Benefits', path: '/benefits' },
-    { name: 'Ingredients', path: '/ingredients' },
-    { name: 'How It Works', path: '/how-it-works' },
+    { name: 'Care Hub 🩺', path: '/care' },
     { name: 'About', path: '/about' },
-    { name: 'FAQ', path: '/faq' },
+    { name: 'How It Works', path: '/how-it-works' },
   ];
 
   return (
@@ -81,6 +82,15 @@ export function Navbar() {
             </button>
             {isAuthenticated ? (
               <div className="hidden sm:flex items-center space-x-4">
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className="flex items-center gap-1 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 px-2.5 py-1 rounded-lg text-xs font-bold transition-all border border-amber-500/30"
+                    title="Go to Admin Dashboard"
+                  >
+                    👑 Admin
+                  </Link>
+                )}
                 <Link
                   to="/orders"
                   className="text-text-main hover:text-primary transition-colors font-medium text-sm"
@@ -113,17 +123,18 @@ export function Navbar() {
                 <User className="h-5 w-5" />
               </Link>
             )}
-            <Link
-              to="/cart"
-              className="text-text-main hover:text-primary transition-colors relative"
+            <button
+              onClick={() => useCartDrawerStore.getState().openDrawer()}
+              className="text-text-main hover:text-primary transition-colors relative p-1 focus:outline-none"
+              aria-label="Open cart drawer"
             >
               <ShoppingCart className="h-5 w-5" />
               {cart?.items?.length > 0 && (
-                <span className="absolute -top-2 -right-2 bg-accent text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-accent text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-xs animate-pulse">
                   {cart.items.reduce((acc: number, item: any) => acc + item.quantity, 0)}
                 </span>
               )}
-            </Link>
+            </button>
           </div>
         </div>
       </Container>
@@ -185,15 +196,36 @@ export function Navbar() {
               {link.name}
             </Link>
           ))}
+          <button
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              setIsPlayStoreModalOpen(true);
+            }}
+            className="text-sm font-bold text-white bg-emerald-800 p-2.5 rounded-xl flex items-center justify-between shadow-xs cursor-pointer"
+          >
+            <span>Get Mobile App</span>
+            <span className="text-[10px] bg-amber-400 text-neutral-950 font-black px-2 py-0.5 rounded-full uppercase">Play Store 📱</span>
+          </button>
           <div className="pt-4 border-t border-border flex flex-col space-y-4">
             {isAuthenticated ? (
-              <Link
-                to="/profile"
-                className="flex items-center text-base font-medium text-text-main hover:text-primary"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <User className="h-5 w-5 mr-3" /> {user?.name}
-              </Link>
+              <>
+                {user?.role === 'admin' && (
+                  <Link
+                    to="/admin"
+                    className="flex items-center text-base font-bold text-amber-700 bg-amber-50 p-2 rounded-lg"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    👑 Admin Dashboard
+                  </Link>
+                )}
+                <Link
+                  to="/profile"
+                  className="flex items-center text-base font-medium text-text-main hover:text-primary"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <User className="h-5 w-5 mr-3" /> {user?.name}
+                </Link>
+              </>
             ) : (
               <Link
                 to="/login"
@@ -206,6 +238,14 @@ export function Navbar() {
           </div>
         </div>
       </div>
+
+      {/* Direct Play Store Modal Trigger */}
+      <PlayStoreModal
+        isOpen={isPlayStoreModalOpen}
+        onClose={() => setIsPlayStoreModalOpen(false)}
+        featureTitle="Kosmico Care Hub Mobile App"
+        featureDescription="Access all clinical-grade health suite tools, smartwatch biometrics, and AI food scanner directly on the Kosmico Mobile App."
+      />
     </nav>
   );
 }

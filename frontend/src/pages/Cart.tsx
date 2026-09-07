@@ -44,61 +44,71 @@ export const Cart = () => {
               </div>
               
               <ul className="divide-y divide-border">
-                {cart.items.map((item: any) => (
-                  <li key={`${item.product._id || item.product}-${item.variant || 'default'}`} className="p-6 flex flex-col sm:grid sm:grid-cols-12 gap-6 items-center">
-                    <div className="col-span-6 flex items-center gap-4 w-full">
-                      <div className="w-24 h-24 bg-background rounded-lg border border-border p-2 flex-shrink-0">
-                        <img 
-                          src={item.product.images?.[0] || '/assets/products/product-box.jpg'} 
-                          alt={item.product.name}
-                          className="w-full h-full object-contain mix-blend-multiply"
-                        />
-                      </div>
-                      <div>
-                        <Link to={`/products/${item.product.slug}`} className="font-serif font-bold text-lg hover:text-primary transition-colors line-clamp-2">
-                          {item.product.name}
-                        </Link>
-                        {item.variant && <div className="text-sm text-text-main mt-1">Size: {item.variant}</div>}
-                        <div className="text-sm text-text-muted mt-1">{formatINR(item.priceSnapshot)}</div>
-                      </div>
-                    </div>
-                    
-                    <div className="col-span-3 flex justify-center w-full sm:w-auto">
-                      <div className="flex items-center border border-border rounded-full overflow-hidden bg-background w-32">
-                        <button
-                          onClick={() => updateMutation.mutate({ productId: item.product._id || item.product, quantity: Math.max(1, item.quantity - 1), variant: item.variant })}
-                          disabled={updateMutation.isPending}
-                          className="w-10 h-10 flex items-center justify-center hover:bg-neutral-100 transition-colors"
-                        >
-                          -
-                        </button>
-                        <span className="flex-1 text-center font-medium">{item.quantity}</span>
-                        <button
-                          onClick={() => updateMutation.mutate({ productId: item.product._id || item.product, quantity: item.quantity + 1, variant: item.variant })}
-                          disabled={updateMutation.isPending}
-                          className="w-10 h-10 flex items-center justify-center hover:bg-neutral-100 transition-colors"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
+                {cart.items.map((item: any) => {
+                  const prod = typeof item.product === 'object' && item.product !== null ? item.product : {};
+                  const productId = prod._id || (typeof item.product === 'string' ? item.product : '');
+                  const imageSrc = Array.isArray(prod.images) && prod.images.length > 0 
+                    ? prod.images[0] 
+                    : '/assets/products/product-box.jpg';
+                  const productName = prod.name || 'Kosmico Classic Monk Fruit Sweetener (250ml)';
+                  const productSlug = prod.slug || 'kosmico-classic-monk-fruit-sweetener-250g';
 
-                    <div className="col-span-2 text-right font-bold text-lg w-full sm:w-auto text-center sm:text-right">
-                      {formatINR(item.priceSnapshot * item.quantity)}
-                    </div>
+                  return (
+                    <li key={`${productId}-${item.variant || 'default'}`} className="p-6 flex flex-col sm:grid sm:grid-cols-12 gap-6 items-center">
+                      <div className="col-span-6 flex items-center gap-4 w-full">
+                        <div className="w-24 h-24 bg-background rounded-lg border border-border p-2 flex-shrink-0">
+                          <img 
+                            src={imageSrc} 
+                            alt={productName}
+                            className="w-full h-full object-contain mix-blend-multiply"
+                          />
+                        </div>
+                        <div>
+                          <Link to={`/products/${productSlug}`} className="font-serif font-bold text-lg hover:text-primary transition-colors line-clamp-2">
+                            {productName}
+                          </Link>
+                          {item.variant && <div className="text-sm text-text-main mt-1">Size: {item.variant}</div>}
+                          <div className="text-sm text-text-muted mt-1">{formatINR(item.priceSnapshot)}</div>
+                        </div>
+                      </div>
+                      
+                      <div className="col-span-3 flex justify-center w-full sm:w-auto">
+                        <div className="flex items-center border border-border rounded-full overflow-hidden bg-background w-32">
+                          <button
+                            onClick={() => updateMutation.mutate({ productId, quantity: Math.max(1, item.quantity - 1), variant: item.variant })}
+                            disabled={updateMutation.isPending}
+                            className="w-10 h-10 flex items-center justify-center hover:bg-neutral-100 transition-colors"
+                          >
+                            -
+                          </button>
+                          <span className="flex-1 text-center font-medium">{item.quantity}</span>
+                          <button
+                            onClick={() => updateMutation.mutate({ productId, quantity: item.quantity + 1, variant: item.variant })}
+                            disabled={updateMutation.isPending}
+                            className="w-10 h-10 flex items-center justify-center hover:bg-neutral-100 transition-colors"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
 
-                    <div className="col-span-1 flex justify-end w-full sm:w-auto">
-                      <button 
-                        onClick={() => removeMutation.mutate({ productId: item.product._id || item.product, variant: item.variant })}
-                        disabled={removeMutation.isPending}
-                        className="text-text-muted hover:text-error transition-colors p-2"
-                        aria-label="Remove item"
-                      >
-                        <Trash2 className="w-5 h-5" />
-                      </button>
-                    </div>
-                  </li>
-                ))}
+                      <div className="col-span-2 text-right font-bold text-lg w-full sm:w-auto text-center sm:text-right">
+                        {formatINR(item.priceSnapshot * item.quantity)}
+                      </div>
+
+                      <div className="col-span-1 flex justify-end w-full sm:w-auto">
+                        <button 
+                          onClick={() => removeMutation.mutate({ productId, variant: item.variant })}
+                          disabled={removeMutation.isPending}
+                          className="text-text-muted hover:text-error transition-colors p-2"
+                          aria-label="Remove item"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
             

@@ -42,7 +42,6 @@ export function ProductShowcase() {
                   image: product.images?.[0] || '/assets/products/product-box.jpg',
                   rating: product.rating,
                   reviewsCount: product.numReviews,
-                  badge: product.isNewProduct ? 'New' : product.stock === 0 ? 'Out of Stock' : undefined
                 }} 
               />
             ))}

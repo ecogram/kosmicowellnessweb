@@ -1,6 +1,10 @@
 import { Hero } from '../features/home/Hero';
 import { TrustIndicators } from '../features/home/TrustIndicators';
+import { SmartCareSuite } from '../features/home/SmartCareSuite';
+import { AppDownloadSection } from '../features/home/AppDownloadSection';
+import { HealthTargeting } from '../features/home/HealthTargeting';
 import { ProductShowcase } from '../features/home/ProductShowcase';
+import { MithaiSection } from '../features/home/MithaiSection';
 import { Benefits } from '../features/home/Benefits';
 import { BrandStory } from '../features/home/BrandStory';
 import { Ingredients } from '../features/home/Ingredients';
@@ -16,7 +20,11 @@ export function Home() {
     <div className="flex flex-col w-full">
       <Hero />
       <TrustIndicators />
+      <SmartCareSuite />
+      <HealthTargeting />
       <ProductShowcase />
+      <MithaiSection />
+      <AppDownloadSection />
       <Benefits />
       <BrandStory />
       <Ingredients />

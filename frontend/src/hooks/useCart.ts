@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
+import { useCartDrawerStore } from '../store/useCartDrawerStore';
 
 export const useCart = () => {
   const { isAuthenticated } = useAuthStore();
@@ -17,6 +18,7 @@ export const useCart = () => {
 
 export const useAddToCart = () => {
   const queryClient = useQueryClient();
+  const openDrawer = useCartDrawerStore((state) => state.openDrawer);
   
   return useMutation({
     mutationFn: async ({ productId, quantity, variant }: { productId: string; quantity: number, variant?: string }) => {
@@ -25,6 +27,7 @@ export const useAddToCart = () => {
     },
     onSuccess: (updatedCart) => {
       queryClient.setQueryData(['cart'], updatedCart);
+      openDrawer();
     },
   });
 };

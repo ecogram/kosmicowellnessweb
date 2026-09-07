@@ -21,62 +21,14 @@ export const useProducts = (params: FetchProductsParams) => {
         Object.entries(params).filter(([_, v]) => v !== undefined && v !== '')
       );
 
-      try {
-        const { data } = await api.get('/products', { params: cleanParams });
-        if (data && data.data && data.data.length > 0) {
-          return {
-            products: data.data,
-            pagination: data.meta || { total: data.data.length, page: params.page || 1, pages: 1 }
-          };
-        }
-      } catch (err) {
-        console.warn('Backend API not reachable or empty. Serving curated catalog.', err);
-      }
-
-      // Fallback: Local catalog with full search, filter & sort capabilities
-      let filtered = [...DEFAULT_PRODUCTS];
-
-      if (params.search) {
-        const q = params.search.toLowerCase();
-        filtered = filtered.filter(
-          (p) => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)
-        );
-      }
-
-      if (params.category) {
-        filtered = filtered.filter((p) => {
-          if (typeof p.category === 'object' && p.category !== null) {
-            return p.category._id === params.category || p.category.slug === params.category;
-          }
-          return p.category === params.category;
-        });
-      }
-
-      if (params.sort) {
-        if (params.sort === 'price') {
-          filtered.sort((a, b) => a.price - b.price);
-        } else if (params.sort === '-price') {
-          filtered.sort((a, b) => b.price - a.price);
-        } else if (params.sort === '-rating') {
-          filtered.sort((a, b) => b.rating - a.rating);
-        }
-      }
-
-      const page = params.page || 1;
-      const limit = params.limit || 12;
-      const startIndex = (page - 1) * limit;
-      const paginatedProducts = filtered.slice(startIndex, startIndex + limit);
-
+      const { data } = await api.get('/products', { params: cleanParams });
       return {
-        products: paginatedProducts,
-        pagination: {
-          total: filtered.length,
-          page,
-          pages: Math.max(1, Math.ceil(filtered.length / limit)),
-        },
+        products: data.data || data.data?.products || [],
+        pagination: data.meta || { total: 0, page: params.page || 1, pages: 1 }
       };
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
   });
 };
 

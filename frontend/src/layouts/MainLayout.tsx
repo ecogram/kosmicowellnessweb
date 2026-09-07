@@ -3,6 +3,9 @@ import { useEffect } from 'react';
 import { AnnouncementBar } from '../components/layout/AnnouncementBar';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
+import { WhatsAppButton } from '../components/layout/WhatsAppButton';
+import { AiConsultantButton } from '../components/layout/AiConsultantButton';
+import { CartDrawer } from '../components/cart/CartDrawer';
 
 export function MainLayout() {
   const { pathname } = useLocation();
@@ -19,6 +22,10 @@ export function MainLayout() {
         <Outlet />
       </main>
       <Footer />
+      <AiConsultantButton />
+      <WhatsAppButton />
+      <CartDrawer />
     </div>
   );
 }
+

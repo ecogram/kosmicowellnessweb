@@ -23,7 +23,7 @@ export function FinalCta() {
             </Button>
           </Link>
           <p className="mt-6 text-sm text-white/60">
-            Free shipping on all orders over $50. 100% satisfaction guarantee.
+            100% satisfaction guarantee.
           </p>
         </div>
       </Container>

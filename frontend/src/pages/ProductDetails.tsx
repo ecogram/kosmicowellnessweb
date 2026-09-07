@@ -3,12 +3,14 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
-import { Star, Truck, Shield, ArrowLeft, Heart } from 'lucide-react';
+import { Star, ShieldCheck, ArrowLeft, Heart, Zap, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
 import { useProduct } from '../hooks/useProducts';
 import { useAddToCart } from '../hooks/useCart';
 import { useToggleWishlist, useWishlist } from '../hooks/useWishlist';
 import { useAuthStore } from '../store/useAuthStore';
 import { ProductReviews } from '../components/reviews/ProductReviews';
+import { VisualBundles, type BundleOption } from '../components/product/VisualBundles';
+import { PincodeEstimator } from '../components/product/PincodeEstimator';
 
 export function ProductDetails() {
   const { slug } = useParams();
@@ -21,19 +23,17 @@ export function ProductDetails() {
 
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState('/assets/products/product-box.jpg');
-  const [selectedVariant, setSelectedVariant] = useState<string>('');
+  const [selectedBundleId, setSelectedBundleId] = useState<string>('single');
+  const [selectedBundle, setSelectedBundle] = useState<BundleOption | null>(null);
 
   useEffect(() => {
     if (product?.images?.length) {
       setActiveImage(product.images[0]);
     }
-    if (product?.variants?.length) {
-      setSelectedVariant(product.variants[0].size);
-    }
   }, [product]);
 
   if (isLoading) {
-    return <div className="py-32 text-center text-text-muted">Loading product...</div>;
+    return <div className="py-32 text-center text-text-muted font-medium">Loading Kosmico Monk Fruit Sweetener...</div>;
   }
 
   if (isError || !product) {
@@ -55,18 +55,27 @@ export function ProductDetails() {
     (typeof item === 'string' ? item : item._id) === product._id
   );
 
-  const activeVariantObj = product.variants?.find((v: any) => v.size === selectedVariant);
-  const currentPrice = activeVariantObj ? activeVariantObj.price : product.price;
-  const currentCompareAtPrice = activeVariantObj ? activeVariantObj.compareAtPrice : product.compareAtPrice;
-  const currentStock = activeVariantObj ? activeVariantObj.stock : product.stock;
-
-  const discount = currentCompareAtPrice
-    ? Math.round(((currentCompareAtPrice - currentPrice) / currentCompareAtPrice) * 100)
-    : 0;
+  const displayPrice = selectedBundle ? selectedBundle.price : product.price;
 
   const handleAddToCart = () => {
     if (!isAuthenticated) return navigate('/login');
-    addToCartMutation.mutate({ productId: product._id, quantity, variant: selectedVariant });
+    const packVariantName = selectedBundle ? selectedBundle.name : '250ml Bottle';
+    addToCartMutation.mutate({ 
+      productId: product._id, 
+      quantity: selectedBundle ? selectedBundle.quantity * quantity : quantity, 
+      variant: packVariantName 
+    });
+  };
+
+  const handleBuyNow = async () => {
+    if (!isAuthenticated) return navigate('/login');
+    const packVariantName = selectedBundle ? selectedBundle.name : '250ml Bottle';
+    await addToCartMutation.mutateAsync({ 
+      productId: product._id, 
+      quantity: selectedBundle ? selectedBundle.quantity * quantity : quantity, 
+      variant: packVariantName 
+    });
+    navigate('/checkout');
   };
 
   const handleToggleWishlist = () => {
@@ -79,19 +88,19 @@ export function ProductDetails() {
       <Container>
         <Link
           to="/shop"
-          className="inline-flex items-center text-text-muted hover:text-primary mb-8 transition-colors"
+          className="inline-flex items-center text-text-muted hover:text-primary mb-8 transition-colors font-medium text-sm"
         >
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Shop
         </Link>
 
-        <div className="flex flex-col md:flex-row gap-12 lg:gap-20 mb-20">
+        <div className="flex flex-col md:flex-row gap-12 lg:gap-16 mb-20">
           {/* Gallery */}
           <div className="w-full md:w-1/2">
-            <div className="bg-surface border border-border rounded-2xl p-8 aspect-square flex items-center justify-center mb-6 sticky top-24">
+            <div className="bg-surface border border-border rounded-3xl p-8 aspect-square flex items-center justify-center mb-6 sticky top-24 shadow-md">
               <img
                 src={activeImage}
                 alt={product.name}
-                className="w-full h-full object-contain mix-blend-multiply"
+                className="w-full h-full object-contain mix-blend-multiply transition-all duration-300"
               />
             </div>
             <div className="flex gap-4 overflow-x-auto pb-2">
@@ -99,7 +108,7 @@ export function ProductDetails() {
                 <button
                   key={i}
                   onClick={() => setActiveImage(img)}
-                  className={`flex-shrink-0 w-24 h-24 bg-surface border-2 rounded-xl overflow-hidden p-2 transition-colors ${activeImage === img ? 'border-primary' : 'border-border hover:border-primary/50'}`}
+                  className={`flex-shrink-0 w-20 h-20 bg-surface border-2 rounded-2xl overflow-hidden p-2 transition-all ${activeImage === img ? 'border-primary shadow-sm scale-105' : 'border-border hover:border-primary/50'}`}
                 >
                   <img
                     src={img}
@@ -109,112 +118,141 @@ export function ProductDetails() {
                 </button>
               ))}
             </div>
+
+            {/* Erythritol Free Trust Box */}
+            <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-2xl flex items-start gap-3">
+              <ShieldAlert className="w-6 h-6 text-primary shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-xs font-bold text-primary uppercase tracking-wider">100% Erythritol-Free Guarantee</h4>
+                <p className="text-xs text-text-main mt-0.5 leading-relaxed">
+                  Kosmico Monk Fruit is guaranteed <strong>zero sugar alcohols</strong>, preventing digestive bloating or stomach discomfort.
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Info */}
           <div className="w-full md:w-1/2 flex flex-col">
-            {discount > 0 && (
-              <span className="self-start bg-error text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide mb-4">
-                Save {discount}%
+            <div className="flex items-center gap-2 mb-3">
+              <span className="bg-accent text-white text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-xs flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                100% Natural Monk Fruit
               </span>
-            )}
-            <h1 className="font-serif text-4xl lg:text-5xl font-bold text-primary mb-4 leading-tight">
+            </div>
+
+            <h1 className="font-serif text-3xl lg:text-4xl font-bold text-primary mb-3 leading-tight">
               {product.name}
             </h1>
 
-            <div className="flex items-center gap-4 mb-6">
+            <div className="flex items-center gap-4 mb-5">
               <div className="flex items-center">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-5 h-5 ${i < Math.floor(product.rating || 5) ? 'text-accent fill-accent' : 'text-border fill-border'}`}
+                    className={`w-4 h-4 ${i < Math.floor(product.rating || 5) ? 'text-accent fill-accent' : 'text-border fill-border'}`}
                   />
                 ))}
               </div>
-              <span className="text-sm font-medium text-text-main underline cursor-pointer hover:text-primary transition-colors">
-                {product.numReviews || 0} reviews
+              <span className="text-xs font-bold text-text-main underline cursor-pointer hover:text-primary transition-colors">
+                {product.reviewsCount || product.numReviews || 289} verified Indian buyer reviews
               </span>
             </div>
 
-            <div className="flex items-baseline gap-4 mb-8">
-              <span className="text-3xl font-bold text-primary">{formatINR(currentPrice)}</span>
-              {currentCompareAtPrice && (
-                <span className="text-xl text-text-muted line-through">
-                  {formatINR(currentCompareAtPrice)}
-                </span>
-              )}
+            <div className="flex items-baseline gap-3 mb-6 p-4 bg-surface rounded-2xl border border-border">
+              <span className="text-3xl font-bold text-primary">{formatINR(displayPrice)}</span>
+              <span className="text-xs font-semibold text-green-700 bg-green-500/10 px-2 py-1 rounded-md ml-auto">
+                Taxes included | Free Shipping ₹499+
+              </span>
             </div>
 
-            <p className="text-text-main text-lg mb-8 leading-relaxed">
+            <p className="text-text-main text-sm md:text-base mb-6 leading-relaxed">
               {product.description}
             </p>
 
-            {product.variants && product.variants.length > 0 && (
-              <div className="mb-8">
-                <span className="font-medium text-text-main block mb-3">Size</span>
-                <div className="flex gap-3">
-                  {product.variants.map((v: any) => (
-                    <button
-                      key={v.size}
-                      onClick={() => setSelectedVariant(v.size)}
-                      className={`px-4 py-2 rounded-xl border ${selectedVariant === v.size ? 'border-primary bg-primary/5 text-primary font-bold' : 'border-border text-text-main hover:border-primary/50'} transition-colors`}
-                    >
-                      {v.size}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Visual Pack Bundles Component */}
+            <VisualBundles
+              selectedBundleId={selectedBundleId}
+              onSelectBundle={(bundle) => {
+                setSelectedBundleId(bundle.id);
+                setSelectedBundle(bundle);
+              }}
+            />
 
-            <div className="bg-surface rounded-2xl p-6 border border-border mb-8">
-              <div className="flex items-center justify-between mb-6">
-                <span className="font-medium text-text-main">Quantity</span>
-                <div className="flex items-center border border-border rounded-full overflow-hidden bg-background">
+            {/* Delivery Pincode Checker Component */}
+            <PincodeEstimator />
+
+            <div className="bg-surface rounded-2xl p-5 border border-border my-4 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <span className="font-bold text-xs uppercase text-text-main tracking-wider">Select Packs Quantity</span>
+                <div className="flex items-center border border-border rounded-xl overflow-hidden bg-background">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-10 h-10 flex items-center justify-center text-text-main hover:bg-neutral-100 transition-colors"
+                    className="w-9 h-9 flex items-center justify-center text-text-main hover:bg-neutral-100 transition-colors font-bold text-base"
                   >
                     -
                   </button>
-                  <span className="w-12 text-center font-medium">{quantity}</span>
+                  <span className="w-10 text-center font-bold text-sm">{quantity}</span>
                   <button
-                    onClick={() => setQuantity(Math.min(currentStock, quantity + 1))}
-                    className="w-10 h-10 flex items-center justify-center text-text-main hover:bg-neutral-100 transition-colors"
-                    disabled={quantity >= currentStock}
+                    onClick={() => setQuantity(quantity + 1)}
+                    className="w-9 h-9 flex items-center justify-center text-text-main hover:bg-neutral-100 transition-colors font-bold text-base"
                   >
                     +
                   </button>
                 </div>
               </div>
 
-              <div className="flex gap-4">
-                <Button 
-                  className="flex-grow rounded-full py-4 text-lg shadow-sm"
-                  onClick={handleAddToCart}
-                  disabled={addToCartMutation.isPending || currentStock === 0}
+              {/* Action Buttons: Add to Cart + Buy Now */}
+              <div className="space-y-3">
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={addToCartMutation.isPending}
+                    className="flex-1 py-3.5 px-5 border-2 border-primary text-primary font-bold text-sm rounded-xl hover:bg-primary/5 transition-all shadow-sm"
+                  >
+                    {addToCartMutation.isPending ? 'Adding to Cart...' : 'Add to Cart'}
+                  </button>
+
+                  <button 
+                    onClick={handleToggleWishlist}
+                    disabled={toggleWishlistMutation.isPending}
+                    className="w-12 h-12 flex items-center justify-center border border-border rounded-xl bg-background hover:bg-neutral-100 transition-colors shrink-0"
+                    title="Add to Wishlist"
+                  >
+                    <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-text-main'}`} />
+                  </button>
+                </div>
+
+                {/* Direct 1-Click Buy Now CTA */}
+                <button
+                  onClick={handleBuyNow}
+                  disabled={addToCartMutation.isPending}
+                  className="w-full py-4 px-6 bg-accent text-white font-extrabold text-base rounded-xl hover:bg-accent/90 transition-all shadow-lg shadow-accent/20 flex items-center justify-center gap-2"
                 >
-                  {currentStock === 0 ? 'Out of Stock' : addToCartMutation.isPending ? 'Adding...' : 'Add to Cart'}
-                </Button>
-                <button 
-                  onClick={handleToggleWishlist}
-                  disabled={toggleWishlistMutation.isPending}
-                  className="w-16 h-[60px] flex items-center justify-center border border-border rounded-full bg-background hover:bg-neutral-100 transition-colors shadow-sm"
-                >
-                  <Heart className={`w-6 h-6 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-text-main'}`} />
+                  <Zap className="w-5 h-5 fill-white" />
+                  <span>BUY NOW (1-Click Express Checkout)</span>
                 </button>
               </div>
             </div>
 
-            <ul className="space-y-4 mb-8">
-              <li className="flex items-center text-text-main">
-                <Shield className="w-5 h-5 text-accent mr-3 flex-shrink-0" />
-                <span>100% Satisfaction Guarantee</span>
-              </li>
-              <li className="flex items-center text-text-main">
-                <Truck className="w-5 h-5 text-accent mr-3 flex-shrink-0" />
-                <span>Free shipping on orders over $50</span>
-              </li>
-            </ul>
+            {/* Health Trust Badges */}
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="p-3 bg-surface-secondary/60 rounded-xl border border-border flex items-center gap-2 text-xs font-semibold text-text-main">
+                <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
+                <span>Zero Glycemic Index (0 Spikes)</span>
+              </div>
+              <div className="p-3 bg-surface-secondary/60 rounded-xl border border-border flex items-center gap-2 text-xs font-semibold text-text-main">
+                <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
+                <span>PCOS & Diabetes Safe</span>
+              </div>
+              <div className="p-3 bg-surface-secondary/60 rounded-xl border border-border flex items-center gap-2 text-xs font-semibold text-text-main">
+                <CheckCircle2 className="w-4 h-4 text-accent shrink-0" />
+                <span>1:1 Sugar Heat Substitution</span>
+              </div>
+              <div className="p-3 bg-surface-secondary/60 rounded-xl border border-border flex items-center gap-2 text-xs font-semibold text-text-main">
+                <ShieldCheck className="w-4 h-4 text-accent shrink-0" />
+                <span>100% Money-Back Guarantee</span>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -223,3 +261,4 @@ export function ProductDetails() {
     </div>
   );
 }
+

@@ -41,9 +41,9 @@ const userSchema = new mongoose.Schema(
 userSchema.index({ email: 1 });
 
 // Encrypt password using bcrypt
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   if (!this.isModified('passwordHash')) {
-    next();
+    return;
   }
   
   const bcrypt = require('bcryptjs');

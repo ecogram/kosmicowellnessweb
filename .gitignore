@@ -33,6 +33,10 @@ docker-compose.override.yml
 *.swp
 .DS_Store
 
+# Media & Scratch
+*.mp4
+scratch_*.js
+backend/scratch_*.js
+
 # Zip Archives
 *.zip
-

@@ -17,6 +17,8 @@ import { Orders } from './pages/Orders';
 import { OrderDetails } from './pages/OrderDetails';
 import { Wishlist } from './pages/Wishlist';
 import { Notifications } from './pages/Notifications';
+import { CarePage } from './pages/CarePage';
+import { AiConsultantPage } from './pages/AiConsultantPage';
 import { About } from './pages/About';
 import { BenefitsPage } from './pages/BenefitsPage';
 import { IngredientsPage } from './pages/IngredientsPage';
@@ -88,6 +90,8 @@ function App() {
                 <Route element={<MainLayout />}>
                   <Route path="/" element={<Home />} />
                   <Route path="/shop" element={<Shop />} />
+                  <Route path="/care" element={<CarePage />} />
+                  <Route path="/ai-consultant" element={<AiConsultantPage />} />
                   <Route path="/products/:slug" element={<ProductDetails />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />

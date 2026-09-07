@@ -30,10 +30,9 @@ class PaymentService {
       throw new ApiError(400, 'Order is already paid');
     }
 
-    // Convert total to smallest currency unit (paise/cents)
+    // Convert total to smallest currency unit (paise)
     const amountInSmallestUnit = Math.round(order.total * 100);
-    // Fallback to USD if order total implies unmigrated legacy prices
-    const currency = order.total < 500 ? 'USD' : 'INR';
+    const currency = 'INR';
 
     let rzpOrder;
     try {

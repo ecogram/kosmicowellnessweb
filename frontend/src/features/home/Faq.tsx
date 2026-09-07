@@ -21,7 +21,7 @@ const faqs = [
   {
     question: 'Is it safe for diabetics?',
     answer:
-      'Kosmiko Wellness contains zero calories and zero net carbs, meaning it does not spike blood glucose or insulin levels, making it a popular choice for individuals managing diabetes or following a ketogenic diet.',
+      'Kosmiko Wellness has zero calories and zero net carbs, meaning it does not spike blood glucose or insulin levels, making it a popular choice for individuals managing diabetes or following a ketogenic diet.',
   },
   {
     question: 'Does Sweet Monk contain sugar alcohols or Erythritol?',

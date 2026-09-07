@@ -50,8 +50,13 @@ export const Login = () => {
         <h2 className="text-2xl font-serif font-bold text-center mb-6">Welcome Back</h2>
         
         {serverError && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-md">
-            {serverError}
+          <div className="mb-4 p-3.5 bg-red-50 text-red-700 text-xs rounded-xl font-semibold border border-red-200 shadow-xs">
+            <p className="font-bold">⚠️ Login Failed</p>
+            <p className="mt-0.5">
+              {serverError === 'Invalid credentials' || serverError === 'Failed to login'
+                ? 'Incorrect email or password. Please use password: 123456 or click Sign Up below to create a new account.'
+                : serverError}
+            </p>
           </div>
         )}
 

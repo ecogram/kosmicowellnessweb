@@ -49,7 +49,7 @@ export const Checkout = () => {
   } = useForm({
     resolver: zodResolver(addressSchema),
     defaultValues: {
-      country: 'US'
+      country: 'IN'
     }
   });
 
@@ -141,7 +141,7 @@ export const Checkout = () => {
 
   const itemsToCalculate = cart?.items || createdOrder?.items || [];
   const subtotal = itemsToCalculate.reduce((sum: number, item: any) => sum + ((item.priceSnapshot || item.price) * item.quantity), 0);
-  const shipping = createdOrder ? createdOrder.shippingCost : (subtotal >= 50 ? 0 : 5.99);
+  const shipping = createdOrder ? createdOrder.shippingCost : (subtotal >= 499 ? 0 : 49);
   const tax = createdOrder ? createdOrder.taxAmount : 0;
   const total = createdOrder ? createdOrder.total : (subtotal + shipping + tax);
 
@@ -347,24 +347,33 @@ export const Checkout = () => {
               <h2 className="font-serif text-2xl font-bold mb-6">Order Summary</h2>
               
               <ul className="space-y-4 mb-6 max-h-64 overflow-y-auto pr-2">
-                {(cart?.items || createdOrder?.items || []).map((item: any) => (
-                  <li key={item.product._id || item.product} className="flex gap-4">
-                    <div className="w-16 h-16 bg-background rounded border border-border p-1 flex-shrink-0">
-                      <img 
-                        src={item.product.images?.[0] || '/assets/products/product-box.jpg'} 
-                        alt={item.product.name}
-                        className="w-full h-full object-contain mix-blend-multiply"
-                      />
-                    </div>
-                    <div className="flex-1 flex flex-col justify-center">
-                      <span className="text-sm font-medium line-clamp-1">{item.product.name}</span>
-                      <span className="text-sm text-text-muted">Qty: {item.quantity}</span>
-                    </div>
-                    <div className="flex items-center text-sm font-medium">
-                      {formatINR(item.priceSnapshot * item.quantity)}
-                    </div>
-                  </li>
-                ))}
+                {(cart?.items || createdOrder?.items || []).map((item: any) => {
+                  const prod = typeof item.product === 'object' && item.product !== null ? item.product : {};
+                  const productId = prod._id || (typeof item.product === 'string' ? item.product : 'item');
+                  const imageSrc = Array.isArray(prod.images) && prod.images.length > 0 
+                    ? prod.images[0] 
+                    : '/assets/products/product-box.jpg';
+                  const productName = prod.name || 'Kosmico Classic Monk Fruit Sweetener (250ml)';
+
+                  return (
+                    <li key={`${productId}-${item.variant || 'default'}`} className="flex gap-4">
+                      <div className="w-16 h-16 bg-background rounded border border-border p-1 flex-shrink-0">
+                        <img 
+                          src={imageSrc} 
+                          alt={productName}
+                          className="w-full h-full object-contain mix-blend-multiply"
+                        />
+                      </div>
+                      <div className="flex-1 flex flex-col justify-center">
+                        <span className="text-sm font-medium line-clamp-1">{productName}</span>
+                        <span className="text-sm text-text-muted">Qty: {item.quantity}</span>
+                      </div>
+                      <div className="flex items-center text-sm font-medium">
+                        {formatINR((item.priceSnapshot || item.price || prod.price || 387) * item.quantity)}
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
 
               <div className="space-y-4 mb-6 text-text-main border-t border-border pt-6">
