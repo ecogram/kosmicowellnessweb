@@ -7,7 +7,6 @@ import { WhatsAppButton } from '../components/layout/WhatsAppButton';
 import { AiConsultantButton } from '../components/layout/AiConsultantButton';
 import { CartDrawer } from '../components/cart/CartDrawer';
 
-import { HangingPlayStoreWidget } from '../components/layout/HangingPlayStoreWidget';
 
 export function MainLayout() {
   const { pathname } = useLocation();
@@ -32,7 +31,6 @@ export function MainLayout() {
           <Outlet />
         </main>
         <Footer />
-        <HangingPlayStoreWidget />
         <AiConsultantButton />
         <WhatsAppButton />
         <CartDrawer />

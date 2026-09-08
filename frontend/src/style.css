@@ -150,8 +150,9 @@ h6 {
   animation: marquee-scroll 28s linear infinite;
 }
 
-.animate-marquee:hover {
-  animation-play-state: paused;
+.animate-marquee:hover,
+.animate-marquee.paused {
+  animation-play-state: paused !important;
 }
 
 @keyframes hanging-swing {

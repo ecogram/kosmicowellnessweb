@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Menu, Search, X, Bell } from 'lucide-react';
 import { Container } from '../ui/Container';
@@ -7,6 +8,7 @@ import { useCartDrawerStore } from '../../store/useCartDrawerStore';
 import { useCart } from '../../hooks/useCart';
 import { useUnreadCount } from '../../hooks/useNotifications';
 import { PlayStoreModal } from '../ui/PlayStoreModal';
+import { HangingPlayStoreWidget } from './HangingPlayStoreWidget';
 
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -37,7 +39,7 @@ export function Navbar() {
   ];
 
   return (
-    <nav className="bg-surface/95 backdrop-blur-md border-b border-border shadow-xs">
+    <nav className="bg-surface/95 backdrop-blur-md border-b border-border shadow-xs relative">
       <Container>
         <div className="flex items-center justify-between h-16 gap-2">
           {/* Left: Mobile Menu button & Brand Logo */}
@@ -161,79 +163,111 @@ export function Navbar() {
         </div>
       )}
 
-      {/* Mobile Menu Overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-overlay bg-black/50 md:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+      {/* Mobile Menu Portal (Attached directly to document.body to avoid sticky header clipping) */}
+      {typeof document !== 'undefined' && isMobileMenuOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] md:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity duration-300"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
 
-      {/* Mobile Menu Drawer */}
-      <div
-        className={`fixed inset-y-0 left-0 z-modal w-64 bg-surface transform transition-transform duration-300 ease-in-out md:hidden ${
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <span className="font-serif text-xl font-bold text-primary">Menu</span>
-          <button onClick={() => setIsMobileMenuOpen(false)} className="text-text-main p-2">
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-        <div className="flex flex-col p-4 space-y-4">
-          {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.path}
-              className="text-base font-medium text-text-main hover:text-primary"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              {link.name}
-            </Link>
-          ))}
-          <button
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              setIsPlayStoreModalOpen(true);
-            }}
-            className="text-sm font-bold text-white bg-emerald-800 p-2.5 rounded-xl flex items-center justify-between shadow-xs cursor-pointer"
+          {/* Full-Height Mobile Drawer */}
+          <div
+            className="fixed inset-y-0 left-0 z-[10000] w-[85vw] max-w-sm bg-white text-neutral-900 shadow-2xl border-r border-neutral-200 flex flex-col h-full max-h-screen overflow-hidden animate-slideInRight"
+            style={{ backgroundColor: '#ffffff' }}
           >
-            <span>Get Mobile App</span>
-            <span className="text-[10px] bg-amber-400 text-neutral-950 font-black px-2 py-0.5 rounded-full uppercase">Play Store 📱</span>
-          </button>
-          <div className="pt-4 border-t border-border flex flex-col space-y-4">
-            {isAuthenticated ? (
-              <>
-                {user?.role === 'admin' && (
-                  <Link
-                    to="/admin"
-                    className="flex items-center text-base font-bold text-amber-700 bg-amber-50 p-2 rounded-lg"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    👑 Admin Dashboard
-                  </Link>
-                )}
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between p-4 border-b border-neutral-200 bg-white text-neutral-900 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <img src="/logo.png" alt="Kosmico" className="h-7 w-auto object-contain" />
+                <span className="font-serif text-lg font-bold text-emerald-900">Menu</span>
+              </div>
+              <button 
+                onClick={() => setIsMobileMenuOpen(false)} 
+                className="text-neutral-600 hover:text-neutral-900 p-2 rounded-full hover:bg-neutral-100 transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Clean Navigation Buttons */}
+            <div className="flex flex-col p-4 space-y-3 bg-white flex-1" style={{ backgroundColor: '#ffffff' }}>
+              {navLinks.map((link) => (
                 <Link
-                  to="/profile"
-                  className="flex items-center text-base font-medium text-text-main hover:text-primary"
+                  key={link.name}
+                  to={link.path}
+                  className="px-4 py-3 rounded-xl bg-neutral-50 hover:bg-emerald-50 text-neutral-900 hover:text-emerald-900 font-bold text-base border border-neutral-200 transition-all active:scale-98 block"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  <User className="h-5 w-5 mr-3" /> {user?.name}
+                  {link.name}
                 </Link>
-              </>
-            ) : (
-              <Link
-                to="/login"
-                className="flex items-center text-base font-medium text-text-main hover:text-primary"
-                onClick={() => setIsMobileMenuOpen(false)}
+              ))}
+
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setIsPlayStoreModalOpen(true);
+                }}
+                className="w-full text-left px-4 py-3 rounded-xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-base transition-all flex items-center justify-between active:scale-98 shadow-xs"
               >
-                <User className="h-5 w-5 mr-3" /> Account
-              </Link>
-            )}
-          </div>
-        </div>
+                <span>Get Mobile App</span>
+                <span className="text-xs bg-amber-400 text-neutral-950 px-2 py-0.5 rounded-full font-black">Play Store 📱</span>
+              </button>
+
+              <div className="pt-2 border-t border-neutral-200">
+                {isAuthenticated ? (
+                  <div className="space-y-2">
+                    {user?.role === 'admin' && (
+                      <Link
+                        to="/admin"
+                        className="px-4 py-3 rounded-xl bg-amber-50 text-amber-900 font-bold text-sm border border-amber-300 block"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        👑 Admin Dashboard
+                      </Link>
+                    )}
+                    <Link
+                      to="/orders"
+                      className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm block"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      📦 My Orders
+                    </Link>
+                    <Link
+                      to="/profile"
+                      className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm block"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      👤 Profile ({user?.name})
+                    </Link>
+                    <button
+                      onClick={() => {
+                        useAuthStore.getState().logout();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full text-left px-4 py-2.5 rounded-xl text-red-600 hover:bg-red-50 font-semibold text-sm block"
+                    >
+                      🚪 Log Out
+                    </button>
+                  </div>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="px-4 py-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-900 font-bold text-base flex items-center gap-2 transition-all block text-center"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <User className="w-5 h-5 inline-block text-neutral-700" />
+                    <span>Account / Sign In</span>
+                  </Link>
+                )}
+              </div>
+            </div>
       </div>
+    </div>,
+    document.body
+  )}
 
       {/* Direct Play Store Modal Trigger */}
       <PlayStoreModal
@@ -242,6 +276,9 @@ export function Navbar() {
         featureTitle="Kosmico Care Hub Mobile App"
         featureDescription="Access all clinical-grade health suite tools, smartwatch biometrics, and AI food scanner directly on the Kosmico Mobile App."
       />
+
+      {/* Hanging Play Store Ornament anchored inside Navbar */}
+      <HangingPlayStoreWidget />
     </nav>
   );
 }

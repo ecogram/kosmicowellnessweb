@@ -9,7 +9,7 @@ interface DishItem {
   tagline: string;
   dishImage: string;
   productImage: string;
-  caloriesSaved: string;
+  healthBadge: string;
   glycemicIndex: string;
   keyFeature: string;
   description: string;
@@ -21,45 +21,45 @@ const DISHES: DishItem[] = [
     name: 'Slow-Cooked Saffron Rice Kheer',
     hindiName: 'केसरिया चावल खीर',
     tagline: 'High-heat stable up to 250°C — Zero milk splitting!',
-    dishImage: '/assets/dishes/kheer.jpg',
-    productImage: '/assets/products/product-box.jpg',
-    caloriesSaved: '320 kcal / bowl',
+    dishImage: '/assets/dishes/kheer-lifestyle.jpg',
+    productImage: '/assets/products/sweetmonk-lifestyle-drop.png',
+    healthBadge: '100% Sugar-Free',
     glycemicIndex: 'GI 0 (Zero Spike)',
     keyFeature: '1:1 Cane Sugar Taste',
-    description: 'Enjoy rich, creamy festive Kheer sweetened 100% naturally with Sweet Monk without increasing blood sugar.'
+    description: 'Enjoy rich, creamy festive Kheer sweetened 100% naturally with Sweet Monk drops without increasing blood sugar.'
   },
   {
     id: 'gajar-halwa',
     name: 'Desi Ghee Gajar Ka Halwa',
     hindiName: 'गाजर का हलवा',
     tagline: 'Caramelizes and coats perfectly like natural sugar!',
-    dishImage: '/assets/dishes/gajar-halwa.jpg',
-    productImage: '/assets/products/product-box.jpg',
-    caloriesSaved: '450 kcal / bowl',
+    dishImage: '/assets/dishes/gajar-halwa-lifestyle.jpg',
+    productImage: '/assets/products/sweetmonk-lifestyle-drop.png',
+    healthBadge: 'Zero Sugar Added',
     glycemicIndex: 'GI 0 (Zero Spike)',
     keyFeature: 'Zero Chemical Aftertaste',
-    description: 'Slow-cooked carrot halwa made for diabetic family members without compromising on authentic festival sweetness.'
+    description: 'Slow-cooked carrot halwa prepared for diabetic family members without compromising on authentic festival sweetness.'
   },
   {
     id: 'ladoo',
     name: 'Homemade Motichoor & Besan Ladoo',
     hindiName: 'बेसन और मोतीचूर के लड्डू',
     tagline: 'Stays fresh without crystalline texture or hard bite!',
-    dishImage: '/assets/dishes/ladoo.jpg',
-    productImage: '/assets/products/product-box.jpg',
-    caloriesSaved: '180 kcal / piece',
+    dishImage: '/assets/dishes/ladoo-lifestyle.jpg',
+    productImage: '/assets/products/sweetmonk-lifestyle-drop.png',
+    healthBadge: '100% Natural Monk Fruit',
     glycemicIndex: 'GI 0 (Zero Spike)',
     keyFeature: 'Zero Erythritol / Gut-Friendly',
-    description: 'Traditional celebration Ladoos prepared with Sweet Monk — 100% natural monk fruit extract.'
+    description: 'Traditional celebration Ladoos prepared with Sweet Monk liquid drops — 100% pure monk fruit extract.'
   },
   {
     id: 'gulab-jamun',
     name: 'Juicy Syrupy Gulab Jamun',
     hindiName: 'गुलाब जामुन',
     tagline: 'Absorbs sweet syrup deeply without bitter metallic taste!',
-    dishImage: '/assets/dishes/gulab-jamun.jpg',
-    productImage: '/assets/products/product-box.jpg',
-    caloriesSaved: '280 kcal / piece',
+    dishImage: '/assets/dishes/gulab-jamun-lifestyle.jpg',
+    productImage: '/assets/products/sweetmonk-lifestyle-drop.png',
+    healthBadge: 'Diabetic & Keto Friendly',
     glycemicIndex: 'GI 0 (Zero Spike)',
     keyFeature: '100% Keto & Diabetic Safe',
     description: 'Mouth-watering Gulab Jamuns dipped in zero-calorie Sweet Monk syrup for guilt-free indulgence.'
@@ -69,12 +69,12 @@ const DISHES: DishItem[] = [
     name: 'Morning Masala & Kadak Chai',
     hindiName: 'कड़क मसाला चाय',
     tagline: 'Dissolves instantly in boiling hot tea — zero curdling!',
-    dishImage: '/assets/products/lifestyle-tea.jpg',
-    productImage: '/assets/products/product-box.jpg',
-    caloriesSaved: '120 kcal / cup',
+    dishImage: '/assets/products/sweetmonk-lifestyle-drop.png',
+    productImage: '/assets/products/sweetmonk-lifestyle-drop.png',
+    healthBadge: 'Zero Calories',
     glycemicIndex: 'GI 0 (Zero Spike)',
     keyFeature: '1 Drop = 1 Spoon Sugar',
-    description: 'Start your mornings with hot Kadak Chai without worrying about daily sugar intake or glucose spikes.'
+    description: 'Start your mornings with hot Kadak Chai using Sweet Monk liquid drops without worrying about daily sugar intake.'
   }
 ];
 
@@ -106,7 +106,7 @@ export function DishesAutoScrollSection() {
           </h2>
 
           <p className="text-neutral-600 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
-            From slow-cooked Kheer to morning Kadak Chai, substitute sugar 1:1 with Sweet Monk Fruit. Zero calories, zero aftertaste, and zero blood sugar spikes.
+            From slow-cooked Kheer to morning Kadak Chai, substitute sugar 1:1 with Sweet Monk Fruit Liquid Sweetener Drops. Zero calories, zero aftertaste, and zero blood sugar spikes.
           </p>
 
           {/* Marquee Play/Pause Control Button */}
@@ -128,7 +128,10 @@ export function DishesAutoScrollSection() {
         <div className="absolute left-0 top-0 bottom-0 w-16 md:w-32 bg-gradient-to-r from-emerald-50/90 to-transparent z-20 pointer-events-none" />
         <div className="absolute right-0 top-0 bottom-0 w-16 md:w-32 bg-gradient-to-l from-emerald-50/90 to-transparent z-20 pointer-events-none" />
 
-        <div className={`animate-marquee flex gap-6 px-4 ${isPaused ? '[animation-play-state:paused]' : ''}`}>
+        <div
+          className={`animate-marquee flex gap-6 px-4 ${isPaused ? 'paused' : ''}`}
+          style={{ animationPlayState: isPaused ? 'paused' : 'running' }}
+        >
           {marqueeItems.map((dish, index) => (
             <div
               key={`${dish.id}-${index}`}
@@ -143,25 +146,10 @@ export function DishesAutoScrollSection() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-                {/* Top Badge: Calories Saved */}
+                {/* Top Badge: Health Badge (Zero Calories / Sugar-Free) */}
                 <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full border border-emerald-900/15 text-emerald-900 font-bold text-xs flex items-center gap-1.5 shadow-sm">
                   <Flame className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                  <span>{dish.caloriesSaved}</span>
-                </div>
-
-                {/* Floating Sweet Monk Product Box Badge */}
-                <div className="absolute bottom-3 right-3 bg-white/95 border border-emerald-800/30 rounded-2xl p-2 flex items-center gap-2.5 shadow-lg backdrop-blur-md group-hover/card:scale-105 transition-transform">
-                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-emerald-50 shrink-0 p-0.5 border border-emerald-800/20">
-                    <img
-                      src={dish.productImage}
-                      alt="Sweet Monk Pack"
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <div className="text-left pr-1">
-                    <span className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider block leading-tight">Sweetened With</span>
-                    <span className="text-xs font-serif font-extrabold text-neutral-900 block leading-tight">Sweet Monk</span>
-                  </div>
+                  <span>{dish.healthBadge}</span>
                 </div>
               </div>
 
