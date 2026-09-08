@@ -37,30 +37,26 @@ export function Navbar() {
   ];
 
   return (
-    <nav className="bg-surface sticky top-0 z-50 border-b border-border shadow-sm">
+    <nav className="bg-surface/95 backdrop-blur-md border-b border-border shadow-xs">
       <Container>
-        <div className="flex justify-between items-center h-16">
-          {/* Mobile menu button */}
-          <div className="flex items-center md:hidden">
+        <div className="flex items-center justify-between h-16 gap-2">
+          {/* Left: Mobile Menu button & Brand Logo */}
+          <div className="flex items-center gap-2 min-w-0">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="text-text-main p-2 focus:outline-none"
+              className="text-text-main p-1.5 focus:outline-none md:hidden shrink-0"
               aria-label="Open menu"
             >
               <Menu className="h-6 w-6" />
             </button>
-          </div>
-
-          {/* Logo */}
-          <div className="flex-shrink-0 flex items-center justify-center md:justify-start w-full md:w-auto">
-            <Link to="/" className="flex items-center gap-2.5 font-serif text-2xl font-bold tracking-tight text-primary">
-              <img src="/logo.png" alt="Kosmico" className="h-8 w-auto object-contain rounded-md" />
-              <span>Kosmiko Wellness</span>
+            <Link to="/" className="flex items-center gap-2 font-serif text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-primary min-w-0">
+              <img src="/logo.png" alt="Kosmico" className="h-7 sm:h-8 w-auto object-contain rounded-md shrink-0" />
+              <span className="truncate sm:whitespace-nowrap">Kosmiko Wellness</span>
             </Link>
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-8">
+          {/* Center: Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-6 lg:space-x-8 shrink-0">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
@@ -72,16 +68,16 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* Icons */}
-          <div className="flex items-center space-x-4 absolute right-4 md:static">
+          {/* Right: Action Icons */}
+          <div className="flex items-center space-x-2 sm:space-x-4 shrink-0">
             <button 
-              className="text-text-main hover:text-primary transition-colors"
+              className="text-text-main hover:text-primary transition-colors p-1"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
             >
               {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
             </button>
             {isAuthenticated ? (
-              <div className="hidden sm:flex items-center space-x-4">
+              <div className="hidden sm:flex items-center space-x-3 lg:space-x-4">
                 {user?.role === 'admin' && (
                   <Link
                     to="/admin"
@@ -118,7 +114,7 @@ export function Navbar() {
             ) : (
               <Link
                 to="/login"
-                className="text-text-main hover:text-primary transition-colors hidden sm:block"
+                className="text-text-main hover:text-primary transition-colors hidden sm:block p-1"
               >
                 <User className="h-5 w-5" />
               </Link>

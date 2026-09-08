@@ -34,8 +34,16 @@ export const OrderSuccess = () => {
                   <span className="font-medium">{order.orderStatus}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-text-muted">Payment:</span>
-                  <span className="font-medium text-amber-600">{order.paymentStatus}</span>
+                  <span className="text-text-muted">Payment Method:</span>
+                  <span className="font-bold text-emerald-800">
+                    {order.paymentMethod === 'COD' ? '💵 Cash on Delivery (COD)' : '💳 Online Payment'}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-text-muted">Payment Status:</span>
+                  <span className="font-medium text-amber-600">
+                    {order.paymentMethod === 'COD' ? 'Pay upon delivery' : order.paymentStatus}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-text-muted">Total:</span>

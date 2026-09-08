@@ -23,8 +23,11 @@
 body {
   font-family: var(--font-sans);
   color: var(--color-text-main);
-  background-color: var(--color-background);
+  background: linear-gradient(180deg, #ecfdf5 0%, #fafafa 30%, #fffbeb 65%, #fafafa 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
 }
+
 
 h1,
 h2,
@@ -131,3 +134,37 @@ h6 {
 .animate-shimmer {
   animation: shimmer 2.5s infinite;
 }
+
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 28s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@keyframes hanging-swing {
+  0%, 100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
+}
+
+.animate-hanging-swing {
+  transform-origin: top center;
+  animation: hanging-swing 4.5s ease-in-out infinite;
+}
+

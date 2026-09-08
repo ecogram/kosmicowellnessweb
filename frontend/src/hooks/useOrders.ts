@@ -16,6 +16,7 @@ interface Address {
 interface CreateOrderData {
   shippingAddress: Address;
   billingAddress?: Address;
+  paymentMethod?: 'ONLINE' | 'COD';
 }
 
 export const useCreateOrder = () => {

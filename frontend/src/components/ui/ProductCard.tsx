@@ -57,9 +57,9 @@ export function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="group relative bg-white border border-emerald-950/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-emerald-950/15 hover:border-emerald-600/40 transition-all duration-500 transform hover:-translate-y-2 flex flex-col h-full">
+    <div className="group relative bg-white border border-emerald-950/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-emerald-950/10 hover:border-emerald-600/40 transition-all duration-300 flex flex-col h-full">
       {/* Light sweep ambient glow effect on hover */}
-      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-700 bg-gradient-to-tr from-emerald-500/5 via-transparent to-amber-500/5 z-0" />
+      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-500 bg-gradient-to-tr from-emerald-500/5 via-transparent to-amber-500/5 z-0" />
 
       {/* Wishlist Button */}
       <button 
@@ -71,7 +71,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
       </button>
 
-      {/* Product Image Stage with 3D Pop & Hover Scale (Single Original Image Only) */}
+      {/* Product Image Stage with 3D Pop & Hover Scale */}
       <Link
         to={`/products/${product.slug}`}
         className="block relative aspect-square bg-gradient-to-b from-neutral-50/80 to-emerald-50/30 overflow-hidden p-6 z-10"
@@ -80,7 +80,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <img
           src={product.image}
           alt={product.name}
-          className="w-full h-full object-contain mix-blend-multiply transition-all duration-700 ease-out transform group-hover:scale-110 group-hover:-translate-y-2 group-hover:drop-shadow-2xl"
+          className="w-full h-full object-contain mix-blend-multiply transition-transform duration-500 ease-out group-hover:scale-105 group-hover:drop-shadow-xl"
         />
 
         {/* Floating Quick View hint */}

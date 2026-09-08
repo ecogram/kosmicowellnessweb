@@ -204,13 +204,20 @@ export const OrderDetails = () => {
                 </div>
                 
                 <div className="flex justify-between items-center bg-neutral-50 p-3 rounded-lg border border-border">
-                  <span className="text-sm font-medium">Payment Status</span>
-                  <span className={`text-sm font-bold uppercase tracking-wide ${order.paymentStatus === 'PAID' ? 'text-green-600' : 'text-error'}`}>
-                    {order.paymentStatus}
+                  <span className="text-sm font-medium">Payment Method</span>
+                  <span className="text-sm font-bold text-emerald-800">
+                    {order.paymentMethod === 'COD' ? '💵 Cash on Delivery (COD)' : '💳 Online Payment'}
                   </span>
                 </div>
 
-                {order.paymentStatus !== 'PAID' && order.orderStatus !== 'CANCELLED' && (
+                <div className="flex justify-between items-center bg-neutral-50 p-3 rounded-lg border border-border">
+                  <span className="text-sm font-medium">Payment Status</span>
+                  <span className={`text-sm font-bold uppercase tracking-wide ${order.paymentStatus === 'PAID' ? 'text-green-600' : 'text-amber-600'}`}>
+                    {order.paymentMethod === 'COD' ? 'Pay Upon Delivery' : order.paymentStatus}
+                  </span>
+                </div>
+
+                {order.paymentMethod !== 'COD' && order.paymentStatus !== 'PAID' && order.orderStatus !== 'CANCELLED' && (
                   <Button 
                     variant="solid" 
                     className="w-full"

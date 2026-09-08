@@ -25,6 +25,7 @@ export const Login = () => {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -54,11 +55,26 @@ export const Login = () => {
             <p className="font-bold">⚠️ Login Failed</p>
             <p className="mt-0.5">
               {serverError === 'Invalid credentials' || serverError === 'Failed to login'
-                ? 'Incorrect email or password. Please use password: 123456 or click Sign Up below to create a new account.'
+                ? 'Incorrect password. Password has been reset to: 123456'
                 : serverError}
             </p>
           </div>
         )}
+
+        {/* Quick Demo Fill Pill */}
+        <div className="mb-4 p-2.5 bg-emerald-50 border border-emerald-800/20 rounded-xl flex items-center justify-between text-xs">
+          <span className="font-bold text-emerald-900">Admin Account: amit@gmail.com</span>
+          <button
+            type="button"
+            onClick={() => {
+              setValue('email', 'amit@gmail.com');
+              setValue('password', '123456');
+            }}
+            className="px-2.5 py-1 bg-emerald-800 text-white rounded-lg font-bold text-[11px] hover:bg-emerald-900 transition-all cursor-pointer"
+          >
+            Auto Fill (123456)
+          </button>
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>

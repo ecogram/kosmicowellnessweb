@@ -79,7 +79,7 @@ export const About: React.FC = () => {
             <h3 className="font-serif font-bold text-lg text-neutral-900">Developed By</h3>
           </div>
           <p className="text-xs md:text-sm text-neutral-700 leading-relaxed">
-            This application was crafted and engineered by <strong className="text-emerald-900 font-bold">Shubham kr Tiwari</strong> and <strong className="text-emerald-900 font-bold">Abhay Kumar</strong> (Kosmico Engineering &amp; Development Team), combining modern mobile &amp; web architecture (Flutter &amp; AI Vision) with ancient Ayurvedic wellness principles.
+            This application was crafted and engineered by <strong className="text-emerald-900 font-bold">Shubham kr Tiwari</strong>, <strong className="text-emerald-900 font-bold">Abhay Kumar</strong> and <strong className="text-emerald-900 font-bold">Amit Kumar</strong> (Kosmico Engineering &amp; Development Team), combining modern mobile &amp; web architecture (Flutter &amp; AI Vision) with ancient Ayurvedic wellness principles.
           </p>
         </div>
 

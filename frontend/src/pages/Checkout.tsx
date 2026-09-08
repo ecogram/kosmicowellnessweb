@@ -12,6 +12,7 @@ import { useCreateOrder } from '../hooks/useOrders';
 import { useCreatePayment, useVerifyPayment } from '../hooks/usePayments';
 import { useAuthStore } from '../store/useAuthStore';
 import { formatINR } from '../utils/currency';
+import { ShoppingBag } from 'lucide-react';
 
 const addressSchema = z.object({
   fullName: z.string().min(2, 'Full name is required'),
@@ -35,6 +36,7 @@ export const Checkout = () => {
   const verifyPaymentMutation = useVerifyPayment();
   const { user } = useAuthStore();
   
+  const [paymentMethod, setPaymentMethod] = useState<'ONLINE' | 'COD'>('ONLINE');
   const [error, setError] = useState<string | null>(null);
   const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<any>(null);
@@ -125,16 +127,31 @@ export const Checkout = () => {
   }, [watchPostalCode, watchCountry, setValue, getValues]);
 
   if (isCartLoading && !createdOrder) {
-    return <div className="py-32 text-center">Loading checkout...</div>;
+    return (
+      <div className="min-h-[65vh] flex flex-col items-center justify-center py-20 px-4">
+        <div className="w-10 h-10 border-4 border-emerald-800 border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-neutral-600 font-medium text-sm">Preparing your checkout...</p>
+      </div>
+    );
   }
 
   if ((!cart || cart.items.length === 0) && !createdOrder) {
     return (
-      <div className="py-32 text-center">
-        <h2 className="text-3xl font-serif text-primary mb-4">Your cart is empty</h2>
-        <Link to="/shop">
-          <Button>Continue Shopping</Button>
-        </Link>
+      <div className="min-h-[65vh] flex flex-col items-center justify-center py-20 px-4">
+        <div className="max-w-md w-full bg-white border border-emerald-800/15 rounded-3xl p-8 text-center shadow-xl shadow-emerald-950/5">
+          <div className="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center text-emerald-800 mx-auto mb-5 border border-emerald-800/20">
+            <ShoppingBag className="w-10 h-10 text-emerald-800" />
+          </div>
+          <h2 className="font-serif text-2xl font-bold text-neutral-900 mb-2">Your Cart is Empty</h2>
+          <p className="text-neutral-600 text-xs leading-relaxed mb-6">
+            You don't have any items in your shopping cart to checkout. Add 100% natural Kosmico Monk Fruit Sweetener to get started!
+          </p>
+          <Link to="/shop">
+            <Button className="w-full py-3 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-sm rounded-xl shadow-md">
+              Browse Kosmiko Products (₹387)
+            </Button>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -218,6 +235,10 @@ export const Checkout = () => {
   const onSubmit = async (data: AddressFormValues) => {
     setError(null);
     if (createdOrder) {
+      if (paymentMethod === 'COD') {
+        navigate(`/order-success/${createdOrder.orderNumber}`);
+        return;
+      }
       // Retry payment if order is already created
       await processPayment(createdOrder, data);
       return;
@@ -226,10 +247,16 @@ export const Checkout = () => {
     try {
       const order = await createOrderMutation.mutateAsync({
         shippingAddress: data,
-        billingAddress: data // Simplifying for Phase 9
+        billingAddress: data,
+        paymentMethod: paymentMethod
       });
       setCreatedOrder(order);
-      await processPayment(order, data);
+      
+      if (paymentMethod === 'COD') {
+        navigate(`/order-success/${order.orderNumber}`);
+      } else {
+        await processPayment(order, data);
+      }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to place order. Please try again.');
     }
@@ -333,10 +360,65 @@ export const Checkout = () => {
             </div>
             
             <div className="bg-surface rounded-2xl border border-border p-8">
-              <h2 className="text-xl font-bold text-text-main mb-4">Payment Method</h2>
-              <p className="text-text-muted">You will be securely redirected to Razorpay to complete your payment.</p>
-              <div className="mt-4 p-4 bg-neutral-50 rounded-lg border border-border flex items-center justify-center">
-                <span className="font-medium text-text-main">Credit Card / UPI / NetBanking</span>
+              <h2 className="text-xl font-bold text-text-main mb-2">Select Payment Method</h2>
+              <p className="text-sm text-text-muted mb-6">Choose how you would like to pay for your order.</p>
+
+              <div className="space-y-4">
+                {/* Online Payment Option */}
+                <label
+                  onClick={() => setPaymentMethod('ONLINE')}
+                  className={`flex items-start gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all ${
+                    paymentMethod === 'ONLINE'
+                      ? 'border-primary bg-emerald-50/50 shadow-md'
+                      : 'border-border bg-background hover:border-emerald-800/30'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="ONLINE"
+                    checked={paymentMethod === 'ONLINE'}
+                    onChange={() => setPaymentMethod('ONLINE')}
+                    className="mt-1 accent-emerald-800 h-4 w-4"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-base text-neutral-900">💳 Online Payment (Razorpay)</span>
+                      <span className="text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-800 px-2 py-0.5 rounded-full">Instant</span>
+                    </div>
+                    <p className="text-xs text-neutral-600 mt-1">
+                      Pay instantly using Google Pay, PhonePe, Paytm, UPI, Credit/Debit Cards, or NetBanking.
+                    </p>
+                  </div>
+                </label>
+
+                {/* Cash on Delivery (COD) Option */}
+                <label
+                  onClick={() => setPaymentMethod('COD')}
+                  className={`flex items-start gap-4 p-5 rounded-2xl border-2 cursor-pointer transition-all ${
+                    paymentMethod === 'COD'
+                      ? 'border-primary bg-emerald-50/50 shadow-md'
+                      : 'border-border bg-background hover:border-emerald-800/30'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="COD"
+                    checked={paymentMethod === 'COD'}
+                    onChange={() => setPaymentMethod('COD')}
+                    className="mt-1 accent-emerald-800 h-4 w-4"
+                  />
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-base text-neutral-900">💵 Cash on Delivery (COD)</span>
+                      <span className="text-[10px] font-extrabold uppercase bg-emerald-800/10 text-emerald-800 px-2 py-0.5 rounded-full">Pay at Doorstep</span>
+                    </div>
+                    <p className="text-xs text-neutral-600 mt-1">
+                      Pay in cash when your order is delivered to your address. No advance payment required!
+                    </p>
+                  </div>
+                </label>
               </div>
             </div>
           </div>
@@ -403,7 +485,13 @@ export const Checkout = () => {
                 className="w-full py-4 text-lg rounded-full"
                 disabled={isSubmitting || createOrderMutation.isPending || isPaymentProcessing}
               >
-                {isPaymentProcessing ? 'Connecting to Payment...' : isSubmitting || createOrderMutation.isPending ? 'Placing Order...' : createdOrder ? 'Retry Payment' : 'Place Order'}
+                {isPaymentProcessing
+                  ? 'Connecting to Razorpay...'
+                  : isSubmitting || createOrderMutation.isPending
+                  ? 'Placing Order...'
+                  : createdOrder
+                  ? (paymentMethod === 'COD' ? 'Order Confirmed (COD)' : 'Retry Online Payment')
+                  : (paymentMethod === 'COD' ? 'Place Order (Cash on Delivery)' : 'Proceed to Pay Online 💳')}
               </Button>
             </div>
           </div>

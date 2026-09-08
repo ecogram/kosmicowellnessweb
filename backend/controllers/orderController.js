@@ -3,7 +3,7 @@ const { ApiResponse, ApiError } = require('../utils/apiResponse');
 const orderService = require('../services/orderService');
 
 const createOrder = asyncHandler(async (req, res) => {
-  const { shippingAddress, billingAddress } = req.body;
+  const { shippingAddress, billingAddress, paymentMethod } = req.body;
   const idempotencyKey = req.headers['idempotency-key'] || req.headers['x-idempotency-key'];
 
   if (!shippingAddress) {
@@ -13,7 +13,7 @@ const createOrder = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Idempotency-Key header is required');
   }
 
-  const order = await orderService.createOrder(req.user._id, shippingAddress, billingAddress, idempotencyKey);
+  const order = await orderService.createOrder(req.user._id, shippingAddress, billingAddress, idempotencyKey, paymentMethod);
   res.status(201).json(new ApiResponse(201, { order }, 'Order created successfully'));
 });
 

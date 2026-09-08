@@ -16,7 +16,7 @@ class OrderService {
     return `SM-${year}-${randomHex}`;
   }
 
-  async createOrder(userId, shippingAddress, billingAddress, idempotencyKey) {
+  async createOrder(userId, shippingAddress, billingAddress, idempotencyKey, paymentMethod = 'ONLINE') {
     // 0. Idempotency Check (Outside Transaction)
     // If a completed record exists for this user + key, just return the exact same order.
     const existingRecord = await IdempotencyRecord.findOne({ user: userId, idempotencyKey }).populate('order');
@@ -123,8 +123,9 @@ class OrderService {
           total,
           shippingAddress,
           billingAddress: billingAddress || shippingAddress,
-          orderStatus: 'PENDING',
-          paymentStatus: 'PENDING'
+          orderStatus: paymentMethod === 'COD' ? 'PROCESSING' : 'PENDING',
+          paymentStatus: 'PENDING',
+          paymentMethod: paymentMethod === 'COD' ? 'COD' : 'ONLINE'
         };
 
         const [createdOrder] = await orderRepository.model.create([orderData], { session });
@@ -145,7 +146,7 @@ class OrderService {
         throw new ApiError(409, 'This order is currently processing. Please wait and refresh.');
       }
       if (error.name === 'MongoServerError' && error.message.includes('replica set')) {
-        return await this.createOrderNonAtomic(userId, shippingAddress, billingAddress, idempotencyKey, cart, session);
+        return await this.createOrderNonAtomic(userId, shippingAddress, billingAddress, idempotencyKey, cart, session, paymentMethod);
       }
       throw error;
     } finally {
@@ -163,7 +164,7 @@ class OrderService {
   }
 
   // Fallback for local environments without replica set
-  async createOrderNonAtomic(userId, shippingAddress, billingAddress, idempotencyKey, cart, session) {
+  async createOrderNonAtomic(userId, shippingAddress, billingAddress, idempotencyKey, cart, session, paymentMethod = 'ONLINE') {
     let subtotal = 0;
     const orderItems = [];
 
@@ -237,7 +238,10 @@ class OrderService {
 
       const [createdOrder] = await orderRepository.model.create([{
         orderNumber, user: userId, items: orderItems, subtotal, shipping, tax, total,
-        shippingAddress, billingAddress: billingAddress || shippingAddress, orderStatus: 'PENDING', paymentStatus: 'PENDING'
+        shippingAddress, billingAddress: billingAddress || shippingAddress, 
+        orderStatus: paymentMethod === 'COD' ? 'PROCESSING' : 'PENDING', 
+        paymentStatus: 'PENDING',
+        paymentMethod: paymentMethod === 'COD' ? 'COD' : 'ONLINE'
       }]);
 
       await IdempotencyRecord.updateOne({ user: userId, idempotencyKey }, { order: createdOrder._id });

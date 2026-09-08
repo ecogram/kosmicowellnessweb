@@ -15,9 +15,19 @@ export function CartDrawer() {
   if (!isOpen) return null;
 
   const items = cart?.items || [];
-  const totalAmount = cart?.totalAmount || items.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
+  
+  const getItemPrice = (item: any) => {
+    if (typeof item.price === 'number' && !isNaN(item.price) && item.price > 0) return item.price;
+    if (typeof item.priceSnapshot === 'number' && !isNaN(item.priceSnapshot) && item.priceSnapshot > 0) return item.priceSnapshot;
+    if (item.product && typeof item.product === 'object' && typeof item.product.price === 'number' && !isNaN(item.product.price) && item.product.price > 0) {
+      return item.product.price;
+    }
+    return 387; // Fallback default product price
+  };
+
+  const totalAmount = items.reduce((acc: number, item: any) => acc + (getItemPrice(item) * (item.quantity || 1)), 0);
   const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - totalAmount);
-  const freeShippingProgress = Math.min(100, (totalAmount / FREE_SHIPPING_THRESHOLD) * 100);
+  const freeShippingProgress = FREE_SHIPPING_THRESHOLD > 0 ? Math.min(100, (totalAmount / FREE_SHIPPING_THRESHOLD) * 100) : 100;
 
   const handleQuantityChange = (productId: string, currentQty: number, change: number, variant?: string) => {
     const newQty = currentQty + change;
@@ -34,16 +44,15 @@ export function CartDrawer() {
   };
 
   return (
-    <div className="fixed inset-0 z-modal overflow-hidden">
+    <div className="fixed inset-0 z-modal flex items-center justify-center p-4 sm:p-6 overflow-hidden">
       {/* Backdrop with Backdrop Blur */}
       <div 
-        className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-500 animate-fadeIn" 
+        className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300 animate-fadeIn" 
         onClick={closeDrawer} 
       />
 
-      <div className="fixed inset-y-0 right-0 max-w-full flex pl-6 sm:pl-10">
-        {/* Animated Drawer Panel */}
-        <div className="w-screen max-w-md bg-surface shadow-2xl flex flex-col border-l border-border transform transition-all duration-300 ease-out animate-slideInRight">
+      {/* Centered Animated Modal Panel */}
+      <div className="relative w-full max-w-lg max-h-[85vh] bg-surface rounded-3xl shadow-2xl flex flex-col border border-emerald-900/20 overflow-hidden z-10 transform transition-all duration-300 animate-fade-in-up">
           
           {/* Header */}
           <div className="p-5 border-b border-border flex items-center justify-between bg-gradient-to-r from-surface to-surface-secondary">
@@ -181,7 +190,7 @@ export function CartDrawer() {
                           </button>
                         </div>
                         <span className="font-bold text-sm text-primary">
-                          ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                          ₹{(getItemPrice(item) * item.quantity).toLocaleString('en-IN')}
                         </span>
                       </div>
                     </div>
@@ -227,7 +236,6 @@ export function CartDrawer() {
           )}
 
         </div>
-      </div>
     </div>
   );
 }

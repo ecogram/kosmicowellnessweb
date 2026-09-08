@@ -1,5 +1,6 @@
 import { Hero } from '../features/home/Hero';
 import { TrustIndicators } from '../features/home/TrustIndicators';
+import { DishesAutoScrollSection } from '../features/home/DishesAutoScrollSection';
 import { SmartCareSuite } from '../features/home/SmartCareSuite';
 import { AppDownloadSection } from '../features/home/AppDownloadSection';
 import { HealthTargeting } from '../features/home/HealthTargeting';
@@ -20,7 +21,9 @@ export function Home() {
     <div className="flex flex-col w-full">
       <Hero />
       <TrustIndicators />
+      <DishesAutoScrollSection />
       <SmartCareSuite />
+
       <HealthTargeting />
       <ProductShowcase />
       <MithaiSection />
