@@ -5,11 +5,11 @@ const { protect } = require('../middleware/authMiddleware');
 const validate = require('../middleware/validate');
 const { z } = require('zod');
 
-// Apply stricter rate limit to auth routes
+// Apply rate limit to auth routes
 const rateLimit = require('express-rate-limit');
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // 20 requests per IP
+  max: process.env.NODE_ENV === 'production' ? 100 : 2000, // relaxed for development
   message: 'Too many auth requests from this IP, please try again after 15 minutes',
 });
 

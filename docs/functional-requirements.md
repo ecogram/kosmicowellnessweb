@@ -1,4 +1,4 @@
-# Kosmiko Wellness - Functional Requirements
+# Kosmico Wellness - Functional Requirements
 
 ## 1. Product System
 

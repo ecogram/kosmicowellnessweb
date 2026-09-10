@@ -22,7 +22,7 @@ export function Lifestyle() {
           </h2>
           <p className="text-lg text-secondary/90 mb-8 leading-relaxed">
             Whether you're hitting the gym, following a strict keto regimen, or simply trying to cut
-            back on empty calories, Kosmiko Wellness fits seamlessly into your active lifestyle.
+            back on empty calories, Kosmico Wellness fits seamlessly into your active lifestyle.
           </p>
           <p className="text-lg text-secondary/90 mb-10 leading-relaxed">
             It provides the satisfying taste you crave without derailing your nutrition goals. Zero

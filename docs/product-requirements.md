@@ -1,8 +1,8 @@
-# Kosmiko Wellness - Product Requirements Document (PRD)
+# Kosmico Wellness - Product Requirements Document (PRD)
 
 ## 1. Product Overview
 
-Kosmiko Wellness is a premium D2C e-commerce website selling Monk Fruit Sweetener. The platform provides a modern, trustworthy, health/wellness-oriented shopping experience.
+Kosmico Wellness is a premium D2C e-commerce website selling Monk Fruit Sweetener. The platform provides a modern, trustworthy, health/wellness-oriented shopping experience.
 
 ## 2. Target Audience
 

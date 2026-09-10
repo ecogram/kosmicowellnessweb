@@ -1,8 +1,8 @@
-# Kosmiko Wellness E-Commerce
+# Kosmico Wellness E-Commerce
 
 ## Project Overview
 
-A production-grade, highly scalable D2C MERN e-commerce application for Kosmiko Wellness (Monk Fruit Sweetener). The platform is architected to eventually support 100,000+ concurrent users with zero single-server dependencies.
+A production-grade, highly scalable D2C MERN e-commerce application for Kosmico Wellness (Monk Fruit Sweetener). The platform is architected to eventually support 100,000+ concurrent users with zero single-server dependencies.
 
 ## Technology Stack
 

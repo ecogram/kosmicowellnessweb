@@ -9,7 +9,7 @@ export function HowItWorks() {
             <div className="aspect-[4/5] rounded-t-full rounded-b-3xl overflow-hidden relative shadow-lg">
               <img
                 src="/assets/products/lifestyle-tea.jpg"
-                alt="Kosmiko Wellness used in morning tea"
+                alt="Kosmico Wellness used in morning tea"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -23,7 +23,7 @@ export function HowItWorks() {
               A 1:1 replacement for sugar.
             </h2>
             <p className="text-lg text-text-muted mb-10 leading-relaxed">
-              No complicated math required. Use Kosmiko Wellness exactly as you would use regular sugar in
+              No complicated math required. Use Kosmico Wellness exactly as you would use regular sugar in
               all your daily routines.
             </p>
 

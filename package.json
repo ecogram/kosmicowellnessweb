@@ -1,7 +1,7 @@
 {
   "name": "sweet-monk-store",
   "version": "1.0.0",
-  "description": "Kosmiko Wellness D2C E-Commerce",
+  "description": "Kosmico Wellness D2C E-Commerce",
   "workspaces": [
     "frontend",
     "backend",

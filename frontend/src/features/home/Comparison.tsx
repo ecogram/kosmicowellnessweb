@@ -10,7 +10,7 @@ export function Comparison() {
             The Sweet Choice is Clear
           </h2>
           <p className="text-text-muted text-lg">
-            See how Kosmiko Wellness stacks up against traditional sugar and artificial alternatives.
+            See how Kosmico Wellness stacks up against traditional sugar and artificial alternatives.
           </p>
         </div>
 
@@ -22,7 +22,7 @@ export function Comparison() {
                   Feature
                 </th>
                 <th className="py-4 px-6 border-b-2 border-accent bg-secondary/30 font-bold text-primary-dark text-center text-xl rounded-t-xl">
-                  Kosmiko Wellness
+                  Kosmico Wellness
                 </th>
                 <th className="py-4 px-6 border-b-2 border-border font-bold text-text-muted text-center">
                   Regular Sugar

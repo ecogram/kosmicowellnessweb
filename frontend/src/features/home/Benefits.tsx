@@ -38,7 +38,7 @@ export function Benefits() {
       <Container>
         <div className="text-center max-w-2xl mx-auto mb-14">
           <span className="text-xs font-bold text-primary uppercase tracking-widest bg-primary/10 px-4 py-1.5 rounded-full inline-block mb-3">
-            Why Choose Kosmiko Wellness
+            Why Choose Kosmico Wellness
           </span>
           <h2 className="font-serif text-3xl md:text-4xl font-bold text-text-main">
             Pure Natural Sweetness, Zero Compromise

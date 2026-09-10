@@ -9,19 +9,19 @@ const faqs = [
       'Monk fruit, also known as Luo Han Guo, is a small green melon native to Southeast Asia. It has been used for centuries in traditional Eastern medicine and gets its sweetness from natural compounds called mogrosides, which are up to 250 times sweeter than regular sugar but contain zero calories.',
   },
   {
-    question: 'Does Kosmiko Wellness have an aftertaste?',
+    question: 'Does Kosmico Wellness have an aftertaste?',
     answer:
       'Unlike many artificial sweeteners or stevia, our liquid monk fruit drops are specifically crafted to mimic the clean, crisp taste of cane sugar without any bitter or chemical aftertaste or sugar alcohols.',
   },
   {
-    question: 'Can I bake with Kosmiko Wellness?',
+    question: 'Can I bake with Kosmico Wellness?',
     answer:
-      'Yes! Kosmiko Wellness drops can be used in your favorite beverages, recipes, and liquid preparations to add clean sweetness.',
+      'Yes! Kosmico Wellness drops can be used in your favorite beverages, recipes, and liquid preparations to add clean sweetness.',
   },
   {
     question: 'Is it safe for diabetics?',
     answer:
-      'Kosmiko Wellness has zero calories and zero net carbs, meaning it does not spike blood glucose or insulin levels, making it a popular choice for individuals managing diabetes or following a ketogenic diet.',
+      'Kosmico Wellness has zero calories and zero net carbs, meaning it does not spike blood glucose or insulin levels, making it a popular choice for individuals managing diabetes or following a ketogenic diet.',
   },
   {
     question: 'Does Sweet Monk contain sugar alcohols or Erythritol?',
@@ -42,7 +42,7 @@ export function Faq() {
               Got Questions?
             </h2>
             <p className="text-text-muted mb-6">
-              Learn more about Kosmiko Wellness, our ingredients, and how to use it in your daily life.
+              Learn more about Kosmico Wellness, our ingredients, and how to use it in your daily life.
             </p>
           </div>
 

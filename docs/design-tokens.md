@@ -1,4 +1,4 @@
-# Kosmiko Wellness - Design Tokens
+# Kosmico Wellness - Design Tokens
 
 ## 1. Colors
 

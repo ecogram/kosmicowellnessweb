@@ -148,7 +148,7 @@ export const Checkout = () => {
           </p>
           <Link to="/shop">
             <Button className="w-full py-3 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-sm rounded-xl shadow-md">
-              Browse Kosmiko Products (₹387)
+              Browse Kosmico Products (₹387)
             </Button>
           </Link>
         </div>
@@ -187,7 +187,7 @@ export const Checkout = () => {
           key: paymentData.keyId,
           amount: paymentData.amount,
           currency: paymentData.currency,
-          name: 'Kosmiko Wellness',
+          name: 'Kosmico Wellness',
           description: `Order ${order.orderNumber}`,
           order_id: paymentData.providerOrderId,
           handler: function (response: any) {

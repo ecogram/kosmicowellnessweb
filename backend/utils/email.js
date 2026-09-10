@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 
 const sendOrderConfirmationEmail = async (order, user) => {
   const mailOptions = {
-    from: '"Kosmiko Wellness" <noreply@kosmikowellness.com>',
+    from: '"Kosmico Wellness" <noreply@kosmicowellness.com>',
     to: user.email,
     subject: `Order Confirmation - ${order.orderNumber}`,
     html: `

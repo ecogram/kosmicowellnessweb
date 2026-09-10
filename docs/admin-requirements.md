@@ -1,4 +1,4 @@
-# Kosmiko Wellness - Admin Requirements
+# Kosmico Wellness - Admin Requirements
 
 ## 1. Admin System Overview
 

@@ -1,21 +1,21 @@
-# Kosmiko Wellness - Information Architecture
+# Kosmico Wellness - Information Architecture
 
-## 1. Public Website Structure
+## 1. Sitemap
 
-- `/` - Home Page
-- `/shop` - Product Listing Page (PLP)
-- `/product/:slug` - Product Detail Page (PDP)
-- `/about` - About the Brand
-- `/ingredients` - Detailed Ingredient Breakdown
-- `/benefits` - Health Benefits of Monk Fruit
-- `/how-it-works` - Usage Instructions
-- `/comparison` - Kosmiko Wellness vs. Sugar vs. Other Substitutes
+### Public Pages
+- `/` - Home (Hero, Benefits, Social Proof, Interactive Demo, Buy Now)
+- `/shop` - Product Catalog (Filter by category, dietary tags, price)
+- `/product/:slug` - Product Detail Page (Images, description, nutrition, reviews, quantity selector, add to cart, sticky buy bar on mobile)
+- `/cart` - Full Cart Page (and slide-over cart drawer from any page)
+- `/checkout` - Multi-step Checkout (Email/Phone -> Shipping -> Payment)
+- `/about` - Brand Story, Mission, monk fruit sourcing & science
+- `/faq` - Frequently Asked Questions (searchable, categorized)
+- `/comparison` - Kosmico Wellness vs. Sugar vs. Other Substitutes
 - `/reviews` - Global Customer Reviews
 - `/faq` - Frequently Asked Questions
 - `/contact` - Customer Support / Contact Form
 - `/terms` - Terms of Service
 - `/privacy` - Privacy Policy
-- `/refunds` - Refund & Return Policy
 
 ## 2. Customer Portal (Requires Auth)
 

@@ -58,7 +58,7 @@ export function Ingredients() {
             <div className="bg-background rounded-3xl p-8 w-full max-w-lg aspect-square flex items-center justify-center shadow-inner">
               <img
                 src="/assets/products/product-front-back.jpg"
-                alt="Kosmiko Wellness Ingredients and Nutrition Label"
+                alt="Kosmico Wellness Ingredients and Nutrition Label"
                 className="w-full h-auto object-contain mix-blend-multiply"
               />
             </div>

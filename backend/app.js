@@ -9,7 +9,7 @@ const app = express();
 const rateLimit = require('express-rate-limit');
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: process.env.NODE_ENV === 'production' ? 200 : 5000,
   message: 'Too many requests from this IP, please try again later.',
 });
 
@@ -54,7 +54,7 @@ app.get('/api/v1/health', (req, res) => {
   const { redis } = require('./config/redis');
   res.status(200).json({
     success: true,
-    message: 'Kosmiko Wellness API is healthy',
+    message: 'Kosmico Wellness API is healthy',
     environment: process.env.NODE_ENV || 'development',
     services: {
       redis: redis.status === 'ready' ? 'healthy' : 'unavailable'

@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Container } from '../ui/Container';
 import { useCategories } from '../../hooks/useProducts';
-import { MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Smartphone } from 'lucide-react';
+import { PLAY_STORE_URL } from '../../utils/constants';
 
 export function Footer() {
   const { data: categories } = useCategories();
@@ -12,12 +13,25 @@ export function Footer() {
           
           {/* Brand Info */}
           <div className="col-span-1 md:col-span-1 space-y-4">
-            <h3 className="font-serif text-2xl font-bold text-amber-400">Kosmiko Wellness</h3>
+            <h3 className="font-serif text-2xl font-bold text-amber-400">Kosmico Wellness</h3>
             <p className="text-emerald-100/80 text-xs leading-relaxed">
               KOSMICO WELLNESS PRIVATE LIMITED — India's leading manufacturer of 100% natural zero-calorie monk fruit sweeteners and Ayurvedic healthcare products.
             </p>
-            <div className="pt-2 text-xs font-semibold text-emerald-200">
+            <div className="pt-1 text-xs font-semibold text-emerald-200">
               Ancient Wisdom, Modern Living
+            </div>
+            
+            {/* Direct Play Store Link in Footer */}
+            <div className="pt-2">
+              <a
+                href={PLAY_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2.5 px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-emerald-700/50 hover:border-amber-400/60 rounded-xl text-xs font-bold text-amber-300 transition-all shadow-xs"
+              >
+                <Smartphone className="w-4 h-4 text-amber-400" />
+                <span>Get App on Google Play 📱</span>
+              </a>
             </div>
           </div>
 

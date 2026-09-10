@@ -53,7 +53,7 @@ export function Navbar() {
             </button>
             <Link to="/" className="flex items-center gap-2 font-serif text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-primary min-w-0">
               <img src="/logo.png" alt="Kosmico" className="h-7 sm:h-8 w-auto object-contain rounded-md shrink-0" />
-              <span className="truncate sm:whitespace-nowrap">Kosmiko Wellness</span>
+              <span className="truncate sm:whitespace-nowrap">Kosmico Wellness</span>
             </Link>
           </div>
 

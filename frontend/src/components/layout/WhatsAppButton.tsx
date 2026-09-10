@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 
 const WHATSAPP_NUMBER = '919876543210'; // +91 98765 43210 — change this
 const WHATSAPP_MESSAGE = encodeURIComponent(
-  'Hello! I came across Kosmiko Wellness and I\'m interested in learning more about your monk fruit sweetener. Can you help me? 😊'
+  'Hello! I came across Kosmico Wellness and I\'m interested in learning more about your monk fruit sweetener. Can you help me? 😊'
 );
 
 export function WhatsAppButton() {
@@ -31,7 +31,7 @@ export function WhatsAppButton() {
               K
             </div>
             <div>
-              <p className="text-xs font-bold text-neutral-800 leading-tight">Kosmiko Support</p>
+              <p className="text-xs font-bold text-neutral-800 leading-tight">Kosmico Support</p>
               <div className="flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full inline-block"></span>
                 <p className="text-[10px] text-green-600 font-medium">Online Now</p>

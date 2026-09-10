@@ -1,4 +1,4 @@
-# Kosmiko Wellness - Edge Cases & Mitigation Strategies
+# Kosmico Wellness - Edge Cases & Mitigation Strategies
 
 ## 1. Inventory & Cart
 

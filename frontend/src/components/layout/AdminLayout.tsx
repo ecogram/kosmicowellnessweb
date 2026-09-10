@@ -33,7 +33,7 @@ export function AdminLayout() {
       <aside className="w-full md:w-64 bg-surface border-r border-border flex-shrink-0 flex flex-col">
         <div className="p-6 border-b border-border flex items-center justify-between">
           <Link to="/" className="font-serif text-2xl font-bold tracking-tight text-primary">
-            Kosmiko Wellness <span className="text-sm font-sans text-text-muted block">Admin</span>
+            Kosmico Wellness <span className="text-sm font-sans text-text-muted block">Admin</span>
           </Link>
         </div>
         

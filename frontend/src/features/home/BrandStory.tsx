@@ -10,7 +10,7 @@ export function BrandStory() {
             <div className="aspect-[4/3] md:aspect-square lg:aspect-[4/3] rounded-3xl overflow-hidden relative z-10">
               <img
                 src="/assets/products/lifestyle-couple.jpg"
-                alt="Couple enjoying healthy lifestyle with Kosmiko Wellness"
+                alt="Couple enjoying healthy lifestyle with Kosmico Wellness"
                 className="w-full h-full object-cover"
               />
             </div>
@@ -22,7 +22,7 @@ export function BrandStory() {
               A sweeter life, <br /> shared with those you love.
             </h2>
             <p className="text-secondary/80 text-lg mb-6 leading-relaxed">
-              We started Kosmiko Wellness because we believed you shouldn't have to choose between
+              We started Kosmico Wellness because we believed you shouldn't have to choose between
               enjoying your favorite sweet treats and living a healthy lifestyle.
             </p>
             <p className="text-secondary/80 text-lg mb-8 leading-relaxed">

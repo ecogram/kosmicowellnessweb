@@ -1,4 +1,4 @@
-# Kosmiko Wellness - User Flows
+# Kosmico Wellness - User Flows
 
 ## 1. Primary Customer Journey (Shopping Flow)
 

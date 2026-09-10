@@ -1,4 +1,4 @@
-# Kosmiko Wellness - UI/UX System
+# Kosmico Wellness - UI/UX System
 
 ## 1. Brand Direction
 
@@ -65,7 +65,7 @@
 4. Trust Indicators (Logos of certifications: Non-GMO, Keto, Vegan)
 5. Product Showcase (Featured products)
 6. Benefits (Icon + Text grid)
-7. Comparison (Kosmiko Wellness vs Sugar table)
+7. Comparison (Kosmico Wellness vs Sugar table)
 8. Reviews (Carousel of testimonials)
 9. FAQ (Accordion)
 10. Footer

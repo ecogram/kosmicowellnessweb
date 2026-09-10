@@ -1,9 +1,10 @@
 import React from 'react';
 import { Container } from '../../components/ui/Container';
 import { Download, Smartphone, Sparkles, Activity, ShieldCheck, QrCode } from 'lucide-react';
+import { PLAY_STORE_URL } from '../../utils/constants';
 
 export const AppDownloadSection: React.FC = () => {
-  const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.kosmicowellness.app';
+  const playStoreUrl = PLAY_STORE_URL;
 
   return (
     <section className="py-16 md:py-24 bg-gradient-to-b from-emerald-900 via-emerald-800 to-emerald-950 text-white relative overflow-hidden">

@@ -127,7 +127,7 @@ export function Hero() {
                   {/* Bottom App Product Tag inside Screen */}
                   <div className="w-full bg-stone-50 border border-stone-200/80 rounded-2xl p-2.5 shadow-sm flex items-center justify-between z-10">
                     <div className="text-left">
-                      <div className="font-serif font-bold text-neutral-900 text-xs leading-snug">Kosmiko Sweet Monk</div>
+                      <div className="font-serif font-bold text-neutral-900 text-xs leading-snug">Kosmico Sweet Monk</div>
                       <div className="text-[10px] text-emerald-800 font-extrabold mt-0.5">₹387 • 100% Zero Calorie</div>
                     </div>
                     <span className="bg-emerald-800 text-white text-[10px] font-bold px-3 py-1.5 rounded-xl shadow-xs flex items-center gap-1">

@@ -15,7 +15,7 @@ export function PrivacyPolicy() {
 
         <section>
           <p className="mb-4">
-            Welcome to Kosmiko Wellness Pvt. Ltd. ("we," "our," "us"). This Privacy Policy
+            Welcome to Kosmico Wellness Pvt. Ltd. ("we," "our," "us"). This Privacy Policy
             explains how we collect, use, disclose, and safeguard your
             information when you use our mobile application and website
             (collectively, the "Service").

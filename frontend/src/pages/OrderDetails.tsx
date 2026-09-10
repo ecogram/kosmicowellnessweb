@@ -57,7 +57,7 @@ export const OrderDetails = () => {
           key: paymentData.keyId,
           amount: paymentData.amount,
           currency: paymentData.currency,
-          name: 'Kosmiko Wellness',
+          name: 'Kosmico Wellness',
           description: `Order ${order.orderNumber}`,
           order_id: paymentData.providerOrderId,
           handler: function (response: any) {

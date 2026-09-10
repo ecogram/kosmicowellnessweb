@@ -1,6 +1,8 @@
 import React from 'react';
 import { X, Smartphone, Download, ShieldCheck, Zap, Star, Sparkles } from 'lucide-react';
 
+import { PLAY_STORE_URL } from '../../utils/constants';
+
 interface PlayStoreModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -16,7 +18,7 @@ export const PlayStoreModal: React.FC<PlayStoreModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const playStoreUrl = 'https://play.google.com/store/apps/details?id=com.kosmicowellness.app';
+  const playStoreUrl = PLAY_STORE_URL;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
@@ -62,7 +64,7 @@ export const PlayStoreModal: React.FC<PlayStoreModalProps> = ({
                   <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
                   4.9 Rating
                 </span>
-                <span className="text-[10px] text-neutral-500 font-bold">10K+ Downloads</span>
+                <span className="text-[10px] text-neutral-500 font-bold">Downloads</span>
               </div>
             </div>
           </div>
