@@ -2,26 +2,16 @@ import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 
 const getBaseURL = (): string => {
-  // 1. Check environment variable
-  const envUrl = import.meta.env.VITE_API_URL;
-  if (envUrl && envUrl.trim()) {
-    // If page is loaded over HTTPS, prevent mixed content block on same domain
-    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && envUrl.startsWith('http://kosmicowellness.com')) {
-      return envUrl.replace('http://', 'https://');
-    }
-    return envUrl.trim();
-  }
-
-  // 2. Production domain auto-detection
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
+    // When running in browser on live production domain (kosmicowellness.com, vercel.app)
     if (host !== 'localhost' && host !== '127.0.0.1') {
-      return `${window.location.origin}/api`;
+      return '/api';
     }
   }
 
-  // 3. Development local fallback
-  return 'http://localhost:5000/api';
+  // Local development / explicit environment variable
+  return import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 };
 
 export const api = axios.create({

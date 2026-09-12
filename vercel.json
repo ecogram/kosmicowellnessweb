@@ -4,6 +4,10 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/api/:match*",
+      "destination": "http://3.7.180.215:5000/api/:match*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
