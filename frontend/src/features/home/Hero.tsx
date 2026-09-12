@@ -42,7 +42,7 @@ export function Hero() {
             <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-10">
               <Link to="/shop" className="w-full sm:w-auto">
                 <button className="w-full sm:w-auto px-8 py-4 bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold text-sm rounded-2xl shadow-xl shadow-emerald-900/20 hover:shadow-2xl hover:shadow-emerald-900/30 transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center gap-2.5 active:scale-95 cursor-pointer">
-                  <span>Shop Monk Fruit</span>
+                  <span>Shop Sweet Monk</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </Link>
