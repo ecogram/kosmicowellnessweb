@@ -19,6 +19,10 @@ import {
 import { Lifestyle } from '../features/home/Lifestyle';
 import { FinalCta } from '../features/home/FinalCta';
 
+// Direct Bundled Asset Imports (100% reliable across all browsers & devices)
+import labReportImage from '../assets/reports/lab-test-report.jpg';
+import nutritionFactsImage from '../assets/reports/nutrition-facts-label.jpg';
+
 export function HowItWorksPage() {
   // Modal state for HD Image inspection
   const [selectedImage, setSelectedImage] = useState<{
@@ -65,58 +69,59 @@ export function HowItWorksPage() {
         </Container>
       </section>
 
-      {/* 2. Official Lab Reports & Nutrition Facts (Direct HD View) */}
+      {/* 2. Official Lab Reports & Nutrition Facts (Direct HD Full Certificate Display) */}
       <section className="py-12 md:py-16 bg-white border-y border-emerald-900/10">
         <Container className="max-w-6xl mx-auto px-4">
           
-          <div className="text-center max-w-2xl mx-auto mb-10">
+          <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="text-[#0a7a40] font-extrabold tracking-widest uppercase text-xs mb-2 block">
-              Quality &amp; Lab Certifications
+              Official Quality Verification
             </span>
             <h2 className="text-3xl sm:text-4xl font-serif font-bold text-neutral-900 mb-3">
               Official Lab Test Report &amp; Nutrition Facts
             </h2>
             <p className="text-neutral-600 text-sm leading-relaxed">
-              Certified by government-approved food testing laboratories. Click on any certificate to view in full HD resolution.
+              Certified by Qualiset Food Laboratories LLP. Click any certificate to enlarge and inspect in full HD.
             </p>
           </div>
 
           {/* Two Images Display Side-by-Side */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 mb-14">
             
-            {/* Image 1: Official Lab Test Report */}
-            <div className="bg-[#fafcfa] rounded-3xl border border-neutral-200 p-5 sm:p-7 shadow-md flex flex-col items-center">
-              <div className="w-full flex items-center justify-between gap-3 mb-4 pb-3 border-b border-neutral-200">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-100 text-[#0a7a40] flex items-center justify-center font-bold">
+            {/* Certificate 1: Official Lab Test Report */}
+            <div className="bg-[#f9fbf9] rounded-3xl border border-neutral-200 p-5 sm:p-7 shadow-lg flex flex-col items-center">
+              <div className="w-full flex items-center justify-between gap-3 mb-5 pb-4 border-b border-neutral-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-[#0a7a40] flex items-center justify-center font-bold">
                     <Beaker className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-serif font-bold text-base text-neutral-900">Lab Test Report (COA)</h3>
-                    <p className="text-[11px] text-neutral-500">Qualiset Food Laboratories LLP • QFL/160726/05</p>
+                    <h3 className="font-serif font-bold text-lg text-neutral-900">Lab Test Report (COA)</h3>
+                    <p className="text-xs text-neutral-500">Qualiset Food Laboratories LLP • Report No: QFL/160726/05</p>
                   </div>
                 </div>
-                <span className="bg-emerald-100 text-[#0a7a40] text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full">
-                  Verified 0 Sugar
+                <span className="bg-emerald-100 text-[#0a7a40] text-xs font-extrabold uppercase px-3 py-1 rounded-full">
+                  100% Passed
                 </span>
               </div>
 
-              {/* Direct Full-Length HD Image */}
+              {/* Direct Full-Length HD Certificate Image */}
               <div 
                 onClick={() => setSelectedImage({
                   title: 'Official Lab Test Report (Certificate of Analysis)',
                   subtitle: 'Qualiset Food Laboratories LLP — Report No: QFL/160726/05',
-                  imageSrc: '/assets/reports/lab-test-report.jpg'
+                  imageSrc: labReportImage
                 })}
-                className="w-full bg-white rounded-2xl border border-neutral-200/90 p-3 shadow-xs cursor-pointer group hover:border-[#0a7a40] transition-all relative overflow-hidden"
+                className="w-full bg-white rounded-2xl border border-neutral-300 p-2 sm:p-4 shadow-md cursor-pointer group hover:border-[#0a7a40] hover:shadow-xl transition-all relative overflow-hidden flex items-center justify-center"
               >
                 <img 
-                  src="/assets/reports/lab-test-report.jpg" 
-                  alt="Official Lab Test Report" 
-                  className="w-full h-auto max-h-[580px] object-contain mx-auto rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
+                  src={labReportImage} 
+                  alt="Official Lab Test Report - Qualiset Food Laboratories" 
+                  className="w-full h-auto object-contain max-h-[650px] mx-auto rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
+                  loading="eager"
                 />
                 <div className="absolute inset-0 bg-emerald-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-xs">
-                  <span className="bg-white/95 text-neutral-900 font-bold text-xs px-4 py-2 rounded-xl shadow-lg flex items-center gap-1.5">
+                  <span className="bg-white text-neutral-900 font-bold text-xs px-5 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
                     <ZoomIn className="w-4 h-4 text-[#0a7a40]" />
                     Click to Enlarge HD View
                   </span>
@@ -124,39 +129,40 @@ export function HowItWorksPage() {
               </div>
             </div>
 
-            {/* Image 2: Official Nutrition Facts Label */}
-            <div className="bg-[#fafcfa] rounded-3xl border border-neutral-200 p-5 sm:p-7 shadow-md flex flex-col items-center">
-              <div className="w-full flex items-center justify-between gap-3 mb-4 pb-3 border-b border-neutral-200">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+            {/* Certificate 2: Official Nutrition Facts Label */}
+            <div className="bg-[#f9fbf9] rounded-3xl border border-neutral-200 p-5 sm:p-7 shadow-lg flex flex-col items-center">
+              <div className="w-full flex items-center justify-between gap-3 mb-5 pb-4 border-b border-neutral-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
                     <FileText className="w-5 h-5" />
                   </div>
                   <div>
-                    <h3 className="font-serif font-bold text-base text-neutral-900">Nutrition Facts Label</h3>
-                    <p className="text-[11px] text-neutral-500">Standard Dietary Declaration • 100g Serving</p>
+                    <h3 className="font-serif font-bold text-lg text-neutral-900">Nutrition Facts Label</h3>
+                    <p className="text-xs text-neutral-500">Standard Dietary Declaration • 100g Serving</p>
                   </div>
                 </div>
-                <span className="bg-amber-100 text-amber-900 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full">
+                <span className="bg-amber-100 text-amber-900 text-xs font-extrabold uppercase px-3 py-1 rounded-full">
                   0.00 Calories
                 </span>
               </div>
 
-              {/* Direct Full-Length HD Image */}
+              {/* Direct Full-Length HD Certificate Image */}
               <div 
                 onClick={() => setSelectedImage({
                   title: 'Official Nutrition Facts Label',
                   subtitle: 'Standard Certified Nutritional Breakdown per 100g Serving',
-                  imageSrc: '/assets/reports/nutrition-facts-label.jpg'
+                  imageSrc: nutritionFactsImage
                 })}
-                className="w-full bg-white rounded-2xl border border-neutral-200/90 p-3 shadow-xs cursor-pointer group hover:border-[#0a7a40] transition-all relative overflow-hidden"
+                className="w-full bg-white rounded-2xl border border-neutral-300 p-2 sm:p-4 shadow-md cursor-pointer group hover:border-[#0a7a40] hover:shadow-xl transition-all relative overflow-hidden flex items-center justify-center"
               >
                 <img 
-                  src="/assets/reports/nutrition-facts-label.jpg" 
+                  src={nutritionFactsImage} 
                   alt="Official Nutrition Facts Label" 
-                  className="w-full h-auto max-h-[580px] object-contain mx-auto rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
+                  className="w-full h-auto object-contain max-h-[650px] mx-auto rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
+                  loading="eager"
                 />
                 <div className="absolute inset-0 bg-emerald-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-xs">
-                  <span className="bg-white/95 text-neutral-900 font-bold text-xs px-4 py-2 rounded-xl shadow-lg flex items-center gap-1.5">
+                  <span className="bg-white text-neutral-900 font-bold text-xs px-5 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
                     <ZoomIn className="w-4 h-4 text-[#0a7a40]" />
                     Click to Enlarge HD View
                   </span>
