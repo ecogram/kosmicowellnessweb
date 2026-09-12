@@ -32,6 +32,7 @@ export function Navbar() {
   };
 
   const navLinks = [
+    { name: 'Home', path: '/' },
     { name: 'Shop', path: '/shop' },
     { name: 'Care Hub 🩺', path: '/care' },
     { name: 'About', path: '/about' },

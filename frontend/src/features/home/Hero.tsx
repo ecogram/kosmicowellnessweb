@@ -22,7 +22,7 @@ export function Hero() {
             {/* Top Pill Tag */}
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-800/10 border border-emerald-800/20 text-emerald-900 text-xs font-bold uppercase tracking-wider mb-6 shadow-xs backdrop-blur-md">
               <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500 animate-pulse" />
-              <span>India's #1 Pure Monk Fruit Sweetener &amp; Care App</span>
+              <span>India's #1 Sweet Monk Sweetener &amp; Care App</span>
             </div>
 
             {/* Main Headline */}
@@ -35,7 +35,7 @@ export function Hero() {
 
             {/* Subtitle */}
             <p className="text-base sm:text-lg text-neutral-600 mb-8 max-w-xl leading-relaxed">
-              100% natural zero-calorie liquid monk fruit sweetener paired with clinical AI biometrics. Replace sugar cup-for-cup with zero blood glucose spikes.
+              100% natural zero-calorie Sweet Monk liquid sweetener paired with clinical AI biometrics. Replace sugar cup-for-cup with zero blood glucose spikes.
             </p>
 
             {/* CTA Action Buttons */}
@@ -178,7 +178,7 @@ export function Hero() {
                 <Leaf className="w-4 h-4 text-amber-300" />
               </div>
               <div className="text-left">
-                <div className="text-xs font-black text-neutral-900 leading-none">100% Monk Fruit</div>
+                <div className="text-xs font-black text-neutral-900 leading-none">100% Sweet Monk</div>
                 <div className="text-[10px] text-neutral-500 font-bold mt-0.5">Zero Calories • Zero Aftertaste</div>
               </div>
             </div>
