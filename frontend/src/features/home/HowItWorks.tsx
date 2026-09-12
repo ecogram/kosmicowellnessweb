@@ -57,6 +57,22 @@ export function HowItWorks() {
                 </p>
               </div>
             </div>
+
+            {/* Lab Certified Trust Banner */}
+            <div className="mt-8 p-4 bg-emerald-50/80 border border-emerald-800/20 rounded-2xl flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="w-10 h-10 rounded-xl bg-emerald-800 text-white flex items-center justify-center font-bold text-lg">
+                  ✓
+                </span>
+                <div>
+                  <h5 className="font-bold text-neutral-900 text-sm">Lab Tested 0.0 Calories &amp; 0g Sugar</h5>
+                  <p className="text-xs text-neutral-600">Qualiset Food Laboratories Report: QFL/160726/05</p>
+                </div>
+              </div>
+              <a href="/how-it-works" className="text-xs font-bold text-emerald-800 hover:text-emerald-950 underline shrink-0">
+                View Lab Report &rarr;
+              </a>
+            </div>
           </div>
         </div>
       </Container>
