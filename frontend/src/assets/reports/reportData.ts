@@ -1,4 +1,4 @@
-// Embedded HD Certificate Previews and Direct PDF URLs (Updated: 2026-09-12T11:00:24.705Z)
+// Embedded HD Certificate Previews and Direct PDF URLs (Updated: 2026-09-12T11:15:15.598Z)
 export const COA_DROPS_PDF_URL = "/COA_Drops.pdf";
 export const LABEL_DROPS_PDF_URL = "/Label_Drops.pdf";
 
