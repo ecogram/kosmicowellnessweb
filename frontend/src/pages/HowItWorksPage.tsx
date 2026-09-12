@@ -19,8 +19,10 @@ import {
 import { Lifestyle } from '../features/home/Lifestyle';
 import { FinalCta } from '../features/home/FinalCta';
 import { 
-  NUTRITION_FACTS_HD_IMAGE,
-  LABEL_DROPS_PDF_URL
+  COA_DROPS_PDF_URL,
+  LABEL_DROPS_PDF_URL,
+  LAB_TEST_REPORT_HD_IMAGE,
+  NUTRITION_FACTS_HD_IMAGE
 } from '../assets/reports/reportData';
 
 export function HowItWorksPage() {
@@ -45,7 +47,7 @@ export function HowItWorksPage() {
         <Container className="relative z-10 text-center max-w-4xl mx-auto px-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-800/10 border border-emerald-800/20 text-[#0a7a40] text-xs font-bold uppercase tracking-wider mb-5 shadow-xs">
             <Sparkles className="w-4 h-4 text-emerald-700" />
-            <span>100% Pure Monk Fruit • Certified Nutrition</span>
+            <span>100% Pure Monk Fruit • Certified &amp; Lab-Tested</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-extrabold text-neutral-900 leading-[1.15] mb-5">
@@ -73,94 +75,175 @@ export function HowItWorksPage() {
         </Container>
       </section>
 
-      {/* 2. Official Certified Nutrition Facts Section */}
+      {/* 2. Official Certified Reports & Declarations Section */}
       <section className="py-12 md:py-16 bg-white border-y border-emerald-900/10">
-        <Container className="max-w-4xl mx-auto px-4">
+        <Container className="max-w-6xl mx-auto px-4">
           
-          <div className="text-center max-w-2xl mx-auto mb-10">
+          <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="text-[#0a7a40] font-extrabold tracking-widest uppercase text-xs mb-2 block">
-              Official Quality Declaration
+              Official Quality Verification
             </span>
             <h2 className="text-3xl sm:text-4xl font-serif font-bold text-neutral-900 mb-3">
-              Certified Nutrition Facts Label
+              Official Certificates &amp; Nutrition Facts
             </h2>
             <p className="text-neutral-600 text-sm leading-relaxed">
-              Standardized dietary declaration confirming zero calories, zero sugar, and zero fats. Click on the document card to view in full HD.
+              Complete transparency with verified lab certification and standardized nutrition declarations. Click any document to view in full HD.
             </p>
           </div>
 
-          {/* Centered Premium Certificate Card */}
-          <div className="bg-[#fafcfa] rounded-3xl border border-neutral-200 p-6 sm:p-10 shadow-xl max-w-2xl mx-auto mb-14">
-            <div className="flex items-start justify-between gap-3 mb-6 pb-4 border-b border-neutral-200">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold shrink-0">
-                  <FileText className="w-6 h-6" />
+          {/* Side-by-Side 2-Column Certificate Cards Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-14">
+            
+            {/* Card 1: Official Certificate of Analysis (COA) - Placed FIRST */}
+            <div className="bg-[#fafcfa] rounded-3xl border border-emerald-800/20 p-6 sm:p-8 shadow-xl flex flex-col justify-between hover:shadow-2xl transition-all">
+              <div>
+                <div className="flex items-start justify-between gap-3 mb-5 pb-4 border-b border-neutral-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-[#0a7a40] flex items-center justify-center font-bold shrink-0">
+                      <ShieldCheck className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-serif font-bold text-xl text-neutral-900">Certificate of Analysis (COA)</h3>
+                      <p className="text-xs text-neutral-500 mt-0.5">Official Quality Analysis &amp; Verification</p>
+                    </div>
+                  </div>
+                  <span className="bg-emerald-100 text-[#0a7a40] text-xs font-extrabold uppercase px-3 py-1 rounded-full shrink-0">
+                    Verified
+                  </span>
                 </div>
-                <div>
-                  <h3 className="font-serif font-bold text-xl text-neutral-900">Nutrition Facts Label</h3>
-                  <p className="text-xs text-neutral-500 mt-0.5">Standard Dietary Declaration • 100g Serving</p>
+
+                <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed mb-4">
+                  Official laboratory analysis confirming <strong>0.00 Kcal Calories, 0.0g Sugar, and 0.0g Carbohydrates</strong> with zero artificial additives in Kosmico Monk Fruit Liquid Sweetener.
+                </p>
+
+                <div className="flex flex-wrap gap-2 mb-6">
+                  <span className="bg-white border border-emerald-900/10 text-neutral-800 text-xs font-bold px-2.5 py-1 rounded-lg shadow-2xs">✓ 0.00 Calories</span>
+                  <span className="bg-white border border-emerald-900/10 text-neutral-800 text-xs font-bold px-2.5 py-1 rounded-lg shadow-2xs">✓ 0.0g Sugar</span>
+                  <span className="bg-white border border-emerald-900/10 text-neutral-800 text-xs font-bold px-2.5 py-1 rounded-lg shadow-2xs">✓ 0.0g Trans Fat</span>
+                </div>
+
+                {/* Embedded HD Image Preview for COA */}
+                <div 
+                  onClick={() => setSelectedDoc({
+                    title: 'Official Certificate of Analysis (COA)',
+                    subtitle: 'Certified Quality & Composition Report',
+                    imageSrc: LAB_TEST_REPORT_HD_IMAGE,
+                    pdfUrl: COA_DROPS_PDF_URL
+                  })}
+                  className="w-full bg-white rounded-2xl border border-neutral-300 p-3 sm:p-4 shadow-sm cursor-pointer group hover:border-[#0a7a40] hover:shadow-lg transition-all relative overflow-hidden flex items-center justify-center min-h-[360px]"
+                >
+                  <img 
+                    src={LAB_TEST_REPORT_HD_IMAGE} 
+                    alt="Official Certificate of Analysis (COA)" 
+                    className="w-full h-auto max-h-[460px] object-contain rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
+                  />
+                  <div className="absolute inset-0 bg-emerald-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-xs">
+                    <span className="bg-white text-neutral-900 font-bold text-xs px-4 py-2 rounded-xl shadow-xl flex items-center gap-2">
+                      <ZoomIn className="w-4 h-4 text-[#0a7a40]" />
+                      Click to View Full Document
+                    </span>
+                  </div>
                 </div>
               </div>
-              <span className="bg-amber-100 text-amber-900 text-xs font-extrabold uppercase px-3 py-1 rounded-full shrink-0">
-                0.00 Calories
-              </span>
-            </div>
 
-            <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed mb-5">
-              Standardized nutrition panel declaring <strong>0.00 Calories, 0.00g Total Fat, 0.0g Carbohydrates, 0.0g Sugars, and 0.0g Protein</strong> per 100 gm serving for dietary compliance.
-            </p>
-
-            <div className="flex flex-wrap gap-2 mb-6">
-              <span className="bg-white border border-emerald-900/10 text-neutral-800 text-xs font-bold px-3 py-1 rounded-lg shadow-2xs">✓ 100g Serving</span>
-              <span className="bg-white border border-emerald-900/10 text-neutral-800 text-xs font-bold px-3 py-1 rounded-lg shadow-2xs">✓ 0.00 Total Calories</span>
-              <span className="bg-white border border-emerald-900/10 text-neutral-800 text-xs font-bold px-3 py-1 rounded-lg shadow-2xs">✓ 0% Daily Value Fat</span>
-              <span className="bg-white border border-emerald-900/10 text-neutral-800 text-xs font-bold px-3 py-1 rounded-lg shadow-2xs">✓ 0% Daily Value Sugar</span>
-            </div>
-
-            {/* Direct High-Resolution Embedded Image Container */}
-            <div 
-              onClick={() => setSelectedDoc({
-                title: 'Official Nutrition Facts Label',
-                subtitle: 'Standard Certified Nutritional Breakdown per 100g Serving',
-                imageSrc: NUTRITION_FACTS_HD_IMAGE,
-                pdfUrl: LABEL_DROPS_PDF_URL
-              })}
-              className="w-full bg-white rounded-2xl border border-neutral-300 p-4 sm:p-6 shadow-md cursor-pointer group hover:border-[#0a7a40] hover:shadow-xl transition-all relative overflow-hidden flex items-center justify-center min-h-[400px]"
-            >
-              <img 
-                src={NUTRITION_FACTS_HD_IMAGE} 
-                alt="Official Nutrition Facts Label" 
-                className="w-full h-auto max-h-[500px] object-contain rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
-              />
-              <div className="absolute inset-0 bg-emerald-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-xs">
-                <span className="bg-white text-neutral-900 font-bold text-xs px-5 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
-                  <ZoomIn className="w-4 h-4 text-[#0a7a40]" />
-                  Click to View Full Document
-                </span>
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => setSelectedDoc({
+                    title: 'Official Certificate of Analysis (COA)',
+                    subtitle: 'Certified Quality & Composition Report',
+                    imageSrc: LAB_TEST_REPORT_HD_IMAGE,
+                    pdfUrl: COA_DROPS_PDF_URL
+                  })}
+                  className="flex-1 py-3 px-3 bg-emerald-50 hover:bg-emerald-100 text-[#0a7a40] font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                  <span>Full Screen (HD)</span>
+                </button>
+                <button
+                  onClick={() => handleOpenPdf(COA_DROPS_PDF_URL)}
+                  className="py-3 px-4 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Open PDF</span>
+                </button>
               </div>
             </div>
 
-            <div className="mt-6 flex gap-3">
-              <button
-                onClick={() => setSelectedDoc({
-                  title: 'Official Nutrition Facts Label',
-                  subtitle: 'Standard Certified Nutritional Breakdown per 100g Serving',
-                  imageSrc: NUTRITION_FACTS_HD_IMAGE,
-                  pdfUrl: LABEL_DROPS_PDF_URL
-                })}
-                className="flex-1 py-3 px-4 bg-emerald-50 hover:bg-emerald-100 text-[#0a7a40] font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <ZoomIn className="w-4 h-4" />
-                <span>View Full Screen (HD)</span>
-              </button>
-              <button
-                onClick={() => handleOpenPdf(LABEL_DROPS_PDF_URL)}
-                className="py-3 px-5 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
-              >
-                <ExternalLink className="w-4 h-4" />
-                <span>Open PDF</span>
-              </button>
+            {/* Card 2: Certified Nutrition Facts Label - Placed SECOND */}
+            <div className="bg-[#fafcfa] rounded-3xl border border-neutral-200 p-6 sm:p-8 shadow-xl flex flex-col justify-between hover:shadow-2xl transition-all">
+              <div>
+                <div className="flex items-start justify-between gap-3 mb-5 pb-4 border-b border-neutral-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold shrink-0">
+                      <FileText className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-serif font-bold text-xl text-neutral-900">Nutrition Facts Label</h3>
+                      <p className="text-xs text-neutral-500 mt-0.5">Standard Dietary Declaration • 100g Serving</p>
+                    </div>
+                  </div>
+                  <span className="bg-amber-100 text-amber-900 text-xs font-extrabold uppercase px-3 py-1 rounded-full shrink-0">
+                    0.00 Calories
+                  </span>
+                </div>
+
+                <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed mb-4">
+                  Standardized nutrition panel declaring <strong>0.00 Calories, 0.00g Total Fat, 0.0g Carbohydrates, 0.0g Sugars, and 0.0g Protein</strong> per 100 gm serving for dietary compliance.
+                </p>
+
+                <div className="flex flex-wrap gap-2 mb-6">
+                  <span className="bg-white border border-emerald-900/10 text-neutral-800 text-xs font-bold px-2.5 py-1 rounded-lg shadow-2xs">✓ 100g Serving</span>
+                  <span className="bg-white border border-emerald-900/10 text-neutral-800 text-xs font-bold px-2.5 py-1 rounded-lg shadow-2xs">✓ 0.00 Total Calories</span>
+                  <span className="bg-white border border-emerald-900/10 text-neutral-800 text-xs font-bold px-2.5 py-1 rounded-lg shadow-2xs">✓ 0% Daily Value Fat</span>
+                </div>
+
+                {/* Embedded HD Image Preview for Nutrition Facts */}
+                <div 
+                  onClick={() => setSelectedDoc({
+                    title: 'Official Nutrition Facts Label',
+                    subtitle: 'Standard Certified Nutritional Breakdown per 100g Serving',
+                    imageSrc: NUTRITION_FACTS_HD_IMAGE,
+                    pdfUrl: LABEL_DROPS_PDF_URL
+                  })}
+                  className="w-full bg-white rounded-2xl border border-neutral-300 p-3 sm:p-4 shadow-sm cursor-pointer group hover:border-[#0a7a40] hover:shadow-lg transition-all relative overflow-hidden flex items-center justify-center min-h-[360px]"
+                >
+                  <img 
+                    src={NUTRITION_FACTS_HD_IMAGE} 
+                    alt="Official Nutrition Facts Label" 
+                    className="w-full h-auto max-h-[460px] object-contain rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
+                  />
+                  <div className="absolute inset-0 bg-emerald-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-xs">
+                    <span className="bg-white text-neutral-900 font-bold text-xs px-4 py-2 rounded-xl shadow-xl flex items-center gap-2">
+                      <ZoomIn className="w-4 h-4 text-[#0a7a40]" />
+                      Click to View Full Document
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => setSelectedDoc({
+                    title: 'Official Nutrition Facts Label',
+                    subtitle: 'Standard Certified Nutritional Breakdown per 100g Serving',
+                    imageSrc: NUTRITION_FACTS_HD_IMAGE,
+                    pdfUrl: LABEL_DROPS_PDF_URL
+                  })}
+                  className="flex-1 py-3 px-3 bg-emerald-50 hover:bg-emerald-100 text-[#0a7a40] font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                  <span>Full Screen (HD)</span>
+                </button>
+                <button
+                  onClick={() => handleOpenPdf(LABEL_DROPS_PDF_URL)}
+                  className="py-3 px-4 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Open PDF</span>
+                </button>
+              </div>
             </div>
+
           </div>
 
           {/* 3. Verified Nutritional Breakdown Summary Table */}
