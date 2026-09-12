@@ -46,23 +46,30 @@ const queryClient = new QueryClient({
   },
 });
 
-// We need an AuthInit component to check if the user is logged in on mount
+// AuthInit preserves persistent login state
 const AuthInit = ({ children }: { children: React.ReactNode }) => {
-  const { setAuth, logout, setLoading } = useAuthStore();
+  const { accessToken, setAuth, setLoading } = useAuthStore();
 
   useEffect(() => {
     const initAuth = async () => {
+      if (!accessToken) {
+        setLoading(false);
+        return;
+      }
       try {
-        const response = await api.get('/auth/me');
-        setAuth(response.data.data.user, api.defaults.headers.common['Authorization']?.toString().replace('Bearer ', '') || '');
+        const response = await api.get('/auth/profile');
+        if (response.data?.data) {
+          const user = response.data.data.user || response.data.data;
+          setAuth(user, accessToken);
+        }
       } catch (error) {
-        logout(); // Not logged in
+        // Keep persisted state intact even if profile check fails temporarily
       } finally {
         setLoading(false);
       }
     };
     initAuth();
-  }, [setAuth, logout, setLoading]);
+  }, [accessToken, setAuth, setLoading]);
 
   return <>{children}</>;
 };

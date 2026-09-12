@@ -17,6 +17,9 @@ router.route('/')
   .get(wishlistController.getWishlist)
   .delete(wishlistController.clearWishlist);
 
+router.post('/add', wishlistController.addToWishlist);
+router.post('/remove', wishlistController.removeWishlistFromBody);
+
 router.route('/items')
   .post(validate(addSchema), wishlistController.addToWishlist);
 

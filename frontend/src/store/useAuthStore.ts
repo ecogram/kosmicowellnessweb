@@ -1,10 +1,14 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface User {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   email: string;
-  role: string;
+  role?: string;
+  phoneNumber?: string;
+  profilePicture?: string;
 }
 
 interface AuthState {
@@ -18,14 +22,25 @@ interface AuthState {
   setLoading: (loading: boolean) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  accessToken: null,
-  isAuthenticated: false,
-  isLoading: true, // Start true so we can check on mount
-  setAuth: (user, accessToken) =>
-    set({ user, accessToken, isAuthenticated: true, isLoading: false }),
-  setAccessToken: (accessToken) => set({ accessToken }),
-  logout: () => set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false }),
-  setLoading: (isLoading) => set({ isLoading }),
-}));
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      accessToken: null,
+      isAuthenticated: false,
+      isLoading: false,
+      setAuth: (user, accessToken) => {
+        set({ user, accessToken, isAuthenticated: true, isLoading: false });
+      },
+      setAccessToken: (accessToken) => set({ accessToken }),
+      logout: () => {
+        set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
+      },
+      setLoading: (isLoading) => set({ isLoading }),
+    }),
+    {
+      name: 'kosmico_auth_v1',
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
+);

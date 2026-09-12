@@ -1,12 +1,12 @@
+const shippingService = require('./shippingService');
+
 class TaxService {
   /**
-   * Calculates tax based on subtotal and shipping address.
-   * Basic foundation: 0% tax for now, configurable.
+   * Calculates tax/GST based on subtotal, address and payment method.
+   * Product MRP is inclusive of product GST in India; courier GST applies on COD.
    */
-  calculateTax(subtotal, shippingAddress) {
-    const taxRate = 0.0; // Configurable tax rate
-    // Round to 2 decimal places
-    return Math.round(subtotal * taxRate * 100) / 100;
+  calculateTax(subtotal = 0, shippingAddress = {}, paymentMethod = 'ONLINE') {
+    return shippingService.calculateGst(subtotal, shippingAddress, paymentMethod);
   }
 }
 

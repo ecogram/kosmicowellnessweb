@@ -58,29 +58,35 @@ export function ProductDetails() {
   const displayPrice = selectedBundle ? selectedBundle.price : product.price;
 
   const handleAddToCart = () => {
-    if (!isAuthenticated) return navigate('/login');
     const packVariantName = selectedBundle ? selectedBundle.name : '250ml Bottle';
+    const finalPrice = selectedBundle ? selectedBundle.price : product.price;
     addToCartMutation.mutate({ 
-      productId: product._id, 
+      productId: product._id || product.id, 
       quantity: selectedBundle ? selectedBundle.quantity * quantity : quantity, 
-      variant: packVariantName 
+      variant: packVariantName,
+      name: product.name,
+      price: finalPrice,
+      image: product.image || (product.images?.length ? product.images[0] : '/assets/products/product-box.jpg')
     });
   };
 
   const handleBuyNow = async () => {
-    if (!isAuthenticated) return navigate('/login');
     const packVariantName = selectedBundle ? selectedBundle.name : '250ml Bottle';
+    const finalPrice = selectedBundle ? selectedBundle.price : product.price;
     await addToCartMutation.mutateAsync({ 
-      productId: product._id, 
+      productId: product._id || product.id, 
       quantity: selectedBundle ? selectedBundle.quantity * quantity : quantity, 
-      variant: packVariantName 
+      variant: packVariantName,
+      name: product.name,
+      price: finalPrice,
+      image: product.image || (product.images?.length ? product.images[0] : '/assets/products/product-box.jpg')
     });
     navigate('/checkout');
   };
 
   const handleToggleWishlist = () => {
     if (!isAuthenticated) return navigate('/login');
-    toggleWishlistMutation.mutate(product._id);
+    toggleWishlistMutation.mutate(product._id || product.id);
   };
 
   return (

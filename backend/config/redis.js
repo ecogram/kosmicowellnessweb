@@ -1,43 +1,63 @@
-const Redis = require('ioredis');
+const EventEmitter = require('events');
 
-let host = process.env.REDIS_HOST || '127.0.0.1';
-let port = process.env.REDIS_PORT || 6379;
-let password = process.env.REDIS_PASSWORD || undefined;
+// In-Memory Fallback Cache for local development without Redis
+class InMemoryRedis extends EventEmitter {
+  constructor() {
+    super();
+    this.store = new Map();
+    this.status = 'ready';
+  }
 
-if (process.env.REDIS_URL) {
-  try {
-    const url = new URL(process.env.REDIS_URL);
-    host = url.hostname || host;
-    port = url.port || port;
-    if (url.password) password = url.password;
-  } catch (err) {
-    console.error('Failed to parse REDIS_URL:', err);
+  async get(key) {
+    return this.store.get(key) || null;
+  }
+
+  async set(key, value, ...args) {
+    this.store.set(key, value);
+    return 'OK';
+  }
+
+  async del(key) {
+    return this.store.delete(key) ? 1 : 0;
+  }
+
+  async quit() {
+    this.store.clear();
+    return 'OK';
+  }
+
+  duplicate() {
+    return new InMemoryRedis();
   }
 }
 
+let redis;
 const redisConfig = {
-  host,
-  port,
-  password,
-  retryStrategy(times) {
-    const delay = Math.min(times * 50, 2000);
-    return delay; // Reconnect after a delay
-  },
-  maxRetriesPerRequest: null, // Required for BullMQ
+  host: process.env.REDIS_HOST || '127.0.0.1',
+  port: parseInt(process.env.REDIS_PORT, 10) || 6379,
+  lazyConnect: true,
+  maxRetriesPerRequest: 1,
 };
 
-// Create a single shared instance for caching
-const redis = new Redis(redisConfig);
-
-redis.on('connect', () => {
-  console.log('Redis connected successfully');
-});
-
-redis.on('error', (err) => {
-  console.error('Redis connection error:', err);
-});
+if (process.env.REDIS_URL && process.env.NODE_ENV === 'production') {
+  try {
+    const Redis = require('ioredis');
+    redis = new Redis(process.env.REDIS_URL, {
+      lazyConnect: true,
+      maxRetriesPerRequest: 1,
+      retryStrategy: () => null,
+    });
+    redis.on('error', () => {});
+    redis.connect().catch(() => {});
+  } catch (e) {
+    redis = new InMemoryRedis();
+  }
+} else {
+  // Use zero-overhead in-memory cache in local dev
+  redis = new InMemoryRedis();
+}
 
 module.exports = {
   redis,
-  redisConfig, // Exported to easily create isolated connections for BullMQ
+  redisConfig,
 };

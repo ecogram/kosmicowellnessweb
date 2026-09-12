@@ -6,6 +6,8 @@ router.route('/')
   .get(productController.getProducts)
   .post(productController.createProduct);
 
+router.get('/user/list', productController.getProducts);
+
 router.route('/:slug')
   .get(productController.getProductBySlug);
 

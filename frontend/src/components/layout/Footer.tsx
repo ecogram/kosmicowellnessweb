@@ -99,7 +99,7 @@ export function Footer() {
               <div className="flex items-start gap-2.5">
                 <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <span>
-                  1305 &amp; 1307 A, 13th Floor, Tower 3, NX One Tower, Greater Noida (West), UP - 201306
+                   423 A, 4th Floor, Tower 3, NX One Tower, Greater Noida (West), UP - 201306
                 </span>
               </div>
 

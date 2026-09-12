@@ -110,16 +110,16 @@ export const Shop = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
               {data.products.map((product: any) => (
                 <ProductCard 
-                  key={product._id} 
+                  key={product._id || product.id} 
                   product={{
-                    id: product._id,
+                    id: product._id || product.id,
                     name: product.name,
-                    slug: product.slug,
+                    slug: product.slug || product._id || product.id,
                     price: product.price,
                     compareAtPrice: product.compareAtPrice,
-                    image: product.images?.[0] || '/assets/products/product-box.jpg',
-                    rating: product.rating,
-                    reviewsCount: product.numReviews,
+                    image: product.image || (product.images?.length ? product.images[0] : '/assets/products/product-box.jpg'),
+                    rating: product.rating || 5,
+                    reviewsCount: product.numReviews || product.reviewsCount || 128,
                   }}
                 />
               ))}

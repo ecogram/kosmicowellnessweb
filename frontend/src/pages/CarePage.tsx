@@ -2,222 +2,270 @@ import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { 
-  Activity, Sun, Moon, Sunset, Sunrise, Watch, Plus, Droplets, 
-  Camera, Users, CheckCircle2, Smartphone, Download 
+  Sun, Moon, Sunset, Sunrise, Watch, Droplets, 
+  CheckCircle2, Smartphone, 
+  Lock, Download, Sparkles
 } from 'lucide-react';
 import { PlayStoreModal } from '../components/ui/PlayStoreModal';
+import { PLAY_STORE_URL } from '../utils/constants';
 
 export const CarePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get('tab') || 'today';
 
   const [timeOfDay, setTimeOfDay] = useState<'dawn' | 'day' | 'dusk' | 'night'>('day');
-  const [hydration] = useState(750); // ml
-  const [isBleModalOpen, setIsBleModalOpen] = useState(true); // Open by default or on card click
-  const [modalTitle, setModalTitle] = useState('Kosmico Mobile App Required');
-  const [modalDesc, setModalDesc] = useState('To access and interact with live biometrics, smartwatch BLE sync, and AI food scanning, please download the Kosmico Mobile App on Google Play Store.');
+  const [hydration] = useState(750); // ml display preview
+  const [selectedStress] = useState<number | null>(null);
+  const [selectedEnergy] = useState<number | null>(null);
 
-  const openModalWithDetails = (title: string, desc: string) => {
+  // Play Store promotion modal
+  const [isStoreModalOpen, setIsStoreModalOpen] = useState(false);
+  const [modalTitle, setModalTitle] = useState('Mobile App Exclusive Feature');
+  const [modalDesc, setModalDesc] = useState('Access live BLE sync, AI food vision, and real-time health tracking on the Kosmico Mobile App on Google Play Store.');
+
+  const openAppStoreModal = (title: string, desc: string) => {
     setModalTitle(title);
     setModalDesc(desc);
-    setIsBleModalOpen(true);
+    setIsStoreModalOpen(true);
+  };
+
+  const handleTabChange = (tabId: string) => {
+    if (tabId !== 'today') {
+      const titles: Record<string, { title: string; desc: string }> = {
+        community: {
+          title: 'Kosmico Community & Social',
+          desc: 'Posting recipes, milestones and connecting with wellness buddies is exclusively available on the Kosmico Mobile App.',
+        },
+        scan: {
+          title: 'AI Camera Plate Scanner',
+          desc: 'Real-time AI camera plate food scanning and carb analysis is exclusively available on the Kosmico Mobile App on Google Play.',
+        },
+        log: {
+          title: 'Daily Glucose & Insulin Logger',
+          desc: 'Direct biometric sync and clinical diabetes logging is exclusively available on the Kosmico Mobile App.',
+        },
+        network: {
+          title: 'Care Network & SOS Emergency Alert',
+          desc: 'Emergency SOS alerts, doctor network and caregiver sync are exclusively available on the Kosmico Mobile App.',
+        },
+      };
+
+      const feature = titles[tabId] || {
+        title: 'Mobile App Exclusive Feature',
+        desc: 'Please download the Kosmico Mobile App on Google Play Store to use this feature.',
+      };
+
+      openAppStoreModal(feature.title, feature.desc);
+      return;
+    }
+    setSearchParams({ tab: tabId });
   };
 
   return (
-    <div className="py-10 md:py-16 bg-gradient-to-b from-stone-50 via-emerald-50/30 to-background min-h-screen relative">
-      <Container>
+    <div className="py-8 md:py-14 bg-gradient-to-b from-[#eef9f2] via-stone-50 to-[#eef9f2] min-h-screen relative">
+      <Container className="max-w-4xl">
         
-        {/* Top Luxury App Banner Notice */}
-        <div className="mb-8 bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-950 text-white rounded-3xl p-5 sm:p-6 shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 border border-emerald-700/50 relative overflow-hidden">
-          <div className="flex items-center gap-4 relative z-10">
-            <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center text-amber-300 border border-white/20 shadow-md">
-              <Smartphone className="w-6 h-6" />
+        {/* Top App Update / Mobile App Banner Notice */}
+        <div className="mb-6 bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-950 text-white rounded-3xl p-4 sm:p-5 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4 border border-emerald-700/50">
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center text-amber-300 border border-white/20 shrink-0">
+              <Smartphone className="w-5 h-5" />
             </div>
             <div>
-              <div className="font-serif font-bold text-base text-amber-300">Kosmico Mobile App Premium Health Suite</div>
-              <div className="text-xs text-emerald-100/90 mt-0.5">Preview live biometrics below • Click any feature card to get the App on Google Play</div>
+              <div className="font-serif font-bold text-sm text-amber-300 flex items-center gap-2">
+                <span>Kosmico GlucoRhythm &amp; Care Suite</span>
+                <span className="text-[10px] bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full font-sans">App Exclusive</span>
+              </div>
+              <div className="text-xs text-emerald-100/90 mt-0.5">Your Clinical Diabetes &amp; Wellness Management Partner</div>
             </div>
           </div>
           <button
-            onClick={() => openModalWithDetails('Download Kosmico Mobile App', 'Get instant access to live Bluetooth smartwatch biometrics, AI food scanning, and glucose trend tracking.')}
-            className="px-6 py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 text-neutral-950 font-black text-xs rounded-2xl shadow-lg shadow-amber-400/20 hover:shadow-amber-400/30 transition-all flex items-center gap-2 relative z-10 active:scale-95"
+            onClick={() => openAppStoreModal('Bluetooth Smartwatch & CGM Sync', 'Pairing smartwatches (Samsung, Apple, Noise, boAt) and CGM monitors requires the Kosmico Mobile App on Google Play.')}
+            className="px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 text-neutral-950 font-black text-xs rounded-xl shadow-md transition-all flex items-center gap-2 active:scale-95 shrink-0 cursor-pointer"
           >
-            <Download className="w-4 h-4 text-neutral-950" />
-            <span>Get App on Google Play</span>
+            <Watch className="w-3.5 h-3.5 text-neutral-950" />
+            <span>Devices &amp; BLE Sync</span>
           </button>
         </div>
 
-        {/* Header Title */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-border">
+        {/* Header Title Matching App */}
+        <div className="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-neutral-200">
           <div>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-900/10 text-emerald-900 text-xs font-extrabold uppercase tracking-wider mb-2 border border-emerald-900/20">
-              <Activity className="w-3.5 h-3.5 text-amber-500" />
-              <span>GlucoRhythm Dashboard</span>
+            <div className="flex items-center gap-2">
+              <span className="font-serif text-2xl sm:text-3xl font-bold text-[#14532d]">
+                GlucoRhythm
+              </span>
+              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1">
+                <Lock className="w-3 h-3" /> App View
+              </span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-serif font-black text-neutral-900">
-              Diabetes &amp; Health Management Partner
-            </h1>
+            <p className="text-xs text-neutral-600 mt-0.5">
+              Your Diabetes Management Partner (Preview Dashboard)
+            </p>
           </div>
 
-          {/* App Device Pair Action */}
           <button
-            onClick={() => openModalWithDetails('Pair BLE Smartwatch & Sensors', 'Bluetooth LE smartwatch biometrics and continuous glucose monitors require native Android sensors available on the Kosmico Mobile App.')}
-            className="px-6 py-3.5 bg-emerald-900 hover:bg-emerald-950 text-white font-bold text-xs rounded-2xl shadow-md hover:shadow-lg transition-all flex items-center gap-2 border border-emerald-700/50 active:scale-95"
+            onClick={() => openAppStoreModal('Smartwatch & CGM Devices', 'Connect your smartwatches and CGMs via Bluetooth on the Kosmico Mobile App.')}
+            className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#16a34a] border border-[#16a34a]/30 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
           >
-            <Watch className="w-4 h-4 text-amber-400" />
-            <span>Pair BLE Smartwatch</span>
+            <Watch className="w-4 h-4" />
+            <span>Devices</span>
           </button>
         </div>
 
-        {/* Sub-Navigation Tabs matching App */}
-        <div className="flex items-center gap-2.5 overflow-x-auto pb-4 mb-8 scrollbar-none">
+        {/* 5 Sub-Navigation Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none">
           {[
-            { id: 'today', label: 'Today Dashboard', icon: Activity },
-            { id: 'scan', label: 'Plate AI Scan', icon: Camera },
-            { id: 'community', label: 'Care Community', icon: Users },
-            { id: 'devices', label: 'Device Sync (BLE)', icon: Watch },
+            { id: 'today', label: 'Today', isAppOnly: false },
+            { id: 'community', label: 'Community', isAppOnly: true },
+            { id: 'scan', label: 'Scan Meal', isAppOnly: true },
+            { id: 'log', label: 'Log Entry', isAppOnly: true },
+            { id: 'network', label: 'Care Network', isAppOnly: true },
           ].map((tab) => {
-            const Icon = tab.icon;
             const isActive = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
-                onClick={() => {
-                  setSearchParams({ tab: tab.id });
-                  openModalWithDetails(`Access ${tab.label}`, `To use ${tab.label} feature, please download the Kosmico Mobile App on Google Play Store.`);
-                }}
-                className={`px-5 py-3 rounded-2xl text-xs font-extrabold flex items-center gap-2.5 whitespace-nowrap transition-all ${
+                onClick={() => handleTabChange(tab.id)}
+                className={`px-5 py-2.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                   isActive
-                    ? 'bg-gradient-to-r from-emerald-900 to-emerald-950 text-white shadow-lg shadow-emerald-950/20'
-                    : 'bg-white text-neutral-700 hover:bg-emerald-800/10 border border-border shadow-2xs'
+                    ? 'bg-[#16a34a] text-white shadow-md'
+                    : 'bg-white text-neutral-700 hover:bg-emerald-50 border border-neutral-200'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-amber-400' : 'text-emerald-800'}`} />
                 <span>{tab.label}</span>
+                {tab.isAppOnly && (
+                  <span className="text-[10px] opacity-75 font-normal">📱</span>
+                )}
               </button>
             );
           })}
         </div>
 
-        {/* TAB 1: TODAY DASHBOARD */}
+        {/* ================= TAB 1: TODAY ================= */}
         {activeTab === 'today' && (
-          <div className="space-y-8">
+          <div className="space-y-6">
             
             {/* Time of Day Selector */}
-            <div className="flex justify-center">
-              <div className="inline-flex bg-white p-1.5 rounded-2xl border border-border gap-1.5 shadow-sm">
-                {[
-                  { id: 'dawn', label: 'Dawn', icon: Sunrise },
-                  { id: 'day', label: 'Day', icon: Sun },
-                  { id: 'dusk', label: 'Dusk', icon: Sunset },
-                  { id: 'night', label: 'Night', icon: Moon },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  const isSelected = timeOfDay === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => {
-                        setTimeOfDay(item.id as any);
-                        openModalWithDetails('Time-of-Day Filter Log', 'Daily glucose logging and time-of-day history sync requires the Kosmico Mobile App.');
-                      }}
-                      className={`px-5 py-2.5 rounded-xl text-xs font-extrabold flex items-center gap-2 transition-all ${
-                        isSelected
-                          ? 'bg-emerald-900 text-white shadow-sm'
-                          : 'text-neutral-600 hover:text-neutral-900'
-                      }`}
-                    >
-                      <Icon className={`w-4 h-4 ${isSelected ? 'text-amber-400' : ''}`} />
-                      <span>{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="flex justify-between items-center bg-white p-2 rounded-2xl border border-neutral-200 shadow-xs max-w-md mx-auto">
+              {[
+                { id: 'dawn', label: 'Dawn', icon: Sunrise },
+                { id: 'day', label: 'Day', icon: Sun },
+                { id: 'dusk', label: 'Dusk', icon: Sunset },
+                { id: 'night', label: 'Night', icon: Moon },
+              ].map((item) => {
+                const Icon = item.icon;
+                const isSelected = timeOfDay === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setTimeOfDay(item.id as any)}
+                    className={`flex-1 py-2 rounded-xl text-xs font-bold flex flex-col sm:flex-row items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-[#16a34a] text-white shadow-xs'
+                        : 'text-neutral-600 hover:text-neutral-900'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5" />
+                    <span>{item.label}</span>
+                  </button>
+                );
+              })}
             </div>
 
-            {/* Ultra Luxury Live Biometrics & CGM Sync Card */}
-            <div
-              onClick={() => openModalWithDetails('Smartwatch & CGM Biometrics', 'Live Bluetooth LE biometrics and continuous glucose sync requires the Kosmico Mobile App on Google Play.')}
-              className="cursor-pointer bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-950 text-white rounded-[32px] p-7 md:p-8 shadow-2xl relative overflow-hidden group hover:border-amber-400/50 border border-emerald-700/50 transition-all duration-300"
-            >
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-white/10 pb-5 mb-6">
-                <div>
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-3 h-3 rounded-full bg-emerald-400 animate-ping" />
-                    <span className="font-serif font-bold text-base text-amber-300">Hardware &amp; CGM Sync</span>
-                  </div>
-                  <p className="text-xs text-emerald-100/80 mt-1">Live biometrics monitoring active via Bluetooth LE</p>
+            {/* Hardware & CGM Sync Strip */}
+            <div className="bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-950 text-white rounded-2xl p-4 sm:p-5 shadow-md border border-emerald-700/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="space-y-1 text-xs">
+                <div className="flex items-center gap-2 font-bold text-amber-300">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+                  <span>Hardware &amp; CGM Sync</span>
                 </div>
-                <button
-                  className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl text-xs font-bold text-amber-300 transition-colors flex items-center gap-1.5"
-                >
-                  <Watch className="w-4 h-4 text-amber-400" />
-                  <span>Sync Smartwatch</span>
-                </button>
+                <div className="text-emerald-100/90 text-[11px] flex flex-wrap gap-2">
+                  <span>Live: <strong className="text-white">112 mg/dL</strong> (Steady &amp; Stable)</span>
+                  <span>•</span>
+                  <span>BP: <strong className="text-white">118/76 mmHg</strong></span>
+                  <span>•</span>
+                  <span><strong className="text-white">74 BPM</strong></span>
+                  <span>•</span>
+                  <span><strong className="text-white">98% SpO2</strong></span>
+                </div>
+              </div>
+              <button
+                onClick={() => openAppStoreModal('Pair Smartwatch / CGM', 'Hardware pairing with Dexcom, Abbott, Apple Watch & Samsung Galaxy Watch requires the Kosmico Mobile App on Google Play.')}
+                className="px-4 py-1.5 bg-amber-400 hover:bg-amber-300 text-neutral-950 font-bold rounded-xl text-xs transition-colors shrink-0 cursor-pointer"
+              >
+                Pair on App
+              </button>
+            </div>
+
+            {/* 4 Vitals Metric Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+              <div 
+                onClick={() => openAppStoreModal('Continuous Glucose Monitor (CGM)', 'Live minute-by-minute glucose streaming is active on the Kosmico Mobile App.')}
+                className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-2xl p-3.5 space-y-1 cursor-pointer hover:border-emerald-500 transition-all hover:scale-[1.02]"
+              >
+                <div className="text-lg font-black text-[#14532d]">112 mg/dL</div>
+                <div className="text-[10px] text-emerald-700 font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Steady &amp; Stable
+                </div>
               </div>
 
-              {/* Vitals Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 space-y-1">
-                  <div className="text-[10px] uppercase font-extrabold text-emerald-200">Glucose</div>
-                  <div className="text-2xl sm:text-3xl font-black text-white">112 <span className="text-xs font-normal">mg/dL</span></div>
-                  <div className="text-[10px] text-emerald-300 font-semibold flex items-center gap-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Steady &amp; Stable
-                  </div>
-                </div>
+              <div 
+                onClick={() => openAppStoreModal('Blood Pressure Sync', 'Optical BP vitals sync requires the Kosmico Mobile App.')}
+                className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-2xl p-3.5 space-y-1 cursor-pointer hover:border-emerald-500 transition-all hover:scale-[1.02]"
+              >
+                <div className="text-lg font-black text-[#14532d]">118/76</div>
+                <div className="text-[10px] text-emerald-700 font-bold">Optimal Normal</div>
+              </div>
 
-                <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 space-y-1">
-                  <div className="text-[10px] uppercase font-extrabold text-emerald-200">Blood Pressure</div>
-                  <div className="text-2xl sm:text-3xl font-black text-white">118/76</div>
-                  <div className="text-[10px] text-emerald-300 font-semibold">Optimal Range</div>
-                </div>
+              <div 
+                onClick={() => openAppStoreModal('Heart Rate & HRV', 'Live heart rate pulse sync is available on the Kosmico Mobile App.')}
+                className="bg-[#fdf2f8] border border-[#fbcfe8] rounded-2xl p-3.5 space-y-1 cursor-pointer hover:border-pink-400 transition-all hover:scale-[1.02]"
+              >
+                <div className="text-lg font-black text-pink-900">74 BPM</div>
+                <div className="text-[10px] text-pink-700 font-bold">HRV 52ms</div>
+              </div>
 
-                <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 space-y-1">
-                  <div className="text-[10px] uppercase font-extrabold text-emerald-200">Heart Rate</div>
-                  <div className="text-2xl sm:text-3xl font-black text-amber-300">74 <span className="text-xs font-normal">BPM</span></div>
-                  <div className="text-[10px] text-amber-200 font-semibold">HRV 52ms</div>
-                </div>
-
-                <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-2xl p-4 space-y-1">
-                  <div className="text-[10px] uppercase font-extrabold text-emerald-200">SpO2 Oxygen</div>
-                  <div className="text-2xl sm:text-3xl font-black text-white">98%</div>
-                  <div className="text-[10px] text-emerald-300 font-semibold">Optimal</div>
-                </div>
+              <div 
+                onClick={() => openAppStoreModal('SpO2 Blood Oxygen', 'Continuous blood oxygen saturation is available on the Kosmico Mobile App.')}
+                className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-2xl p-3.5 space-y-1 cursor-pointer hover:border-emerald-500 transition-all hover:scale-[1.02]"
+              >
+                <div className="text-lg font-black text-[#14532d]">98%</div>
+                <div className="text-[10px] text-emerald-700 font-bold">Optimal</div>
               </div>
             </div>
 
             {/* Continuous Glucose Waveform Section */}
-            <div
-              onClick={() => openModalWithDetails('Continuous Glucose Waveform', 'Continuous 24-hour glucose trend monitoring requires native CGM sensor integration on the Kosmico Mobile App.')}
-              className="cursor-pointer bg-white rounded-[32px] p-7 md:p-8 border border-border shadow-lg hover:border-emerald-800/40 transition-all"
-            >
-              <div className="flex justify-between items-center mb-6">
+            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200 shadow-sm space-y-4">
+              <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="font-serif font-bold text-xl text-neutral-900">Continuous Glucose Waveform</h3>
-                  <p className="text-xs text-neutral-500 mt-0.5">Target Range: 70 - 180 mg/dL (ADA Standard)</p>
+                  <h3 className="font-serif font-bold text-base text-neutral-900">
+                    Continuous Glucose Waveform <span className="text-xs text-neutral-500 font-normal">({timeOfDay.toUpperCase()})</span>
+                  </h3>
+                  <p className="text-[11px] text-neutral-500">Target: 70 - 180 mg/dL (ADA Standard)</p>
                 </div>
-                <span className="px-4 py-1.5 bg-emerald-100 text-emerald-900 font-extrabold text-xs rounded-full border border-emerald-800/20">
-                  112 mg/dL Current
+                <span className="px-3 py-1 bg-emerald-50 text-[#16a34a] font-bold text-xs rounded-full border border-emerald-200">
+                  112 mg/dL &rarr;
                 </span>
               </div>
 
-              {/* Simulated Waveform Visual */}
-              <div className="h-48 w-full bg-stone-50/80 rounded-2xl p-4 border border-border relative flex items-end justify-between overflow-hidden">
-                <svg className="absolute inset-0 w-full h-full p-4" preserveAspectRatio="none" viewBox="0 0 400 100">
+              {/* Waveform Line Visual */}
+              <div className="h-36 w-full bg-[#f8fafc] rounded-2xl p-3 border border-neutral-200 relative flex items-end justify-between overflow-hidden">
+                <svg className="absolute inset-0 w-full h-full p-2" preserveAspectRatio="none" viewBox="0 0 400 100">
                   <defs>
                     <linearGradient id="waveGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#059669" stopOpacity="0.35" />
-                      <stop offset="100%" stopColor="#059669" stopOpacity="0" />
+                      <stop offset="0%" stopColor="#16a34a" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#16a34a" stopOpacity="0" />
                     </linearGradient>
                   </defs>
-                  <rect x="0" y="20" width="400" height="60" fill="#ecfdf5" opacity="0.8" />
-                  <line x1="0" y1="20" x2="400" y2="20" stroke="#a7f3d0" strokeDasharray="4 4" />
-                  <line x1="0" y1="80" x2="400" y2="80" stroke="#a7f3d0" strokeDasharray="4 4" />
+                  <rect x="0" y="20" width="400" height="60" fill="#ecfdf5" opacity="0.6" />
+                  <line x1="0" y1="20" x2="400" y2="20" stroke="#86efac" strokeDasharray="3 3" />
+                  <line x1="0" y1="80" x2="400" y2="80" stroke="#86efac" strokeDasharray="3 3" />
                   <path
                     d="M 0 50 Q 50 30, 100 55 T 200 45 T 300 40 T 400 48"
                     fill="none"
-                    stroke="#047857"
-                    strokeWidth="3.5"
+                    stroke="#16a34a"
+                    strokeWidth="3"
                   />
                   <path
                     d="M 0 50 Q 50 30, 100 55 T 200 45 T 300 40 T 400 48 L 400 100 L 0 100 Z"
@@ -226,173 +274,147 @@ export const CarePage: React.FC = () => {
                 </svg>
               </div>
 
-              {/* Stats Meters Grid */}
-              <div className="grid grid-cols-3 gap-4 mt-6 text-center">
-                <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200">
-                  <div className="text-2xl font-black text-emerald-800">82%</div>
-                  <div className="text-xs font-bold text-neutral-600 mt-0.5">Time in Range</div>
+              {/* Stats Row */}
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="bg-neutral-50 p-3 rounded-2xl border border-neutral-200">
+                  <div className="text-xl font-black text-[#16a34a]">82%</div>
+                  <div className="text-[10px] font-bold text-neutral-600 mt-0.5">Time in Range</div>
                 </div>
-                <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200">
-                  <div className="text-2xl font-black text-amber-600">5.8%</div>
-                  <div className="text-xs font-bold text-neutral-600 mt-0.5">Est. A1C</div>
+                <div className="bg-neutral-50 p-3 rounded-2xl border border-neutral-200">
+                  <div className="text-xl font-black text-amber-600">5.8%</div>
+                  <div className="text-[10px] font-bold text-neutral-600 mt-0.5">Est. A1C</div>
                 </div>
-                <div className="bg-stone-50 p-4 rounded-2xl border border-stone-200">
-                  <div className="text-2xl font-black text-emerald-900">112</div>
-                  <div className="text-xs font-bold text-neutral-600 mt-0.5">Avg Glucose</div>
+                <div className="bg-neutral-50 p-3 rounded-2xl border border-neutral-200">
+                  <div className="text-xl font-black text-neutral-900">112</div>
+                  <div className="text-[10px] font-bold text-neutral-600 mt-0.5">Avg Glucose</div>
                 </div>
               </div>
             </div>
 
-            {/* Lifestyle Trackers (Water, Stress, Energy) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
-              {/* Hydration Tracker */}
-              <div
-                onClick={() => openModalWithDetails('Hydration Tracker Log', 'Daily water tracking history and push reminders require the Kosmico Mobile App.')}
-                className="cursor-pointer bg-white rounded-[32px] p-7 border border-border shadow-md hover:border-blue-400/50 transition-all space-y-4"
-              >
+            {/* Lifestyle Trackers (Hydration, Stress, Energy) */}
+            <div className="bg-white rounded-3xl p-5 sm:p-6 border border-neutral-200 shadow-sm space-y-5">
+              <div className="flex justify-between items-center">
+                <h3 className="font-serif font-bold text-base text-neutral-900">Lifestyle Trackers</h3>
+                <span 
+                  onClick={() => openAppStoreModal('Clinical Biomarkers', 'Track and correlate glycemic response with hydration, sleep, stress and meal timing on the Kosmico Mobile App.')}
+                  className="text-xs text-[#16a34a] font-bold cursor-pointer hover:underline"
+                >
+                  Why this?
+                </span>
+              </div>
+
+              {/* Hydration */}
+              <div className="bg-[#f0f9ff] border border-[#bae6fd] rounded-2xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                      <Droplets className="w-6 h-6" />
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <Droplets className="w-4 h-4 text-blue-600" />
                     <div>
-                      <h4 className="font-serif font-bold text-base text-neutral-900">Hydration Tracker</h4>
-                      <p className="text-xs text-neutral-500">{hydration} / 2000 ml</p>
+                      <div className="text-xs font-bold text-neutral-900">Hydration</div>
+                      <div className="text-[10px] text-neutral-500">{hydration} / 2500 ml</div>
                     </div>
                   </div>
                   <button
-                    className="px-4 py-2 bg-blue-600 text-white font-bold text-xs rounded-xl shadow-xs flex items-center gap-1"
+                    onClick={() => openAppStoreModal('Hydration & Water Logger', 'Logging water intake and hydration alarms is available on the Kosmico Mobile App.')}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>+250ml</span>
+                    +250ml
                   </button>
                 </div>
-
-                <div className="w-full bg-neutral-100 h-3 rounded-full overflow-hidden">
-                  <div
-                    className="bg-blue-500 h-full transition-all duration-500"
-                    style={{ width: `${Math.min((hydration / 2000) * 100, 100)}%` }}
+                <div className="w-full bg-blue-100 h-2 rounded-full overflow-hidden">
+                  <div 
+                    className="bg-blue-600 h-full transition-all duration-300"
+                    style={{ width: `${Math.min((hydration / 2500) * 100, 100)}%` }}
                   />
                 </div>
               </div>
 
-              {/* Stress & Energy Selector */}
-              <div
-                onClick={() => openModalWithDetails('Mood & Energy Logger', 'Log stress levels, energy scores, and supplement reminders on the Kosmico Mobile App.')}
-                className="cursor-pointer bg-white rounded-[32px] p-7 border border-border shadow-md space-y-4 hover:border-emerald-800/40 transition-all"
-              >
-                <h4 className="font-serif font-bold text-base text-neutral-900">Log How You Feel</h4>
-                
-                <div>
-                  <label className="text-xs text-neutral-600 font-semibold mb-1.5 block">Stress Level</label>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((lvl) => (
+              {/* Stress & Energy Emojis */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-neutral-50 border border-neutral-200 rounded-2xl p-3.5">
+                  <div className="text-xs font-bold text-neutral-900 mb-1">Stress Level</div>
+                  <div className="text-[10px] text-neutral-500 mb-2">
+                    {selectedStress !== null ? `Logged: Level ${selectedStress + 1}` : 'Not logged • Tap to log on App'}
+                  </div>
+                  <div className="flex justify-between text-xl">
+                    {['😢', '😐', '🙂', '😌'].map((emoji, idx) => (
                       <button
-                        key={lvl}
-                        className="flex-1 py-2.5 rounded-xl text-xs font-extrabold bg-stone-50 text-neutral-700 border border-stone-200"
+                        key={idx}
+                        onClick={() => openAppStoreModal('Stress Biomarker Logger', 'Correlate stress cortisol levels with glucose spikes on the Kosmico Mobile App.')}
+                        className="p-1.5 rounded-xl transition-all hover:scale-110 cursor-pointer"
                       >
-                        Lvl {lvl}
+                        {emoji}
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-xs text-neutral-600 font-semibold mb-1.5 block">Energy Level</label>
-                  <div className="flex gap-2">
-                    {[1, 2, 3, 4, 5].map((lvl) => (
+                <div className="bg-neutral-50 border border-neutral-200 rounded-2xl p-3.5">
+                  <div className="text-xs font-bold text-neutral-900 mb-1">Energy Level</div>
+                  <div className="text-[10px] text-neutral-500 mb-2">
+                    {selectedEnergy !== null ? `Logged: Level ${selectedEnergy + 1}` : 'Tap to log how you feel'}
+                  </div>
+                  <div className="flex justify-between text-xl">
+                    {['😴', '😐', '⚡', '🔥'].map((emoji, idx) => (
                       <button
-                        key={lvl}
-                        className="flex-1 py-2.5 rounded-xl text-xs font-extrabold bg-stone-50 text-neutral-700 border border-stone-200"
+                        key={idx}
+                        onClick={() => openAppStoreModal('Energy & Fatigue Tracker', 'Track energy levels throughout the day on the Kosmico Mobile App.')}
+                        className="p-1.5 rounded-xl transition-all hover:scale-110 cursor-pointer"
                       >
-                        {lvl}⚡
+                        {emoji}
                       </button>
                     ))}
                   </div>
                 </div>
-
               </div>
 
-            </div>
-
-          </div>
-        )}
-
-        {/* TAB 2: PLATE AI SCAN */}
-        {activeTab === 'scan' && (
-          <div
-            onClick={() => openModalWithDetails('Plate AI Meal Scanner', 'Camera AI meal scanning and instant Glycemic Index analysis requires the Kosmico Mobile App on Google Play.')}
-            className="cursor-pointer bg-white rounded-[32px] p-8 border border-border shadow-lg max-w-2xl mx-auto space-y-6 hover:border-emerald-800/50 transition-all"
-          >
-            <div className="text-center space-y-2">
-              <div className="w-16 h-16 rounded-3xl bg-emerald-800/10 text-emerald-800 mx-auto flex items-center justify-center font-bold">
-                <Camera className="w-8 h-8" />
-              </div>
-              <h2 className="text-2xl font-serif font-bold text-neutral-900">Plate AI Meal Scanner</h2>
-              <p className="text-xs text-neutral-600 max-w-md mx-auto leading-relaxed">
-                Upload or capture a food photo to estimate calories, net carbs, and glycemic impact using Gemini AI Vision.
-              </p>
-            </div>
-
-            <div className="border-2 border-dashed border-emerald-800/30 bg-stone-50/80 rounded-3xl p-8 text-center relative">
-              <div className="space-y-3">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 text-emerald-800 mx-auto flex items-center justify-center">
-                  <Plus className="w-6 h-6" />
+              {/* Meal & Medication Status */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div 
+                  onClick={() => openAppStoreModal('Meal Markers', 'Log meals and photograph food plates on the Kosmico Mobile App.')}
+                  className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 text-xs text-neutral-600 cursor-pointer hover:bg-emerald-50/50"
+                >
+                  <strong className="block text-neutral-800 font-bold mb-0.5">Meal Markers</strong>
+                  No meals logged for {timeOfDay} • Tap to log
                 </div>
-                <div className="text-sm font-bold text-neutral-800">Tap to Open App Camera Scanner</div>
-                <p className="text-xs text-neutral-500">Requires Kosmico Mobile App for instant AI scan</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 3: CARE COMMUNITY */}
-        {activeTab === 'community' && (
-          <div
-            onClick={() => openModalWithDetails('Care Community & SOS Network', 'Joining doctor SOS emergency groups and peer keto circles requires the Kosmico Mobile App.')}
-            className="cursor-pointer bg-white rounded-[32px] p-8 border border-border shadow-lg max-w-3xl mx-auto space-y-6 hover:border-emerald-800/50 transition-all"
-          >
-            <div className="flex justify-between items-center border-b border-border pb-4">
-              <div>
-                <h2 className="text-xl font-bold font-serif text-neutral-900">Kosmico Care Network &amp; Community</h2>
-                <p className="text-xs text-neutral-500">Connect with peer health groups &amp; family care circles</p>
-              </div>
-              <button
-                className="px-4 py-2 bg-emerald-900 text-white font-bold text-xs rounded-xl hover:bg-emerald-950"
-              >
-                Join Doctor SOS Group
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              {[
-                { name: 'Dr. Priya Sharma', role: 'Endocrinologist Care', text: 'Tip of the day: Replacing refined sugar with pure monk fruit keeps your glycemic response flat throughout the day.' },
-                { name: 'Rohan Mehta', role: 'Keto Community', text: 'Logged 10,000 steps today and kept my sugar level strictly at 105 mg/dL. Feel super energetic!' }
-              ].map((post, idx) => (
-                <div key={idx} className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-900 text-white flex items-center justify-center font-bold text-sm">
-                      {post.name[0]}
-                    </div>
-                    <div>
-                      <div className="font-bold text-xs text-neutral-900">{post.name}</div>
-                      <div className="text-[10px] text-emerald-800 font-semibold">{post.role}</div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-neutral-700 leading-relaxed">{post.text}</p>
+                <div 
+                  onClick={() => openAppStoreModal('Medication & Insulin Schedule', 'Schedule and track insulin dosage and metformin reminders on the Kosmico Mobile App.')}
+                  className="p-3 bg-neutral-50 rounded-xl border border-neutral-200 text-xs text-neutral-600 cursor-pointer hover:bg-emerald-50/50"
+                >
+                  <strong className="block text-neutral-800 font-bold mb-0.5">Medication &amp; Insulin</strong>
+                  No medication logged today • Tap to log
                 </div>
-              ))}
+              </div>
+
+              {/* App Promotion Banner at Bottom of Dashboard */}
+              <div className="p-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 rounded-2xl border border-emerald-200/80 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <Sparkles className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <p className="text-xs text-emerald-950 font-medium">
+                    Want to log readings, sync your smartwatch or scan food plates?
+                  </p>
+                </div>
+                <a
+                  href={PLAY_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center gap-1.5 shrink-0"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Get App</span>
+                </a>
+              </div>
+
             </div>
+
           </div>
         )}
 
       </Container>
 
-      {/* Play Store Download Modal */}
+      {/* Play Store Modal Popup */}
       <PlayStoreModal
-        isOpen={isBleModalOpen}
-        onClose={() => setIsBleModalOpen(false)}
+        isOpen={isStoreModalOpen}
+        onClose={() => setIsStoreModalOpen(false)}
         featureTitle={modalTitle}
         featureDescription={modalDesc}
       />

@@ -1,6 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
-const { ApiResponse } = require('../utils/apiResponse');
+const { ApiResponse, ApiError } = require('../utils/apiResponse');
 const notificationService = require('../services/notificationService');
+const Notification = require('../models/Notification');
 
 const getNotifications = asyncHandler(async (req, res) => {
   const { page, limit } = req.query;
@@ -24,9 +25,25 @@ const markAllAsRead = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, null, 'All notifications marked as read'));
 });
 
+const deleteNotification = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const deleted = await Notification.findOneAndDelete({ _id: id, user: req.user._id });
+  if (!deleted) {
+    throw new ApiError(404, 'Notification not found');
+  }
+  res.status(200).json(new ApiResponse(200, null, 'Notification deleted successfully'));
+});
+
+const clearAllNotifications = asyncHandler(async (req, res) => {
+  await Notification.deleteMany({ user: req.user._id });
+  res.status(200).json(new ApiResponse(200, null, 'All notifications cleared successfully'));
+});
+
 module.exports = {
   getNotifications,
   getUnreadCount,
   markAsRead,
   markAllAsRead,
+  deleteNotification,
+  clearAllNotifications,
 };

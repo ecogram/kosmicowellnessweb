@@ -1,10 +1,8 @@
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
-import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, ShieldCheck, Truck, Sparkles, Lock } from 'lucide-react';
+import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, ShieldCheck, Truck, Lock } from 'lucide-react';
 import { useCartDrawerStore } from '../../store/useCartDrawerStore';
 import { useCart, useUpdateCartItem, useRemoveCartItem } from '../../hooks/useCart';
-
-const FREE_SHIPPING_THRESHOLD = 499;
 
 export function CartDrawer() {
   const { isOpen, closeDrawer } = useCartDrawerStore();
@@ -27,8 +25,6 @@ export function CartDrawer() {
   };
 
   const totalAmount = items.reduce((acc: number, item: any) => acc + (getItemPrice(item) * (item.quantity || 1)), 0);
-  const remainingForFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - totalAmount);
-  const freeShippingProgress = FREE_SHIPPING_THRESHOLD > 0 ? Math.min(100, (totalAmount / FREE_SHIPPING_THRESHOLD) * 100) : 100;
 
   const handleQuantityChange = (productId: string, currentQty: number, change: number, variant?: string) => {
     const newQty = currentQty + change;
@@ -79,28 +75,13 @@ export function CartDrawer() {
           </button>
         </div>
 
-        {/* Free Shipping Progress Bar */}
-        <div className="p-3.5 sm:p-4 bg-emerald-50/80 border-b border-emerald-900/10 relative overflow-hidden shrink-0">
-          <div className="flex items-center justify-between text-xs font-semibold text-neutral-900 mb-2">
-            <span className="flex items-center gap-1.5">
-              <Truck className="w-4 h-4 text-emerald-800 animate-bounce" />
-              {remainingForFreeShipping > 0 ? (
-                <>Add <strong className="text-emerald-900 font-bold">₹{remainingForFreeShipping}</strong> more for FREE Express Shipping!</>
-              ) : (
-                <span className="text-emerald-800 font-bold flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                  🎉 You've unlocked FREE Express Delivery!
-                </span>
-              )}
-            </span>
-            <span className="font-extrabold text-xs text-emerald-900">{Math.round(freeShippingProgress)}%</span>
+        {/* Delivery Info Banner */}
+        <div className="p-3 sm:p-3.5 bg-emerald-50/90 border-b border-emerald-900/10 flex items-center justify-between text-xs font-semibold text-neutral-800 shrink-0">
+          <div className="flex items-center gap-2">
+            <Truck className="w-4 h-4 text-emerald-800 shrink-0" />
+            <span>🎉 <strong className="text-emerald-900">FREE Delivery</strong> on all Online Prepaid Orders!</span>
           </div>
-          <div className="w-full h-2.5 bg-neutral-200 rounded-full overflow-hidden p-0.5">
-            <div 
-              className="h-full bg-gradient-to-r from-emerald-700 via-emerald-600 to-amber-500 transition-all duration-700 rounded-full shadow-xs"
-              style={{ width: `${freeShippingProgress}%` }}
-            />
-          </div>
+          <span className="text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">Shiprocket</span>
         </div>
 
         {/* Cart Content */}
@@ -214,7 +195,7 @@ export function CartDrawer() {
 
             <div className="flex items-center gap-1.5 text-[11px] text-emerald-900 bg-emerald-50 p-2.5 rounded-xl font-semibold border border-emerald-200">
               <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
-              <span>100% Secure Checkout | Free Express Shipping</span>
+              <span>100% Secure Checkout | Live Shiprocket Delivery</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2.5 pt-1">

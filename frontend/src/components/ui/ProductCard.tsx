@@ -37,8 +37,13 @@ export function ProductCard({ product }: ProductCardProps) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isAuthenticated) return navigate('/login');
-    addToCartMutation.mutate({ productId: product.id, quantity: 1 });
+    addToCartMutation.mutate({ 
+      productId: product.id, 
+      quantity: 1,
+      name: product.name,
+      price: product.price,
+      image: product.image
+    });
   };
 
   const handleToggleWishlist = (e: React.MouseEvent) => {
@@ -51,8 +56,13 @@ export function ProductCard({ product }: ProductCardProps) {
   const handleBuyNow = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isAuthenticated) return navigate('/login');
-    await addToCartMutation.mutateAsync({ productId: product.id, quantity: 1 });
+    await addToCartMutation.mutateAsync({ 
+      productId: product.id, 
+      quantity: 1,
+      name: product.name,
+      price: product.price,
+      image: product.image
+    });
     navigate('/checkout');
   };
 

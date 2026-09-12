@@ -1,36 +1,46 @@
-const { Emitter } = require('@socket.io/redis-emitter');
-const Redis = require('ioredis');
-const { redisConfig } = require('../config/redis');
-
-let emitter;
-
-try {
-  const redisClient = new Redis(redisConfig);
-  emitter = new Emitter(redisClient);
-} catch (error) {
-  console.error('Failed to initialize Redis Emitter', error);
-  // Dummy emitter fallback
-  emitter = {
-    to: () => ({ emit: () => {} }),
-    emit: () => {}
-  };
-}
+const { getIo } = require('./socket');
 
 const emitToUser = (userId, event, payload) => {
-  emitter.to(`user:${userId}`).emit(event, payload);
+  try {
+    const io = getIo();
+    io.to(`user:${userId}`).emit(event, payload);
+  } catch (_) {}
 };
 
 const emitToAdmins = (event, payload) => {
-  emitter.to('admins').emit(event, payload);
+  try {
+    const io = getIo();
+    io.to('admins').emit(event, payload);
+  } catch (_) {}
 };
 
 const emitToOrder = (orderId, event, payload) => {
-  emitter.to(`order:${orderId}`).emit(event, payload);
+  try {
+    const io = getIo();
+    io.to(`order:${orderId}`).emit(event, payload);
+  } catch (_) {}
+};
+
+const emitter = {
+  to: (room) => ({
+    emit: (event, payload) => {
+      try {
+        const io = getIo();
+        io.to(room).emit(event, payload);
+      } catch (_) {}
+    },
+  }),
+  emit: (event, payload) => {
+    try {
+      const io = getIo();
+      io.emit(event, payload);
+    } catch (_) {}
+  },
 };
 
 module.exports = {
   emitter,
   emitToUser,
   emitToAdmins,
-  emitToOrder
+  emitToOrder,
 };

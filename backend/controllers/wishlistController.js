@@ -26,9 +26,16 @@ const clearWishlist = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, { wishlist }, 'Wishlist cleared'));
 });
 
+const removeWishlistFromBody = asyncHandler(async (req, res) => {
+  const { productId } = req.body;
+  const wishlist = await wishlistService.removeItem(getUserId(req), productId);
+  res.status(200).json(new ApiResponse(200, { wishlist }, 'Item removed from wishlist'));
+});
+
 module.exports = {
   getWishlist,
   addToWishlist,
   removeWishlistItem,
+  removeWishlistFromBody,
   clearWishlist,
 };

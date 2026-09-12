@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please add an email'],
       unique: true,
+      trim: true,
       match: [
         /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
         'Please add a valid email',
@@ -20,7 +21,7 @@ const userSchema = new mongoose.Schema(
     },
     passwordHash: {
       type: String,
-      required: [true, 'Please add a password'],
+      required: false,
       select: false, // Do not return by default
     },
     role: {
@@ -32,13 +33,27 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    phoneNumber: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    profilePicture: {
+      type: String,
+      default: '',
+    },
+    friends: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
+    ],
   },
   {
     timestamps: true,
   }
 );
 
-userSchema.index({ email: 1 });
 
 // Encrypt password using bcrypt
 userSchema.pre('save', async function () {

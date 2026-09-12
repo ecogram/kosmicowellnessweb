@@ -72,8 +72,8 @@ class OrderService {
         }
 
         // 3. Shipping and Tax
-        const shipping = shippingService.calculateShipping(subtotal, shippingAddress);
-        const tax = taxService.calculateTax(subtotal, shippingAddress);
+        const shipping = shippingService.calculateShipping(subtotal, shippingAddress, paymentMethod);
+        const tax = taxService.calculateTax(subtotal, shippingAddress, paymentMethod);
         const discount = 0;
         const total = subtotal + shipping + tax - discount;
 
@@ -200,8 +200,8 @@ class OrderService {
         });
       }
 
-      const shipping = shippingService.calculateShipping(subtotal, shippingAddress);
-      const tax = taxService.calculateTax(subtotal, shippingAddress);
+      const shipping = shippingService.calculateShipping(subtotal, shippingAddress, paymentMethod);
+      const tax = taxService.calculateTax(subtotal, shippingAddress, paymentMethod);
       const total = subtotal + shipping + tax;
 
       let orderNumber;
@@ -261,8 +261,13 @@ class OrderService {
     }
   }
 
-  async getOrder(orderNumber, userId) {
-    const order = await orderRepository.model.findOne({ orderNumber, user: userId });
+  async getOrder(orderIdentifier, userId) {
+    const isObjectId = mongoose.Types.ObjectId.isValid(orderIdentifier);
+    const query = isObjectId
+      ? { $or: [{ orderNumber: orderIdentifier }, { _id: orderIdentifier }], user: userId }
+      : { orderNumber: orderIdentifier, user: userId };
+
+    const order = await orderRepository.model.findOne(query);
     if (!order) throw new ApiError(404, 'Order not found');
     return order;
   }

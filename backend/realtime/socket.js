@@ -20,18 +20,20 @@ const initializeSocket = (httpServer) => {
     },
   });
 
-  // Try to use Redis Adapter for horizontal scaling
-  try {
-    const pubClient = new Redis(redisConfig);
-    const subClient = pubClient.duplicate();
-
-    pubClient.on('error', (err) => console.error('Redis PubClient Error:', err.message));
-    subClient.on('error', (err) => console.error('Redis SubClient Error:', err.message));
-
-    io.adapter(createAdapter(pubClient, subClient));
-    console.log('Socket.IO Redis Adapter connected');
-  } catch (error) {
-    console.error('Failed to initialize Socket.IO Redis Adapter. Falling back to memory adapter.', error);
+  // Socket.IO Memory / Redis Adapter
+  if (process.env.REDIS_URL && process.env.NODE_ENV === 'production') {
+    try {
+      const pubClient = new Redis(redisConfig);
+      const subClient = pubClient.duplicate();
+      pubClient.on('error', () => {});
+      subClient.on('error', () => {});
+      io.adapter(createAdapter(pubClient, subClient));
+      console.log('Socket.IO Redis Adapter connected');
+    } catch (error) {
+      console.log('Socket.IO running in memory mode');
+    }
+  } else {
+    console.log('Socket.IO running in lightweight memory mode');
   }
 
   // Authentication Middleware

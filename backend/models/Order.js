@@ -96,6 +96,27 @@ const orderSchema = new mongoose.Schema(
     paymentReference: {
       type: String, // E.g., Razorpay order ID
     },
+    courierPartner: {
+      type: String,
+      default: 'Shiprocket / Bluedart',
+    },
+    trackingNumber: {
+      type: String,
+      default: '',
+    },
+    cancelReason: {
+      type: String,
+      default: '',
+    },
+    returnReason: {
+      type: String,
+      default: '',
+    },
+    refundStatus: {
+      type: String,
+      enum: ['NONE', 'INITIATED', 'PROCESSED', 'REJECTED'],
+      default: 'NONE',
+    },
   },
   {
     timestamps: true,

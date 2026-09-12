@@ -6,6 +6,8 @@ router.route('/')
   .get(categoryController.getCategories)
   .post(categoryController.createCategory);
 
+router.get('/user/list', categoryController.getCategories);
+
 router.route('/:slug')
   .get(categoryController.getCategoryBySlug);
 
