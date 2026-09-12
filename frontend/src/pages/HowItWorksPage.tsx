@@ -1,18 +1,14 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { 
-  FileText, 
-  Download, 
-  ZoomIn, 
   CheckCircle2, 
   ShieldCheck, 
   Award, 
-  Eye, 
+  ZoomIn, 
   X, 
   Sparkles, 
   Beaker,
-  ArrowRight,
+  FileText,
   Zap,
   Leaf,
   Coffee,
@@ -24,30 +20,27 @@ import { Lifestyle } from '../features/home/Lifestyle';
 import { FinalCta } from '../features/home/FinalCta';
 
 export function HowItWorksPage() {
-  // Modal state for HD Document inspection
-  const [activeModalDoc, setActiveModalDoc] = useState<{
+  // Modal state for HD Image inspection
+  const [selectedImage, setSelectedImage] = useState<{
     title: string;
     imageSrc: string;
-    pdfSrc: string;
-    reportNo?: string;
-    labName?: string;
-    description: string;
+    subtitle: string;
   } | null>(null);
 
   return (
     <div className="flex flex-col w-full bg-[#f8faf8] pt-24 pb-16 font-sans">
       
       {/* 1. Header Hero Banner */}
-      <section className="relative py-12 md:py-16 overflow-hidden">
+      <section className="relative py-10 md:py-14 overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-emerald-100/50 via-emerald-50/30 to-transparent rounded-full blur-3xl pointer-events-none" />
         
         <Container className="relative z-10 text-center max-w-4xl mx-auto px-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-800/10 border border-emerald-800/20 text-[#0a7a40] text-xs font-bold uppercase tracking-wider mb-6 shadow-xs">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-800/10 border border-emerald-800/20 text-[#0a7a40] text-xs font-bold uppercase tracking-wider mb-5 shadow-xs">
             <Sparkles className="w-4 h-4 text-emerald-700" />
             <span>100% Certified Pure Monk Fruit • Lab Verified</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-extrabold text-neutral-900 leading-[1.15] mb-6">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-extrabold text-neutral-900 leading-[1.15] mb-5">
             How Kosmico Sweet Monk Works
           </h1>
 
@@ -72,191 +65,117 @@ export function HowItWorksPage() {
         </Container>
       </section>
 
-      {/* 2. Official Lab Reports & Quality Certificates Section */}
+      {/* 2. Official Lab Reports & Nutrition Facts (Direct HD View) */}
       <section className="py-12 md:py-16 bg-white border-y border-emerald-900/10">
         <Container className="max-w-6xl mx-auto px-4">
           
-          <div className="text-center max-w-2xl mx-auto mb-12">
+          <div className="text-center max-w-2xl mx-auto mb-10">
             <span className="text-[#0a7a40] font-extrabold tracking-widest uppercase text-xs mb-2 block">
-              Official Verification &amp; Certification
+              Quality &amp; Lab Certifications
             </span>
-            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-neutral-900 mb-4">
-              Certified Lab Reports &amp; Nutrition Facts
+            <h2 className="text-3xl sm:text-4xl font-serif font-bold text-neutral-900 mb-3">
+              Official Lab Test Report &amp; Nutrition Facts
             </h2>
             <p className="text-neutral-600 text-sm leading-relaxed">
-              Every batch of Kosmico Sweet Monk is independently tested by government-approved food testing laboratories to guarantee 100% purity and zero sugar. Click on any document to view in HD or download the official PDF.
+              Certified by government-approved food testing laboratories. Click on any certificate to view in full HD resolution.
             </p>
           </div>
 
-          {/* Document Cards Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-14">
+          {/* Two Images Display Side-by-Side */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
             
-            {/* Document Card 1: Official Test Report (COA) */}
-            <div className="bg-gradient-to-b from-stone-50 to-white rounded-3xl border border-neutral-200/90 p-6 md:p-8 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
-              <div>
-                <div className="flex items-center justify-between gap-4 mb-4 pb-4 border-b border-neutral-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-[#0a7a40] flex items-center justify-center font-bold">
-                      <Beaker className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-serif font-bold text-lg text-neutral-900">Lab Test Report (COA)</h3>
-                      <p className="text-xs text-neutral-500 font-medium">Qualiset Food Laboratories LLP • QFL/160726/05</p>
-                    </div>
+            {/* Image 1: Official Lab Test Report */}
+            <div className="bg-[#fafcfa] rounded-3xl border border-neutral-200 p-5 sm:p-7 shadow-md flex flex-col items-center">
+              <div className="w-full flex items-center justify-between gap-3 mb-4 pb-3 border-b border-neutral-200">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-100 text-[#0a7a40] flex items-center justify-center font-bold">
+                    <Beaker className="w-5 h-5" />
                   </div>
-                  <span className="bg-emerald-100 text-[#0a7a40] text-[11px] font-extrabold uppercase px-3 py-1 rounded-full shrink-0">
-                    Verified
-                  </span>
-                </div>
-
-                <p className="text-xs text-neutral-600 leading-relaxed mb-5">
-                  Complete microbiological and nutritional value testing confirming <strong>0.00g Moisture, 0.0g Protein, 0.0g Sugars, and 0.0 Kcal Calories</strong> in Monk Fruit Liquid Sweetener.
-                </p>
-
-                {/* High Resolution Image Preview */}
-                <div 
-                  onClick={() => setActiveModalDoc({
-                    title: 'Official Lab Test Report (Certificate of Analysis)',
-                    imageSrc: '/assets/reports/lab-test-report.jpg',
-                    pdfSrc: '/assets/reports/lab-test-report.pdf',
-                    reportNo: 'QFL/160726/05',
-                    labName: 'Qualiset Food Laboratories LLP, Rajkot',
-                    description: 'Tested and verified by Qualiset Food Laboratories LLP for Green Sugar Pvt. Ltd. Sample: Monk Fruit Liquid Sweetener.'
-                  })}
-                  className="relative rounded-2xl overflow-hidden border border-neutral-200 bg-white p-3 shadow-inner cursor-pointer group-hover:border-[#0a7a40]/50 transition-all mb-6 aspect-[4/5] flex items-center justify-center"
-                >
-                  <img 
-                    src="/assets/reports/lab-test-report.jpg" 
-                    alt="Official Lab Test Report - Kosmico Sweet Monk" 
-                    className="w-full h-full object-contain drop-shadow transition-transform duration-500 group-hover:scale-[1.02]"
-                  />
-                  <div className="absolute inset-0 bg-emerald-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-xs">
-                    <span className="bg-white text-neutral-900 font-bold text-xs px-4 py-2 rounded-xl shadow-lg flex items-center gap-1.5">
-                      <ZoomIn className="w-4 h-4 text-[#0a7a40]" />
-                      Click to View HD
-                    </span>
+                  <div>
+                    <h3 className="font-serif font-bold text-base text-neutral-900">Lab Test Report (COA)</h3>
+                    <p className="text-[11px] text-neutral-500">Qualiset Food Laboratories LLP • QFL/160726/05</p>
                   </div>
                 </div>
+                <span className="bg-emerald-100 text-[#0a7a40] text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full">
+                  Verified 0 Sugar
+                </span>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  onClick={() => setActiveModalDoc({
-                    title: 'Official Lab Test Report (Certificate of Analysis)',
-                    imageSrc: '/assets/reports/lab-test-report.jpg',
-                    pdfSrc: '/assets/reports/lab-test-report.pdf',
-                    reportNo: 'QFL/160726/05',
-                    labName: 'Qualiset Food Laboratories LLP, Rajkot',
-                    description: 'Tested and verified by Qualiset Food Laboratories LLP for Green Sugar Pvt. Ltd. Sample: Monk Fruit Liquid Sweetener.'
-                  })}
-                  className="flex-1 py-3 px-4 bg-emerald-50 hover:bg-emerald-100 text-[#0a7a40] font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Eye className="w-4 h-4" />
-                  <span>View Full HD Report</span>
-                </button>
-                <a
-                  href="/assets/reports/lab-test-report.pdf"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download="Kosmico-Lab-Test-Report.pdf"
-                  className="py-3 px-4 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm cursor-pointer"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download PDF</span>
-                </a>
+              {/* Direct Full-Length HD Image */}
+              <div 
+                onClick={() => setSelectedImage({
+                  title: 'Official Lab Test Report (Certificate of Analysis)',
+                  subtitle: 'Qualiset Food Laboratories LLP — Report No: QFL/160726/05',
+                  imageSrc: '/assets/reports/lab-test-report.jpg'
+                })}
+                className="w-full bg-white rounded-2xl border border-neutral-200/90 p-3 shadow-xs cursor-pointer group hover:border-[#0a7a40] transition-all relative overflow-hidden"
+              >
+                <img 
+                  src="/assets/reports/lab-test-report.jpg" 
+                  alt="Official Lab Test Report" 
+                  className="w-full h-auto max-h-[580px] object-contain mx-auto rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
+                />
+                <div className="absolute inset-0 bg-emerald-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-xs">
+                  <span className="bg-white/95 text-neutral-900 font-bold text-xs px-4 py-2 rounded-xl shadow-lg flex items-center gap-1.5">
+                    <ZoomIn className="w-4 h-4 text-[#0a7a40]" />
+                    Click to Enlarge HD View
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Document Card 2: Official Nutrition Facts Label */}
-            <div className="bg-gradient-to-b from-stone-50 to-white rounded-3xl border border-neutral-200/90 p-6 md:p-8 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between group">
-              <div>
-                <div className="flex items-center justify-between gap-4 mb-4 pb-4 border-b border-neutral-200">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
-                      <FileText className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-serif font-bold text-lg text-neutral-900">Nutrition Facts Label</h3>
-                      <p className="text-xs text-neutral-500 font-medium">Standard Dietary Declaration • 100g Serving</p>
-                    </div>
+            {/* Image 2: Official Nutrition Facts Label */}
+            <div className="bg-[#fafcfa] rounded-3xl border border-neutral-200 p-5 sm:p-7 shadow-md flex flex-col items-center">
+              <div className="w-full flex items-center justify-between gap-3 mb-4 pb-3 border-b border-neutral-200">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+                    <FileText className="w-5 h-5" />
                   </div>
-                  <span className="bg-amber-100 text-amber-900 text-[11px] font-extrabold uppercase px-3 py-1 rounded-full shrink-0">
-                    Certified
-                  </span>
-                </div>
-
-                <p className="text-xs text-neutral-600 leading-relaxed mb-5">
-                  Standardized nutrition panel validating <strong>0.00 Calories, 0.00g Total Fat, 0.0g Total Carbohydrates, 0.0g Sugars, and 0.0g Protein</strong> per 100 gm.
-                </p>
-
-                {/* High Resolution Image Preview */}
-                <div 
-                  onClick={() => setActiveModalDoc({
-                    title: 'Official Nutrition Facts Label',
-                    imageSrc: '/assets/reports/nutrition-facts-label.jpg',
-                    pdfSrc: '/assets/reports/nutrition-facts-label.pdf',
-                    reportNo: 'Standard Nutrition Label',
-                    labName: 'Green Sugar Pvt. Ltd. Regulatory Compliance',
-                    description: 'Certified Nutrition Facts Panel for Kosmico Sweet Monk Fruit Liquid Drops.'
-                  })}
-                  className="relative rounded-2xl overflow-hidden border border-neutral-200 bg-white p-3 shadow-inner cursor-pointer group-hover:border-[#0a7a40]/50 transition-all mb-6 aspect-[4/5] flex items-center justify-center"
-                >
-                  <img 
-                    src="/assets/reports/nutrition-facts-label.jpg" 
-                    alt="Official Nutrition Facts Label - Kosmico Sweet Monk" 
-                    className="w-full h-full object-contain drop-shadow transition-transform duration-500 group-hover:scale-[1.02]"
-                  />
-                  <div className="absolute inset-0 bg-emerald-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2 backdrop-blur-xs">
-                    <span className="bg-white text-neutral-900 font-bold text-xs px-4 py-2 rounded-xl shadow-lg flex items-center gap-1.5">
-                      <ZoomIn className="w-4 h-4 text-[#0a7a40]" />
-                      Click to View HD
-                    </span>
+                  <div>
+                    <h3 className="font-serif font-bold text-base text-neutral-900">Nutrition Facts Label</h3>
+                    <p className="text-[11px] text-neutral-500">Standard Dietary Declaration • 100g Serving</p>
                   </div>
                 </div>
+                <span className="bg-amber-100 text-amber-900 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full">
+                  0.00 Calories
+                </span>
               </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3 pt-2">
-                <button
-                  onClick={() => setActiveModalDoc({
-                    title: 'Official Nutrition Facts Label',
-                    imageSrc: '/assets/reports/nutrition-facts-label.jpg',
-                    pdfSrc: '/assets/reports/nutrition-facts-label.pdf',
-                    reportNo: 'Standard Nutrition Label',
-                    labName: 'Green Sugar Pvt. Ltd. Regulatory Compliance',
-                    description: 'Certified Nutrition Facts Panel for Kosmico Sweet Monk Fruit Liquid Drops.'
-                  })}
-                  className="flex-1 py-3 px-4 bg-emerald-50 hover:bg-emerald-100 text-[#0a7a40] font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Eye className="w-4 h-4" />
-                  <span>View Full HD Label</span>
-                </button>
-                <a
-                  href="/assets/reports/nutrition-facts-label.pdf"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  download="Kosmico-Nutrition-Facts-Label.pdf"
-                  className="py-3 px-4 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm cursor-pointer"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download PDF</span>
-                </a>
+              {/* Direct Full-Length HD Image */}
+              <div 
+                onClick={() => setSelectedImage({
+                  title: 'Official Nutrition Facts Label',
+                  subtitle: 'Standard Certified Nutritional Breakdown per 100g Serving',
+                  imageSrc: '/assets/reports/nutrition-facts-label.jpg'
+                })}
+                className="w-full bg-white rounded-2xl border border-neutral-200/90 p-3 shadow-xs cursor-pointer group hover:border-[#0a7a40] transition-all relative overflow-hidden"
+              >
+                <img 
+                  src="/assets/reports/nutrition-facts-label.jpg" 
+                  alt="Official Nutrition Facts Label" 
+                  className="w-full h-auto max-h-[580px] object-contain mx-auto rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
+                />
+                <div className="absolute inset-0 bg-emerald-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-xs">
+                  <span className="bg-white/95 text-neutral-900 font-bold text-xs px-4 py-2 rounded-xl shadow-lg flex items-center gap-1.5">
+                    <ZoomIn className="w-4 h-4 text-[#0a7a40]" />
+                    Click to Enlarge HD View
+                  </span>
+                </div>
               </div>
             </div>
 
           </div>
 
-          {/* 3. Verified Nutritional Breakdown Table */}
+          {/* 3. Verified Nutritional Breakdown Summary Table */}
           <div className="bg-[#f0fdf4] rounded-3xl border border-emerald-800/20 p-6 md:p-8 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
                 <h3 className="font-serif font-bold text-xl text-neutral-900 flex items-center gap-2">
                   <Award className="w-5 h-5 text-[#0a7a40]" />
-                  <span>Laboratory Test Summary (Per 100g)</span>
+                  <span>Lab Test Parameters &amp; Results (Per 100g)</span>
                 </h3>
                 <p className="text-xs text-neutral-600 mt-1">
-                  Sample: Monk Fruit Liquid Sweetener (250ml) • Report: QFL/160726/05
+                  Sample: Monk Fruit Liquid Sweetener (250ml) • Qualiset Food Lab Report: QFL/160726/05
                 </p>
               </div>
               <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#0a7a40] bg-white px-3 py-1.5 rounded-full border border-emerald-800/20 shadow-2xs">
@@ -314,12 +233,11 @@ export function HowItWorksPage() {
         </Container>
       </section>
 
-      {/* 4. How to Use Kosmico in Daily Life (Everyday Usage) */}
+      {/* 4. Everyday Usage Guide */}
       <section className="py-14 md:py-20 bg-[#f8faf8]">
         <Container className="max-w-6xl mx-auto px-4">
           <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
             
-            {/* Image Column */}
             <div className="w-full lg:w-1/2">
               <div className="aspect-[4/5] rounded-3xl overflow-hidden relative shadow-2xl border-4 border-white">
                 <img
@@ -336,7 +254,6 @@ export function HowItWorksPage() {
               </div>
             </div>
 
-            {/* Text & Grid Column */}
             <div className="w-full lg:w-1/2">
               <span className="text-[#0a7a40] font-extrabold tracking-widest uppercase text-xs mb-3 block">
                 Simple Daily Usage
@@ -401,58 +318,37 @@ export function HowItWorksPage() {
       {/* 6. Final CTA Section */}
       <FinalCta />
 
-      {/* Full HD Document Zoom / Inspection Modal */}
-      {activeModalDoc && (
+      {/* Full-Screen HD Image Viewer Modal */}
+      {selectedImage && (
         <div 
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-fadeIn"
-          onClick={() => setActiveModalDoc(null)}
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+          onClick={() => setSelectedImage(null)}
         >
           <div 
-            className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border border-white/20 animate-scaleUp"
+            className="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col overflow-hidden shadow-2xl border border-white/20"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-5 border-b border-neutral-200 bg-[#f8faf8]">
+            <div className="flex items-center justify-between p-4 px-6 border-b border-neutral-200 bg-[#f8faf8]">
               <div>
-                <h3 className="font-serif font-bold text-lg text-neutral-900">{activeModalDoc.title}</h3>
-                <p className="text-xs text-neutral-500 font-medium">{activeModalDoc.labName} • {activeModalDoc.reportNo}</p>
+                <h3 className="font-serif font-bold text-base sm:text-lg text-neutral-900">{selectedImage.title}</h3>
+                <p className="text-xs text-neutral-500 font-medium">{selectedImage.subtitle}</p>
               </div>
-              <div className="flex items-center gap-2">
-                <a
-                  href={activeModalDoc.pdfSrc}
-                  download
-                  className="py-2 px-3.5 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5 shadow-xs"
-                >
-                  <Download className="w-4 h-4" />
-                  <span>Download PDF</span>
-                </a>
-                <button
-                  onClick={() => setActiveModalDoc(null)}
-                  className="w-9 h-9 rounded-xl bg-neutral-200/80 hover:bg-neutral-300 text-neutral-700 flex items-center justify-center transition-colors cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="w-9 h-9 rounded-xl bg-neutral-200/80 hover:bg-neutral-300 text-neutral-700 flex items-center justify-center transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            {/* Modal Body: Scrollable Full HD Image */}
+            {/* Full HD Image Display */}
             <div className="p-4 sm:p-6 overflow-y-auto bg-neutral-100 flex items-center justify-center flex-1">
               <img 
-                src={activeModalDoc.imageSrc} 
-                alt={activeModalDoc.title}
-                className="max-h-[70vh] w-auto object-contain rounded-xl shadow-lg border border-neutral-300 bg-white" 
+                src={selectedImage.imageSrc} 
+                alt={selectedImage.title}
+                className="max-h-[75vh] w-auto object-contain rounded-xl shadow-lg border border-neutral-300 bg-white" 
               />
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 bg-white border-t border-neutral-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-600">
-              <p>{activeModalDoc.description}</p>
-              <Link to="/shop" onClick={() => setActiveModalDoc(null)}>
-                <button className="px-5 py-2.5 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold rounded-xl flex items-center gap-1.5 shadow-sm">
-                  <span>Shop Sweet Monk</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </Link>
             </div>
           </div>
         </div>
