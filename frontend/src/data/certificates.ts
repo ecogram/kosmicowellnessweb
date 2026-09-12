@@ -12,17 +12,6 @@ export interface CertificateItem {
 
 export const CERTIFICATES: CertificateItem[] = [
   {
-    id: 'lab-test-report',
-    title: 'Official Lab Test Report (Certificate of Analysis)',
-    subtitle: 'Qualiset Food Laboratories LLP • Report No: QFL/160726/05',
-    badge: '100% Zero-Sugar Verified',
-    badgeColor: 'bg-emerald-100 text-[#0a7a40]',
-    imageSrc: '/assets/products/lab-test-report.jpg',
-    fallbackSrc: '/assets/reports/lab-test-report.jpg',
-    description: 'Government certified food laboratory analysis verifying 0.0 Kcal Calories, 0.00g Sugar, 0.00g Carbohydrates, and zero artificial additives in Kosmico Monk Fruit Liquid Sweetener.',
-    highlights: ['0.0 Kcal Calories', '0.0g Total Sugar', '0.00g Net Carbs', '0.0g Trans Fat']
-  },
-  {
     id: 'nutrition-facts-label',
     title: 'Certified Nutrition Facts Label',
     subtitle: 'Standard Regulatory Food Label • 100g Serving Declaration',
