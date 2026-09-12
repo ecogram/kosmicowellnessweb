@@ -18,18 +18,10 @@ import {
 } from 'lucide-react';
 import { Lifestyle } from '../features/home/Lifestyle';
 import { FinalCta } from '../features/home/FinalCta';
-
-// Direct Bundled Asset Imports (100% reliable across all browsers & devices)
-import labReportImage from '../assets/reports/lab-test-report.jpg';
-import nutritionFactsImage from '../assets/reports/nutrition-facts-label.jpg';
+import { CERTIFICATES, type CertificateItem } from '../data/certificates';
 
 export function HowItWorksPage() {
-  // Modal state for HD Image inspection
-  const [selectedImage, setSelectedImage] = useState<{
-    title: string;
-    imageSrc: string;
-    subtitle: string;
-  } | null>(null);
+  const [activeCert, setActiveCert] = useState<CertificateItem | null>(null);
 
   return (
     <div className="flex flex-col w-full bg-[#f8faf8] pt-24 pb-16 font-sans">
@@ -69,107 +61,93 @@ export function HowItWorksPage() {
         </Container>
       </section>
 
-      {/* 2. Official Lab Reports & Nutrition Facts (Direct HD Full Certificate Display) */}
+      {/* 2. Official Lab Reports & Quality Certificates Section */}
       <section className="py-12 md:py-16 bg-white border-y border-emerald-900/10">
         <Container className="max-w-6xl mx-auto px-4">
           
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="text-[#0a7a40] font-extrabold tracking-widest uppercase text-xs mb-2 block">
-              Official Quality Verification
+              Quality &amp; Lab Certifications
             </span>
             <h2 className="text-3xl sm:text-4xl font-serif font-bold text-neutral-900 mb-3">
               Official Lab Test Report &amp; Nutrition Facts
             </h2>
             <p className="text-neutral-600 text-sm leading-relaxed">
-              Certified by Qualiset Food Laboratories LLP. Click any certificate to enlarge and inspect in full HD.
+              Tested and certified by Qualiset Food Laboratories LLP. Click any certificate to enlarge in high definition.
             </p>
           </div>
 
-          {/* Two Images Display Side-by-Side */}
+          {/* Certificates Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 mb-14">
-            
-            {/* Certificate 1: Official Lab Test Report */}
-            <div className="bg-[#f9fbf9] rounded-3xl border border-neutral-200 p-5 sm:p-7 shadow-lg flex flex-col items-center">
-              <div className="w-full flex items-center justify-between gap-3 mb-5 pb-4 border-b border-neutral-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-[#0a7a40] flex items-center justify-center font-bold">
-                    <Beaker className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-serif font-bold text-lg text-neutral-900">Lab Test Report (COA)</h3>
-                    <p className="text-xs text-neutral-500">Qualiset Food Laboratories LLP • Report No: QFL/160726/05</p>
-                  </div>
-                </div>
-                <span className="bg-emerald-100 text-[#0a7a40] text-xs font-extrabold uppercase px-3 py-1 rounded-full">
-                  100% Passed
-                </span>
-              </div>
-
-              {/* Direct Full-Length HD Certificate Image */}
+            {CERTIFICATES.map((cert) => (
               <div 
-                onClick={() => setSelectedImage({
-                  title: 'Official Lab Test Report (Certificate of Analysis)',
-                  subtitle: 'Qualiset Food Laboratories LLP — Report No: QFL/160726/05',
-                  imageSrc: labReportImage
-                })}
-                className="w-full bg-white rounded-2xl border border-neutral-300 p-2 sm:p-4 shadow-md cursor-pointer group hover:border-[#0a7a40] hover:shadow-xl transition-all relative overflow-hidden flex items-center justify-center"
+                key={cert.id}
+                className="bg-[#fafcfa] rounded-3xl border border-neutral-200 p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between"
               >
-                <img 
-                  src={labReportImage} 
-                  alt="Official Lab Test Report - Qualiset Food Laboratories" 
-                  className="w-full h-auto object-contain max-h-[650px] mx-auto rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
-                  loading="eager"
-                />
-                <div className="absolute inset-0 bg-emerald-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-xs">
-                  <span className="bg-white text-neutral-900 font-bold text-xs px-5 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
-                    <ZoomIn className="w-4 h-4 text-[#0a7a40]" />
-                    Click to Enlarge HD View
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Certificate 2: Official Nutrition Facts Label */}
-            <div className="bg-[#f9fbf9] rounded-3xl border border-neutral-200 p-5 sm:p-7 shadow-lg flex flex-col items-center">
-              <div className="w-full flex items-center justify-between gap-3 mb-5 pb-4 border-b border-neutral-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
-                    <FileText className="w-5 h-5" />
+                <div>
+                  {/* Header Title */}
+                  <div className="flex items-start justify-between gap-3 mb-4 pb-4 border-b border-neutral-200">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-[#0a7a40] flex items-center justify-center font-bold shrink-0">
+                        {cert.id === 'lab-test-report' ? <Beaker className="w-5 h-5" /> : <FileText className="w-5 h-5 text-amber-800" />}
+                      </div>
+                      <div>
+                        <h3 className="font-serif font-bold text-lg text-neutral-900 leading-snug">{cert.title}</h3>
+                        <p className="text-xs text-neutral-500 mt-0.5">{cert.subtitle}</p>
+                      </div>
+                    </div>
+                    <span className={`text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full shrink-0 ${cert.badgeColor}`}>
+                      {cert.badge}
+                    </span>
                   </div>
-                  <div>
-                    <h3 className="font-serif font-bold text-lg text-neutral-900">Nutrition Facts Label</h3>
-                    <p className="text-xs text-neutral-500">Standard Dietary Declaration • 100g Serving</p>
+
+                  <p className="text-xs text-neutral-600 leading-relaxed mb-5">
+                    {cert.description}
+                  </p>
+
+                  {/* Highlights */}
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {cert.highlights.map((hl, i) => (
+                      <span key={i} className="bg-white border border-emerald-900/10 text-neutral-800 text-[11px] font-bold px-3 py-1 rounded-lg shadow-2xs">
+                        ✓ {hl}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Document Frame / Preview */}
+                  <div 
+                    onClick={() => setActiveCert(cert)}
+                    className="w-full bg-white rounded-2xl border border-neutral-300 p-3 sm:p-5 shadow-sm cursor-pointer group hover:border-[#0a7a40] hover:shadow-md transition-all relative overflow-hidden flex items-center justify-center"
+                  >
+                    <img 
+                      src={cert.imageSrc} 
+                      alt={cert.title}
+                      className="w-full h-auto max-h-[520px] object-contain rounded-md transition-transform duration-300 group-hover:scale-[1.01]"
+                      loading="eager"
+                      onError={(e: any) => {
+                        if (e.target.src !== cert.fallbackSrc) {
+                          e.target.src = cert.fallbackSrc;
+                        }
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-emerald-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-xs">
+                      <span className="bg-white text-neutral-900 font-bold text-xs px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
+                        <ZoomIn className="w-4 h-4 text-[#0a7a40]" />
+                        Click to Enlarge HD View
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <span className="bg-amber-100 text-amber-900 text-xs font-extrabold uppercase px-3 py-1 rounded-full">
-                  0.00 Calories
-                </span>
-              </div>
 
-              {/* Direct Full-Length HD Certificate Image */}
-              <div 
-                onClick={() => setSelectedImage({
-                  title: 'Official Nutrition Facts Label',
-                  subtitle: 'Standard Certified Nutritional Breakdown per 100g Serving',
-                  imageSrc: nutritionFactsImage
-                })}
-                className="w-full bg-white rounded-2xl border border-neutral-300 p-2 sm:p-4 shadow-md cursor-pointer group hover:border-[#0a7a40] hover:shadow-xl transition-all relative overflow-hidden flex items-center justify-center"
-              >
-                <img 
-                  src={nutritionFactsImage} 
-                  alt="Official Nutrition Facts Label" 
-                  className="w-full h-auto object-contain max-h-[650px] mx-auto rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
-                  loading="eager"
-                />
-                <div className="absolute inset-0 bg-emerald-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-xs">
-                  <span className="bg-white text-neutral-900 font-bold text-xs px-5 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
-                    <ZoomIn className="w-4 h-4 text-[#0a7a40]" />
-                    Click to Enlarge HD View
-                  </span>
-                </div>
+                <button
+                  onClick={() => setActiveCert(cert)}
+                  className="mt-6 w-full py-3 px-4 bg-emerald-50 hover:bg-emerald-100 text-[#0a7a40] font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                  <span>View Full Certificate (HD)</span>
+                </button>
               </div>
-            </div>
-
+            ))}
           </div>
 
           {/* 3. Verified Nutritional Breakdown Summary Table */}
@@ -324,11 +302,11 @@ export function HowItWorksPage() {
       {/* 6. Final CTA Section */}
       <FinalCta />
 
-      {/* Full-Screen HD Image Viewer Modal */}
-      {selectedImage && (
+      {/* Full-Screen HD Modal Viewer */}
+      {activeCert && (
         <div 
           className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
-          onClick={() => setSelectedImage(null)}
+          onClick={() => setActiveCert(null)}
         >
           <div 
             className="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col overflow-hidden shadow-2xl border border-white/20"
@@ -337,23 +315,28 @@ export function HowItWorksPage() {
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 px-6 border-b border-neutral-200 bg-[#f8faf8]">
               <div>
-                <h3 className="font-serif font-bold text-base sm:text-lg text-neutral-900">{selectedImage.title}</h3>
-                <p className="text-xs text-neutral-500 font-medium">{selectedImage.subtitle}</p>
+                <h3 className="font-serif font-bold text-base sm:text-lg text-neutral-900">{activeCert.title}</h3>
+                <p className="text-xs text-neutral-500 font-medium">{activeCert.subtitle}</p>
               </div>
               <button
-                onClick={() => setSelectedImage(null)}
+                onClick={() => setActiveCert(null)}
                 className="w-9 h-9 rounded-xl bg-neutral-200/80 hover:bg-neutral-300 text-neutral-700 flex items-center justify-center transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Full HD Image Display */}
+            {/* Full HD Certificate Image */}
             <div className="p-4 sm:p-6 overflow-y-auto bg-neutral-100 flex items-center justify-center flex-1">
               <img 
-                src={selectedImage.imageSrc} 
-                alt={selectedImage.title}
+                src={activeCert.imageSrc} 
+                alt={activeCert.title}
                 className="max-h-[75vh] w-auto object-contain rounded-xl shadow-lg border border-neutral-300 bg-white" 
+                onError={(e: any) => {
+                  if (e.target.src !== activeCert.fallbackSrc) {
+                    e.target.src = certFallback(activeCert);
+                  }
+                }}
               />
             </div>
           </div>
@@ -362,4 +345,8 @@ export function HowItWorksPage() {
 
     </div>
   );
+}
+
+function certFallback(cert: CertificateItem): string {
+  return cert.fallbackSrc;
 }
