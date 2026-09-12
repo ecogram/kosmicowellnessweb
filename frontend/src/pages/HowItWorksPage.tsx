@@ -14,18 +14,29 @@ import {
   Coffee,
   Cookie,
   Wine,
-  Utensils
+  Utensils,
+  ExternalLink
 } from 'lucide-react';
 import { Lifestyle } from '../features/home/Lifestyle';
 import { FinalCta } from '../features/home/FinalCta';
-import { LAB_TEST_REPORT_HD_IMAGE, NUTRITION_FACTS_HD_IMAGE } from '../assets/reports/reportData';
+import { 
+  LAB_TEST_REPORT_HD_IMAGE, 
+  NUTRITION_FACTS_HD_IMAGE,
+  COA_DROPS_PDF_URL,
+  LABEL_DROPS_PDF_URL
+} from '../assets/reports/reportData';
 
 export function HowItWorksPage() {
   const [selectedDoc, setSelectedDoc] = useState<{
     title: string;
     subtitle: string;
     imageSrc: string;
+    pdfUrl: string;
   } | null>(null);
+
+  const handleOpenPdf = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
 
   return (
     <div className="flex flex-col w-full bg-[#f8faf8] pt-24 pb-16 font-sans">
@@ -77,15 +88,15 @@ export function HowItWorksPage() {
               Official Lab Test Report &amp; Nutrition Facts
             </h2>
             <p className="text-neutral-600 text-sm leading-relaxed">
-              Independently tested by Qualiset Food Laboratories LLP. Click on any certificate to inspect in full HD view.
+              Certified by Qualiset Food Laboratories LLP. Click on any document card to view the full PDF document.
             </p>
           </div>
 
           {/* Two Certificates Display Side-by-Side */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 mb-14">
             
-            {/* Certificate 1: Official Lab Test Report */}
-            <div className="bg-[#fafcfa] rounded-3xl border border-neutral-200 p-6 sm:p-8 shadow-lg flex flex-col justify-between">
+            {/* Certificate 1: Official Lab Test Report (COA_Drops.pdf) */}
+            <div className="bg-[#fafcfa] rounded-3xl border border-neutral-200 p-6 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
               <div>
                 <div className="flex items-start justify-between gap-3 mb-5 pb-4 border-b border-neutral-200">
                   <div className="flex items-center gap-3">
@@ -117,38 +128,49 @@ export function HowItWorksPage() {
                   onClick={() => setSelectedDoc({
                     title: 'Official Lab Test Report (Certificate of Analysis)',
                     subtitle: 'Qualiset Food Laboratories LLP — Report No: QFL/160726/05',
-                    imageSrc: LAB_TEST_REPORT_HD_IMAGE
+                    imageSrc: LAB_TEST_REPORT_HD_IMAGE,
+                    pdfUrl: COA_DROPS_PDF_URL
                   })}
-                  className="w-full bg-white rounded-2xl border border-neutral-300 p-3 sm:p-4 shadow-md cursor-pointer group hover:border-[#0a7a40] hover:shadow-xl transition-all relative overflow-hidden flex items-center justify-center"
+                  className="w-full bg-white rounded-2xl border border-neutral-300 p-3 sm:p-4 shadow-md cursor-pointer group hover:border-[#0a7a40] hover:shadow-xl transition-all relative overflow-hidden flex items-center justify-center min-h-[380px]"
                 >
                   <img 
                     src={LAB_TEST_REPORT_HD_IMAGE} 
-                    alt="Official Lab Test Report" 
-                    className="w-full h-auto max-h-[520px] object-contain rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
+                    alt="Official Lab Test Report - COA_Drops.pdf" 
+                    className="w-full h-auto max-h-[480px] object-contain rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
                   />
                   <div className="absolute inset-0 bg-emerald-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-xs">
                     <span className="bg-white text-neutral-900 font-bold text-xs px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
                       <ZoomIn className="w-4 h-4 text-[#0a7a40]" />
-                      Click to Enlarge HD View
+                      Click to View Full Document
                     </span>
                   </div>
                 </div>
               </div>
 
-              <button
-                onClick={() => setSelectedDoc({
-                  title: 'Official Lab Test Report (Certificate of Analysis)',
-                  subtitle: 'Qualiset Food Laboratories LLP — Report No: QFL/160726/05',
-                  imageSrc: LAB_TEST_REPORT_HD_IMAGE
-                })}
-                className="mt-6 w-full py-3 px-4 bg-emerald-50 hover:bg-emerald-100 text-[#0a7a40] font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <ZoomIn className="w-4 h-4" />
-                <span>View Full Certificate (HD)</span>
-              </button>
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => setSelectedDoc({
+                    title: 'Official Lab Test Report (Certificate of Analysis)',
+                    subtitle: 'Qualiset Food Laboratories LLP — Report No: QFL/160726/05',
+                    imageSrc: LAB_TEST_REPORT_HD_IMAGE,
+                    pdfUrl: COA_DROPS_PDF_URL
+                  })}
+                  className="flex-1 py-3 px-4 bg-emerald-50 hover:bg-emerald-100 text-[#0a7a40] font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                  <span>View HD Certificate</span>
+                </button>
+                <button
+                  onClick={() => handleOpenPdf(COA_DROPS_PDF_URL)}
+                  className="py-3 px-4 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Open PDF</span>
+                </button>
+              </div>
             </div>
 
-            {/* Certificate 2: Official Nutrition Facts Label */}
+            {/* Certificate 2: Official Nutrition Facts Label (Label_Drops.pdf) */}
             <div className="bg-[#fafcfa] rounded-3xl border border-neutral-200 p-6 sm:p-8 shadow-lg flex flex-col justify-between">
               <div>
                 <div className="flex items-start justify-between gap-3 mb-5 pb-4 border-b border-neutral-200">
@@ -181,35 +203,46 @@ export function HowItWorksPage() {
                   onClick={() => setSelectedDoc({
                     title: 'Official Nutrition Facts Label',
                     subtitle: 'Standard Certified Nutritional Breakdown per 100g Serving',
-                    imageSrc: NUTRITION_FACTS_HD_IMAGE
+                    imageSrc: NUTRITION_FACTS_HD_IMAGE,
+                    pdfUrl: LABEL_DROPS_PDF_URL
                   })}
-                  className="w-full bg-white rounded-2xl border border-neutral-300 p-3 sm:p-4 shadow-md cursor-pointer group hover:border-[#0a7a40] hover:shadow-xl transition-all relative overflow-hidden flex items-center justify-center"
+                  className="w-full bg-white rounded-2xl border border-neutral-300 p-3 sm:p-4 shadow-md cursor-pointer group hover:border-[#0a7a40] hover:shadow-xl transition-all relative overflow-hidden flex items-center justify-center min-h-[380px]"
                 >
                   <img 
                     src={NUTRITION_FACTS_HD_IMAGE} 
-                    alt="Official Nutrition Facts Label" 
-                    className="w-full h-auto max-h-[520px] object-contain rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
+                    alt="Official Nutrition Facts Label - Label_Drops.pdf" 
+                    className="w-full h-auto max-h-[480px] object-contain rounded-lg transition-transform duration-300 group-hover:scale-[1.01]"
                   />
                   <div className="absolute inset-0 bg-emerald-950/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-xs">
                     <span className="bg-white text-neutral-900 font-bold text-xs px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2">
                       <ZoomIn className="w-4 h-4 text-[#0a7a40]" />
-                      Click to Enlarge HD View
+                      Click to View Full Document
                     </span>
                   </div>
                 </div>
               </div>
 
-              <button
-                onClick={() => setSelectedDoc({
-                  title: 'Official Nutrition Facts Label',
-                  subtitle: 'Standard Certified Nutritional Breakdown per 100g Serving',
-                  imageSrc: NUTRITION_FACTS_HD_IMAGE
-                })}
-                className="mt-6 w-full py-3 px-4 bg-emerald-50 hover:bg-emerald-100 text-[#0a7a40] font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <ZoomIn className="w-4 h-4" />
-                <span>View Full Certificate (HD)</span>
-              </button>
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => setSelectedDoc({
+                    title: 'Official Nutrition Facts Label',
+                    subtitle: 'Standard Certified Nutritional Breakdown per 100g Serving',
+                    imageSrc: NUTRITION_FACTS_HD_IMAGE,
+                    pdfUrl: LABEL_DROPS_PDF_URL
+                  })}
+                  className="flex-1 py-3 px-4 bg-emerald-50 hover:bg-emerald-100 text-[#0a7a40] font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                  <span>View HD Label</span>
+                </button>
+                <button
+                  onClick={() => handleOpenPdf(LABEL_DROPS_PDF_URL)}
+                  className="py-3 px-4 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  <span>Open PDF</span>
+                </button>
+              </div>
             </div>
 
           </div>
@@ -366,7 +399,7 @@ export function HowItWorksPage() {
       {/* 6. Final CTA Section */}
       <FinalCta />
 
-      {/* Full-Screen HD Modal Viewer */}
+      {/* Full-Screen HD Modal Viewer with PDF Open Option */}
       {selectedDoc && (
         <div 
           className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
@@ -382,12 +415,21 @@ export function HowItWorksPage() {
                 <h3 className="font-serif font-bold text-base sm:text-lg text-neutral-900">{selectedDoc.title}</h3>
                 <p className="text-xs text-neutral-500 font-medium">{selectedDoc.subtitle}</p>
               </div>
-              <button
-                onClick={() => setSelectedDoc(null)}
-                className="w-9 h-9 rounded-xl bg-neutral-200/80 hover:bg-neutral-300 text-neutral-700 flex items-center justify-center transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleOpenPdf(selectedDoc.pdfUrl)}
+                  className="py-1.5 px-3 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Open PDF</span>
+                </button>
+                <button
+                  onClick={() => setSelectedDoc(null)}
+                  className="w-9 h-9 rounded-xl bg-neutral-200/80 hover:bg-neutral-300 text-neutral-700 flex items-center justify-center transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Full HD Certificate Image */}
