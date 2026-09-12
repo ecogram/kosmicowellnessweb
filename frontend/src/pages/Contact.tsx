@@ -29,7 +29,7 @@ export function Contact() {
           </a>
 
           <a
-            href="mailto:supportkosmicowellness@gmail.com"
+            href="mailto:support@kosmicowellness.com"
             className="bg-surface p-6 rounded-3xl border border-border shadow-xs text-center space-y-2 hover:border-emerald-800 transition-all"
           >
             <div className="w-12 h-12 rounded-2xl bg-emerald-800/10 text-emerald-800 mx-auto flex items-center justify-center font-bold">
@@ -37,7 +37,7 @@ export function Contact() {
             </div>
             <h3 className="font-bold text-sm text-neutral-900">Email Us</h3>
             <p className="text-xs text-neutral-500">Response in 24 hours</p>
-            <div className="text-xs font-bold text-emerald-800 mt-2 truncate">supportkosmico...</div>
+            <div className="text-xs font-bold text-emerald-800 mt-2 truncate">support@kosmico...</div>
           </a>
 
           <div className="bg-surface p-6 rounded-3xl border border-border shadow-xs text-center space-y-2">
@@ -89,8 +89,8 @@ export function Contact() {
                 </div>
                 <div>
                   <h3 className="font-bold text-neutral-900 mb-1">Official Email Support</h3>
-                  <a href="mailto:supportkosmicowellness@gmail.com" className="text-xs font-bold text-emerald-800 hover:underline">
-                    supportkosmicowellness@gmail.com
+                  <a href="mailto:support@kosmicowellness.com" className="text-xs font-bold text-emerald-800 hover:underline">
+                    support@kosmicowellness.com
                   </a>
                 </div>
               </div>

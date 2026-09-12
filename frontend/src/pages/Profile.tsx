@@ -1154,7 +1154,7 @@ export const Profile: React.FC = () => {
                 <div className="text-[10px] text-neutral-500">Instant AI Support</div>
               </Link>
 
-              <a href="mailto:supportkosmicowellness@gmail.com" className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1 hover:border-emerald-800 transition-colors">
+              <a href="mailto:support@kosmicowellness.com" className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1 hover:border-emerald-800 transition-colors">
                 <Mail className="w-5 h-5 text-emerald-800 mx-auto" />
                 <div className="font-bold text-xs text-neutral-900">Email Us</div>
                 <div className="text-[10px] text-neutral-500">Response in 24 hours</div>

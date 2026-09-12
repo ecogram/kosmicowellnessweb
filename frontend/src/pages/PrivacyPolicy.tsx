@@ -280,10 +280,10 @@ export function PrivacyPolicy() {
           <p>
             To exercise these rights, contact us at{' '}
             <a
-              href="mailto:supportkosmicowellness@gmail.com"
+              href="mailto:support@kosmicowellness.com"
               className="text-primary hover:underline"
             >
-              supportkosmicowellness@gmail.com
+              support@kosmicowellness.com
             </a>
             .
           </p>
@@ -298,10 +298,10 @@ export function PrivacyPolicy() {
             You may delete your account at any time through the app settings or
             by contacting us at{' '}
             <a
-              href="mailto:supportkosmicowellness@gmail.com"
+              href="mailto:support@kosmicowellness.com"
               className="text-primary hover:underline"
             >
-              supportkosmicowellness@gmail.com
+              support@kosmicowellness.com
             </a>
             . Upon deletion, we will remove your personal data from active
             systems within 30 days, except where retention is required for legal
@@ -392,10 +392,10 @@ export function PrivacyPolicy() {
           <p>
             Email:{' '}
             <a
-              href="mailto:supportkosmicowellness@gmail.com"
+              href="mailto:support@kosmicowellness.com"
               className="text-primary hover:underline"
             >
-              supportkosmicowellness@gmail.com
+              support@kosmicowellness.com
             </a>
           </p>
         </section>
