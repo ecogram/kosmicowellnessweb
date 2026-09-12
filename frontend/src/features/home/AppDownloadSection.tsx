@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Container } from '../../components/ui/Container';
-import { Download, Smartphone, Sparkles, Activity, ShieldCheck, QrCode } from 'lucide-react';
+import { Download, Smartphone, Sparkles, Activity, ShieldCheck, X, ExternalLink } from 'lucide-react';
 import { PLAY_STORE_URL } from '../../utils/constants';
 
 export const AppDownloadSection: React.FC = () => {
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const playStoreUrl = PLAY_STORE_URL;
+  const qrImageSrc = '/assets/icons/playstore-qr.jpg';
 
   return (
     <section className="py-16 md:py-24 bg-gradient-to-b from-emerald-900 via-emerald-800 to-emerald-950 text-white relative overflow-hidden">
@@ -51,13 +53,13 @@ export const AppDownloadSection: React.FC = () => {
               </div>
             </div>
 
-            {/* Play Store Download & QR Code Actions */}
+            {/* Play Store Download & Real QR Code Actions */}
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-5">
               <a
                 href={playStoreUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-8 py-4 bg-amber-400 hover:bg-amber-300 text-neutral-950 font-extrabold text-sm rounded-2xl shadow-xl shadow-amber-400/20 hover:shadow-amber-400/30 transition-all duration-300 transform hover:-translate-y-0.5 flex items-center gap-3"
+                className="px-8 py-4 bg-amber-400 hover:bg-amber-300 text-neutral-950 font-extrabold text-sm rounded-2xl shadow-xl shadow-amber-400/20 hover:shadow-amber-400/30 transition-all duration-300 transform hover:-translate-y-0.5 flex items-center gap-3 cursor-pointer"
               >
                 <Download className="w-5 h-5 text-neutral-950" />
                 <div className="text-left leading-tight">
@@ -66,16 +68,27 @@ export const AppDownloadSection: React.FC = () => {
                 </div>
               </a>
 
-              {/* Simulated QR Code for Quick Scan */}
-              <div className="flex items-center gap-3 bg-white/10 border border-white/20 p-2.5 rounded-2xl backdrop-blur-md">
-                <div className="w-12 h-12 bg-white rounded-xl p-1 flex items-center justify-center">
-                  <QrCode className="w-10 h-10 text-neutral-900" />
+              {/* Real Play Store QR Scanner Button - Click to Open Card */}
+              <button
+                type="button"
+                onClick={() => setIsQrModalOpen(true)}
+                className="flex items-center gap-3 bg-white/10 hover:bg-white/15 border border-white/20 hover:border-amber-400/60 p-2.5 rounded-2xl backdrop-blur-md transition-all cursor-pointer group text-left"
+                title="Click to expand QR Code Scanner"
+              >
+                <div className="w-12 h-12 bg-white rounded-xl p-1 flex items-center justify-center overflow-hidden shadow-xs shrink-0 group-hover:scale-105 transition-transform">
+                  <img
+                    src={qrImageSrc}
+                    alt="Play Store QR Code"
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <div className="text-left text-xs">
-                  <div className="font-bold text-white">Scan to Download</div>
+                  <div className="font-bold text-white group-hover:text-amber-300 transition-colors flex items-center gap-1">
+                    <span>Scan to Download</span>
+                  </div>
                   <div className="text-[10px] text-emerald-200">Point phone camera</div>
                 </div>
-              </div>
+              </button>
             </div>
 
           </div>
@@ -151,6 +164,67 @@ export const AppDownloadSection: React.FC = () => {
 
         </div>
       </Container>
+
+      {/* Play Store QR Code Expanded Card Modal */}
+      {isQrModalOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn"
+          onClick={() => setIsQrModalOpen(false)}
+        >
+          <div 
+            className="relative max-w-sm w-full bg-white rounded-3xl overflow-hidden shadow-2xl border border-neutral-200 text-neutral-900 p-6 sm:p-8 flex flex-col items-center text-center space-y-5 animate-scaleUp"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setIsQrModalOpen(false)}
+              className="absolute top-4 right-4 p-2 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 transition-colors cursor-pointer"
+              title="Close QR Code"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Header */}
+            <div className="space-y-1 pt-1">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 text-[11px] font-bold uppercase tracking-wider mb-1">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-700" />
+                <span>Google Play Store</span>
+              </div>
+              <h3 className="font-serif font-bold text-2xl text-neutral-900">
+                Scan to Download
+              </h3>
+              <p className="text-xs text-neutral-600 max-w-[240px] mx-auto leading-relaxed">
+                Point your phone camera at this QR code to install the <strong>Kosmico Wellness</strong> app directly.
+              </p>
+            </div>
+
+            {/* Large High-Definition Scannable QR Code */}
+            <div className="p-4 bg-white rounded-2xl border-2 border-dashed border-emerald-800/30 shadow-inner flex items-center justify-center w-60 h-60">
+              <img
+                src={qrImageSrc}
+                alt="Kosmico Wellness Google Play QR Code"
+                className="w-full h-full object-contain rounded-lg"
+              />
+            </div>
+
+            {/* Direct Link Action */}
+            <div className="w-full pt-1 space-y-2">
+              <a
+                href={playStoreUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3 px-4 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>Open Google Play Store</span>
+                <ExternalLink className="w-4 h-4" />
+              </a>
+              <p className="text-[11px] text-neutral-400">Available for Android smartphones &amp; tablets</p>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </section>
   );
 };
