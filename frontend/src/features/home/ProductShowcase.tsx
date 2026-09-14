@@ -13,7 +13,7 @@ export function ProductShowcase() {
             Shop Our Bestsellers
           </h2>
           <p className="text-text-muted text-lg">
-            Experience the natural sweetness of monk fruit. Perfect for baking, coffee, and all your
+            Experience the natural sweetness of Sweet Monk. Perfect for baking, coffee, and all your
             favorite recipes.
           </p>
         </div>

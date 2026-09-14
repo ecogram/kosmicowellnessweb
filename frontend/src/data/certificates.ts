@@ -19,7 +19,7 @@ export const CERTIFICATES: CertificateItem[] = [
     badgeColor: 'bg-emerald-100 text-[#0a7a40]',
     imageSrc: '/assets/reports/coa-drops-report.jpg',
     fallbackSrc: '/assets/reports/coa-drops-report.jpg',
-    description: 'Official laboratory analysis verifying 0.00 Kcal Calories, 0.0g Sugar, 0.0g Carbohydrates, and zero artificial additives in Kosmico Monk Fruit Liquid Sweetener.',
+    description: 'Official laboratory analysis verifying 0.00 Kcal Calories, 0.0g Sugar, 0.0g Carbohydrates, and zero artificial additives in Kosmico Sweet Monk Liquid Sweetener.',
     highlights: ['0.00 Kcal Calories', '0.0g Total Sugar', '0.0g Net Carbs', '0.0g Trans Fat']
   },
   {

@@ -2,16 +2,13 @@ import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 
 const getBaseURL = (): string => {
-  if (typeof window !== 'undefined') {
-    const host = window.location.hostname;
-    // When running in browser on live production domain (kosmicowellness.com, vercel.app)
-    if (host !== 'localhost' && host !== '127.0.0.1') {
-      return '/api';
-    }
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
   }
-
-  // Local development / explicit environment variable
-  return import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return '/api';
+  }
+  return 'https://api.kosmicowellness.com/api';
 };
 
 export const api = axios.create({

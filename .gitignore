@@ -37,6 +37,8 @@ docker-compose.override.yml
 *.mp4
 scratch_*.js
 backend/scratch_*.js
+scratch/
+docx_text.txt
 
 # Zip Archives
 *.zip

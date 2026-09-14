@@ -133,3 +133,70 @@ export const useAdminUpdateReviewStatus = () => {
     },
   });
 };
+
+// Admin Coupons
+export interface AdminCoupon {
+  _id: string;
+  code: string;
+  description: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  maxDiscount?: number;
+  minOrderAmount: number;
+  expiresAt: string;
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export const useAdminCoupons = () => {
+  return useQuery({
+    queryKey: ['admin', 'coupons'],
+    queryFn: async () => {
+      const { data } = await api.get('/coupons/admin/all');
+      return (data.data || []) as AdminCoupon[];
+    },
+  });
+};
+
+export const useAdminCreateCoupon = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (couponData: Partial<AdminCoupon>) => {
+      const { data } = await api.post('/coupons/admin', couponData);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'coupons'] });
+      queryClient.invalidateQueries({ queryKey: ['coupons'] });
+    },
+  });
+};
+
+export const useAdminUpdateCoupon = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data: updateData }: { id: string; data: Partial<AdminCoupon> }) => {
+      const { data } = await api.patch(`/coupons/admin/${id}`, updateData);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'coupons'] });
+      queryClient.invalidateQueries({ queryKey: ['coupons'] });
+    },
+  });
+};
+
+export const useAdminDeleteCoupon = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.delete(`/coupons/admin/${id}`);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'coupons'] });
+      queryClient.invalidateQueries({ queryKey: ['coupons'] });
+    },
+  });
+};

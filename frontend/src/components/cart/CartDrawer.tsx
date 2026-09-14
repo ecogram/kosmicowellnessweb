@@ -99,7 +99,7 @@ export function CartDrawer() {
               <div>
                 <h3 className="font-serif text-lg font-bold text-neutral-900">Your cart is empty</h3>
                 <p className="text-xs text-neutral-600 mt-1 max-w-xs leading-relaxed">
-                  Start your zero-calorie journey with 100% natural Kosmico Monk Fruit Sweetener!
+                  Start your zero-calorie journey with 100% natural Sweet Monk Sweetener!
                 </p>
               </div>
               <button
@@ -109,7 +109,7 @@ export function CartDrawer() {
                 }}
                 className="px-6 py-2.5 bg-emerald-800 text-white font-bold text-xs rounded-xl hover:bg-emerald-900 transition-all shadow-md active:scale-95"
               >
-                Shop Kosmico Monk Fruit (₹387)
+                Shop Sweet Monk (₹387)
               </button>
             </div>
           ) : (
@@ -137,7 +137,7 @@ export function CartDrawer() {
                     <div>
                       <div className="flex justify-between items-start gap-2">
                         <h4 className="font-serif font-bold text-xs sm:text-sm text-neutral-900 line-clamp-2 leading-snug">
-                          {prod.name || 'Kosmico Monk Fruit Sweetener'}
+                          {prod.name || 'Sweet Monk (250ml)'}
                         </h4>
                         <button
                           onClick={() => removeCartItem.mutate({ productId: prod._id || item.product, variant: item.variant })}

@@ -109,7 +109,7 @@ export const useAddToCart = () => {
       );
 
       const itemPrice = price || 387;
-      const itemName = name || 'Sweet Monk (Monk Fruit Sweetener)';
+      const itemName = name || 'Sweet Monk (250ml)';
       const itemImage = image || '/assets/products/product-box.jpg';
 
       let updatedItems = [...currentCart.items];

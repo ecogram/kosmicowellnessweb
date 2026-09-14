@@ -24,12 +24,11 @@ services:
       - .env
     environment:
       - NODE_ENV=development
-      - MONGODB_URI=mongodb://mongodb:27017/sweet-monk
+      - MONGODB_URI=mongodb+srv://KosmicoWellness:KosmicoWellness@cluster0.67auck3.mongodb.net/kosmico
+      - MONGO_URI=mongodb+srv://KosmicoWellness:KosmicoWellness@cluster0.67auck3.mongodb.net/kosmico
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
-      mongodb:
-        condition: service_started
       redis:
         condition: service_started
 
@@ -45,7 +44,8 @@ services:
       - .env
     environment:
       - NODE_ENV=development
-      - MONGODB_URI=mongodb://mongodb:27017/sweet-monk
+      - MONGODB_URI=mongodb+srv://KosmicoWellness:KosmicoWellness@cluster0.67auck3.mongodb.net/kosmico
+      - MONGO_URI=mongodb+srv://KosmicoWellness:KosmicoWellness@cluster0.67auck3.mongodb.net/kosmico
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:

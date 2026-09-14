@@ -38,6 +38,20 @@ h6 {
   font-family: var(--font-serif);
 }
 
+/* Ensure all numerals (0-9), prices, and currency symbols render in modern Roman/lining figures */
+.font-sans,
+[data-currency],
+.font-sans-nums {
+  font-family: var(--font-sans) !important;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Remove serif distortion from numbers/prices */
+.font-price {
+  font-family: var(--font-sans) !important;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
 @keyframes fade-in-up {
   from {
     opacity: 0;

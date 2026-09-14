@@ -83,6 +83,14 @@ export const useCreateOrder = () => {
         orderObj.currency = resData.currency;
       }
 
+      // Ensure full charges breakdown is stored
+      if (data.deliveryFee !== undefined) orderObj.shipping = data.deliveryFee;
+      if (data.gstCharge !== undefined) orderObj.tax = data.gstCharge;
+      if (data.discountAmount !== undefined) orderObj.discount = data.discountAmount;
+      if (data.amount !== undefined) orderObj.total = data.amount;
+      if (data.paymentMethod) orderObj.paymentMethod = data.paymentMethod;
+      if (data.items) orderObj.items = data.items;
+
       saveLocalOrder(orderObj);
       return orderObj;
     },
@@ -144,6 +152,16 @@ export const useOrders = (params: { page?: number; limit?: number }) => {
           }
         }
       } catch (e) {}
+
+      // Strictly sort all orders descending (latest / newest order first on top)
+      ordersList.sort((a: any, b: any) => {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        if (!isNaN(timeA) && !isNaN(timeB) && timeA !== timeB) {
+          return timeB - timeA;
+        }
+        return (b.orderNumber || b._id || '').localeCompare(a.orderNumber || a._id || '');
+      });
 
       return {
         orders: ordersList,

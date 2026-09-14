@@ -8,7 +8,7 @@ export function FinalCta() {
       <Container>
         <div className="max-w-3xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-serif font-bold mb-6">
-            Ready to make the sweetner change?
+            Ready to make the sweetener change?
           </h2>
           <p className="text-lg md:text-xl text-primary-light mb-10 text-white/80">
             Join thousands of others who have switched to a healthier, zero-calorie alternative

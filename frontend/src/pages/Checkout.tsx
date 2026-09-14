@@ -28,6 +28,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { formatINR } from '../utils/currency';
 
 import { api } from '../services/api';
+import { useCoupons } from '../hooks/useCoupons';
 
 interface SavedAddress {
   _id?: string;
@@ -193,13 +194,15 @@ export const Checkout: React.FC = () => {
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
 
-  // Delivery estimation from Shiprocket API
+  // Delivery estimation from Shiprocket API (dynamic based on pincode & weight)
   const [deliveryEstimate, setDeliveryEstimate] = useState<{
     expectedDate: string;
+    courierName: string;
     deliveryFee: number;
     gstCharge: number;
   }>({
-    expectedDate: 'Sep 14, 2026',
+    expectedDate: '',
+    courierName: '',
     deliveryFee: 0,
     gstCharge: 0,
   });
@@ -240,13 +243,25 @@ export const Checkout: React.FC = () => {
     }
   };
 
+  // Calculations
+  const itemsToCalculate = cart?.items || createdOrder?.items || [];
+  const subtotal = itemsToCalculate.reduce(
+    (sum: number, item: any) => sum + (item.priceSnapshot || item.price || 387) * item.quantity,
+    0
+  );
+
+  const deliveryFee = paymentMode === 'ONLINE' ? 0 : Number(deliveryEstimate.deliveryFee ?? 0);
+  const gst = paymentMode === 'ONLINE' ? 0 : Number(deliveryEstimate.gstCharge ?? 0);
+  const discount = appliedCoupon ? appliedCoupon.discount : 0;
+  const total = Math.max(0, subtotal - discount + deliveryFee + gst);
+
   useEffect(() => {
     fetchAddresses();
   }, [user]);
 
   // Fetch dynamic Shiprocket delivery estimation when mode, address or cart items change
   useEffect(() => {
-    const pincodeToUse = selectedAddress?.pincode || '201318';
+    const pincodeToUse = (selectedAddress?.pincode || '201318').toString().trim();
     const itemsList = cart?.items || createdOrder?.items || [];
     const totalItemCount = itemsList.reduce((sum: number, it: any) => sum + (it.quantity || 1), 0) || 1;
     const estimatedWeightKg = Math.max(0.5, totalItemCount * 0.25);
@@ -260,23 +275,26 @@ export const Checkout: React.FC = () => {
           weight: estimatedWeightKg,
           subtotal: subtotal,
         });
-        if (res.data?.data) {
-          const data = res.data.data;
+        const resData = res.data?.data || res.data;
+        if (resData) {
           setDeliveryEstimate({
-            expectedDate: data.expectedDate || 'Sep 14, 2026',
-            deliveryFee: typeof data.deliveryFee === 'number' ? data.deliveryFee : (paymentMode === 'ONLINE' ? 0 : 77),
-            gstCharge: typeof data.gstCharge === 'number' ? data.gstCharge : (paymentMode === 'ONLINE' ? 0 : 13),
+            expectedDate: resData.estimatedDeliveryDate || resData.expectedDate || '',
+            courierName: resData.courierName || resData.courierPartner || 'Shiprocket Express',
+            deliveryFee: typeof resData.deliveryFee === 'number' ? resData.deliveryFee : (paymentMode === 'ONLINE' ? 0 : 77),
+            gstCharge: typeof resData.gstCharge === 'number' ? resData.gstCharge : (paymentMode === 'ONLINE' ? 0 : 13),
           });
         }
       } catch (err) {
-        console.error('Shiprocket fetch error:', err);
+        console.warn('Live Shiprocket estimation error, using fallback:', err);
       } finally {
         setTimeout(() => setIsCalculatingShipping(false), 200);
       }
     };
 
-    fetchEstimate();
-  }, [paymentMode, selectedAddress?._id, selectedAddress?.pincode, cart?.items?.length]);
+    if (pincodeToUse.length >= 6) {
+      fetchEstimate();
+    }
+  }, [paymentMode, selectedAddress?._id, selectedAddress?.pincode, cart?.items?.length, subtotal]);
 
   if (isCartLoading && !createdOrder) {
     return (
@@ -296,29 +314,17 @@ export const Checkout: React.FC = () => {
           </div>
           <h2 className="font-serif text-2xl font-bold text-neutral-900 mb-2">Your Cart is Empty</h2>
           <p className="text-neutral-600 text-xs leading-relaxed mb-6">
-            You don't have any items in your cart. Add 100% natural Kosmico Monk Fruit Sweetener to continue!
+            You don't have any items in your cart. Add 100% natural Sweet Monk Sweetener to continue!
           </p>
           <Link to="/shop">
             <Button className="w-full py-3 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-sm rounded-xl shadow-md">
-              Browse Kosmico Products (₹387)
+              Browse Sweet Monk Products (₹387)
             </Button>
           </Link>
         </div>
       </div>
     );
   }
-
-  // Calculations
-  const itemsToCalculate = cart?.items || createdOrder?.items || [];
-  const subtotal = itemsToCalculate.reduce(
-    (sum: number, item: any) => sum + (item.priceSnapshot || item.price || 387) * item.quantity,
-    0
-  );
-
-  const deliveryFee = paymentMode === 'ONLINE' ? 0 : (typeof deliveryEstimate.deliveryFee === 'number' ? deliveryEstimate.deliveryFee : 77);
-  const gst = paymentMode === 'ONLINE' ? 0 : (typeof deliveryEstimate.gstCharge === 'number' ? deliveryEstimate.gstCharge : 13);
-  const discount = appliedCoupon ? appliedCoupon.discount : 0;
-  const total = Math.max(0, subtotal - discount + deliveryFee + gst);
 
   const loadRazorpay = () => {
     return new Promise((resolve) => {
@@ -486,18 +492,47 @@ export const Checkout: React.FC = () => {
     }
   };
 
+  const { data: dbCoupons } = useCoupons();
+
   const handleApplyCoupon = (code: string) => {
     setCouponError(null);
     const cleanCode = code.trim().toUpperCase();
+    if (!cleanCode) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+
+    const matchedCoupon = dbCoupons?.find((c) => c.code === cleanCode && c.isActive);
+    if (matchedCoupon) {
+      if (matchedCoupon.minOrderAmount && subtotal < matchedCoupon.minOrderAmount) {
+        setCouponError(`Minimum order amount of ₹${matchedCoupon.minOrderAmount} required for this coupon`);
+        return;
+      }
+      let disc = 0;
+      if (matchedCoupon.discountType === 'percentage') {
+        disc = Math.round((subtotal * matchedCoupon.discountValue) / 100);
+        if (matchedCoupon.maxDiscount && disc > matchedCoupon.maxDiscount) {
+          disc = matchedCoupon.maxDiscount;
+        }
+      } else {
+        disc = matchedCoupon.discountValue;
+      }
+      disc = Math.min(disc, subtotal);
+      setAppliedCoupon({ code: matchedCoupon.code, discount: disc });
+      setIsCouponModalOpen(false);
+      return;
+    }
+
+    // Fallback static checks
     if (cleanCode === 'WELCOME10') {
       const disc = Math.round(subtotal * 0.1);
       setAppliedCoupon({ code: 'WELCOME10', discount: disc });
       setIsCouponModalOpen(false);
     } else if (cleanCode === 'KOSMICO50') {
-      setAppliedCoupon({ code: 'KOSMICO50', discount: 50 });
+      setAppliedCoupon({ code: 'KOSMICO50', discount: Math.min(50, subtotal) });
       setIsCouponModalOpen(false);
     } else {
-      setCouponError('Invalid coupon code. Try WELCOME10 or KOSMICO50');
+      setCouponError('Invalid or expired coupon code');
     }
   };
 
@@ -779,7 +814,7 @@ export const Checkout: React.FC = () => {
           <div className="space-y-3 mb-4">
             {(cart?.items || createdOrder?.items || []).map((item: any, idx: number) => {
               const prod = typeof item.product === 'object' && item.product !== null ? item.product : {};
-              const productName = prod.name || prod.title || 'Sweet Monk (Monk Fruit Sweetener)';
+              const productName = prod.name || prod.title || 'Sweet Monk (250ml)';
               const itemPrice = item.priceSnapshot || item.price || prod.price || 387;
 
               return (
@@ -809,17 +844,37 @@ export const Checkout: React.FC = () => {
             )}
 
             <div className="flex justify-between text-neutral-600">
-              <span>Delivery Fee</span>
+              <span className="flex items-center gap-1.5">
+                Delivery Fee
+                {isCalculatingShipping && <Loader2 className="w-3 h-3 animate-spin text-[#0a7a40]" />}
+              </span>
               <span className={`font-bold ${paymentMode === 'ONLINE' ? 'text-[#0a7a40]' : 'text-neutral-900'}`}>
-                {paymentMode === 'ONLINE' ? 'FREE' : formatINR(deliveryFee)}
+                {isCalculatingShipping ? 'Calculating...' : (paymentMode === 'ONLINE' ? 'FREE' : formatINR(deliveryFee))}
               </span>
             </div>
 
             <div className="flex justify-between text-neutral-600">
-              <span>GST</span>
-              <span className="font-bold text-neutral-900">{formatINR(gst)}</span>
+              <span className="flex items-center gap-1.5">
+                GST
+                {isCalculatingShipping && <Loader2 className="w-3 h-3 animate-spin text-[#0a7a40]" />}
+              </span>
+              <span className="font-bold text-neutral-900">
+                {isCalculatingShipping ? '...' : (paymentMode === 'ONLINE' ? '₹0' : formatINR(gst))}
+              </span>
             </div>
           </div>
+
+          {deliveryEstimate.expectedDate && (
+            <div className="mt-3 p-2.5 bg-emerald-50/70 border border-emerald-200/60 rounded-xl flex items-center justify-between text-xs text-[#0a7a40]">
+              <span className="font-semibold flex items-center gap-1.5">
+                <span>🚚</span>
+                <span>{deliveryEstimate.courierName || 'Shiprocket Live'}</span>
+              </span>
+              <span className="font-semibold text-emerald-900">
+                Delivery by {deliveryEstimate.expectedDate}
+              </span>
+            </div>
+          )}
 
           <div className="border-t border-neutral-100 pt-4 mt-3 flex justify-between items-center">
             <span className="font-bold text-base text-neutral-900">Total Amount</span>
@@ -1123,28 +1178,34 @@ export const Checkout: React.FC = () => {
               {couponError && <p className="text-red-600 text-xs mb-3">{couponError}</p>}
 
               <div className="space-y-3">
-                <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider">Available Coupons</p>
-                <div
-                  onClick={() => handleApplyCoupon('WELCOME10')}
-                  className="p-3.5 bg-emerald-50/50 border border-emerald-200 rounded-2xl cursor-pointer hover:bg-emerald-100/50 transition-all flex items-center justify-between"
-                >
-                  <div>
-                    <span className="font-extrabold text-sm text-[#0a7a40]">WELCOME10</span>
-                    <p className="text-xs text-neutral-600">Get 10% instant discount on your order</p>
+                <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider">AVAILABLE COUPONS</p>
+                {(dbCoupons && dbCoupons.length > 0 ? dbCoupons : [
+                  { _id: '1', code: 'WELCOME10', description: 'Get 10% Instant discount on your order', discountType: 'percentage' as const, discountValue: 10, minOrderAmount: 299, expiresAt: '2026-12-31', isActive: true },
+                  { _id: '2', code: 'KOSMICO50', description: 'Flat ₹50 OFF on orders', discountType: 'fixed' as const, discountValue: 50, minOrderAmount: 499, expiresAt: '2026-12-31', isActive: true },
+                ]).filter(c => c.isActive !== false).map((c) => (
+                  <div
+                    key={c.code}
+                    onClick={() => handleApplyCoupon(c.code)}
+                    className="p-4 bg-[#eefbf3] border border-emerald-300/80 rounded-2xl cursor-pointer hover:bg-emerald-100/70 hover:border-emerald-400 transition-all flex items-center justify-between group"
+                  >
+                    <div>
+                      <span className="font-extrabold text-sm text-[#0a7a40] tracking-wide block">{c.code}</span>
+                      <p className="text-xs text-neutral-600 mt-0.5">
+                        {c.description || (c.discountType === 'percentage' ? `Get ${c.discountValue}% instant discount on your order` : `Flat ₹${c.discountValue} OFF on orders`)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleApplyCoupon(c.code);
+                      }}
+                      className="text-xs font-bold text-[#0a7a40] hover:text-[#086333] hover:underline shrink-0 ml-3"
+                    >
+                      Apply
+                    </button>
                   </div>
-                  <span className="text-xs font-bold text-[#0a7a40] underline">Apply</span>
-                </div>
-
-                <div
-                  onClick={() => handleApplyCoupon('KOSMICO50')}
-                  className="p-3.5 bg-emerald-50/50 border border-emerald-200 rounded-2xl cursor-pointer hover:bg-emerald-100/50 transition-all flex items-center justify-between"
-                >
-                  <div>
-                    <span className="font-extrabold text-sm text-[#0a7a40]">KOSMICO50</span>
-                    <p className="text-xs text-neutral-600">Flat ₹50 OFF on orders</p>
-                  </div>
-                  <span className="text-xs font-bold text-[#0a7a40] underline">Apply</span>
-                </div>
+                ))}
               </div>
             </div>
           </div>

@@ -131,7 +131,7 @@ export const OrderDetails = () => {
                       />
                     </div>
                     <div className="flex-1">
-                      <div className="font-medium">{item.name || 'Kosmico Monk Fruit Sweetener'}</div>
+                      <div className="font-medium">{item.name || 'Sweet Monk (250ml)'}</div>
                       {item.variant && <div className="text-sm text-text-muted mt-1">Size: {item.variant}</div>}
                       <div className="text-sm text-text-muted">Qty: {item.quantity || 1}</div>
                     </div>
@@ -172,30 +172,51 @@ export const OrderDetails = () => {
           <div className="w-full lg:w-1/3 space-y-8">
             <div className="bg-surface rounded-2xl border border-border p-6">
               <h2 className="font-bold text-lg mb-4">Summary</h2>
-              <div className="space-y-3 text-sm mb-6 border-b border-border pb-6">
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Subtotal</span>
-                  <span>{formatINR(order.subtotal || order.total || 387)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Shipping</span>
-                  <span>{formatINR(order.shipping || 0)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-text-muted">Tax</span>
-                  <span>{formatINR(order.tax || 0)}</span>
-                </div>
-                {order.discount > 0 && (
-                  <div className="flex justify-between text-error">
-                    <span>Discount</span>
-                    <span>-{formatINR(order.discount)}</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex justify-between items-end mb-6">
-                <span className="font-bold text-lg">Total</span>
-                <span className="font-serif font-bold text-2xl text-primary">{formatINR(order.total || 387)}</span>
-              </div>
+              {(() => {
+                const isCOD = (order.paymentMethod || '').toUpperCase() === 'COD';
+                const orderSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 387) * (it.quantity || 1), 0) || 387);
+                const shippingFee = Number(order.shipping ?? order.deliveryFee ?? (isCOD ? 77 : 0));
+                const taxFee = Number(order.tax ?? order.gstCharge ?? (isCOD ? 13 : 0));
+                const discountAmt = Number(order.discount ?? order.discountAmount ?? 0);
+
+                let orderTotal = Number(order.total ?? order.amount ?? 0);
+                if (!orderTotal || (isCOD && orderTotal <= orderSubtotal && (shippingFee > 0 || taxFee > 0))) {
+                  orderTotal = orderSubtotal - discountAmt + shippingFee + taxFee;
+                }
+
+                return (
+                  <>
+                    <div className="space-y-3 text-sm mb-6 border-b border-border pb-6">
+                      <div className="flex justify-between">
+                        <span className="text-text-muted">Subtotal</span>
+                        <span className="font-medium">{formatINR(orderSubtotal)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-text-muted">
+                          Delivery Fee {!isCOD && <span className="text-emerald-700 text-xs font-semibold">(Free)</span>}
+                        </span>
+                        <span className={!isCOD ? 'text-emerald-700 font-bold' : 'font-medium'}>
+                          {!isCOD ? 'FREE' : formatINR(shippingFee)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-text-muted">GST</span>
+                        <span className="font-medium">{!isCOD ? '₹0' : formatINR(taxFee)}</span>
+                      </div>
+                      {discountAmt > 0 && (
+                        <div className="flex justify-between text-emerald-700 font-semibold">
+                          <span>Discount</span>
+                          <span>-{formatINR(discountAmt)}</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex justify-between items-end mb-6">
+                      <span className="font-bold text-lg">Total Amount</span>
+                      <span className="font-sans font-bold text-2xl text-primary">{formatINR(orderTotal)}</span>
+                    </div>
+                  </>
+                );
+              })()}
               
               <div className="space-y-4">
                 <div className="flex justify-between items-center bg-neutral-50 p-3 rounded-lg border border-border">

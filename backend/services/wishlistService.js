@@ -21,7 +21,8 @@ class WishlistService {
     }
 
     // Add if not exists
-    if (!wishlist.items.includes(productId)) {
+    const exists = wishlist.items.some(item => (item._id || item).toString() === productId.toString());
+    if (!exists) {
       wishlist.items.push(productId);
       await wishlist.save();
     }
@@ -34,7 +35,7 @@ class WishlistService {
     let wishlist = await wishlistRepository.findOne({ user: userId });
     if (!wishlist) throw new ApiError(404, 'Wishlist not found');
 
-    wishlist.items = wishlist.items.filter(item => item.toString() !== productId);
+    wishlist.items = wishlist.items.filter(item => (item._id || item).toString() !== productId.toString());
     await wishlist.save();
     
     return await wishlistRepository.findOneWithProducts({ user: userId });

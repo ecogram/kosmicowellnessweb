@@ -50,8 +50,8 @@ export const Cart = () => {
                   const imageSrc = Array.isArray(prod.images) && prod.images.length > 0 
                     ? prod.images[0] 
                     : '/assets/products/product-box.jpg';
-                  const productName = prod.name || 'Kosmico Classic Monk Fruit Sweetener (250ml)';
-                  const productSlug = prod.slug || 'kosmico-classic-monk-fruit-sweetener-250g';
+                  const productName = prod.name || 'Sweet Monk (250ml)';
+                  const productSlug = prod.slug || 'sweet-monk-sweetener-250ml';
 
                   return (
                     <li key={`${productId}-${item.variant || 'default'}`} className="p-6 flex flex-col sm:grid sm:grid-cols-12 gap-6 items-center">
@@ -144,7 +144,7 @@ export const Cart = () => {
               <div className="border-t border-border pt-6 mb-8">
                 <div className="flex justify-between items-end">
                   <span className="font-bold text-lg">Total</span>
-                  <span className="font-serif font-bold text-3xl text-primary">{formatINR(subtotal)}</span>
+                  <span className="font-sans font-bold text-3xl text-primary">{formatINR(subtotal)}</span>
                 </div>
               </div>
               

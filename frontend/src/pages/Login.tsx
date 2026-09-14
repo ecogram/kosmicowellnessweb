@@ -39,18 +39,30 @@ export const Login: React.FC = () => {
     return `00:${s}`;
   };
 
+  const handleEmailChange = (val: string) => {
+    const lower = val.toLowerCase().replace(/\s/g, '');
+    setEmail(lower);
+    if (/[A-Z]/.test(val)) {
+      setErrorMessage('Capital letters are not allowed in email. Automatically converted to lowercase.');
+    } else if (errorMessage?.includes('Capital letters are not allowed')) {
+      setErrorMessage(null);
+    }
+  };
+
   // Handle Send OTP
   const handleSendOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-      setErrorMessage('Please enter a valid email address');
+    const cleanEmail = email.trim().toLowerCase();
+    const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+      setErrorMessage('Please enter a valid lowercase email address (e.g. name@domain.com)');
       return;
     }
 
     try {
       setIsLoading(true);
       setErrorMessage(null);
-      await api.post('/auth/login', { email: email.trim().toLowerCase() });
+      await api.post('/auth/login', { email: cleanEmail });
 
       setStep('otp');
       setResendTimer(30);
@@ -206,9 +218,19 @@ export const Login: React.FC = () => {
 
             {/* Error Message */}
             {errorMessage && (
-              <div className="w-full mb-5 p-3.5 bg-red-50 text-red-700 text-xs rounded-2xl font-medium border border-red-200/80 flex items-start gap-2 animate-shake">
-                <span className="text-red-500 font-bold shrink-0">⚠️</span>
-                <span className="flex-1">{errorMessage}</span>
+              <div className="w-full mb-5 p-3.5 bg-red-50 text-red-700 text-xs rounded-2xl font-medium border border-red-200/80 flex flex-col gap-1.5 animate-shake">
+                <div className="flex items-start gap-2">
+                  <span className="text-red-500 font-bold shrink-0">⚠️</span>
+                  <span className="flex-1">{errorMessage}</span>
+                </div>
+                {(errorMessage.toLowerCase().includes('no account') || errorMessage.toLowerCase().includes('create an account')) && (
+                  <Link
+                    to="/register"
+                    className="ml-6 text-[#064e3b] font-bold underline hover:text-emerald-700 text-xs"
+                  >
+                    Click here to Create an Account &rarr;
+                  </Link>
+                )}
               </div>
             )}
 
@@ -216,16 +238,16 @@ export const Login: React.FC = () => {
             <form onSubmit={handleSendOtp} className="w-full space-y-4">
               <div>
                 <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-1.5">
-                  Email Address
+                  Email Address (Lowercase)
                 </label>
                 <div className="relative flex items-center">
                   <Mail className="w-4 h-4 text-emerald-600 absolute left-3.5 pointer-events-none" />
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => handleEmailChange(e.target.value)}
                     placeholder="e.g. name@gmail.com"
-                    className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 text-sm text-neutral-900 placeholder:text-neutral-400 font-medium focus:bg-white focus:border-emerald-600 focus:ring-3 focus:ring-emerald-500/20 focus:outline-none transition-all shadow-inner"
+                    className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 text-sm text-neutral-900 placeholder:text-neutral-400 font-medium lowercase focus:bg-white focus:border-emerald-600 focus:ring-3 focus:ring-emerald-500/20 focus:outline-none transition-all shadow-inner"
                     autoFocus
                     required
                   />

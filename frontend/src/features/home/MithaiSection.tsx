@@ -243,7 +243,7 @@ export function MithaiSection() {
               <div className="text-white space-y-2">
                 <div className="flex items-center gap-2">
                   <span className="bg-emerald-600 text-white text-[11px] font-bold px-3 py-1 rounded-full border border-emerald-400/40 shadow-xs">
-                    Sweet Monk 100% Monk Fruit
+                    100% Pure Sweet Monk
                   </span>
                   <span className="bg-amber-500 text-neutral-950 text-[11px] font-black px-2.5 py-1 rounded-full">
                     Family Safe
@@ -251,7 +251,7 @@ export function MithaiSection() {
                 </div>
                 <h4 className="font-serif text-xl md:text-2xl font-bold">100% Sugar Taste. 0 Calories.</h4>
                 <p className="text-neutral-300 text-xs leading-relaxed">
-                  Slow-cooked Indian sweets and chai prepared with pure Monk Fruit drops for the entire family.
+                  Slow-cooked Indian sweets and chai prepared with pure Sweet Monk drops for the entire family.
                 </p>
               </div>
             </div>
@@ -279,7 +279,7 @@ export function MithaiSection() {
             <div className="p-6 bg-white flex items-center justify-between">
               <div>
                 <h3 className="font-serif font-bold text-lg text-neutral-900">{previewModalImage.title}</h3>
-                <p className="text-xs text-neutral-600">Prepared naturally with Sweet Monk Fruit Sweetener Drops</p>
+                <p className="text-xs text-neutral-600">Prepared naturally with Sweet Monk Sweetener Drops</p>
               </div>
               <a
                 href="/shop"

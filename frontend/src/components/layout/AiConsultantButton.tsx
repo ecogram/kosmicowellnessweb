@@ -198,8 +198,8 @@ export function AiConsultantButton() {
           : 'Hair fall ke liye humara Ayurvedic Hair Oil (Bhringraj & Amla) best hai. Yeh roots ko nourish karke hair growth stimulate karta hai.';
       } else if (lower.includes('pet') || lower.includes('digestion') || lower.includes('stomach')) {
         replyText = language === 'english'
-          ? 'For stomach and digestion wellness, we recommend our Liver Care Supplement along with replacing refined sugar with 100% natural Sweet Monk fruit drops.'
-          : 'Pet ki samasya ke liye humara Liver Care Supplement aur Sugar-free diet recommended hai. Monk fruit sweetener drops 0 calories offer karte hain.';
+          ? 'For stomach and digestion wellness, we recommend our Liver Care Supplement along with replacing refined sugar with 100% natural Sweet Monk drops.'
+          : 'Pet ki samasya ke liye humara Liver Care Supplement aur Sugar-free diet recommended hai. Sweet Monk sweetener drops 0 calories offer karte hain.';
       } else if (lower.includes('weight') || lower.includes('loss') || lower.includes('fat')) {
         replyText = language === 'english'
           ? 'For healthy weight loss, eliminating refined sugar is key. Kosmico Sweet Monk drops offer zero calories and zero net carbohydrates.'

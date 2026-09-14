@@ -91,14 +91,14 @@ export function VisualBundles({ selectedBundleId, onSelectBundle }: VisualBundle
                   </div>
                 </div>
 
-                <p className="text-[11px] text-text-muted font-medium">
+                <p className="text-[11px] text-text-muted font-sans font-semibold">
                   {bundle.unitPrice}
                 </p>
               </div>
 
               <div className="mt-3 pt-2 border-t border-border/60">
                 <div className="flex items-baseline gap-1.5">
-                  <span className="font-serif text-lg font-bold text-primary">
+                  <span className="font-sans text-xl font-black text-emerald-900 tracking-tight">
                     ₹{bundle.price}
                   </span>
                 </div>

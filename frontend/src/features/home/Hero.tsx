@@ -193,7 +193,7 @@ export function Hero() {
         isOpen={isPlayStoreModalOpen}
         onClose={() => setIsPlayStoreModalOpen(false)}
         featureTitle="Kosmico Wellness Mobile App"
-        featureDescription="Experience live GlucoRhythm biometrics, AI food scanning, and order pure Monk Fruit sweeteners directly inside the Kosmico App."
+        featureDescription="Experience live GlucoRhythm biometrics, AI food scanning, and order pure Sweet Monk sweeteners directly inside the Kosmico App."
       />
     </section>
   );

@@ -47,7 +47,7 @@ export function HowItWorksPage() {
         <Container className="relative z-10 text-center max-w-4xl mx-auto px-4">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-800/10 border border-emerald-800/20 text-[#0a7a40] text-xs font-bold uppercase tracking-wider mb-5 shadow-xs">
             <Sparkles className="w-4 h-4 text-emerald-700" />
-            <span>100% Pure Monk Fruit • Certified &amp; Lab-Tested</span>
+            <span>100% Pure Sweet Monk • Certified &amp; Lab-Tested</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-serif font-extrabold text-neutral-900 leading-[1.15] mb-5">
@@ -55,7 +55,7 @@ export function HowItWorksPage() {
           </h1>
 
           <p className="text-base sm:text-lg text-neutral-600 max-w-2xl mx-auto leading-relaxed mb-8">
-            Experience the miracle of ancient Monk Fruit (Luo Han Guo). Replaces regular table sugar 1:1 cup-for-cup with <strong>zero calories, zero net carbs, and zero blood glucose spikes</strong>.
+            Experience the miracle of 100% natural Sweet Monk. Replaces regular table sugar 1:1 cup-for-cup with <strong>zero calories, zero net carbs, and zero blood glucose spikes</strong>.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-bold text-neutral-700">
@@ -113,7 +113,7 @@ export function HowItWorksPage() {
                 </div>
 
                 <p className="text-xs sm:text-sm text-neutral-600 leading-relaxed mb-4">
-                  Official laboratory analysis confirming <strong>0.00 Kcal Calories, 0.0g Sugar, and 0.0g Carbohydrates</strong> with zero artificial additives in Kosmico Monk Fruit Liquid Sweetener.
+                  Official laboratory analysis confirming <strong>0.00 Kcal Calories, 0.0g Sugar, and 0.0g Carbohydrates</strong> with zero artificial additives in Kosmico Sweet Monk Liquid Sweetener.
                 </p>
 
                 <div className="flex flex-wrap gap-2 mb-6">
@@ -255,7 +255,7 @@ export function HowItWorksPage() {
                   <span>Certified Nutritional Breakdown (Per 100g)</span>
                 </h3>
                 <p className="text-xs text-neutral-600 mt-1">
-                  Kosmico Pure Monk Fruit Liquid Sweetener • Zero Glycemic Index
+                  Kosmico Pure Sweet Monk Liquid Sweetener • Zero Glycemic Index
                 </p>
               </div>
               <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-[#0a7a40] bg-white px-3 py-1.5 rounded-full border border-emerald-800/20 shadow-2xs">

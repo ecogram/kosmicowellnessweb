@@ -14,8 +14,8 @@ export function Footer() {
           {/* Brand Info */}
           <div className="col-span-1 md:col-span-1 space-y-4">
             <h3 className="font-serif text-2xl font-bold text-amber-400">Kosmico Wellness</h3>
-            <p className="text-emerald-100/80 text-xs leading-relaxed">
-              KOSMICO WELLNESS PRIVATE LIMITED — India's leading manufacturer of 100% natural zero-calorie monk fruit sweeteners and Ayurvedic healthcare products.
+            <p className="text-sm text-neutral-300/80 leading-relaxed font-normal">
+              KOSMICO WELLNESS PRIVATE LIMITED — India's leading manufacturer of 100% natural zero-calorie Sweet Monk sweeteners and Ayurvedic healthcare products.
             </p>
             <div className="pt-1 text-xs font-semibold text-emerald-200">
               Ancient Wisdom, Modern Living
@@ -42,6 +42,16 @@ export function Footer() {
               <li>
                 <Link to="/shop" className="hover:text-white transition-colors">
                   All Products
+                </Link>
+              </li>
+              <li>
+                <Link to="/coupons" className="hover:text-white transition-colors text-amber-300 font-bold">
+                  Coupons &amp; Offers 🎟️
+                </Link>
+              </li>
+              <li>
+                <Link to="/wishlist" className="hover:text-white transition-colors">
+                  My Wishlist ❤️
                 </Link>
               </li>
               {categories?.map((cat: any) => (

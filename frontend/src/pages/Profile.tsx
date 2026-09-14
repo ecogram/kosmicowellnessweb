@@ -2,10 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { useAuthStore } from '../store/useAuthStore';
+import { useWishlist } from '../hooks/useWishlist';
+import { useOrders } from '../hooks/useOrders';
+import { useCoupons } from '../hooks/useCoupons';
+import { api } from '../services/api';
 import { 
   Package, Heart, Ticket, MapPin, CreditCard, RotateCcw, 
   Globe, Moon, HelpCircle, Info, LogOut, Edit3, X, Phone, MessageSquare, Mail, Building,
-  Plus, Trash2, Home, Briefcase, CheckCircle2, Smartphone
+  Plus, Trash2, Home, Briefcase, CheckCircle2, Smartphone, Camera, Upload
 } from 'lucide-react';
 
 interface SavedAddress {
@@ -56,34 +60,28 @@ const DEFAULT_ADDRESSES: SavedAddress[] = [
   {
     id: 'addr-1',
     fullName: 'Amit Kumar',
-    phone: '+91 98765 43210',
-    addressLine1: 'Flat 402, Green Valley Apartments, Sector 62',
-    addressLine2: 'Near Metro Station',
-    city: 'Noida',
-    state: 'Uttar Pradesh',
-    postalCode: '201301',
-    country: 'India',
-    type: 'HOME',
-    isDefault: true
-  },
-  {
-    id: 'addr-2',
-    fullName: 'Amit Kumar',
     phone: '+91 97931 70555',
-    addressLine1: 'Tower 3, NX One Commercial Complex',
-    addressLine2: '4th Floor, Suite 423',
-    city: 'Greater Noida West',
+    addressLine1: 'Tower 3, NX One Commercial Complex, Suite 423',
+    addressLine2: 'Techzone 4, Greater Noida West',
+    city: 'Greater Noida',
     state: 'Uttar Pradesh',
     postalCode: '201306',
     country: 'India',
-    type: 'WORK',
-    isDefault: false
+    type: 'HOME',
+    isDefault: true
   }
 ];
 
 export const Profile: React.FC = () => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, updateUser } = useAuthStore();
+  const { data: wishlist } = useWishlist();
+  const { data: ordersData } = useOrders({ page: 1, limit: 100 });
+  const { data: couponsData } = useCoupons();
   const navigate = useNavigate();
+
+  const ordersCount = ordersData?.orders ? ordersData.orders.length : (ordersData?.pagination?.total ?? 0);
+  const wishlistCount = wishlist?.items?.length || 0;
+  const couponsCount = couponsData ? couponsData.filter((c: any) => c.isActive !== false).length : 2;
 
   // Settings State
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -95,9 +93,14 @@ export const Profile: React.FC = () => {
 
   // Edit Profile Form State
   const [fullName, setFullName] = useState(user?.name || 'Amit Kumar');
-  const [email, setEmail] = useState(user?.email || 'amitky2056@gmail.com');
-  const [phone, setPhone] = useState('+91 98765 43210');
+  const [email, setEmail] = useState(user?.email || '');
+  const [phone, setPhone] = useState(user?.phoneNumber || (user as any)?.phone || '');
+  const [profilePicture, setProfilePicture] = useState(user?.profilePicture || '');
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
+
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const editModalFileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Address Management State
   const [addresses, setAddresses] = useState<SavedAddress[]>(() => {
@@ -147,10 +150,15 @@ export const Profile: React.FC = () => {
   const [upiIdInput, setUpiIdInput] = useState('');
   const [upiSetDefault, setUpiSetDefault] = useState(true);
 
-  // Update name/email when user changes
+  // Update name/email/phone/picture when user changes
   useEffect(() => {
     if (user?.name) setFullName(user.name);
     if (user?.email) setEmail(user.email);
+    if (user?.profilePicture !== undefined) setProfilePicture(user.profilePicture);
+    if (user) {
+      const userPhone = user.phoneNumber || (user as any).phone || '';
+      if (userPhone) setPhone(userPhone);
+    }
   }, [user]);
 
   // Save to localStorage when modified
@@ -162,13 +170,87 @@ export const Profile: React.FC = () => {
     localStorage.setItem('kosmico_saved_payment_methods', JSON.stringify(paymentMethods));
   }, [paymentMethods]);
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  // Image Upload Handlers
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file (JPG, PNG, WEBP).');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setProfilePicture(dataUrl);
+        // Persist immediately
+        try {
+          setIsUploadingPhoto(true);
+          await api.put('/auth/profile', {
+            name: fullName.trim() || user?.name,
+            phoneNumber: phone.trim() || user?.phoneNumber,
+            profilePicture: dataUrl,
+          });
+          updateUser({ profilePicture: dataUrl });
+        } catch (err) {
+          console.warn('Profile picture save warning:', err);
+          updateUser({ profilePicture: dataUrl });
+        } finally {
+          setIsUploadingPhoto(false);
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = async () => {
+    setProfilePicture('');
+    try {
+      setIsUploadingPhoto(true);
+      await api.delete('/auth/remove-profile-picture');
+      updateUser({ profilePicture: '' });
+    } catch (err) {
+      console.warn('Remove picture warning:', err);
+      updateUser({ profilePicture: '' });
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanName = fullName.trim();
+    const cleanPhone = phone.trim();
+
+    try {
+      await api.put('/auth/profile', {
+        name: cleanName,
+        phoneNumber: cleanPhone,
+        profilePicture: profilePicture,
+      });
+    } catch (err) {
+      console.warn('Backend update profile notice:', err);
+    }
+
+    // Persist updated profile to auth store and localStorage
+    updateUser({
+      name: cleanName,
+      phoneNumber: cleanPhone,
+      profilePicture: profilePicture,
+    });
+
     setIsProfileSaved(true);
     setTimeout(() => {
       setIsProfileSaved(false);
       setIsEditProfileOpen(false);
-    }, 1200);
+    }, 1000);
   };
 
   const handleLogout = () => {
@@ -276,26 +358,65 @@ export const Profile: React.FC = () => {
       <Container className="max-w-3xl mx-auto space-y-6">
         
         {/* User Header Info Card */}
-        <div className={`p-6 rounded-3xl border shadow-xs flex items-center justify-between gap-4 ${isDarkMode ? 'bg-neutral-800 border-neutral-700' : 'bg-surface border-border'}`}>
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-emerald-800 text-amber-300 font-serif font-black text-xl flex items-center justify-center border-2 border-emerald-600 shadow-md">
-              {fullName.split(' ').map(n => n[0]).join('')}
+        <div className={`p-4 sm:p-6 rounded-3xl border shadow-xs flex items-center justify-between gap-3 sm:gap-4 ${isDarkMode ? 'bg-neutral-800 border-neutral-700' : 'bg-surface border-border'}`}>
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <div className="relative group shrink-0">
+              {profilePicture || user?.profilePicture ? (
+                <img
+                  src={profilePicture || user?.profilePicture}
+                  alt={user?.name || fullName}
+                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-emerald-600 shadow-md"
+                />
+              ) : (
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-800 text-amber-300 font-serif font-black text-lg sm:text-xl flex items-center justify-center border-2 border-emerald-600 shadow-md uppercase">
+                  {((user?.name || fullName || 'U').split(' ').filter(Boolean).map((n: string) => n[0]).join('') || 'U').slice(0, 2)}
+                </div>
+              )}
+
+              {/* Camera Upload Badge */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#0a7a40] hover:bg-[#086334] text-white flex items-center justify-center shadow-md border-2 border-white transition-transform hover:scale-110 cursor-pointer"
+                title="Upload Profile Picture"
+              >
+                <Camera className="w-3.5 h-3.5" />
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageFileChange}
+                accept="image/*"
+                className="hidden"
+              />
             </div>
-            <div>
+
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold font-serif">{fullName}</h1>
+                <h1 className="text-lg sm:text-xl font-bold font-serif truncate">{user?.name || fullName || 'User'}</h1>
                 {user?.role === 'admin' && (
-                  <span className="px-2 py-0.5 bg-amber-500/15 text-amber-800 text-[11px] font-black rounded-full border border-amber-500/30">
+                  <span className="px-2 py-0.5 bg-amber-500/15 text-amber-800 text-[10px] sm:text-[11px] font-black rounded-full border border-amber-500/30 shrink-0">
                     👑 ADMIN
                   </span>
                 )}
               </div>
-              <p className={`text-xs ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>{email}</p>
+              <p className={`text-xs truncate ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>{user?.email || email}</p>
+              {(user?.phoneNumber || phone) && (
+                <p className={`text-[11px] font-medium mt-0.5 truncate ${isDarkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>
+                  📞 {user?.phoneNumber || phone}
+                </p>
+              )}
             </div>
           </div>
 
           <button
-            onClick={() => setIsEditProfileOpen(true)}
+            onClick={() => {
+              setFullName(user?.name || '');
+              setEmail(user?.email || '');
+              setPhone(user?.phoneNumber || (user as any)?.phone || '');
+              setProfilePicture(user?.profilePicture || '');
+              setIsEditProfileOpen(true);
+            }}
             className="p-2.5 rounded-2xl bg-emerald-800/10 hover:bg-emerald-800/20 text-emerald-800 transition-colors cursor-pointer"
             title="Edit Profile"
           >
@@ -339,7 +460,7 @@ export const Profile: React.FC = () => {
             <div className="w-8 h-8 rounded-xl bg-emerald-800/10 text-emerald-800 mx-auto flex items-center justify-center font-bold">
               <Package className="w-4 h-4" />
             </div>
-            <div className="text-lg font-black font-serif">0</div>
+            <div className="text-lg font-black font-sans">{ordersCount}</div>
             <div className={`text-xs font-semibold ${isDarkMode ? 'text-neutral-400' : 'text-neutral-600'}`}>Orders</div>
           </Link>
 
@@ -350,19 +471,20 @@ export const Profile: React.FC = () => {
             <div className="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-600 mx-auto flex items-center justify-center font-bold">
               <Heart className="w-4 h-4" />
             </div>
-            <div className="text-lg font-black font-serif">0</div>
+            <div className="text-lg font-black font-sans">{wishlistCount}</div>
             <div className={`text-xs font-semibold ${isDarkMode ? 'text-neutral-400' : 'text-neutral-600'}`}>Wishlist</div>
           </Link>
 
-          <div
-            className={`p-4 rounded-2xl border text-center space-y-1 ${isDarkMode ? 'bg-neutral-800 border-neutral-700' : 'bg-surface border-border'}`}
+          <Link
+            to="/coupons"
+            className={`p-4 rounded-2xl border text-center space-y-1 transition-all ${isDarkMode ? 'bg-neutral-800 border-neutral-700 hover:border-emerald-500' : 'bg-surface border-border hover:border-emerald-800/30'}`}
           >
             <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 mx-auto flex items-center justify-center font-bold">
               <Ticket className="w-4 h-4" />
             </div>
-            <div className="text-lg font-black font-serif">0</div>
+            <div className="text-lg font-black font-sans">{couponsCount}</div>
             <div className={`text-xs font-semibold ${isDarkMode ? 'text-neutral-400' : 'text-neutral-600'}`}>Coupons</div>
-          </div>
+          </Link>
         </div>
 
         {/* Section 1: Account Settings matching App */}
@@ -371,6 +493,38 @@ export const Profile: React.FC = () => {
 
           <div className="space-y-1">
             <Link
+              to="/coupons"
+              className={`flex items-center justify-between p-3.5 rounded-2xl transition-colors ${isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'}`}
+            >
+              <div className="flex items-center gap-3">
+                <Ticket className="w-5 h-5 text-amber-600" />
+                <div>
+                  <div className="text-sm font-bold">My Coupons &amp; Offers</div>
+                  <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                    {couponsCount} active promo voucher{couponsCount === 1 ? '' : 's'} available
+                  </div>
+                </div>
+              </div>
+              <span className="text-neutral-400 font-bold">&rsaquo;</span>
+            </Link>
+
+            <Link
+              to="/wishlist"
+              className={`flex items-center justify-between p-3.5 rounded-2xl transition-colors ${isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'}`}
+            >
+              <div className="flex items-center gap-3">
+                <Heart className="w-5 h-5 text-rose-600" />
+                <div>
+                  <div className="text-sm font-bold">My Wishlist</div>
+                  <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                    {wishlistCount ? `${wishlistCount} saved item(s)` : 'View and manage saved products'}
+                  </div>
+                </div>
+              </div>
+              <span className="text-neutral-400 font-bold">&rsaquo;</span>
+            </Link>
+
+            <Link
               to="/orders"
               className={`flex items-center justify-between p-3.5 rounded-2xl transition-colors ${isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'}`}
             >
@@ -378,7 +532,9 @@ export const Profile: React.FC = () => {
                 <Package className="w-5 h-5 text-emerald-800" />
                 <div>
                   <div className="text-sm font-bold">My Orders</div>
-                  <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>Track and manage your orders</div>
+                  <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                    {ordersCount > 0 ? `${ordersCount} order${ordersCount === 1 ? '' : 's'} placed • Track status` : 'Track and manage your orders'}
+                  </div>
                 </div>
               </div>
               <span className="text-neutral-400 font-bold">&rsaquo;</span>
@@ -536,13 +692,80 @@ export const Profile: React.FC = () => {
             </div>
 
             <form onSubmit={handleSaveProfile} className="space-y-4">
+              {/* Profile Photo Uploader Section */}
+              <div className="flex flex-col items-center justify-center pb-4 border-b border-neutral-100 space-y-3">
+                <div className="relative">
+                  {profilePicture ? (
+                    <img
+                      src={profilePicture}
+                      alt="Profile Preview"
+                      className="w-20 h-20 rounded-full object-cover border-2 border-emerald-600 shadow-md"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-emerald-800 text-amber-300 font-serif font-black text-2xl flex items-center justify-center border-2 border-emerald-600 shadow-md uppercase">
+                      {((fullName || user?.name || 'U').split(' ').filter(Boolean).map((n: string) => n[0]).join('') || 'U').slice(0, 2)}
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => editModalFileInputRef.current?.click()}
+                    className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-[#0a7a40] text-white shadow-md border-2 border-white hover:bg-[#086334] cursor-pointer transition-transform hover:scale-110"
+                    title="Upload / Change Photo"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <input
+                  type="file"
+                  ref={editModalFileInputRef}
+                  onChange={handleImageFileChange}
+                  accept="image/*"
+                  className="hidden"
+                />
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => editModalFileInputRef.current?.click()}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Upload className="w-3.5 h-3.5" />
+                    <span>{profilePicture ? 'Change Photo' : 'Upload Photo'}</span>
+                  </button>
+
+                  {profilePicture && (
+                    <button
+                      type="button"
+                      onClick={handleRemovePhoto}
+                      className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Remove</span>
+                    </button>
+                  )}
+                </div>
+
+                {isUploadingPhoto && (
+                  <p className="text-[11px] text-emerald-700 font-semibold animate-pulse">Saving photo...</p>
+                )}
+              </div>
+
               <div>
                 <label className="text-xs font-bold text-neutral-700 block mb-1">Full Name</label>
                 <input
                   type="text"
+                  required
+                  placeholder="Enter your name"
                   value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-neutral-300 rounded-xl text-sm text-neutral-900 focus:ring-2 focus:ring-emerald-800"
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (/^[a-zA-Z\s]*$/.test(val)) {
+                      setFullName(val);
+                    }
+                  }}
+                  className="w-full px-4 py-2.5 border border-neutral-300 rounded-xl text-sm text-neutral-900 focus:ring-2 focus:ring-emerald-800 focus:border-emerald-800"
                 />
               </div>
 
@@ -550,25 +773,29 @@ export const Profile: React.FC = () => {
                 <label className="text-xs font-bold text-neutral-700 block mb-1">Email Address</label>
                 <input
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-neutral-300 rounded-xl text-sm text-neutral-900 focus:ring-2 focus:ring-emerald-800"
+                  value={user?.email || email}
+                  disabled
+                  readOnly
+                  className="w-full px-4 py-2.5 border border-neutral-200 bg-neutral-100 rounded-xl text-sm text-neutral-500 cursor-not-allowed select-none"
                 />
+                <p className="text-[10px] text-neutral-400 mt-1">Registered email address cannot be changed</p>
               </div>
 
               <div>
                 <label className="text-xs font-bold text-neutral-700 block mb-1">Phone Number</label>
                 <input
-                  type="text"
+                  type="tel"
+                  placeholder="Enter phone number (e.g. 9793170555)"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-neutral-300 rounded-xl text-sm text-neutral-900 focus:ring-2 focus:ring-emerald-800"
+                  className="w-full px-4 py-2.5 border border-neutral-300 rounded-xl text-sm text-neutral-900 focus:ring-2 focus:ring-emerald-800 focus:border-emerald-800"
                 />
               </div>
 
               {isProfileSaved && (
-                <div className="p-3 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-xl text-center">
-                  ✓ Profile updated successfully!
+                <div className="p-3 bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold rounded-xl text-center flex items-center justify-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                  <span>Profile updated and saved successfully!</span>
                 </div>
               )}
 
@@ -1160,18 +1387,23 @@ export const Profile: React.FC = () => {
                 <div className="text-[10px] text-neutral-500">Response in 24 hours</div>
               </a>
 
-              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1">
+              <a
+                href="https://www.google.com/maps/search/?api=1&query=NX+One+Tower+Greater+Noida+West+201306"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1 hover:border-emerald-800 transition-colors block cursor-pointer"
+              >
                 <Building className="w-5 h-5 text-emerald-800 mx-auto" />
                 <div className="font-bold text-xs text-neutral-900">Visit Us</div>
                 <div className="text-[10px] text-neutral-500">Greater Noida</div>
-              </div>
+              </a>
             </div>
 
             {/* Full Details Section matching Video */}
             <div className="bg-emerald-50 border border-emerald-800/10 rounded-2xl p-4 space-y-2 text-xs">
               <div className="font-bold text-emerald-900 text-xs">Main Office Address</div>
               <p className="text-neutral-700 text-[11px] leading-relaxed">
-                1305 &amp; 1307 A, 13th Floor, Tower 3, NX One Tower, Greater Noida (West), Gautam Buddha Nagar, UP, India - 201306
+                423 A, 4th Floor, Tower 3, NX One Tower, Greater Noida (West), Gautam Buddha Nagar, UP, India - 201306
               </p>
               <div className="pt-2 border-t border-emerald-800/10 flex justify-between text-[11px]">
                 <span className="font-bold text-neutral-800">Support Line:</span>

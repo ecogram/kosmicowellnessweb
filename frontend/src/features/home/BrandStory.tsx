@@ -26,9 +26,9 @@ export function BrandStory() {
               enjoying your favorite sweet treats and living a healthy lifestyle.
             </p>
             <p className="text-secondary/80 text-lg mb-8 leading-relaxed">
-              Derived from the ancient monk fruit, our sweetener brings natural, zero-calorie
+              Derived from 100% natural Sweet Monk, our sweetener brings clean, zero-calorie
               sweetness into your home. It's the perfect companion for family breakfasts, afternoon
-              teas, and midnight baking sessions.
+              teas, and celebration sweets.
             </p>
             <Button
               variant="outline"

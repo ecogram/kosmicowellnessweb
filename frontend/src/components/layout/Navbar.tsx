@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, User, Menu, Search, X, Bell } from 'lucide-react';
+import { ShoppingCart, User, Menu, Search, X, Bell, Heart } from 'lucide-react';
 import { Container } from '../ui/Container';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useCartDrawerStore } from '../../store/useCartDrawerStore';
 import { useCart } from '../../hooks/useCart';
+import { useWishlist } from '../../hooks/useWishlist';
 import { useUnreadCount } from '../../hooks/useNotifications';
 import { PlayStoreModal } from '../ui/PlayStoreModal';
 import { HangingPlayStoreWidget } from './HangingPlayStoreWidget';
@@ -19,6 +20,7 @@ export function Navbar() {
 
   const { user, isAuthenticated } = useAuthStore();
   const { data: cart } = useCart();
+  const { data: wishlist } = useWishlist();
   const { data: unreadCount } = useUnreadCount();
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -79,6 +81,22 @@ export function Navbar() {
             >
               {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
             </button>
+
+            {/* Wishlist Button (Always accessible) */}
+            <Link
+              to="/wishlist"
+              className="text-text-main hover:text-rose-600 transition-colors relative p-1"
+              title="My Wishlist"
+              aria-label="Wishlist"
+            >
+              <Heart className="h-5 w-5" />
+              {wishlist?.items?.length > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-xs">
+                  {wishlist.items.length > 9 ? '9+' : wishlist.items.length}
+                </span>
+              )}
+            </Link>
+
             {isAuthenticated ? (
               <div className="hidden sm:flex items-center space-x-3 lg:space-x-4">
                 {user?.role === 'admin' && (
@@ -109,9 +127,16 @@ export function Navbar() {
                 </Link>
                 <Link
                   to="/profile"
-                  className="text-text-main hover:text-primary transition-colors font-medium text-sm"
+                  className="text-text-main hover:text-primary transition-colors font-medium text-sm flex items-center gap-1.5"
                 >
-                  {user?.name?.split(' ')[0]}
+                  {user?.profilePicture ? (
+                    <img
+                      src={user.profilePicture}
+                      alt={user.name}
+                      className="w-6 h-6 rounded-full object-cover border border-emerald-600"
+                    />
+                  ) : null}
+                  <span>{user?.name?.split(' ')[0]}</span>
                 </Link>
               </div>
             ) : (
@@ -230,6 +255,34 @@ export function Navbar() {
                       </Link>
                     )}
                     <Link
+                      to="/wishlist"
+                      className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm flex items-center justify-between"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Heart className="w-4 h-4 text-rose-500 fill-rose-500/20" />
+                        <span>❤️ My Wishlist</span>
+                      </div>
+                      {wishlist?.items?.length > 0 && (
+                        <span className="bg-rose-100 text-rose-700 text-xs px-2 py-0.5 rounded-full font-bold">
+                          {wishlist.items.length}
+                        </span>
+                      )}
+                    </Link>
+                    <Link
+                      to="/coupons"
+                      className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm flex items-center justify-between"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🎟️</span>
+                        <span>Coupons &amp; Offers</span>
+                      </div>
+                      <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full">
+                        4 Active
+                      </span>
+                    </Link>
+                    <Link
                       to="/orders"
                       className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm block"
                       onClick={() => setIsMobileMenuOpen(false)}
@@ -254,14 +307,44 @@ export function Navbar() {
                     </button>
                   </div>
                 ) : (
-                  <Link
-                    to="/login"
-                    className="px-4 py-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-900 font-bold text-base flex items-center gap-2 transition-all block text-center"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <User className="w-5 h-5 inline-block text-neutral-700" />
-                    <span>Account / Sign In</span>
-                  </Link>
+                  <div className="space-y-2">
+                    <Link
+                      to="/wishlist"
+                      className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm flex items-center justify-between"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Heart className="w-4 h-4 text-rose-500 fill-rose-500/20" />
+                        <span>❤️ My Wishlist</span>
+                      </div>
+                      {wishlist?.items?.length > 0 && (
+                        <span className="bg-rose-100 text-rose-700 text-xs px-2 py-0.5 rounded-full font-bold">
+                          {wishlist.items.length}
+                        </span>
+                      )}
+                    </Link>
+                    <Link
+                      to="/coupons"
+                      className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm flex items-center justify-between"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">🎟️</span>
+                        <span>Coupons &amp; Offers</span>
+                      </div>
+                      <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full">
+                        4 Active
+                      </span>
+                    </Link>
+                    <Link
+                      to="/login"
+                      className="px-4 py-3 rounded-xl bg-neutral-100 hover:bg-neutral-200 text-neutral-900 font-bold text-base flex items-center gap-2 transition-all block text-center"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <User className="w-5 h-5 inline-block text-neutral-700" />
+                      <span>Account / Sign In</span>
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>

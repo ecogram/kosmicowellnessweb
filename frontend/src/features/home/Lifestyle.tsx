@@ -31,13 +31,13 @@ export function Lifestyle() {
 
           <div className="grid grid-cols-2 gap-6 border-t border-white/20 pt-8">
             <div>
-              <div className="text-4xl font-serif font-bold text-accent mb-2">0g</div>
+              <div className="text-4xl font-sans font-extrabold text-accent mb-2">0g</div>
               <div className="text-sm font-medium text-white uppercase tracking-wider">
                 Net Carbs
               </div>
             </div>
             <div>
-              <div className="text-4xl font-serif font-bold text-accent mb-2">0</div>
+              <div className="text-4xl font-sans font-extrabold text-accent mb-2">0</div>
               <div className="text-sm font-medium text-white uppercase tracking-wider">
                 Calories
               </div>

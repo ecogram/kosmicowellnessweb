@@ -2,7 +2,15 @@ import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '../store/useAuthStore';
 
-const SOCKET_URL = import.meta.env.VITE_API_URL?.replace('/api/v1', '') || 'http://localhost:5000';
+const getSocketURL = (): string => {
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost') {
+      return window.location.origin;
+    }
+    return 'https://api.kosmicowellness.com';
+  }
+  return 'https://api.kosmicowellness.com';
+};
 
 export const useSocket = () => {
   const { accessToken, isAuthenticated } = useAuthStore();
@@ -21,31 +29,33 @@ export const useSocket = () => {
 
     // Initialize socket connection
     if (!socketRef.current) {
-      socketRef.current = io(SOCKET_URL, {
+      const socket = io(getSocketURL(), {
+        path: '/socket.io',
         auth: { token: accessToken },
+        transports: ['websocket', 'polling'],
         reconnection: true,
-        reconnectionAttempts: 10,
-        reconnectionDelay: 2000,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 3000,
+        timeout: 10000,
       });
 
-      socketRef.current.on('connect', () => {
+      socket.on('connect', () => {
         setIsConnected(true);
-        console.log('Socket.IO Connected');
       });
 
-      socketRef.current.on('disconnect', () => {
+      socket.on('disconnect', () => {
         setIsConnected(false);
-        console.log('Socket.IO Disconnected');
       });
 
-      socketRef.current.on('connect_error', (error) => {
-        console.error('Socket.IO Connection Error:', error);
+      socket.on('connect_error', () => {
+        setIsConnected(false);
       });
+
+      socketRef.current = socket;
     }
 
     return () => {
-      // Don't disconnect on unmount, we want a persistent connection for the provider.
-      // Connection lifecycle is tied to authentication status.
+      // Keep persistent connection while authenticated
     };
   }, [isAuthenticated, accessToken]);
 

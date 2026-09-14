@@ -7,7 +7,6 @@ import { Star, ShieldCheck, ArrowLeft, Heart, Zap, ShieldAlert, Sparkles, CheckC
 import { useProduct } from '../hooks/useProducts';
 import { useAddToCart } from '../hooks/useCart';
 import { useToggleWishlist, useWishlist } from '../hooks/useWishlist';
-import { useAuthStore } from '../store/useAuthStore';
 import { ProductReviews } from '../components/reviews/ProductReviews';
 import { VisualBundles, type BundleOption } from '../components/product/VisualBundles';
 import { PincodeEstimator } from '../components/product/PincodeEstimator';
@@ -16,13 +15,12 @@ export function ProductDetails() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const { data: product, isLoading, isError } = useProduct(slug as string);
-  const { isAuthenticated } = useAuthStore();
   const addToCartMutation = useAddToCart();
   const toggleWishlistMutation = useToggleWishlist();
   const { data: wishlist } = useWishlist();
 
   const [quantity, setQuantity] = useState(1);
-  const [activeImage, setActiveImage] = useState('/assets/products/product-box.jpg');
+  const [activeImage, setActiveImage] = useState<string>('/assets/products/product-box.jpg');
   const [selectedBundleId, setSelectedBundleId] = useState<string>('single');
   const [selectedBundle, setSelectedBundle] = useState<BundleOption | null>(null);
 
@@ -33,7 +31,7 @@ export function ProductDetails() {
   }, [product]);
 
   if (isLoading) {
-    return <div className="py-32 text-center text-text-muted font-medium">Loading Kosmico Monk Fruit Sweetener...</div>;
+    return <div className="py-32 text-center text-text-muted font-medium">Loading Sweet Monk Sweetener...</div>;
   }
 
   if (isError || !product) {
@@ -51,79 +49,79 @@ export function ProductDetails() {
     ? product.images 
     : ['/assets/products/product-box.jpg', '/assets/products/product-front-back.jpg', '/assets/products/lifestyle-tea.jpg'];
 
-  const isWishlisted = wishlist?.items?.some((item: any) => 
-    (typeof item === 'string' ? item : item._id) === product._id
-  );
+  const isWishlisted = wishlist?.items?.some((item: any) => {
+    const itemId = typeof item === 'string' ? item : (item?._id || item?.id);
+    const currentId = product._id || product.id;
+    return itemId?.toString() === currentId?.toString();
+  });
 
   const displayPrice = selectedBundle ? selectedBundle.price : product.price;
 
   const handleAddToCart = () => {
-    const packVariantName = selectedBundle ? selectedBundle.name : '250ml Bottle';
-    const finalPrice = selectedBundle ? selectedBundle.price : product.price;
-    addToCartMutation.mutate({ 
-      productId: product._id || product.id, 
-      quantity: selectedBundle ? selectedBundle.quantity * quantity : quantity, 
-      variant: packVariantName,
+    const variantStr = selectedBundle ? selectedBundle.name : 'Single (250ml)';
+    addToCartMutation.mutate({
+      productId: product._id || product.id,
+      quantity: selectedBundle ? selectedBundle.quantity * quantity : quantity,
+      variant: variantStr,
+      price: displayPrice,
       name: product.name,
-      price: finalPrice,
-      image: product.image || (product.images?.length ? product.images[0] : '/assets/products/product-box.jpg')
+      image: images[0],
     });
   };
 
-  const handleBuyNow = async () => {
-    const packVariantName = selectedBundle ? selectedBundle.name : '250ml Bottle';
-    const finalPrice = selectedBundle ? selectedBundle.price : product.price;
-    await addToCartMutation.mutateAsync({ 
-      productId: product._id || product.id, 
-      quantity: selectedBundle ? selectedBundle.quantity * quantity : quantity, 
-      variant: packVariantName,
-      name: product.name,
-      price: finalPrice,
-      image: product.image || (product.images?.length ? product.images[0] : '/assets/products/product-box.jpg')
-    });
+  const handleBuyNow = () => {
+    handleAddToCart();
     navigate('/checkout');
   };
 
   const handleToggleWishlist = () => {
-    if (!isAuthenticated) return navigate('/login');
-    toggleWishlistMutation.mutate(product._id || product.id);
+    toggleWishlistMutation.mutate({
+      _id: product._id || product.id,
+      id: product._id || product.id,
+      name: product.name,
+      slug: product.slug,
+      price: product.price,
+      compareAtPrice: product.compareAtPrice || 499,
+      image: product.image || (product.images?.length ? product.images[0] : '/assets/products/product-box.jpg'),
+    });
   };
 
   return (
-    <div className="bg-background min-h-screen py-12">
+    <div className="py-12 bg-background min-h-[90vh]">
       <Container>
-        <Link
-          to="/shop"
-          className="inline-flex items-center text-text-muted hover:text-primary mb-8 transition-colors font-medium text-sm"
+        <Link 
+          to="/shop" 
+          className="inline-flex items-center text-sm font-medium text-text-muted hover:text-primary mb-8 transition-colors group"
         >
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Shop
+          <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
+          Back to Shop
         </Link>
 
-        <div className="flex flex-col md:flex-row gap-12 lg:gap-16 mb-20">
+        <div className="flex flex-col md:flex-row gap-10 lg:gap-14 mb-16 items-start">
           {/* Gallery */}
-          <div className="w-full md:w-1/2">
-            <div className="bg-surface border border-border rounded-3xl p-8 aspect-square flex items-center justify-center mb-6 sticky top-24 shadow-md">
-              <img
-                src={activeImage}
-                alt={product.name}
-                className="w-full h-full object-contain mix-blend-multiply transition-all duration-300"
+          <div className="w-full md:w-1/2 md:sticky md:top-28">
+            <div className="aspect-square bg-surface rounded-3xl border border-border p-8 mb-4 flex items-center justify-center overflow-hidden shadow-xs">
+              <img 
+                src={activeImage} 
+                alt={product.name} 
+                className="w-full h-full object-contain mix-blend-multiply hover:scale-105 transition-transform duration-500"
               />
             </div>
-            <div className="flex gap-4 overflow-x-auto pb-2">
-              {images.map((img: string, i: number) => (
-                <button
-                  key={i}
-                  onClick={() => setActiveImage(img)}
-                  className={`flex-shrink-0 w-20 h-20 bg-surface border-2 rounded-2xl overflow-hidden p-2 transition-all ${activeImage === img ? 'border-primary shadow-sm scale-105' : 'border-border hover:border-primary/50'}`}
-                >
-                  <img
-                    src={img}
-                    alt={`Thumbnail ${i}`}
-                    className="w-full h-full object-contain mix-blend-multiply"
-                  />
-                </button>
-              ))}
-            </div>
+            {images.length > 1 && (
+              <div className="grid grid-cols-4 gap-3">
+                {images.map((img: string, idx: number) => (
+                  <button
+                    key={idx}
+                    onClick={() => setActiveImage(img)}
+                    className={`aspect-square rounded-2xl border-2 p-2 bg-surface overflow-hidden transition-all cursor-pointer ${
+                      activeImage === img ? 'border-primary shadow-xs ring-2 ring-primary/20' : 'border-border hover:border-text-muted'
+                    }`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-contain mix-blend-multiply" />
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Erythritol Free Trust Box */}
             <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-2xl flex items-start gap-3">
@@ -131,7 +129,7 @@ export function ProductDetails() {
               <div>
                 <h4 className="text-xs font-bold text-primary uppercase tracking-wider">100% Erythritol-Free Guarantee</h4>
                 <p className="text-xs text-text-main mt-0.5 leading-relaxed">
-                  Kosmico Monk Fruit is guaranteed <strong>zero sugar alcohols</strong>, preventing digestive bloating or stomach discomfort.
+                  Kosmico Sweet Monk is guaranteed <strong>zero sugar alcohols</strong>, preventing digestive bloating or stomach discomfort.
                 </p>
               </div>
             </div>
@@ -142,7 +140,7 @@ export function ProductDetails() {
             <div className="flex items-center gap-2 mb-3">
               <span className="bg-accent text-white text-[11px] font-extrabold px-3 py-1 rounded-full uppercase tracking-wider shadow-xs flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
-                100% Natural Monk Fruit
+                100% Natural Sweet Monk
               </span>
             </div>
 
@@ -164,9 +162,19 @@ export function ProductDetails() {
               </span>
             </div>
 
-            <div className="flex items-baseline gap-3 mb-6 p-4 bg-surface rounded-2xl border border-border">
-              <span className="text-3xl font-bold text-primary">{formatINR(displayPrice)}</span>
-              <span className="text-xs font-semibold text-green-700 bg-green-500/10 px-2 py-1 rounded-md ml-auto">
+            <div className="flex items-baseline gap-3 mb-6 p-4 bg-surface rounded-2xl border border-border flex-wrap">
+              <span className="text-3xl font-black text-primary font-sans">{formatINR(displayPrice)}</span>
+              {((product.compareAtPrice && product.compareAtPrice > displayPrice) || displayPrice < 499) && (
+                <>
+                  <span className="text-base text-neutral-400 line-through font-sans">
+                    {formatINR(product.compareAtPrice || 499)}
+                  </span>
+                  <span className="text-xs font-extrabold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md">
+                    {Math.round((((product.compareAtPrice || 499) - displayPrice) / (product.compareAtPrice || 499)) * 100)}% OFF
+                  </span>
+                </>
+              )}
+              <span className="text-xs font-semibold text-green-700 bg-green-500/10 px-2.5 py-1 rounded-md ml-auto">
                 Taxes included | Free Shipping ₹499+
               </span>
             </div>
@@ -219,12 +227,18 @@ export function ProductDetails() {
                   </button>
 
                   <button 
+                    type="button"
                     onClick={handleToggleWishlist}
                     disabled={toggleWishlistMutation.isPending}
-                    className="w-12 h-12 flex items-center justify-center border border-border rounded-xl bg-background hover:bg-neutral-100 transition-colors shrink-0"
-                    title="Add to Wishlist"
+                    className={`w-12 h-12 flex items-center justify-center border rounded-xl transition-all shrink-0 cursor-pointer shadow-xs active:scale-95 disabled:opacity-50 ${
+                      isWishlisted 
+                        ? 'bg-rose-50 border-rose-300 text-rose-600 shadow-rose-100' 
+                        : 'border-border bg-background hover:bg-neutral-100 text-text-main hover:text-rose-500'
+                    }`}
+                    title={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+                    aria-label="Toggle Wishlist"
                   >
-                    <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-text-main'}`} />
+                    <Heart className={`w-5 h-5 transition-transform duration-200 ${isWishlisted ? 'fill-rose-500 text-rose-500 scale-110' : ''}`} />
                   </button>
                 </div>
 

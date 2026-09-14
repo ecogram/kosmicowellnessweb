@@ -27,13 +27,23 @@ const verifyOtp = asyncHandler(async (req, res) => {
 // Document Aligned Auth Endpoints:
 const register = asyncHandler(async (req, res) => {
   const { email, name } = req.body;
+  if (!name || name.trim().length < 2) {
+    throw new ApiError(400, 'Please enter your full name');
+  }
+  const nameRegex = /^[a-zA-Z\s]+$/;
+  if (!nameRegex.test(name.trim())) {
+    throw new ApiError(400, 'Name should only contain alphabets (no numbers or special characters allowed)');
+  }
   const result = await authService.sendEmailOtp(email, 'register');
-  res.status(200).json(new ApiResponse(200, { ...result, name }, 'Registration OTP sent successfully'));
+  res.status(200).json(new ApiResponse(200, { ...result, name: name.trim() }, 'Registration OTP sent successfully'));
 });
 
 const signupVerify = asyncHandler(async (req, res) => {
   const { email, otp, name } = req.body;
-  const { user, accessToken, refreshToken } = await authService.verifyEmailOtp(email, otp, name, req.ip, 'register');
+  if (name && !/^[a-zA-Z\s]+$/.test(name.trim())) {
+    throw new ApiError(400, 'Name should only contain alphabets (no numbers or special characters allowed)');
+  }
+  const { user, accessToken, refreshToken } = await authService.verifyEmailOtp(email, otp, name ? name.trim() : undefined, req.ip, 'register');
 
   res.cookie('jwt', refreshToken, cookieOptions);
   res.status(200).json(new ApiResponse(200, { user, token: accessToken, accessToken }, 'User registered successfully'));

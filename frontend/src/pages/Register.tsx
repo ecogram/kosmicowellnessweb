@@ -37,21 +37,49 @@ export const Register: React.FC = () => {
     return `00:${s}`;
   };
 
+  const handleNameChange = (val: string) => {
+    // Only allow letters and spaces (no numbers 0-9, no special symbols)
+    const filtered = val.replace(/[^a-zA-Z\s]/g, '');
+    setName(filtered);
+    if (val !== filtered) {
+      setErrorMessage('Name should only contain letters (no numbers or special characters allowed)');
+    } else if (errorMessage?.includes('Name should only')) {
+      setErrorMessage(null);
+    }
+  };
+
+  const handleEmailChange = (val: string) => {
+    const lower = val.toLowerCase().replace(/\s/g, '');
+    setEmail(lower);
+    if (/[A-Z]/.test(val)) {
+      setErrorMessage('Capital letters are not allowed in email. Automatically converted to lowercase.');
+    } else if (errorMessage?.includes('Capital letters are not allowed')) {
+      setErrorMessage(null);
+    }
+  };
+
   const handleSendOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!name || name.trim().length < 2) {
-      setErrorMessage('Please enter your full name');
+    const cleanName = name.trim();
+    if (!cleanName || cleanName.length < 2) {
+      setErrorMessage('Please enter your full name (at least 2 letters)');
       return;
     }
-    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-      setErrorMessage('Please enter a valid email address');
+    if (!/^[a-zA-Z\s]+$/.test(cleanName)) {
+      setErrorMessage('Name should only contain letters (no numbers allowed)');
+      return;
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+      setErrorMessage('Please enter a valid lowercase email address (e.g. name@domain.com)');
       return;
     }
 
     try {
       setIsLoading(true);
       setErrorMessage(null);
-      await api.post('/auth/register', { email: email.trim().toLowerCase(), name: name.trim() });
+      await api.post('/auth/register', { email: cleanEmail, name: cleanName });
 
       setStep('otp');
       setResendTimer(30);
@@ -199,9 +227,19 @@ export const Register: React.FC = () => {
 
             {/* Error Message */}
             {errorMessage && (
-              <div className="w-full mb-4 p-3.5 bg-red-50 text-red-700 text-xs rounded-2xl font-medium border border-red-200 flex items-start gap-2">
-                <span className="text-red-500 font-bold shrink-0">⚠️</span>
-                <span className="flex-1">{errorMessage}</span>
+              <div className="w-full mb-4 p-3.5 bg-red-50 text-red-700 text-xs rounded-2xl font-medium border border-red-200 flex flex-col gap-1.5">
+                <div className="flex items-start gap-2">
+                  <span className="text-red-500 font-bold shrink-0">⚠️</span>
+                  <span className="flex-1">{errorMessage}</span>
+                </div>
+                {errorMessage.toLowerCase().includes('already exists') && (
+                  <Link
+                    to="/login"
+                    className="ml-6 text-[#064e3b] font-bold underline hover:text-emerald-700 text-xs"
+                  >
+                    Click here to Log In directly &rarr;
+                  </Link>
+                )}
               </div>
             )}
 
@@ -209,14 +247,14 @@ export const Register: React.FC = () => {
             <form onSubmit={handleSendOtp} className="w-full space-y-4">
               <div>
                 <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-1.5">
-                  Full Name
+                  Full Name (Letters Only)
                 </label>
                 <div className="relative flex items-center">
                   <User className="w-4 h-4 text-emerald-600 absolute left-3.5 pointer-events-none" />
                   <input
                     type="text"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => handleNameChange(e.target.value)}
                     placeholder="e.g. Rahul Sharma"
                     className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 text-sm text-neutral-900 placeholder:text-neutral-400 font-medium focus:bg-white focus:border-emerald-600 focus:ring-3 focus:ring-emerald-500/20 focus:outline-none transition-all shadow-inner"
                     autoFocus
@@ -227,16 +265,16 @@ export const Register: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-1.5">
-                  Email Address
+                  Email Address (Lowercase)
                 </label>
                 <div className="relative flex items-center">
                   <Mail className="w-4 h-4 text-emerald-600 absolute left-3.5 pointer-events-none" />
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => handleEmailChange(e.target.value)}
                     placeholder="e.g. rahul@gmail.com"
-                    className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 text-sm text-neutral-900 placeholder:text-neutral-400 font-medium focus:bg-white focus:border-emerald-600 focus:ring-3 focus:ring-emerald-500/20 focus:outline-none transition-all shadow-inner"
+                    className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 text-sm text-neutral-900 placeholder:text-neutral-400 font-medium lowercase focus:bg-white focus:border-emerald-600 focus:ring-3 focus:ring-emerald-500/20 focus:outline-none transition-all shadow-inner"
                     required
                   />
                 </div>

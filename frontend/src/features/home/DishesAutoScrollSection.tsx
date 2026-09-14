@@ -63,10 +63,10 @@ const DISHES: DishItem[] = [
     tagline: 'Stays fresh without crystalline texture or hard bite!',
     dishImage: '/assets/dishes/ladoo.jpg',
     productImage: '/assets/products/sweetmonk-lifestyle-drop.png',
-    healthBadge: '100% Natural Monk Fruit',
+    healthBadge: '100% Natural Sweet Monk',
     glycemicIndex: 'GI 0 (Zero Spike)',
     keyFeature: 'Zero Erythritol / Gut-Friendly',
-    description: 'Traditional celebration Ladoos prepared with Sweet Monk liquid drops — 100% pure monk fruit extract.',
+    description: 'Traditional celebration Ladoos prepared with Sweet Monk liquid drops — 100% pure plant-based sweetener.',
     caloriesSaving: 'Save 150 kcal per ladoo'
   },
   {
@@ -121,7 +121,7 @@ export function DishesAutoScrollSection() {
           </h2>
 
           <p className="text-neutral-600 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
-            From slow-cooked Kheer and Gajar Ka Halwa to Gulab Jamun, Rasmalai, and morning Chai — replace sugar 1:1 with pure Sweet Monk Fruit Drops. Zero calories, zero aftertaste, and zero blood sugar spikes.
+            From slow-cooked Kheer and Gajar Ka Halwa to Gulab Jamun, Rasmalai, and morning Chai — replace sugar 1:1 with pure Sweet Monk Drops. Zero calories, zero aftertaste, and zero blood sugar spikes.
           </p>
 
           {/* Marquee Play/Pause Control Button */}

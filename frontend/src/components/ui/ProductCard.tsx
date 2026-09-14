@@ -4,7 +4,6 @@ import { Button } from './Button';
 import { Star, Heart, ShoppingBag, Zap } from 'lucide-react';
 import { useAddToCart } from '../../hooks/useCart';
 import { useToggleWishlist, useWishlist } from '../../hooks/useWishlist';
-import { useAuthStore } from '../../store/useAuthStore';
 
 export interface Product {
   id: string;
@@ -24,21 +23,22 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const { isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
   const addToCartMutation = useAddToCart();
   const toggleWishlistMutation = useToggleWishlist();
   const { data: wishlist } = useWishlist();
 
-  const isWishlisted = wishlist?.items?.some((item: any) => 
-    (typeof item === 'string' ? item : item._id) === product.id
-  );
+  const productId = product.id || (product as any)._id;
+  const isWishlisted = wishlist?.items?.some((item: any) => {
+    const itemId = typeof item === 'string' ? item : (item?._id || item?.id);
+    return itemId?.toString() === productId?.toString();
+  });
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     addToCartMutation.mutate({ 
-      productId: product.id, 
+      productId: productId, 
       quantity: 1,
       name: product.name,
       price: product.price,
@@ -49,15 +49,22 @@ export function ProductCard({ product }: ProductCardProps) {
   const handleToggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isAuthenticated) return navigate('/login');
-    toggleWishlistMutation.mutate(product.id);
+    toggleWishlistMutation.mutate({
+      _id: productId,
+      id: productId,
+      name: product.name,
+      slug: product.slug,
+      price: product.price,
+      compareAtPrice: product.compareAtPrice,
+      image: product.image,
+    });
   };
 
   const handleBuyNow = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     await addToCartMutation.mutateAsync({ 
-      productId: product.id, 
+      productId: productId, 
       quantity: 1,
       name: product.name,
       price: product.price,
@@ -73,12 +80,18 @@ export function ProductCard({ product }: ProductCardProps) {
 
       {/* Wishlist Button */}
       <button 
+        type="button"
         onClick={handleToggleWishlist}
         disabled={toggleWishlistMutation.isPending}
-        className="absolute top-3.5 right-3.5 z-20 p-2.5 rounded-full bg-white/90 backdrop-blur-md hover:bg-white text-neutral-400 hover:text-red-500 transition-all duration-300 shadow-md hover:scale-110 disabled:opacity-50"
-        title="Add to Wishlist"
+        className={`absolute top-3.5 right-3.5 z-20 p-2.5 rounded-full backdrop-blur-md transition-all duration-300 shadow-md hover:scale-110 disabled:opacity-50 cursor-pointer ${
+          isWishlisted 
+            ? 'bg-rose-50 text-rose-600 border border-rose-200' 
+            : 'bg-white/90 hover:bg-white text-neutral-400 hover:text-rose-500'
+        }`}
+        title={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+        aria-label="Wishlist"
       >
-        <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
+        <Heart className={`w-4 h-4 transition-transform duration-200 ${isWishlisted ? 'fill-rose-500 text-rose-500 scale-110' : ''}`} />
       </button>
 
       {/* Product Image Stage with 3D Pop & Hover Scale */}
@@ -125,8 +138,20 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Price & Action Section */}
         <div className="mt-auto pt-3 flex flex-col gap-2.5 border-t border-neutral-100">
           <div className="flex items-center justify-between">
-            <div className="flex flex-col">
-              <span className="text-xl font-extrabold text-emerald-800 tracking-tight">{formatINR(product.price)}</span>
+            <div className="flex items-baseline gap-1.5 flex-wrap">
+              <span className="text-xl font-black text-emerald-800 tracking-tight font-sans">
+                {formatINR(product.price)}
+              </span>
+              {product.compareAtPrice && product.compareAtPrice > product.price && (
+                <>
+                  <span className="text-xs text-neutral-400 line-through font-sans">
+                    {formatINR(product.compareAtPrice)}
+                  </span>
+                  <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-md">
+                    {Math.round(((product.compareAtPrice - product.price) / product.compareAtPrice) * 100)}% OFF
+                  </span>
+                </>
+              )}
             </div>
             <Button 
               size="sm" 

@@ -29,9 +29,9 @@ class AuthService {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const emailRegex = /^\S+@\S+\.\S+$/;
+    const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
     if (!emailRegex.test(normalizedEmail)) {
-      throw new ApiError(400, 'Please provide a valid email address');
+      throw new ApiError(400, 'Please provide a valid lowercase email address');
     }
 
     // 1. Validation for Registration: Ensure single account per email

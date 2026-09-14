@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 
-const WHATSAPP_NUMBER = '919876543210'; // +91 98765 43210 — change this
+const WHATSAPP_NUMBER = '919793170555'; // +91 97931 70555
 const WHATSAPP_MESSAGE = encodeURIComponent(
-  'Hello! I came across Kosmico Wellness and I\'m interested in learning more about your monk fruit sweetener. Can you help me? 😊'
+  'Hello! I came across Kosmico Wellness and I\'m interested in learning more about Sweet Monk sweetener. Can you help me? 😊'
 );
 
 export function WhatsAppButton() {
   const [showTooltip, setShowTooltip] = useState(true);
 
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`;
+  const cleanNumber = WHATSAPP_NUMBER.replace(/\D/g, '');
+  const whatsappUrl = `https://wa.me/${cleanNumber}?text=${WHATSAPP_MESSAGE}`;
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
