@@ -494,12 +494,26 @@ export const Checkout: React.FC = () => {
 
   const { data: dbCoupons } = useCoupons();
 
-  const handleApplyCoupon = (code: string) => {
+  const handleApplyCoupon = async (code: string) => {
     setCouponError(null);
     const cleanCode = code.trim().toUpperCase();
     if (!cleanCode) {
       setCouponError('Please enter a coupon code');
       return;
+    }
+
+    try {
+      const res = await api.post('/coupons/apply', { code: cleanCode, orderAmount: subtotal });
+      const disc = res.data?.data?.discountAmount ?? 0;
+      setAppliedCoupon({ code: cleanCode, discount: disc });
+      setIsCouponModalOpen(false);
+      return;
+    } catch (apiErr: any) {
+      const serverMsg = apiErr.response?.data?.message;
+      if (serverMsg) {
+        setCouponError(serverMsg);
+        return;
+      }
     }
 
     const matchedCoupon = dbCoupons?.find((c) => c.code === cleanCode && c.isActive);
@@ -523,17 +537,7 @@ export const Checkout: React.FC = () => {
       return;
     }
 
-    // Fallback static checks
-    if (cleanCode === 'WELCOME10') {
-      const disc = Math.round(subtotal * 0.1);
-      setAppliedCoupon({ code: 'WELCOME10', discount: disc });
-      setIsCouponModalOpen(false);
-    } else if (cleanCode === 'KOSMICO50') {
-      setAppliedCoupon({ code: 'KOSMICO50', discount: Math.min(50, subtotal) });
-      setIsCouponModalOpen(false);
-    } else {
-      setCouponError('Invalid or expired coupon code');
-    }
+    setCouponError('Invalid or expired coupon code');
   };
 
   const handleEditAddress = (addr: SavedAddress, e: React.MouseEvent) => {
@@ -1179,33 +1183,39 @@ export const Checkout: React.FC = () => {
 
               <div className="space-y-3">
                 <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider">AVAILABLE COUPONS</p>
-                {(dbCoupons && dbCoupons.length > 0 ? dbCoupons : [
-                  { _id: '1', code: 'WELCOME10', description: 'Get 10% Instant discount on your order', discountType: 'percentage' as const, discountValue: 10, minOrderAmount: 299, expiresAt: '2026-12-31', isActive: true },
-                  { _id: '2', code: 'KOSMICO50', description: 'Flat ₹50 OFF on orders', discountType: 'fixed' as const, discountValue: 50, minOrderAmount: 499, expiresAt: '2026-12-31', isActive: true },
-                ]).filter(c => c.isActive !== false).map((c) => (
-                  <div
-                    key={c.code}
-                    onClick={() => handleApplyCoupon(c.code)}
-                    className="p-4 bg-[#eefbf3] border border-emerald-300/80 rounded-2xl cursor-pointer hover:bg-emerald-100/70 hover:border-emerald-400 transition-all flex items-center justify-between group"
-                  >
-                    <div>
-                      <span className="font-extrabold text-sm text-[#0a7a40] tracking-wide block">{c.code}</span>
-                      <p className="text-xs text-neutral-600 mt-0.5">
-                        {c.description || (c.discountType === 'percentage' ? `Get ${c.discountValue}% instant discount on your order` : `Flat ₹${c.discountValue} OFF on orders`)}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleApplyCoupon(c.code);
-                      }}
-                      className="text-xs font-bold text-[#0a7a40] hover:text-[#086333] hover:underline shrink-0 ml-3"
+                {dbCoupons && dbCoupons.filter(c => c.isActive !== false).length > 0 ? (
+                  dbCoupons.filter(c => c.isActive !== false).map((c) => (
+                    <div
+                      key={c.code}
+                      onClick={() => handleApplyCoupon(c.code)}
+                      className="p-4 bg-[#eefbf3] border border-emerald-300/80 rounded-2xl cursor-pointer hover:bg-emerald-100/70 hover:border-emerald-400 transition-all flex items-center justify-between group"
                     >
-                      Apply
-                    </button>
+                      <div>
+                        <span className="font-extrabold text-sm text-[#0a7a40] tracking-wide block">{c.code}</span>
+                        <p className="text-xs text-neutral-600 mt-0.5">
+                          {c.description || (c.discountType === 'percentage' ? `Get ${c.discountValue}% instant discount on your order` : `Flat ₹${c.discountValue} OFF on orders`)}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApplyCoupon(c.code);
+                        }}
+                        className="text-xs font-bold text-[#0a7a40] hover:text-[#086333] hover:underline shrink-0 ml-3 cursor-pointer"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 rounded-2xl bg-neutral-50 border border-neutral-200 text-center space-y-1">
+                    <p className="text-xs font-bold text-neutral-700">No Public Coupons Active</p>
+                    <p className="text-[11px] text-neutral-500">
+                      If you have a promo voucher, enter the code above and click Apply.
+                    </p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>

@@ -17,8 +17,14 @@ export const useCoupons = () => {
   return useQuery({
     queryKey: ['coupons'],
     queryFn: async () => {
-      const { data } = await api.get('/coupons');
-      return data.data as CouponItem[];
+      try {
+        const { data } = await api.get('/coupons');
+        const list = Array.isArray(data?.data) ? data.data : (data?.data?.coupons || []);
+        return list as CouponItem[];
+      } catch (err) {
+        console.warn('Coupons fetch notice:', err);
+        return [] as CouponItem[];
+      }
     },
     staleTime: 60 * 1000,
   });

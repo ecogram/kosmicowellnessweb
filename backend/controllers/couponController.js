@@ -56,27 +56,7 @@ const applyCoupon = asyncHandler(async (req, res) => {
 });
 
 const getCoupons = asyncHandler(async (req, res) => {
-  let coupons = await Coupon.find({ isActive: true }).sort({ createdAt: -1 });
-  if (coupons.length === 0) {
-    coupons = await Coupon.create([
-      {
-        code: 'WELCOME10',
-        description: 'Get 10% Instant discount on your order',
-        discountType: 'percentage',
-        discountValue: 10,
-        minOrderAmount: 299,
-        isActive: true,
-      },
-      {
-        code: 'KOSMICO50',
-        description: 'Flat ₹50 OFF on orders',
-        discountType: 'fixed',
-        discountValue: 50,
-        minOrderAmount: 499,
-        isActive: true,
-      },
-    ]);
-  }
+  const coupons = await Coupon.find({ isActive: true }).sort({ createdAt: -1 });
   res.status(200).json(new ApiResponse(200, coupons, 'Coupons fetched successfully'));
 });
 

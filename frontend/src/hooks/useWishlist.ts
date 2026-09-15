@@ -131,9 +131,17 @@ export const useToggleWishlist = () => {
       if (isAuthenticated && productId) {
         try {
           if (isRemoving) {
-            await api.delete(`/wishlist/items/${productId}`);
+            try {
+              await api.post('/wishlist/remove', { productId });
+            } catch {
+              await api.delete(`/wishlist/items/${productId}`);
+            }
           } else {
-            await api.post('/wishlist/items', { productId });
+            try {
+              await api.post('/wishlist/add', { productId });
+            } catch {
+              await api.post('/wishlist/items', { productId });
+            }
           }
         } catch (apiErr) {
           console.warn('Backend wishlist sync notice:', apiErr);

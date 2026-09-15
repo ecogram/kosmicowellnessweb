@@ -16,30 +16,7 @@ export function Coupons() {
     }, 2500);
   };
 
-  const defaultCoupons = [
-    {
-      _id: '1',
-      code: 'WELCOME10',
-      description: 'Get 10% Instant discount on your order',
-      discountType: 'percentage',
-      discountValue: 10,
-      minOrderAmount: 299,
-      expiresAt: '2026-12-31',
-      isActive: true,
-    },
-    {
-      _id: '2',
-      code: 'KOSMICO50',
-      description: 'Flat ₹50 OFF on orders',
-      discountType: 'fixed',
-      discountValue: 50,
-      minOrderAmount: 499,
-      expiresAt: '2026-12-31',
-      isActive: true,
-    },
-  ];
-
-  const couponsList = dbCoupons !== undefined ? dbCoupons : defaultCoupons;
+  const activeCoupons = (dbCoupons || []).filter((c) => c.isActive !== false);
 
   return (
     <div className="bg-background min-h-screen py-10 md:py-16 font-sans">
@@ -56,19 +33,19 @@ export function Coupons() {
               Exclusive Discounts &amp; Coupons
             </h1>
             <p className="text-emerald-100 text-sm sm:text-base leading-relaxed">
-              Apply these coupon codes during checkout to enjoy instant savings on 100% natural, erythritol-free Kosmico Sweet Monk.
+              Apply valid coupon codes during checkout to enjoy instant savings on 100% natural, erythritol-free Kosmico Sweet Monk.
             </p>
           </div>
         </div>
 
-        {/* Coupons List */}
+        {/* Coupons List / Empty State */}
         {isLoading ? (
           <div className="min-h-[200px] flex items-center justify-center">
             <div className="w-8 h-8 border-3 border-emerald-200 border-t-[#0a7a40] rounded-full animate-spin"></div>
           </div>
-        ) : (
+        ) : activeCoupons.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {couponsList.filter(c => c.isActive !== false).map((coupon) => {
+            {activeCoupons.map((coupon) => {
               const isCopied = copiedCode === coupon.code;
 
               return (
@@ -156,6 +133,27 @@ export function Coupons() {
                 </div>
               );
             })}
+          </div>
+        ) : (
+          <div className="bg-white rounded-3xl border border-neutral-200 p-10 text-center space-y-4 shadow-sm">
+            <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center mx-auto">
+              <Ticket className="w-8 h-8 opacity-70" />
+            </div>
+            <div className="space-y-1 max-w-md mx-auto">
+              <h3 className="font-serif font-bold text-xl text-neutral-900">No Active Coupons Available</h3>
+              <p className="text-xs text-neutral-500 leading-relaxed">
+                There are no public promotional vouchers available right now. As soon as new discount offers are launched, they will appear here automatically.
+              </p>
+            </div>
+            <div className="pt-2">
+              <Link
+                to="/shop"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer"
+              >
+                <span>Explore Products</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
         )}
 

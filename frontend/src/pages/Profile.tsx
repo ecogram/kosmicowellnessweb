@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { useAuthStore } from '../store/useAuthStore';
@@ -9,7 +9,7 @@ import { api } from '../services/api';
 import { 
   Package, Heart, Ticket, MapPin, CreditCard, RotateCcw, 
   Globe, Moon, HelpCircle, Info, LogOut, Edit3, X, Phone, MessageSquare, Mail, Building,
-  Plus, Trash2, Home, Briefcase, CheckCircle2, Smartphone, Camera, Upload
+  Plus, Trash2, Home, Briefcase, CheckCircle2, Smartphone, Camera, Upload, RefreshCw, Check, AlertCircle
 } from 'lucide-react';
 
 interface SavedAddress {
@@ -81,7 +81,7 @@ export const Profile: React.FC = () => {
 
   const ordersCount = ordersData?.orders ? ordersData.orders.length : (ordersData?.pagination?.total ?? 0);
   const wishlistCount = wishlist?.items?.length || 0;
-  const couponsCount = couponsData ? couponsData.filter((c: any) => c.isActive !== false).length : 2;
+  const couponsCount = couponsData ? couponsData.filter((c: any) => c.isActive !== false).length : 0;
 
   // Settings State
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -99,8 +99,16 @@ export const Profile: React.FC = () => {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
 
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const editModalFileInputRef = React.useRef<HTMLInputElement>(null);
+  // Photo Selection & Live Camera State
+  const [isPhotoPickerOpen, setIsPhotoPickerOpen] = useState(false);
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user');
+  const [capturedLivePhoto, setCapturedLivePhoto] = useState<string | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const editModalFileInputRef = useRef<HTMLInputElement>(null);
 
   // Address Management State
   const [addresses, setAddresses] = useState<SavedAddress[]>(() => {
@@ -161,6 +169,38 @@ export const Profile: React.FC = () => {
     }
   }, [user]);
 
+  // Fetch live addresses from backend
+  const fetchLiveAddresses = async () => {
+    try {
+      const res = await api.get('/address');
+      const list = res.data?.data || (Array.isArray(res.data) ? res.data : []);
+      if (Array.isArray(list) && list.length > 0) {
+        const formatted: SavedAddress[] = list.map((a: any) => ({
+          id: a._id || a.id,
+          fullName: a.fullName || fullName,
+          phone: a.phoneNumber || a.phone || phone,
+          addressLine1: a.streetAddress || a.addressLine1 || '',
+          addressLine2: a.addressLine2 || '',
+          city: a.city || 'Noida',
+          state: a.state || 'Uttar Pradesh',
+          postalCode: a.pincode || a.postalCode || '201301',
+          country: a.country || 'India',
+          type: (a.addressLabel?.toUpperCase() === 'WORK' ? 'WORK' : a.addressLabel?.toUpperCase() === 'OTHER' ? 'OTHER' : 'HOME') as 'HOME' | 'WORK' | 'OTHER',
+          isDefault: !!a.isDefault
+        }));
+        setAddresses(formatted);
+      }
+    } catch (err) {
+      console.warn('Backend address fetch notice:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchLiveAddresses();
+    }
+  }, [user]);
+
   // Save to localStorage when modified
   useEffect(() => {
     localStorage.setItem('kosmico_saved_addresses', JSON.stringify(addresses));
@@ -170,7 +210,142 @@ export const Profile: React.FC = () => {
     localStorage.setItem('kosmico_saved_payment_methods', JSON.stringify(paymentMethods));
   }, [paymentMethods]);
 
-  // Image Upload Handlers
+  // Start Live Camera feed
+  const startLiveCamera = async (facing: 'user' | 'environment' = 'user') => {
+    setCameraError(null);
+    setCapturedLivePhoto(null);
+    setCameraFacing(facing);
+    setIsPhotoPickerOpen(false);
+    setIsCameraModalOpen(true);
+
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(t => t.stop());
+      setCameraStream(null);
+    }
+
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera not supported by your browser or connection is not secure (HTTPS / Localhost required).');
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: facing,
+          width: { ideal: 720 },
+          height: { ideal: 720 },
+        },
+        audio: false,
+      });
+
+      setCameraStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(e => console.warn('Video play notice:', e));
+      }
+    } catch (err: any) {
+      console.error('Camera access error:', err);
+      let msg = 'Could not access camera device.';
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        msg = 'Camera permission was denied. Please allow camera access in your browser address bar/settings to take a live photo.';
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        msg = 'No camera found on this device.';
+      } else if (err.message) {
+        msg = err.message;
+      }
+      setCameraError(msg);
+    }
+  };
+
+  // Toggle Front / Back Camera
+  const toggleCameraFacing = () => {
+    const nextFacing = cameraFacing === 'user' ? 'environment' : 'user';
+    startLiveCamera(nextFacing);
+  };
+
+  // Stop Camera & Close Modal
+  const stopLiveCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(t => t.stop());
+      setCameraStream(null);
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraModalOpen(false);
+    setCapturedLivePhoto(null);
+    setCameraError(null);
+  };
+
+  // Bind video srcObject when modal is active
+  useEffect(() => {
+    if (isCameraModalOpen && videoRef.current && cameraStream && !capturedLivePhoto) {
+      videoRef.current.srcObject = cameraStream;
+      videoRef.current.play().catch(e => console.warn('Video play notice:', e));
+    }
+  }, [isCameraModalOpen, cameraStream, capturedLivePhoto]);
+
+  // Clean up camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+      }
+    };
+  }, [cameraStream]);
+
+  // Snap Snapshot from Live Video
+  const handleSnapPhoto = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const canvas = document.createElement('canvas');
+    const width = video.videoWidth || 640;
+    const height = video.videoHeight || 640;
+    const size = Math.min(width, height);
+    
+    canvas.width = 500;
+    canvas.height = 500;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Center crop to make square avatar
+    const sx = (width - size) / 2;
+    const sy = (height - size) / 2;
+
+    if (cameraFacing === 'user') {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
+
+    ctx.drawImage(video, sx, sy, size, size, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    setCapturedLivePhoto(dataUrl);
+  };
+
+  // Apply Captured Live Photo
+  const handleApplyCapturedPhoto = async () => {
+    if (!capturedLivePhoto) return;
+    const photo = capturedLivePhoto;
+    setProfilePicture(photo);
+    stopLiveCamera();
+
+    try {
+      setIsUploadingPhoto(true);
+      await api.put('/auth/profile', {
+        name: fullName.trim() || user?.name,
+        phoneNumber: phone.trim() || user?.phoneNumber,
+        profilePicture: photo,
+      });
+      updateUser({ profilePicture: photo });
+    } catch (err) {
+      console.warn('Profile picture save warning:', err);
+      updateUser({ profilePicture: photo });
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
+  // Image File Upload Handlers (Gallery / File Explorer)
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -190,6 +365,7 @@ export const Profile: React.FC = () => {
       const dataUrl = event.target?.result as string;
       if (dataUrl) {
         setProfilePicture(dataUrl);
+        setIsPhotoPickerOpen(false);
         // Persist immediately
         try {
           setIsUploadingPhoto(true);
@@ -212,6 +388,7 @@ export const Profile: React.FC = () => {
 
   const handleRemovePhoto = async () => {
     setProfilePicture('');
+    setIsPhotoPickerOpen(false);
     try {
       setIsUploadingPhoto(true);
       await api.delete('/auth/remove-profile-picture');
@@ -287,24 +464,49 @@ export const Profile: React.FC = () => {
     setIsAddingAddress(true);
   };
 
-  const handleDeleteAddress = (id: string) => {
+  const handleDeleteAddress = async (id: string) => {
     setAddresses(prev => prev.filter(a => a.id !== id));
+    try {
+      if (!id.startsWith('addr-')) {
+        await api.delete(`/address/${id}`);
+      }
+    } catch (err) {
+      console.warn('Backend delete address notice:', err);
+    }
     setAddressSuccessMsg('Address removed successfully');
     setTimeout(() => setAddressSuccessMsg(''), 2500);
   };
 
-  const handleSetDefaultAddress = (id: string) => {
+  const handleSetDefaultAddress = async (id: string) => {
     setAddresses(prev => prev.map(a => ({
       ...a,
       isDefault: a.id === id
     })));
+    try {
+      if (!id.startsWith('addr-')) {
+        await api.put(`/address/set-default/${id}`);
+      }
+    } catch (err) {
+      console.warn('Backend set default address notice:', err);
+    }
     setAddressSuccessMsg('Default delivery address updated');
     setTimeout(() => setAddressSuccessMsg(''), 2500);
   };
 
-  const handleSaveAddress = (e: React.FormEvent) => {
+  const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!addrFormLine1 || !addrFormPincode) return;
+
+    const payload = {
+      addressLabel: addrFormType === 'HOME' ? 'Home' : addrFormType === 'WORK' ? 'Work' : 'Other',
+      fullName: addrFormName,
+      streetAddress: addrFormLine1 + (addrFormLine2 ? ', ' + addrFormLine2 : ''),
+      city: addrFormCity,
+      state: addrFormState,
+      pincode: addrFormPincode,
+      phoneNumber: addrFormPhone,
+      isDefault: addrFormIsDefault
+    };
 
     if (editingAddressId) {
       setAddresses(prev => prev.map(a => {
@@ -324,10 +526,24 @@ export const Profile: React.FC = () => {
         }
         return addrFormIsDefault ? { ...a, isDefault: false } : a;
       }));
+
+      try {
+        if (!editingAddressId.startsWith('addr-')) {
+          await api.put(`/address/${editingAddressId}`, payload);
+        } else {
+          const res = await api.post('/address', payload);
+          if (res.data?.data?._id) {
+            setAddresses(prev => prev.map(a => a.id === editingAddressId ? { ...a, id: res.data.data._id } : a));
+          }
+        }
+      } catch (err) {
+        console.warn('Backend update address notice:', err);
+      }
       setAddressSuccessMsg('Address updated successfully');
     } else {
+      const tempId = `addr-${Date.now()}`;
       const newAddr: SavedAddress = {
-        id: `addr-${Date.now()}`,
+        id: tempId,
         fullName: addrFormName,
         phone: addrFormPhone,
         addressLine1: addrFormLine1,
@@ -344,6 +560,15 @@ export const Profile: React.FC = () => {
         const list = addrFormIsDefault ? prev.map(a => ({ ...a, isDefault: false })) : [...prev];
         return [newAddr, ...list];
       });
+
+      try {
+        const res = await api.post('/address', payload);
+        if (res.data?.data?._id) {
+          setAddresses(prev => prev.map(a => a.id === tempId ? { ...a, id: res.data.data._id } : a));
+        }
+      } catch (err) {
+        console.warn('Backend add address notice:', err);
+      }
       setAddressSuccessMsg('New address added successfully');
     }
 
@@ -376,9 +601,9 @@ export const Profile: React.FC = () => {
               {/* Camera Upload Badge */}
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#0a7a40] hover:bg-[#086334] text-white flex items-center justify-center shadow-md border-2 border-white transition-transform hover:scale-110 cursor-pointer"
-                title="Upload Profile Picture"
+                onClick={() => setIsPhotoPickerOpen(true)}
+                className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#0a7a40] hover:bg-[#086334] text-white flex items-center justify-center shadow-md border-2 border-white transition-transform hover:scale-110 cursor-pointer"
+                title="Change Profile Picture (Camera / Upload)"
               >
                 <Camera className="w-3.5 h-3.5" />
               </button>
@@ -501,7 +726,7 @@ export const Profile: React.FC = () => {
                 <div>
                   <div className="text-sm font-bold">My Coupons &amp; Offers</div>
                   <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
-                    {couponsCount} active promo voucher{couponsCount === 1 ? '' : 's'} available
+                    {couponsCount > 0 ? `${couponsCount} active promo voucher${couponsCount === 1 ? '' : 's'} available` : 'No active coupons available right now'}
                   </div>
                 </div>
               </div>
@@ -659,8 +884,8 @@ export const Profile: React.FC = () => {
               <div className="flex items-center gap-3">
                 <Info className="w-5 h-5 text-emerald-800" />
                 <div>
-                  <div className="text-sm font-bold">{language === 'HI' ? 'कॉस्मको के बारे में' : 'About Kosmico'}</div>
-                  <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>Our story and values</div>
+                  <div className="text-sm font-bold">{language === 'HI' ? 'कॉस्मिको के बारे में' : 'About Kosmico'}</div>
+                  <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>Our philosophy and mission</div>
                 </div>
               </div>
               <span className="text-neutral-400 font-bold">&rsaquo;</span>
@@ -669,14 +894,22 @@ export const Profile: React.FC = () => {
           </div>
         </div>
 
-        {/* Logout Button matching App */}
-        <button
-          onClick={handleLogout}
-          className="w-full py-4 bg-red-50 hover:bg-red-100 text-red-600 font-bold text-sm rounded-2xl border border-red-200 transition-colors flex items-center justify-center gap-2 cursor-pointer"
-        >
-          <LogOut className="w-4 h-4" />
-          <span>{language === 'HI' ? 'लॉगआउट' : 'Logout'}</span>
-        </button>
+        {/* Section 3: App Version & Logout */}
+        <div className="space-y-4 pt-2">
+          <div className="text-center">
+            <span className="text-[11px] font-bold text-neutral-400 tracking-wider uppercase">
+              Kosmico Wellness • Web &amp; App v1.0.4
+            </span>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="w-full py-4 rounded-3xl border border-rose-200 bg-rose-50/50 hover:bg-rose-100/70 text-rose-600 font-bold text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>{language === 'HI' ? 'लॉग आउट' : 'Log Out'}</span>
+          </button>
+        </div>
 
       </Container>
 
@@ -709,7 +942,7 @@ export const Profile: React.FC = () => {
 
                   <button
                     type="button"
-                    onClick={() => editModalFileInputRef.current?.click()}
+                    onClick={() => setIsPhotoPickerOpen(true)}
                     className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-[#0a7a40] text-white shadow-md border-2 border-white hover:bg-[#086334] cursor-pointer transition-transform hover:scale-110"
                     title="Upload / Change Photo"
                   >
@@ -725,21 +958,30 @@ export const Profile: React.FC = () => {
                   className="hidden"
                 />
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => startLiveCamera('user')}
+                    className="px-3 py-1.5 rounded-xl bg-emerald-800 text-white hover:bg-emerald-900 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Take Live Photo</span>
+                  </button>
+
                   <button
                     type="button"
                     onClick={() => editModalFileInputRef.current?.click()}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                    className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 border border-emerald-800/10"
                   >
                     <Upload className="w-3.5 h-3.5" />
-                    <span>{profilePicture ? 'Change Photo' : 'Upload Photo'}</span>
+                    <span>Upload File</span>
                   </button>
 
                   {profilePicture && (
                     <button
                       type="button"
                       onClick={handleRemovePhoto}
-                      className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 border border-rose-200"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>Remove</span>
@@ -1414,6 +1656,234 @@ export const Profile: React.FC = () => {
         </div>
       )}
 
+      {/* MODAL 5: PHOTO SELECTION ACTION SHEET */}
+      {isPhotoPickerOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="w-full max-w-sm bg-white rounded-3xl p-6 space-y-4 shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex justify-between items-center border-b pb-3">
+              <div>
+                <h3 className="font-serif font-bold text-lg text-neutral-900">Profile Picture</h3>
+                <p className="text-xs text-neutral-500">Choose how you want to update your picture</p>
+              </div>
+              <button 
+                onClick={() => setIsPhotoPickerOpen(false)} 
+                className="p-1 rounded-full text-neutral-400 hover:text-neutral-700 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2.5 pt-1">
+              {/* Option 1: Live Camera */}
+              <button
+                type="button"
+                onClick={() => startLiveCamera('user')}
+                className="w-full p-3.5 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-sm flex items-center justify-between transition-all shadow-md cursor-pointer group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+                    <Camera className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-sm font-extrabold">Take Live Photo</div>
+                    <div className="text-[11px] text-emerald-100 font-normal">Open webcam / phone camera</div>
+                  </div>
+                </div>
+                <span className="text-white/70 group-hover:translate-x-0.5 transition-transform">&rsaquo;</span>
+              </button>
+
+              {/* Option 2: Upload from Device */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPhotoPickerOpen(false);
+                  fileInputRef.current?.click();
+                }}
+                className="w-full p-3.5 rounded-2xl bg-stone-50 hover:bg-stone-100 text-neutral-900 font-bold text-sm flex items-center justify-between transition-colors border border-stone-200 cursor-pointer group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-800/10 flex items-center justify-center text-emerald-800">
+                    <Upload className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-sm font-extrabold text-neutral-900">Upload from Device</div>
+                    <div className="text-[11px] text-neutral-500 font-normal">Choose JPG, PNG, or WEBP</div>
+                  </div>
+                </div>
+                <span className="text-neutral-400 group-hover:translate-x-0.5 transition-transform">&rsaquo;</span>
+              </button>
+
+              {/* Option 3: Remove Current Photo */}
+              {profilePicture && (
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  className="w-full p-3.5 rounded-2xl bg-rose-50/70 hover:bg-rose-100 text-rose-600 font-bold text-sm flex items-center justify-between transition-colors border border-rose-200/80 cursor-pointer group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-rose-500/15 flex items-center justify-center text-rose-600">
+                      <Trash2 className="w-5 h-5" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-sm font-extrabold">Remove Current Photo</div>
+                      <div className="text-[11px] text-rose-400 font-normal">Reset to initials avatar</div>
+                    </div>
+                  </div>
+                  <span className="text-rose-400 group-hover:translate-x-0.5 transition-transform">&rsaquo;</span>
+                </button>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsPhotoPickerOpen(false)}
+              className="w-full py-2.5 text-center text-xs font-bold text-neutral-500 hover:text-neutral-800 cursor-pointer"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 6: LIVE CAMERA CAPTURE */}
+      {isCameraModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="w-full max-w-md bg-white rounded-3xl p-5 space-y-4 shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex justify-between items-center border-b pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-emerald-800/10 text-emerald-800 flex items-center justify-center">
+                  <Camera className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="font-serif font-bold text-base text-neutral-900">
+                    {capturedLivePhoto ? 'Preview Photo' : 'Take Live Photo'}
+                  </h3>
+                  <p className="text-[11px] text-neutral-500">
+                    {capturedLivePhoto ? 'Looking good? Click save to update profile' : 'Align your face inside the frame'}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={stopLiveCamera} 
+                className="p-1 rounded-full text-neutral-400 hover:text-neutral-700 cursor-pointer"
+                title="Close Camera"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Camera Error Display */}
+            {cameraError ? (
+              <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl space-y-3 text-center">
+                <div className="w-10 h-10 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-rose-800">Camera Access Error</h4>
+                  <p className="text-xs text-rose-600 mt-1">{cameraError}</p>
+                </div>
+                <div className="flex gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => startLiveCamera(cameraFacing)}
+                    className="flex-1 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                  >
+                    Try Again
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      stopLiveCamera();
+                      fileInputRef.current?.click();
+                    }}
+                    className="flex-1 py-2.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                  >
+                    Upload File Instead
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Viewport Frame */}
+                <div className="relative aspect-square w-full max-w-[320px] sm:max-w-[340px] mx-auto rounded-3xl overflow-hidden bg-neutral-900 shadow-inner border-2 border-emerald-800/30 flex items-center justify-center">
+                  {capturedLivePhoto ? (
+                    <img
+                      src={capturedLivePhoto}
+                      alt="Captured Live Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <>
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className={`w-full h-full object-cover ${cameraFacing === 'user' ? 'scale-x-[-1]' : ''}`}
+                      />
+                      {/* Avatar Alignment Target Overlay */}
+                      <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+                        <div className="w-48 h-48 sm:w-56 sm:h-56 rounded-full border-2 border-dashed border-white/60 shadow-[0_0_0_9999px_rgba(0,0,0,0.3)]" />
+                      </div>
+                    </>
+                  )}
+
+                  {/* Camera Flip Switch on Live Feed */}
+                  {!capturedLivePhoto && (
+                    <button
+                      type="button"
+                      onClick={toggleCameraFacing}
+                      className="absolute top-3 right-3 p-2.5 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-xs transition-all shadow-md cursor-pointer active:scale-95"
+                      title="Switch Front / Back Camera"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Shutter / Action Controls */}
+                {!capturedLivePhoto ? (
+                  <div className="flex flex-col items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleSnapPhoto}
+                      className="w-16 h-16 rounded-full bg-linear-to-tr from-emerald-800 to-emerald-600 hover:from-emerald-900 hover:to-emerald-700 text-white flex items-center justify-center shadow-lg border-4 border-white cursor-pointer active:scale-90 transition-transform"
+                      title="Click to Snap Photo"
+                    >
+                      <Camera className="w-7 h-7" />
+                    </button>
+                    <span className="text-xs font-semibold text-neutral-600">Tap to capture picture</span>
+                  </div>
+                ) : (
+                  <div className="flex gap-2.5 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setCapturedLivePhoto(null)}
+                      className="flex-1 py-3 rounded-2xl bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      <span>Retake Photo</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleApplyCapturedPhoto}
+                      disabled={isUploadingPhoto}
+                      className="flex-1 py-3 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer disabled:opacity-50"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>{isUploadingPhoto ? 'Saving...' : 'Use This Photo'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
+
