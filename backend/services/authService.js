@@ -162,7 +162,23 @@ class AuthService {
       createdByIp: ip,
     });
 
-    const pic = user.profilePicture || user.profileImage || user.avatar || '';
+    let pic = user.profilePicture || user.profileImage || user.avatar || '';
+    const { saveProfileImage } = require('../utils/profileStorage');
+    if (pic && pic.startsWith('data:image/')) {
+      try {
+        const publicUrl = saveProfileImage(pic, user._id);
+        if (publicUrl && publicUrl.startsWith('http')) {
+          pic = publicUrl;
+          user.profilePicture = publicUrl;
+          user.profileImage = publicUrl;
+          user.avatar = publicUrl;
+          await user.save();
+        }
+      } catch (err) {
+        console.warn('Auto image migration error:', err);
+      }
+    }
+
     const phone = user.phoneNumber || user.phone || '';
 
     const safeUser = {

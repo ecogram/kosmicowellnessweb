@@ -33,17 +33,36 @@ app.use(
   })
 );
 
+const path = require('path');
+
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, 'uploads');
+const profilesDir = path.join(uploadsDir, 'profiles');
+if (!require('fs').existsSync(uploadsDir)) {
+  require('fs').mkdirSync(uploadsDir, { recursive: true });
+}
+if (!require('fs').existsSync(profilesDir)) {
+  require('fs').mkdirSync(profilesDir, { recursive: true });
+}
+
+// Serve uploaded static files publicly for Mobile App & Web
+app.use('/uploads', express.static(uploadsDir));
+
 app.use('/api', limiter);
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
 app.use(
   express.json({
-    limit: '10mb',
+    limit: '25mb',
     verify: (req, res, buf) => {
       req.rawBody = buf;
     },
   })
 );
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 app.use(cookieParser());
 
 // Import Routers

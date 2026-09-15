@@ -63,12 +63,17 @@ const loginVerify = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, { user, token: accessToken, accessToken }, 'Logged in successfully'));
 });
 
+const { saveProfileImage } = require('../utils/profileStorage');
+
 const updateProfile = asyncHandler(async (req, res) => {
   const file = req.file || (req.files && req.files.length > 0 ? req.files[0] : null);
-  let profilePicture = req.body.profilePicture || req.body.profileImage || req.body.avatar;
+  let rawPic = req.body.profilePicture || req.body.profileImage || req.body.avatar;
 
+  let profilePicture = '';
   if (file) {
-    profilePicture = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    profilePicture = saveProfileImage(file.buffer, req.user._id, req);
+  } else if (rawPic) {
+    profilePicture = saveProfileImage(rawPic, req.user._id, req);
   }
 
   const { name, fullName, phoneNumber, phone, removePhoto } = req.body;
@@ -124,7 +129,24 @@ const getMe = asyncHandler(async (req, res) => {
   const dbUser = await User.findById(req.user._id).select('-passwordHash');
   const u = dbUser || req.user;
 
-  const pic = u.profilePicture || u.profileImage || u.avatar || '';
+  let pic = u.profilePicture || u.profileImage || u.avatar || '';
+  
+  // If stored image is a base64 data URI, auto-migrate to static URL file for mobile app
+  if (pic && pic.startsWith('data:image/')) {
+    try {
+      const publicUrl = saveProfileImage(pic, u._id, req);
+      if (publicUrl && publicUrl.startsWith('http')) {
+        pic = publicUrl;
+        u.profilePicture = publicUrl;
+        u.profileImage = publicUrl;
+        u.avatar = publicUrl;
+        await u.save();
+      }
+    } catch (err) {
+      console.warn('Auto image migration error:', err);
+    }
+  }
+
   const userPhone = u.phoneNumber || u.phone || '';
 
   const user = {
