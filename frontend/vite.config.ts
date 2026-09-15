@@ -60,11 +60,11 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: process.env.VITE_API_URL || 'http://3.7.180.215:5000',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'http://localhost:5000',
+        target: process.env.VITE_API_URL || 'http://3.7.180.215:5000',
         ws: true,
         changeOrigin: true,
       },
