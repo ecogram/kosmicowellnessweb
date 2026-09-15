@@ -5,10 +5,11 @@ const getBaseURL = (): string => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+  // In browser, relative '/api' works on localhost and on https://kosmicowellness.com/api without HTTPS Mixed Content block
+  if (typeof window !== 'undefined') {
     return '/api';
   }
-  return 'http://3.7.180.215:5000/api';
+  return 'https://kosmicowellness.com/api';
 };
 
 export const api = axios.create({
