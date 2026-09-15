@@ -162,39 +162,82 @@ class AuthService {
       createdByIp: ip,
     });
 
+    const pic = user.profilePicture || user.profileImage || user.avatar || '';
+    const phone = user.phoneNumber || user.phone || '';
+
     const safeUser = {
       id: user._id,
       _id: user._id,
       name: user.name,
+      fullName: user.name,
       email: user.email,
       role: user.role,
-      phoneNumber: user.phoneNumber || '',
-      profilePicture: user.profilePicture || '',
+      phoneNumber: phone,
+      phone: phone,
+      mobile: phone,
+      profilePicture: pic,
+      profileImage: pic,
+      avatar: pic,
+      avatarUrl: pic,
+      image: pic,
+      isActive: user.isActive,
     };
 
     return { user: safeUser, accessToken, refreshToken: refreshTokenString };
   }
 
-  async updateProfile(userId, { name, phoneNumber, profilePicture }) {
+  async updateProfile(userId, { name, fullName, phoneNumber, phone, profilePicture, profileImage, avatar, removePhoto }) {
     const user = await User.findById(userId);
     if (!user) {
       throw new ApiError(404, 'User not found');
     }
 
-    if (name) user.name = name.trim();
-    if (phoneNumber !== undefined) user.phoneNumber = phoneNumber.trim();
-    if (profilePicture !== undefined) user.profilePicture = profilePicture;
+    const updatedName = name || fullName;
+    if (updatedName && typeof updatedName === 'string' && updatedName.trim().length > 0) {
+      user.name = updatedName.trim();
+    }
+
+    const updatedPhone = phoneNumber !== undefined ? phoneNumber : phone;
+    if (updatedPhone !== undefined && updatedPhone !== null) {
+      const cleanPhone = updatedPhone.toString().trim();
+      user.phoneNumber = cleanPhone;
+      user.phone = cleanPhone;
+    }
+
+    const updatedPic = profilePicture || profileImage || avatar;
+    if (removePhoto === true) {
+      user.profilePicture = '';
+      user.profileImage = '';
+      user.avatar = '';
+    } else if (updatedPic && typeof updatedPic === 'string' && updatedPic.trim().length > 0) {
+      const cleanPic = updatedPic.trim();
+      user.profilePicture = cleanPic;
+      user.profileImage = cleanPic;
+      user.avatar = cleanPic;
+    }
+    // Note: If updatedPic is empty/undefined and removePhoto is not true, we DO NOT wipe the existing photo!
 
     await user.save();
+
+    const pic = user.profilePicture || user.profileImage || user.avatar || '';
+    const finalPhone = user.phoneNumber || user.phone || '';
 
     return {
       id: user._id,
       _id: user._id,
       name: user.name,
+      fullName: user.name,
       email: user.email,
       role: user.role,
-      phoneNumber: user.phoneNumber || '',
-      profilePicture: user.profilePicture || '',
+      phoneNumber: finalPhone,
+      phone: finalPhone,
+      mobile: finalPhone,
+      profilePicture: pic,
+      profileImage: pic,
+      avatar: pic,
+      avatarUrl: pic,
+      image: pic,
+      isActive: user.isActive,
     };
   }
 
@@ -205,16 +248,28 @@ class AuthService {
     }
 
     user.profilePicture = '';
+    user.profileImage = '';
+    user.avatar = '';
     await user.save();
+
+    const finalPhone = user.phoneNumber || user.phone || '';
 
     return {
       id: user._id,
       _id: user._id,
       name: user.name,
+      fullName: user.name,
       email: user.email,
       role: user.role,
-      phoneNumber: user.phoneNumber || '',
+      phoneNumber: finalPhone,
+      phone: finalPhone,
+      mobile: finalPhone,
       profilePicture: '',
+      profileImage: '',
+      avatar: '',
+      avatarUrl: '',
+      image: '',
+      isActive: user.isActive,
     };
   }
 

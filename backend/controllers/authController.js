@@ -65,14 +65,23 @@ const loginVerify = asyncHandler(async (req, res) => {
 
 const updateProfile = asyncHandler(async (req, res) => {
   const file = req.file || (req.files && req.files.length > 0 ? req.files[0] : null);
-  let profilePicture = req.body.profilePicture;
+  let profilePicture = req.body.profilePicture || req.body.profileImage || req.body.avatar;
 
   if (file) {
     profilePicture = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
   }
 
-  const { name, phoneNumber } = req.body;
-  const user = await authService.updateProfile(req.user._id, { name, phoneNumber, profilePicture });
+  const { name, fullName, phoneNumber, phone, removePhoto } = req.body;
+  const user = await authService.updateProfile(req.user._id, {
+    name,
+    fullName,
+    phoneNumber,
+    phone,
+    profilePicture,
+    profileImage: profilePicture,
+    avatar: profilePicture,
+    removePhoto: removePhoto === true || removePhoto === 'true',
+  });
   res.status(200).json(new ApiResponse(200, { user, ...user }, 'Profile updated successfully'));
 });
 
@@ -111,16 +120,31 @@ const logout = asyncHandler(async (req, res) => {
 });
 
 const getMe = asyncHandler(async (req, res) => {
+  const User = require('../models/User');
+  const dbUser = await User.findById(req.user._id).select('-passwordHash');
+  const u = dbUser || req.user;
+
+  const pic = u.profilePicture || u.profileImage || u.avatar || '';
+  const userPhone = u.phoneNumber || u.phone || '';
+
   const user = {
-    id: req.user._id,
-    _id: req.user._id,
-    name: req.user.name,
-    email: req.user.email,
-    role: req.user.role,
-    phoneNumber: req.user.phoneNumber || '',
-    profilePicture: req.user.profilePicture || '',
-    isActive: req.user.isActive,
-    createdAt: req.user.createdAt,
+    id: u._id,
+    _id: u._id,
+    name: u.name,
+    fullName: u.name,
+    email: u.email,
+    role: u.role,
+    phoneNumber: userPhone,
+    phone: userPhone,
+    mobile: userPhone,
+    profilePicture: pic,
+    profileImage: pic,
+    avatar: pic,
+    avatarUrl: pic,
+    image: pic,
+    isActive: u.isActive,
+    createdAt: u.createdAt,
+    updatedAt: u.updatedAt,
   };
   res.status(200).json(new ApiResponse(200, { user, ...user }, 'User data retrieved'));
 });

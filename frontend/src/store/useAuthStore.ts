@@ -5,10 +5,17 @@ export interface User {
   id?: string;
   _id?: string;
   name: string;
+  fullName?: string;
   email: string;
   role?: string;
   phoneNumber?: string;
+  phone?: string;
+  mobile?: string;
   profilePicture?: string;
+  profileImage?: string;
+  avatar?: string;
+  avatarUrl?: string;
+  image?: string;
 }
 
 interface AuthState {

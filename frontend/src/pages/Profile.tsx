@@ -471,23 +471,42 @@ export const Profile: React.FC = () => {
     const cleanPhone = phone.trim();
 
     try {
-      const res = await api.put('/auth/profile', {
+      const payload: any = {
         name: cleanName,
+        fullName: cleanName,
         phoneNumber: cleanPhone,
-        profilePicture: profilePicture,
-      });
-      const updatedUser = res.data?.data?.user || res.data?.data || {
-        name: cleanName,
-        phoneNumber: cleanPhone,
-        profilePicture: profilePicture,
+        phone: cleanPhone,
       };
-      updateUser(updatedUser);
+      if (profilePicture && profilePicture.trim().length > 0) {
+        payload.profilePicture = profilePicture.trim();
+        payload.profileImage = profilePicture.trim();
+        payload.avatar = profilePicture.trim();
+      }
+
+      const res = await api.put('/auth/profile', payload);
+      const updatedUser = res.data?.data?.user || res.data?.data;
+      if (updatedUser) {
+        if (updatedUser.name) setFullName(updatedUser.name);
+        const p = updatedUser.phoneNumber || updatedUser.phone || cleanPhone;
+        if (p) setPhone(p);
+        const pic = updatedUser.profilePicture || updatedUser.profileImage || updatedUser.avatar || profilePicture;
+        if (pic) setProfilePicture(pic);
+        updateUser(updatedUser);
+      } else {
+        updateUser({
+          name: cleanName,
+          fullName: cleanName,
+          phoneNumber: cleanPhone,
+          phone: cleanPhone,
+        });
+      }
     } catch (err) {
       console.warn('Backend update profile notice:', err);
       updateUser({
         name: cleanName,
+        fullName: cleanName,
         phoneNumber: cleanPhone,
-        profilePicture: profilePicture,
+        phone: cleanPhone,
       });
     }
 
@@ -705,10 +724,10 @@ export const Profile: React.FC = () => {
 
           <button
             onClick={() => {
-              setFullName(user?.name || '');
-              setEmail(user?.email || '');
-              setPhone(user?.phoneNumber || (user as any)?.phone || '');
-              setProfilePicture(user?.profilePicture || '');
+              setFullName(user?.name || (user as any)?.fullName || fullName || '');
+              setEmail(user?.email || email || '');
+              setPhone(user?.phoneNumber || (user as any)?.phone || phone || '');
+              setProfilePicture(profilePicture || user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar || '');
               setIsEditProfileOpen(true);
             }}
             className="p-2.5 rounded-2xl bg-emerald-800/10 hover:bg-emerald-800/20 text-emerald-800 transition-colors cursor-pointer"
