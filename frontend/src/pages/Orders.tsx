@@ -9,6 +9,18 @@ import { Package, Calendar, ChevronRight } from 'lucide-react';
 export const Orders: React.FC = () => {
   const { data, isLoading, isError } = useOrders({ page: 1, limit: 20 });
 
+  const rawOrders = data?.orders || [];
+  const orders = React.useMemo(() => {
+    return [...rawOrders].sort((a: any, b: any) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (!isNaN(timeA) && !isNaN(timeB) && timeA !== timeB) {
+        return timeB - timeA; // Latest date on top
+      }
+      return (b.orderNumber || b._id || '').localeCompare(a.orderNumber || a._id || '');
+    });
+  }, [rawOrders]);
+
   if (isLoading) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
@@ -28,18 +40,6 @@ export const Orders: React.FC = () => {
       </div>
     );
   }
-
-  const rawOrders = data?.orders || [];
-  const orders = React.useMemo(() => {
-    return [...rawOrders].sort((a: any, b: any) => {
-      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      if (!isNaN(timeA) && !isNaN(timeB) && timeA !== timeB) {
-        return timeB - timeA; // Latest date on top
-      }
-      return (b.orderNumber || b._id || '').localeCompare(a.orderNumber || a._id || '');
-    });
-  }, [rawOrders]);
 
   return (
     <div className="bg-[#f8faf8] min-h-[85vh] py-10">
