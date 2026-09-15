@@ -18,6 +18,7 @@ router.post('/register', authController.register);
 router.post('/signup-verify', authController.signupVerify);
 router.post('/login', authController.login);
 router.post('/login-verify', authController.loginVerify);
+router.get('/profile', protect, authController.getMe);
 router.put('/profile', protect, authController.updateProfile);
 router.delete('/remove-profile-picture', protect, authController.removeProfilePicture);
 

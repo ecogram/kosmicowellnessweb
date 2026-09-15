@@ -169,8 +169,24 @@ export const Register: React.FC = () => {
         otp: otpString,
       });
 
-      const { user, accessToken, token } = response.data.data;
-      setAuth(user, accessToken || token);
+      const resData = response.data?.data || response.data || {};
+      let userObj = resData?.user || resData;
+      const authToken = resData?.accessToken || resData?.token || response.data?.token || response.data?.accessToken;
+
+      if (authToken) {
+        setAuth(userObj, authToken);
+        try {
+          const profileRes = await api.get('/auth/profile', {
+            headers: { Authorization: `Bearer ${authToken}` },
+          });
+          if (profileRes.data?.data) {
+            userObj = profileRes.data.data.user || profileRes.data.data;
+            setAuth(userObj, authToken);
+          }
+        } catch (profileErr) {
+          console.warn('Profile fetch after register notice:', profileErr);
+        }
+      }
 
       setTimeout(() => {
         setIsVerifyingModal(false);
