@@ -64,14 +64,21 @@ const loginVerify = asyncHandler(async (req, res) => {
 });
 
 const updateProfile = asyncHandler(async (req, res) => {
-  const { name, phoneNumber, profilePicture } = req.body;
+  const file = req.file || (req.files && req.files.length > 0 ? req.files[0] : null);
+  let profilePicture = req.body.profilePicture;
+
+  if (file) {
+    profilePicture = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+  }
+
+  const { name, phoneNumber } = req.body;
   const user = await authService.updateProfile(req.user._id, { name, phoneNumber, profilePicture });
-  res.status(200).json(new ApiResponse(200, { user }, 'Profile updated successfully'));
+  res.status(200).json(new ApiResponse(200, { user, ...user }, 'Profile updated successfully'));
 });
 
 const removeProfilePicture = asyncHandler(async (req, res) => {
   const user = await authService.removeProfilePicture(req.user._id);
-  res.status(200).json(new ApiResponse(200, { user }, 'Profile picture removed successfully'));
+  res.status(200).json(new ApiResponse(200, { user, ...user }, 'Profile picture removed successfully'));
 });
 
 const refresh = asyncHandler(async (req, res) => {
@@ -104,7 +111,18 @@ const logout = asyncHandler(async (req, res) => {
 });
 
 const getMe = asyncHandler(async (req, res) => {
-  res.status(200).json(new ApiResponse(200, { user: req.user }, 'User data retrieved'));
+  const user = {
+    id: req.user._id,
+    _id: req.user._id,
+    name: req.user.name,
+    email: req.user.email,
+    role: req.user.role,
+    phoneNumber: req.user.phoneNumber || '',
+    profilePicture: req.user.profilePicture || '',
+    isActive: req.user.isActive,
+    createdAt: req.user.createdAt,
+  };
+  res.status(200).json(new ApiResponse(200, { user, ...user }, 'User data retrieved'));
 });
 
 module.exports = {

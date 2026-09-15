@@ -92,12 +92,13 @@ export const Profile: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Edit Profile Form State
-  const [fullName, setFullName] = useState(user?.name || 'Amit Kumar');
+  const [fullName, setFullName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phoneNumber || (user as any)?.phone || '');
   const [profilePicture, setProfilePicture] = useState(user?.profilePicture || '');
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
 
   // Photo Selection & Live Camera State
   const [isPhotoPickerOpen, setIsPhotoPickerOpen] = useState(false);
@@ -158,16 +159,42 @@ export const Profile: React.FC = () => {
   const [upiIdInput, setUpiIdInput] = useState('');
   const [upiSetDefault, setUpiSetDefault] = useState(true);
 
-  // Update name/email/phone/picture when user changes
+  // Synchronize state when store user changes
   useEffect(() => {
     if (user?.name) setFullName(user.name);
     if (user?.email) setEmail(user.email);
-    if (user?.profilePicture !== undefined) setProfilePicture(user.profilePicture);
-    if (user) {
-      const userPhone = user.phoneNumber || (user as any).phone || '';
-      if (userPhone) setPhone(userPhone);
+    if (user?.profilePicture !== undefined) {
+      setProfilePicture(user.profilePicture || '');
+      setImageLoadError(false);
     }
+    const userPhone = user?.phoneNumber || (user as any)?.phone || '';
+    if (userPhone) setPhone(userPhone);
   }, [user]);
+
+  // Fetch fresh user profile from API on mount
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        const res = await api.get('/auth/profile');
+        const fetchedUser = res.data?.data?.user || res.data?.data;
+        if (fetchedUser) {
+          if (fetchedUser.name) setFullName(fetchedUser.name);
+          if (fetchedUser.email) setEmail(fetchedUser.email);
+          if (fetchedUser.profilePicture !== undefined) {
+            setProfilePicture(fetchedUser.profilePicture || '');
+            setImageLoadError(false);
+          }
+          const p = fetchedUser.phoneNumber || fetchedUser.phone || '';
+          if (p) setPhone(p);
+          updateUser(fetchedUser);
+        }
+      } catch (err) {
+        console.warn('Backend user profile fetch notice:', err);
+      }
+    };
+
+    fetchUserProfile();
+  }, [updateUser]);
 
   // Fetch live addresses from backend
   const fetchLiveAddresses = async () => {
@@ -209,6 +236,44 @@ export const Profile: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('kosmico_saved_payment_methods', JSON.stringify(paymentMethods));
   }, [paymentMethods]);
+
+  // Image compressor utility to resize & compress image files
+  const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quality = 0.85): Promise<string> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let { width, height } = img;
+          if (width > height) {
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            resolve(event.target?.result as string);
+            return;
+          }
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => resolve(event.target?.result as string);
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  };
 
   // Start Live Camera feed
   const startLiveCamera = async (facing: 'user' | 'environment' = 'user') => {
@@ -327,16 +392,18 @@ export const Profile: React.FC = () => {
     if (!capturedLivePhoto) return;
     const photo = capturedLivePhoto;
     setProfilePicture(photo);
+    setImageLoadError(false);
     stopLiveCamera();
 
     try {
       setIsUploadingPhoto(true);
-      await api.put('/auth/profile', {
+      const res = await api.put('/auth/profile', {
         name: fullName.trim() || user?.name,
         phoneNumber: phone.trim() || user?.phoneNumber,
         profilePicture: photo,
       });
-      updateUser({ profilePicture: photo });
+      const updatedUser = res.data?.data?.user || res.data?.data || { profilePicture: photo };
+      updateUser(updatedUser);
     } catch (err) {
       console.warn('Profile picture save warning:', err);
       updateUser({ profilePicture: photo });
@@ -346,53 +413,50 @@ export const Profile: React.FC = () => {
   };
 
   // Image File Upload Handlers (Gallery / File Explorer)
-  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file (JPG, PNG, WEBP).');
+      alert('Please select a valid image file (JPG, PNG, WEBP).');
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image size should be less than 5MB.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        setProfilePicture(dataUrl);
+    try {
+      setIsUploadingPhoto(true);
+      const compressedDataUrl = await compressImage(file);
+      if (compressedDataUrl) {
+        setProfilePicture(compressedDataUrl);
+        setImageLoadError(false);
         setIsPhotoPickerOpen(false);
-        // Persist immediately
-        try {
-          setIsUploadingPhoto(true);
-          await api.put('/auth/profile', {
-            name: fullName.trim() || user?.name,
-            phoneNumber: phone.trim() || user?.phoneNumber,
-            profilePicture: dataUrl,
-          });
-          updateUser({ profilePicture: dataUrl });
-        } catch (err) {
-          console.warn('Profile picture save warning:', err);
-          updateUser({ profilePicture: dataUrl });
-        } finally {
-          setIsUploadingPhoto(false);
-        }
+
+        // Persist immediately to API
+        const res = await api.put('/auth/profile', {
+          name: fullName.trim() || user?.name,
+          phoneNumber: phone.trim() || user?.phoneNumber,
+          profilePicture: compressedDataUrl,
+        });
+        const updatedUser = res.data?.data?.user || res.data?.data || { profilePicture: compressedDataUrl };
+        updateUser(updatedUser);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.warn('Profile picture save warning:', err);
+    } finally {
+      setIsUploadingPhoto(false);
+      // Reset input value so same file can be re-selected if needed
+      if (e.target) e.target.value = '';
+    }
   };
 
   const handleRemovePhoto = async () => {
     setProfilePicture('');
+    setImageLoadError(false);
     setIsPhotoPickerOpen(false);
     try {
       setIsUploadingPhoto(true);
-      await api.delete('/auth/remove-profile-picture');
-      updateUser({ profilePicture: '' });
+      const res = await api.delete('/auth/remove-profile-picture');
+      const updatedUser = res.data?.data?.user || res.data?.data || { profilePicture: '' };
+      updateUser(updatedUser);
     } catch (err) {
       console.warn('Remove picture warning:', err);
       updateUser({ profilePicture: '' });
@@ -407,21 +471,25 @@ export const Profile: React.FC = () => {
     const cleanPhone = phone.trim();
 
     try {
-      await api.put('/auth/profile', {
+      const res = await api.put('/auth/profile', {
         name: cleanName,
         phoneNumber: cleanPhone,
         profilePicture: profilePicture,
       });
+      const updatedUser = res.data?.data?.user || res.data?.data || {
+        name: cleanName,
+        phoneNumber: cleanPhone,
+        profilePicture: profilePicture,
+      };
+      updateUser(updatedUser);
     } catch (err) {
       console.warn('Backend update profile notice:', err);
+      updateUser({
+        name: cleanName,
+        phoneNumber: cleanPhone,
+        profilePicture: profilePicture,
+      });
     }
-
-    // Persist updated profile to auth store and localStorage
-    updateUser({
-      name: cleanName,
-      phoneNumber: cleanPhone,
-      profilePicture: profilePicture,
-    });
 
     setIsProfileSaved(true);
     setTimeout(() => {
@@ -586,10 +654,11 @@ export const Profile: React.FC = () => {
         <div className={`p-4 sm:p-6 rounded-3xl border shadow-xs flex items-center justify-between gap-3 sm:gap-4 ${isDarkMode ? 'bg-neutral-800 border-neutral-700' : 'bg-surface border-border'}`}>
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
             <div className="relative group shrink-0">
-              {profilePicture || user?.profilePicture ? (
+              {profilePicture && !imageLoadError ? (
                 <img
-                  src={profilePicture || user?.profilePicture}
-                  alt={user?.name || fullName}
+                  src={profilePicture}
+                  alt={user?.name || fullName || 'User'}
+                  onError={() => setImageLoadError(true)}
                   className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-emerald-600 shadow-md"
                 />
               ) : (
@@ -928,10 +997,11 @@ export const Profile: React.FC = () => {
               {/* Profile Photo Uploader Section */}
               <div className="flex flex-col items-center justify-center pb-4 border-b border-neutral-100 space-y-3">
                 <div className="relative">
-                  {profilePicture ? (
+                  {profilePicture && !imageLoadError ? (
                     <img
                       src={profilePicture}
                       alt="Profile Preview"
+                      onError={() => setImageLoadError(true)}
                       className="w-20 h-20 rounded-full object-cover border-2 border-emerald-600 shadow-md"
                     />
                   ) : (

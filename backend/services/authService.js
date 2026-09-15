@@ -164,6 +164,7 @@ class AuthService {
 
     const safeUser = {
       id: user._id,
+      _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
@@ -188,6 +189,7 @@ class AuthService {
 
     return {
       id: user._id,
+      _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
@@ -207,6 +209,7 @@ class AuthService {
 
     return {
       id: user._id,
+      _id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
