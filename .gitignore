@@ -22,6 +22,10 @@ logs/
 # Uploads
 uploads/*
 !uploads/.gitkeep
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/uploads/profiles/*
+!backend/uploads/profiles/.gitkeep
 
 # Docker
 .docker/

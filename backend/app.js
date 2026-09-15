@@ -127,6 +127,7 @@ const registerRoutes = (prefix) => {
   app.use(`${prefix}/gluco`, glucoRoutes);
   app.use(`${prefix}/posts`, postRoutes);
   app.use(`${prefix}/notifications`, notificationRoutes);
+  app.use(`${prefix}/notification`, notificationRoutes);
   app.use(`${prefix}/system`, systemRoutes);
 
   // Admin

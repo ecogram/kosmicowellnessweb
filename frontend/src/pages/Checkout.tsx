@@ -349,7 +349,7 @@ export const Checkout: React.FC = () => {
       order.keyId ||
       order.key ||
       import.meta.env.VITE_RAZORPAY_KEY_ID ||
-      'rzp_test_TJE6HyUpcQM08b';
+      'rzp_live_TcH3s5Qdh4ngAp';
 
     const calculatedPaise = Math.max(
       100,

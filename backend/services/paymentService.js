@@ -8,8 +8,8 @@ const notificationService = require('./notificationService');
 
 class PaymentService {
   constructor() {
-    const key_id = process.env.RAZORPAY_KEY_ID || 'rzp_test_TJE6HyUpcQM08b';
-    const key_secret = process.env.RAZORPAY_KEY_SECRET || 'Cawb2VEMYsV7Id43QMosH0Zf';
+    const key_id = process.env.RAZORPAY_KEY_ID || 'rzp_live_TcH3s5Qdh4ngAp';
+    const key_secret = process.env.RAZORPAY_KEY_SECRET || '8HiA1PomM2gcACR54tAfnagQ';
     try {
       this.razorpay = new Razorpay({
         key_id,
@@ -77,7 +77,7 @@ class PaymentService {
       providerOrderId: rzpOrder.id,
       amount: rzpOrder.amount,
       currency: rzpOrder.currency,
-      keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_TJE6HyUpcQM08b',
+      keyId: process.env.RAZORPAY_KEY_ID || 'rzp_live_TcH3s5Qdh4ngAp',
       isMock: rzpOrder.id.startsWith('order_dev_'),
     };
   }
@@ -95,7 +95,7 @@ class PaymentService {
 
     if (!isDevMock) {
       const generatedSignature = crypto
-        .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || 'Cawb2VEMYsV7Id43QMosH0Zf')
+        .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '8HiA1PomM2gcACR54tAfnagQ')
         .update(`${razorpay_order_id}|${razorpay_payment_id}`)
         .digest('hex');
 

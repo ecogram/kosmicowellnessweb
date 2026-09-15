@@ -4,13 +4,17 @@ const reviewService = require('../services/reviewService');
 
 const createReview = asyncHandler(async (req, res) => {
   const { productId } = req.params;
-  const { rating, title, content } = req.body;
+  const { rating, title, content, comment, review: reviewText } = req.body;
 
-  if (!rating || !title || !content) {
-    throw new ApiError(400, 'Rating, title, and content are required');
+  const reviewContent = content || comment || reviewText;
+  const reviewTitle = title || (reviewContent ? reviewContent.slice(0, 40) : 'Product Review');
+  const numericRating = Number(rating) || 5;
+
+  if (!numericRating || !reviewContent) {
+    throw new ApiError(400, 'Rating and comment/content are required');
   }
 
-  const review = await reviewService.createReview(productId, req.user._id, rating, title, content);
+  const review = await reviewService.createReview(productId, req.user._id, numericRating, reviewTitle, reviewContent);
   res.status(201).json(new ApiResponse(201, { review }, 'Review created successfully'));
 });
 

@@ -284,6 +284,21 @@ export function Navbar() {
                       </span>
                     </Link>
                     <Link
+                      to="/notifications"
+                      className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm flex items-center justify-between"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Bell className="w-4 h-4 text-emerald-800" />
+                        <span>🔔 Notifications</span>
+                      </div>
+                      {unreadCount > 0 && (
+                        <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </Link>
+                    <Link
                       to="/orders"
                       className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm block"
                       onClick={() => setIsMobileMenuOpen(false)}

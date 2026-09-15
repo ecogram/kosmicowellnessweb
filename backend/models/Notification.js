@@ -3,23 +3,20 @@ const mongoose = require('mongoose');
 const notificationSchema = new mongoose.Schema(
   {
     user: {
-      type: mongoose.Schema.ObjectId,
+      type: mongoose.Schema.Types.Mixed,
       ref: 'User',
-      required: true,
+      required: false,
+      index: true,
+    },
+    userId: {
+      type: mongoose.Schema.Types.Mixed,
+      ref: 'User',
+      required: false,
       index: true,
     },
     type: {
       type: String,
-      enum: [
-        'ORDER_CREATED',
-        'PAYMENT_SUCCESS',
-        'PAYMENT_FAILED',
-        'ORDER_PROCESSING',
-        'ORDER_SHIPPED',
-        'ORDER_DELIVERED',
-        'ORDER_CANCELLED',
-      ],
-      required: true,
+      default: 'GENERAL',
     },
     title: {
       type: String,

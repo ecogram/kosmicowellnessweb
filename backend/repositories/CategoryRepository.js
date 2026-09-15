@@ -11,7 +11,11 @@ class CategoryRepository extends BaseRepository {
   }
 
   async findAllActive() {
-    return await this.model.find({ isActive: true }).sort('sortOrder');
+    let list = await this.model.find({ isActive: { $ne: false } }).sort('sortOrder');
+    if (!list || list.length === 0) {
+      list = await this.model.find().sort('sortOrder');
+    }
+    return list;
   }
 }
 

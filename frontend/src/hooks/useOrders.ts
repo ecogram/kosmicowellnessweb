@@ -57,7 +57,7 @@ export const useCreateOrder = () => {
             items: data.items || [],
             paymentMethod: data.paymentMethod,
             currency: 'INR',
-            keyId: 'rzp_test_TJE6HyUpcQM08b',
+            keyId: 'rzp_live_TcH3s5Qdh4ngAp',
             createdAt: new Date().toISOString(),
           };
           saveLocalOrder(mockOrder);

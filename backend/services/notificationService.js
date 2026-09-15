@@ -88,15 +88,23 @@ class NotificationService {
     return await this.createNotification(userId, type, title, message, { orderId, orderNumber });
   }
 
-  async getUserNotifications(userId, page = 1, limit = 20) {
+  async getUserNotifications(userId, page = 1, limit = 50) {
     const skip = (page - 1) * limit;
-    
-    const notifications = await Notification.find({ user: userId })
+    const filter = {
+      $or: [
+        { user: userId },
+        { userId: userId },
+        { user: userId.toString() },
+        { userId: userId.toString() },
+      ],
+    };
+
+    const notifications = await Notification.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
       
-    const total = await Notification.countDocuments({ user: userId });
+    const total = await Notification.countDocuments(filter);
     
     return {
       notifications,
@@ -110,13 +118,27 @@ class NotificationService {
   }
 
   async getUnreadCount(userId) {
-    return await Notification.countDocuments({ user: userId, isRead: false });
+    const filter = {
+      $or: [
+        { user: userId },
+        { userId: userId },
+        { user: userId.toString() },
+        { userId: userId.toString() },
+      ],
+      $and: [
+        { $or: [{ isRead: false }, { read: false }, { isRead: { $exists: false } }] },
+      ],
+    };
+    return await Notification.countDocuments(filter);
   }
 
   async markAsRead(notificationId, userId) {
     const notification = await Notification.findOneAndUpdate(
-      { _id: notificationId, user: userId },
-      { isRead: true, readAt: new Date() },
+      { 
+        _id: notificationId, 
+        $or: [{ user: userId }, { userId: userId }, { user: userId.toString() }, { userId: userId.toString() }] 
+      },
+      { isRead: true, read: true, readAt: new Date() },
       { new: true }
     );
 
@@ -124,15 +146,18 @@ class NotificationService {
       throw new ApiError(404, 'Notification not found');
     }
     const { emitToUser } = require('../realtime/emitter');
-    const unreadCount = await Notification.countDocuments({ user: userId, isRead: false });
+    const unreadCount = await this.getUnreadCount(userId);
     emitToUser(userId, 'notification:unread-count', { count: unreadCount });
     return notification;
   }
 
   async markAllAsRead(userId) {
     await Notification.updateMany(
-      { user: userId, isRead: false },
-      { isRead: true, readAt: new Date() }
+      { 
+        $or: [{ user: userId }, { userId: userId }, { user: userId.toString() }, { userId: userId.toString() }],
+        $and: [{ $or: [{ isRead: false }, { read: false }, { isRead: { $exists: false } }] }] 
+      },
+      { isRead: true, read: true, readAt: new Date() }
     );
     const { emitToUser } = require('../realtime/emitter');
     emitToUser(userId, 'notification:unread-count', { count: 0 });

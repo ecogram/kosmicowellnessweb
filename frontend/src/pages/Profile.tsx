@@ -92,10 +92,10 @@ export const Profile: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Edit Profile Form State
-  const [fullName, setFullName] = useState(user?.name || '');
+  const [fullName, setFullName] = useState(user?.name || (user as any)?.fullName || '');
   const [email, setEmail] = useState(user?.email || '');
-  const [phone, setPhone] = useState(user?.phoneNumber || (user as any)?.phone || '');
-  const [profilePicture, setProfilePicture] = useState(user?.profilePicture || '');
+  const [phone, setPhone] = useState(user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || '');
+  const [profilePicture, setProfilePicture] = useState(user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar || '');
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
@@ -161,13 +161,15 @@ export const Profile: React.FC = () => {
 
   // Synchronize state when store user changes
   useEffect(() => {
-    if (user?.name) setFullName(user.name);
+    const currentName = user?.name || (user as any)?.fullName;
+    if (currentName) setFullName(currentName);
     if (user?.email) setEmail(user.email);
-    if (user?.profilePicture !== undefined) {
-      setProfilePicture(user.profilePicture || '');
+    const currentPic = user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar;
+    if (currentPic !== undefined) {
+      setProfilePicture(currentPic || '');
       setImageLoadError(false);
     }
-    const userPhone = user?.phoneNumber || (user as any)?.phone || '';
+    const userPhone = user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || '';
     if (userPhone) setPhone(userPhone);
   }, [user]);
 
@@ -178,13 +180,15 @@ export const Profile: React.FC = () => {
         const res = await api.get('/auth/profile');
         const fetchedUser = res.data?.data?.user || res.data?.data;
         if (fetchedUser) {
-          if (fetchedUser.name) setFullName(fetchedUser.name);
+          const freshName = fetchedUser.name || fetchedUser.fullName;
+          if (freshName) setFullName(freshName);
           if (fetchedUser.email) setEmail(fetchedUser.email);
-          if (fetchedUser.profilePicture !== undefined) {
-            setProfilePicture(fetchedUser.profilePicture || '');
+          const freshPic = fetchedUser.profilePicture || fetchedUser.profileImage || fetchedUser.avatar;
+          if (freshPic !== undefined) {
+            setProfilePicture(freshPic || '');
             setImageLoadError(false);
           }
-          const p = fetchedUser.phoneNumber || fetchedUser.phone || '';
+          const p = fetchedUser.phoneNumber || fetchedUser.phone || fetchedUser.mobile || '';
           if (p) setPhone(p);
           updateUser(fetchedUser);
         }

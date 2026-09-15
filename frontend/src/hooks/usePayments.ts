@@ -20,7 +20,7 @@ export const useCreatePayment = () => {
             providerOrderId: `order_dev_${Date.now()}`,
             amount: typeof orderPayload === 'object' && orderPayload.amount ? Math.round(orderPayload.amount * 100) : 38700,
             currency: 'INR',
-            keyId: 'rzp_test_dev',
+            keyId: 'rzp_live_TcH3s5Qdh4ngAp',
             isMock: true,
           };
         }

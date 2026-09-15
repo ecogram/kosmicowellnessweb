@@ -37,7 +37,7 @@ const productSchema = new mongoose.Schema(
       default: ['no-photo.jpg'],
     },
     category: {
-      type: mongoose.Schema.ObjectId,
+      type: mongoose.Schema.Types.Mixed,
       ref: 'Category',
       required: true,
     },
