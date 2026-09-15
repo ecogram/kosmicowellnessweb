@@ -20,7 +20,6 @@ services:
       - .env
     environment:
       - NODE_ENV=production
-      - MONGODB_URI=mongodb+srv://KosmicoWellness:KosmicoWellness@cluster0.67auck3.mongodb.net/kosmico
       - MONGO_URI=mongodb+srv://KosmicoWellness:KosmicoWellness@cluster0.67auck3.mongodb.net/kosmico
       - REDIS_HOST=redis
     depends_on:
@@ -35,7 +34,6 @@ services:
       - .env
     environment:
       - NODE_ENV=production
-      - MONGODB_URI=mongodb+srv://KosmicoWellness:KosmicoWellness@cluster0.67auck3.mongodb.net/kosmico
       - MONGO_URI=mongodb+srv://KosmicoWellness:KosmicoWellness@cluster0.67auck3.mongodb.net/kosmico
       - REDIS_HOST=redis
     depends_on:

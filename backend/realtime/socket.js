@@ -8,14 +8,12 @@ const User = require('../models/User');
 let io;
 
 const initializeSocket = (httpServer) => {
-  const allowedOrigins = ['http://localhost:5173', 'http://localhost'];
-  if (process.env.CLIENT_URL && !allowedOrigins.includes(process.env.CLIENT_URL)) {
-    allowedOrigins.push(process.env.CLIENT_URL);
-  }
-
   io = new Server(httpServer, {
     cors: {
-      origin: allowedOrigins,
+      origin: (origin, callback) => {
+        // Allow mobile apps, web clients, postman, etc.
+        callback(null, true);
+      },
       credentials: true,
     },
   });
@@ -46,7 +44,8 @@ const initializeSocket = (httpServer) => {
         return next(new Error('Authentication error: No token provided'));
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+      const secret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'Kosmico_Secret_Key_123';
+      const decoded = jwt.verify(token, secret);
       
       const user = await User.findById(decoded.id).select('-password');
       if (!user) {

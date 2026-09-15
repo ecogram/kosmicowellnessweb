@@ -7,7 +7,7 @@ const Payment = require('../models/Payment');
 const paymentService = require('../services/paymentService');
 
 const connectDB = async () => {
-  await mongoose.connect(process.env.MONGODB_URI);
+  await mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://KosmicoWellness:KosmicoWellness@cluster0.67auck3.mongodb.net/kosmico');
   console.log('MongoDB Connected');
 };
 

@@ -30,7 +30,7 @@ const PRICE_MAP = {
 
 async function migrate(dryRun = true) {
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/sweet-monk');
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://KosmicoWellness:KosmicoWellness@cluster0.67auck3.mongodb.net/kosmico');
     console.log(`Starting Product INR Migration (Dry Run: ${dryRun})`);
     
     const products = await Product.find({});

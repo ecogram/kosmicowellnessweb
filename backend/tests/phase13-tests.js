@@ -11,7 +11,7 @@ const runTests = async () => {
   // Wait for Redis connection to settle
   await new Promise(resolve => setTimeout(resolve, 500));
   
-  await mongoose.connect(process.env.MONGODB_URI);
+  await mongoose.connect(process.env.MONGO_URI || 'mongodb+srv://KosmicoWellness:KosmicoWellness@cluster0.67auck3.mongodb.net/kosmico');
   console.log('MongoDB Connected');
 
   if (redis.status === 'ready') {

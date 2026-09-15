@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const notificationService = require('../services/notificationService');
 
 async function run() {
-  const mongoUri = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/sweet-monk';
+  const mongoUri = process.env.MONGO_URI || 'mongodb+srv://KosmicoWellness:KosmicoWellness@cluster0.67auck3.mongodb.net/kosmico';
   await mongoose.connect(mongoUri);
   console.log('Connected to MongoDB');
   

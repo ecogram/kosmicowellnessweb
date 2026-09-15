@@ -8,7 +8,8 @@ console.log('Starting Kosmico Wellness Background Worker...');
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    const mongoUri = process.env.MONGO_URI || 'mongodb+srv://KosmicoWellness:KosmicoWellness@cluster0.67auck3.mongodb.net/kosmico';
+    await mongoose.connect(mongoUri);
     console.log('Worker connected to MongoDB');
   } catch (error) {
     console.error('Worker MongoDB connection error:', error);

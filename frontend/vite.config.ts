@@ -64,7 +64,7 @@ export default defineConfig({
         changeOrigin: true,
       },
       '/socket.io': {
-        target: 'https://api.kosmicowellness.com',
+        target: process.env.VITE_SOCKET_URL || (process.env.VITE_API_URL ? process.env.VITE_API_URL.replace(/\/api\/?$/, '') : 'https://api.kosmicowellness.com'),
         ws: true,
         changeOrigin: true,
       },
