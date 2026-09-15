@@ -147,6 +147,15 @@ const getMe = asyncHandler(async (req, res) => {
     }
   }
 
+  // If pic has localhost/127.0.0.1/IP, normalize to production domain https://api.kosmicowellness.com
+  if (pic && (pic.includes('localhost:5000') || pic.includes('127.0.0.1:5000') || pic.includes('3.7.180.215:5000'))) {
+    pic = pic.replace(/http:\/\/(localhost|127\.0\.0\.1|3\.7\.180\.215):5000/, 'https://api.kosmicowellness.com');
+    u.profilePicture = pic;
+    u.profileImage = pic;
+    u.avatar = pic;
+    await u.save();
+  }
+
   const userPhone = u.phoneNumber || u.phone || '';
 
   const user = {

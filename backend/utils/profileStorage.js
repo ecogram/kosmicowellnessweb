@@ -2,22 +2,27 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * Saves uploaded buffer or Base64 image to server disk under /uploads/profiles/
- * and returns a standard full HTTP/HTTPS URL compatible with React Native, Flutter, Android, iOS and Web.
+ * Saves uploaded buffer or Base64 image to server disk under /uploads/
+ * and returns a standard full HTTPS URL compatible with React Native, Flutter, Android, iOS and Web.
+ * URL format matches Production Base URL: https://api.kosmicowellness.com/uploads/profilePicture-<timestamp>.jpg
  */
 function saveProfileImage(input, userId, req) {
   if (!input) return '';
 
   const inputStr = typeof input === 'string' ? input.trim() : '';
 
-  // If already an HTTP/HTTPS URL, return it directly
+  // If already a valid public HTTP/HTTPS URL, return it directly
   if (inputStr.startsWith('http://') || inputStr.startsWith('https://')) {
+    // Normalize localhost or direct IP to production domain https://api.kosmicowellness.com
+    if (inputStr.includes('localhost:5000') || inputStr.includes('127.0.0.1:5000') || inputStr.includes('3.7.180.215:5000')) {
+      return inputStr.replace(/http:\/\/(localhost|127\.0\.0\.1|3\.7\.180\.215):5000/, 'https://api.kosmicowellness.com');
+    }
     return inputStr;
   }
 
-  const profilesDir = path.join(__dirname, '..', 'uploads', 'profiles');
-  if (!fs.existsSync(profilesDir)) {
-    fs.mkdirSync(profilesDir, { recursive: true });
+  const uploadsDir = path.join(__dirname, '..', 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
   }
 
   let buffer;
@@ -37,9 +42,9 @@ function saveProfileImage(input, userId, req) {
     return inputStr;
   }
 
-  const cleanUserId = userId ? userId.toString().replace(/[^a-zA-Z0-9]/g, '') : 'user';
-  const filename = `profile_${cleanUserId}_${Date.now()}.${ext}`;
-  const filePath = path.join(profilesDir, filename);
+  // Generate filename matching exact mobile app pattern: profilePicture-<timestamp>.jpg
+  const filename = `profilePicture-${Date.now()}.${ext}`;
+  const filePath = path.join(uploadsDir, filename);
 
   try {
     fs.writeFileSync(filePath, buffer);
@@ -48,19 +53,13 @@ function saveProfileImage(input, userId, req) {
     return inputStr;
   }
 
-  // Determine base public URL
-  let baseUrl = 'https://kosmicowellness.com';
+  // Base public URL strictly https://api.kosmicowellness.com
+  let baseUrl = 'https://api.kosmicowellness.com';
   if (process.env.BACKEND_URL) {
     baseUrl = process.env.BACKEND_URL.replace(/\/$/, '');
-  } else if (req) {
-    const host = req.headers['x-forwarded-host'] || req.get('host');
-    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-    if (host && !host.includes('kosmicowellness.com')) {
-      baseUrl = `${protocol}://${host}`;
-    }
   }
 
-  return `${baseUrl}/uploads/profiles/${filename}`;
+  return `${baseUrl}/uploads/${filename}`;
 }
 
 module.exports = {

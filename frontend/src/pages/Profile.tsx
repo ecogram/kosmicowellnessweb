@@ -408,6 +408,8 @@ export const Profile: React.FC = () => {
       });
       const updatedUser = res.data?.data?.user || res.data?.data || { profilePicture: photo };
       updateUser(updatedUser);
+      const serverPic = updatedUser.profilePicture || updatedUser.profileImage || updatedUser.avatar;
+      if (serverPic) setProfilePicture(serverPic);
     } catch (err) {
       console.warn('Profile picture save warning:', err);
       updateUser({ profilePicture: photo });
@@ -434,14 +436,34 @@ export const Profile: React.FC = () => {
         setImageLoadError(false);
         setIsPhotoPickerOpen(false);
 
-        // Persist immediately to API
-        const res = await api.put('/auth/profile', {
-          name: fullName.trim() || user?.name,
-          phoneNumber: phone.trim() || user?.phoneNumber,
-          profilePicture: compressedDataUrl,
-        });
-        const updatedUser = res.data?.data?.user || res.data?.data || { profilePicture: compressedDataUrl };
-        updateUser(updatedUser);
+        // Send via FormData for 100% native mobile app compatibility
+        const formData = new FormData();
+        formData.append('name', fullName.trim() || user?.name || '');
+        formData.append('phoneNumber', phone.trim() || user?.phoneNumber || '');
+        formData.append('profilePicture', file);
+
+        try {
+          const res = await api.put('/auth/profile', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+          const updatedUser = res.data?.data?.user || res.data?.data;
+          if (updatedUser) {
+            updateUser(updatedUser);
+            const serverPic = updatedUser.profilePicture || updatedUser.profileImage || updatedUser.avatar;
+            if (serverPic) setProfilePicture(serverPic);
+          }
+        } catch (formErr) {
+          // Fallback to JSON payload if multipart proxy error
+          const res = await api.put('/auth/profile', {
+            name: fullName.trim() || user?.name,
+            phoneNumber: phone.trim() || user?.phoneNumber,
+            profilePicture: compressedDataUrl,
+          });
+          const updatedUser = res.data?.data?.user || res.data?.data || { profilePicture: compressedDataUrl };
+          updateUser(updatedUser);
+          const serverPic = updatedUser.profilePicture || updatedUser.profileImage || updatedUser.avatar;
+          if (serverPic) setProfilePicture(serverPic);
+        }
       }
     } catch (err) {
       console.warn('Profile picture save warning:', err);

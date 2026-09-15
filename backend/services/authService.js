@@ -179,6 +179,14 @@ class AuthService {
       }
     }
 
+    if (pic && (pic.includes('localhost:5000') || pic.includes('127.0.0.1:5000') || pic.includes('3.7.180.215:5000'))) {
+      pic = pic.replace(/http:\/\/(localhost|127\.0\.0\.1|3\.7\.180\.215):5000/, 'https://api.kosmicowellness.com');
+      user.profilePicture = pic;
+      user.profileImage = pic;
+      user.avatar = pic;
+      await user.save();
+    }
+
     const phone = user.phoneNumber || user.phone || '';
 
     const safeUser = {

@@ -60,11 +60,11 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: process.env.VITE_API_URL || 'http://3.7.180.215:5000',
+        target: process.env.VITE_API_URL || 'https://api.kosmicowellness.com/api',
         changeOrigin: true,
       },
       '/socket.io': {
-        target: process.env.VITE_API_URL || 'http://3.7.180.215:5000',
+        target: 'https://api.kosmicowellness.com',
         ws: true,
         changeOrigin: true,
       },

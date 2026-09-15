@@ -1,15 +1,12 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 
+// Always use production live Base URL: https://api.kosmicowellness.com/api
 const getBaseURL = (): string => {
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
-  // In browser, relative '/api' works on localhost and on https://kosmicowellness.com/api without HTTPS Mixed Content block
-  if (typeof window !== 'undefined') {
-    return '/api';
-  }
-  return 'https://kosmicowellness.com/api';
+  return 'https://api.kosmicowellness.com/api';
 };
 
 export const api = axios.create({
