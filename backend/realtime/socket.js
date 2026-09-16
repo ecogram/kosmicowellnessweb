@@ -71,6 +71,10 @@ const initializeSocket = (httpServer) => {
     // Join specific user room
     const userRoom = `user:${socket.user._id}`;
     socket.join(userRoom);
+    socket.join(`user:${socket.user._id.toString()}`);
+    if (socket.user.email) {
+      socket.join(`user:${socket.user.email.toLowerCase()}`);
+    }
     
     // Join admin room if applicable
     if (socket.user.role === 'admin') {

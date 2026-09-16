@@ -99,10 +99,11 @@ const updateProfile = asyncHandler(async (req, res) => {
 
   // Emit realtime profile updated event
   try {
-    const { getIO } = require('../config/socket');
-    const io = getIO();
-    if (io) {
-      io.to(`user:${req.user._id}`).emit('profile:updated', { user });
+    const { emitToUser } = require('../realtime/emitter');
+    emitToUser(req.user._id, 'profile:updated', { user });
+    emitToUser(req.user._id, 'user:profile_updated', { user });
+    if (req.user.email) {
+      emitToUser(req.user.email.toLowerCase(), 'profile:updated', { user });
     }
   } catch (_) {}
 
@@ -113,10 +114,11 @@ const removeProfilePicture = asyncHandler(async (req, res) => {
   const user = await authService.removeProfilePicture(req.user._id);
 
   try {
-    const { getIO } = require('../config/socket');
-    const io = getIO();
-    if (io) {
-      io.to(`user:${req.user._id}`).emit('profile:updated', { user });
+    const { emitToUser } = require('../realtime/emitter');
+    emitToUser(req.user._id, 'profile:updated', { user });
+    emitToUser(req.user._id, 'user:profile_updated', { user });
+    if (req.user.email) {
+      emitToUser(req.user.email.toLowerCase(), 'profile:updated', { user });
     }
   } catch (_) {}
 
