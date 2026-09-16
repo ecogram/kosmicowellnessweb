@@ -263,8 +263,8 @@ export const Checkout: React.FC = () => {
   useEffect(() => {
     const pincodeToUse = (selectedAddress?.pincode || '201318').toString().trim();
     const itemsList = cart?.items || createdOrder?.items || [];
-    const totalItemCount = itemsList.reduce((sum: number, it: any) => sum + (it.quantity || 1), 0) || 1;
-    const estimatedWeightKg = Math.max(0.5, totalItemCount * 0.25);
+    const totalItemCount = itemsList.reduce((sum: number, it: any) => sum + (Number(it.quantity) || 1), 0) || 1;
+    const estimatedWeightKg = Math.max(0.5, totalItemCount * 0.5); // 0.5 kg * total items
 
     const fetchEstimate = async () => {
       setIsCalculatingShipping(true);
@@ -273,6 +273,8 @@ export const Checkout: React.FC = () => {
           deliveryPincode: pincodeToUse,
           paymentMethod: paymentMode,
           weight: estimatedWeightKg,
+          totalItems: totalItemCount,
+          items: itemsList,
           subtotal: subtotal,
         });
         const resData = res.data?.data || res.data;

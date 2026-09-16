@@ -50,13 +50,15 @@ class ShiprocketService {
     let expectedDate = 'Sep 14, 2026';
     let estimatedDays = '2 - 3 Days';
 
+    const calculatedWeight = Math.max(0.5, Number(weight) || 0.5);
+
     try {
       const token = await this.getToken();
       const response = await axios.get(`${this.baseUrl}/courier/serviceability/`, {
         params: {
           pickup_postcode: pickupPincode,
           delivery_postcode: cleanPincode,
-          weight: Math.max(0.5, Number(weight) || 0.5),
+          weight: calculatedWeight,
           cod: isCod,
         },
         headers: {
@@ -94,10 +96,11 @@ class ShiprocketService {
         // 18% GST component
         gstCharge = totalShipping - deliveryFee;
       } else {
-        // Standard fallback for local NCR
-        totalShipping = 90;
-        deliveryFee = 77;
-        gstCharge = 13;
+        // Standard dynamic fallback scaled by weight (0.5 kg * items)
+        const weightMultiplier = calculatedWeight / 0.5;
+        totalShipping = Math.round(90 + Math.max(0, (weightMultiplier - 1) * 30));
+        deliveryFee = Math.round(totalShipping / 1.18);
+        gstCharge = totalShipping - deliveryFee;
       }
     }
 

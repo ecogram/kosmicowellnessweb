@@ -3,9 +3,24 @@ const router = express.Router();
 const postController = require('../controllers/postController');
 const { protect } = require('../middleware/authMiddleware');
 
+const multer = require('multer');
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25MB for media
+});
+
+const handleMediaUpload = (req, res, next) => {
+  upload.any()(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ success: false, message: err.message || 'Media upload error' });
+    }
+    next();
+  });
+};
+
 router.use(protect);
 
-router.post('/', postController.createPost);
+router.post('/', handleMediaUpload, postController.createPost);
 router.get('/feed', postController.getFeed);
 router.get('/user/:userId', postController.getUserPosts);
 router.post('/:postId/like', postController.toggleLike);

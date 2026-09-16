@@ -166,7 +166,7 @@ class AuthService {
     const { saveProfileImage } = require('../utils/profileStorage');
     if (pic && pic.startsWith('data:image/')) {
       try {
-        const publicUrl = saveProfileImage(pic, user._id);
+        const publicUrl = await saveProfileImage(pic, user._id);
         if (publicUrl && publicUrl.startsWith('http')) {
           pic = publicUrl;
           user.profilePicture = publicUrl;

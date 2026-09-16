@@ -71,9 +71,9 @@ const updateProfile = asyncHandler(async (req, res) => {
 
   let profilePicture = '';
   if (file) {
-    profilePicture = saveProfileImage(file.buffer, req.user._id, req);
+    profilePicture = await saveProfileImage(file.buffer || file, req.user._id, req);
   } else if (rawPic) {
-    profilePicture = saveProfileImage(rawPic, req.user._id, req);
+    profilePicture = await saveProfileImage(rawPic, req.user._id, req);
   }
 
   const { name, fullName, phoneNumber, phone, removePhoto } = req.body;
@@ -134,7 +134,7 @@ const getMe = asyncHandler(async (req, res) => {
   // If stored image is a base64 data URI, auto-migrate to static URL file for mobile app
   if (pic && pic.startsWith('data:image/')) {
     try {
-      const publicUrl = saveProfileImage(pic, u._id, req);
+      const publicUrl = await saveProfileImage(pic, u._id, req);
       if (publicUrl && publicUrl.startsWith('http')) {
         pic = publicUrl;
         u.profilePicture = publicUrl;

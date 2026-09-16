@@ -3,8 +3,18 @@ const { ApiResponse, ApiError } = require('../utils/apiResponse');
 const { Post, FriendRequest } = require('../models/Community');
 const User = require('../models/User');
 
+const { saveMediaFile } = require('../utils/profileStorage');
+
 const createPost = asyncHandler(async (req, res) => {
-  const { content, privacyLevel = 'public', mediaUrl = '' } = req.body;
+  const { content, privacyLevel = 'public' } = req.body;
+  let mediaUrl = req.body.mediaUrl || '';
+
+  const file = req.file || (req.files && req.files.length > 0 ? req.files[0] : null);
+  if (file) {
+    mediaUrl = saveMediaFile(file, 'postMedia');
+  } else if (mediaUrl && (mediaUrl.startsWith('data:image/') || mediaUrl.startsWith('data:video/'))) {
+    mediaUrl = saveMediaFile(mediaUrl, 'postMedia');
+  }
 
   if (!content || content.trim().length === 0) {
     throw new ApiError(400, 'Post content is required');
