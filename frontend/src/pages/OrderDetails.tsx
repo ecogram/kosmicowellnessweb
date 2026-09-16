@@ -115,8 +115,10 @@ export const OrderDetails = () => {
 
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           <div className="w-full lg:w-2/3">
-            <h1 className="font-serif text-3xl font-bold text-primary mb-2">Order {order.orderNumber}</h1>
-            <p className="text-text-muted mb-8">Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold text-primary mb-2 break-all">
+              Order #{order._id || order.orderNumber || order.shiprocketOrderId}
+            </h1>
+            <p className="text-text-muted mb-8">Placed on {new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
             
             <div className="bg-surface rounded-2xl border border-border p-6 mb-8">
               <h2 className="font-bold text-lg mb-6">Items</h2>
@@ -125,47 +127,46 @@ export const OrderDetails = () => {
                   <li key={item._id || idx} className="py-4 flex gap-4 items-center">
                     <div className="w-16 h-16 bg-background rounded border border-border p-1 flex-shrink-0">
                       <img 
-                        src={item.image || '/assets/products/product-box.jpg'} 
-                        alt={item.name || 'Product'}
+                        src={item.image || (item.product && item.product.images && item.product.images[0]) || '/assets/products/product-box.jpg'} 
+                        alt={item.name || item.title || 'Product'}
                         className="w-full h-full object-contain mix-blend-multiply"
                       />
                     </div>
                     <div className="flex-1">
-                      <div className="font-medium">{item.name || 'Sweet Monk (250ml)'}</div>
+                      <div className="font-medium">{item.name || item.title || 'Sweet Monk (250ml)'}</div>
                       {item.variant && <div className="text-sm text-text-muted mt-1">Size: {item.variant}</div>}
-                      <div className="text-sm text-text-muted">Qty: {item.quantity || 1}</div>
+                      <div className="text-sm text-text-muted">Qty: {item.quantity || item.qty || 1}</div>
                     </div>
                     <div className="font-medium">
-                      {formatINR((item.priceSnapshot || item.price || 387) * (item.quantity || 1))}
+                      {formatINR((item.priceSnapshot || item.price || 387) * (item.quantity || item.qty || 1))}
                     </div>
                   </li>
                 ))}
               </ul>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-surface rounded-2xl border border-border p-6">
-                <h2 className="font-bold text-lg mb-4">Shipping Address</h2>
-                <address className="not-italic text-text-main text-sm space-y-1">
-                  <p className="font-medium">{order.shippingAddress?.fullName || 'Amit'}</p>
-                  <p>{order.shippingAddress?.addressLine1 || 'NX-ONE, Greater Noida'}</p>
-                  {order.shippingAddress?.addressLine2 && <p>{order.shippingAddress.addressLine2}</p>}
-                  <p>{order.shippingAddress?.city || 'Greater Noida'}, {order.shippingAddress?.state || 'Uttar Pradesh'} {order.shippingAddress?.postalCode || '201318'}</p>
-                  <p>{order.shippingAddress?.country || 'India'}</p>
-                  <p className="pt-2 text-text-muted">{order.shippingAddress?.phone || '8004116370'}</p>
-                </address>
-              </div>
-              
-              <div className="bg-surface rounded-2xl border border-border p-6">
-                <h2 className="font-bold text-lg mb-4">Billing Address</h2>
-                <address className="not-italic text-text-main text-sm space-y-1">
-                  <p className="font-medium">{order.billingAddress?.fullName || order.shippingAddress?.fullName || 'Amit'}</p>
-                  <p>{order.billingAddress?.addressLine1 || order.shippingAddress?.addressLine1 || 'NX-ONE, Greater Noida'}</p>
-                  {order.billingAddress?.addressLine2 && <p>{order.billingAddress.addressLine2}</p>}
-                  <p>{order.billingAddress?.city || order.shippingAddress?.city || 'Greater Noida'}, {order.billingAddress?.state || order.shippingAddress?.state || 'Uttar Pradesh'} {order.billingAddress?.postalCode || order.shippingAddress?.postalCode || '201318'}</p>
-                  <p>{order.billingAddress?.country || 'India'}</p>
-                </address>
-              </div>
+            <div className="bg-surface rounded-2xl border border-border p-6">
+              <h2 className="font-bold text-lg mb-4">Shipping Address</h2>
+              <address className="not-italic text-text-main text-sm space-y-1">
+                <p className="font-medium">{order.shippingAddress?.fullName || order.deliveryAddress?.fullName || order.userName || user?.name || 'Customer'}</p>
+                <p>{order.shippingAddress?.addressLine1 || order.shippingAddress?.streetAddress || order.deliveryAddress?.streetAddress || order.deliveryAddress?.addressLine1 || ''}</p>
+                {(order.shippingAddress?.addressLine2 || order.deliveryAddress?.addressLine2) && (
+                  <p>{order.shippingAddress?.addressLine2 || order.deliveryAddress?.addressLine2}</p>
+                )}
+                <p>
+                  {[
+                    order.shippingAddress?.city || order.deliveryAddress?.city,
+                    order.shippingAddress?.state || order.deliveryAddress?.state,
+                    order.shippingAddress?.postalCode || order.shippingAddress?.pincode || order.deliveryAddress?.pincode || order.deliveryAddress?.postalCode
+                  ].filter(Boolean).join(', ')}
+                </p>
+                <p>{order.shippingAddress?.country || order.deliveryAddress?.country || 'India'}</p>
+                {(order.shippingAddress?.phone || order.shippingAddress?.phoneNumber || order.deliveryAddress?.phoneNumber || order.deliveryAddress?.phone) && (
+                  <p className="pt-2 text-text-muted">
+                    📞 {order.shippingAddress?.phone || order.shippingAddress?.phoneNumber || order.deliveryAddress?.phoneNumber || order.deliveryAddress?.phone}
+                  </p>
+                )}
+              </address>
             </div>
           </div>
 

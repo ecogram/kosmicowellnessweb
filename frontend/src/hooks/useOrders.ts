@@ -120,6 +120,11 @@ export const useOrders = (params: { page?: number; limit?: number }) => {
       let ordersList: any[] = [];
       let pagination = { total: 0, page: 1, limit: 20, totalPages: 1 };
 
+      // Clear any legacy mock orders from localStorage
+      try {
+        localStorage.removeItem('kosmico_user_orders');
+      } catch (e) {}
+
       try {
         const response = await api.get('/payment/myorders', { params });
         const resData = response.data?.data || response.data || {};
@@ -132,35 +137,18 @@ export const useOrders = (params: { page?: number; limit?: number }) => {
           ordersList = resData.orders || (Array.isArray(resData) ? resData : []);
           pagination = resData.pagination || resData.meta || { total: ordersList.length, page: 1, limit: 20, totalPages: 1 };
         } catch (innerErr) {
-          // Load from local storage
-          try {
-            ordersList = JSON.parse(localStorage.getItem('kosmico_user_orders') || '[]');
-            pagination = { total: ordersList.length, page: 1, limit: 20, totalPages: 1 };
-          } catch (e) {
-            ordersList = [];
-          }
+          ordersList = [];
         }
       }
 
-      // Merge any locally placed orders not yet in server list
-      try {
-        const localOrders = JSON.parse(localStorage.getItem('kosmico_user_orders') || '[]');
-        const existingIds = new Set(ordersList.map((o: any) => o.orderNumber || o._id));
-        for (const lo of localOrders) {
-          if (!existingIds.has(lo.orderNumber || lo._id)) {
-            ordersList.unshift(lo);
-          }
-        }
-      } catch (e) {}
-
-      // Strictly sort all orders descending (latest / newest order first on top)
+      // Strictly sort all orders descending by createdAt (latest / newest order first on top)
       ordersList.sort((a: any, b: any) => {
         const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         if (!isNaN(timeA) && !isNaN(timeB) && timeA !== timeB) {
           return timeB - timeA;
         }
-        return (b.orderNumber || b._id || '').localeCompare(a.orderNumber || a._id || '');
+        return (b._id || b.orderNumber || '').localeCompare(a._id || a.orderNumber || '');
       });
 
       return {
@@ -172,51 +160,38 @@ export const useOrders = (params: { page?: number; limit?: number }) => {
   });
 };
 
-export const useOrder = (orderNumber: string) => {
+export const useOrder = (orderId: string) => {
   return useQuery({
-    queryKey: ['orders', orderNumber],
+    queryKey: ['orders', orderId],
     queryFn: async () => {
-      // 1. Check local storage cache first
-      try {
-        const localOrders = JSON.parse(localStorage.getItem('kosmico_user_orders') || '[]');
-        const matchedLocal = localOrders.find(
-          (o: any) => o.orderNumber === orderNumber || o._id === orderNumber || o.internalOrderId === orderNumber
-        );
-        if (matchedLocal) return matchedLocal;
-      } catch (e) {}
+      if (!orderId) return null;
 
-      // 2. Fetch from /payment/myorders
+      // 1. Fetch from /payment/myorders
       try {
-        const response = await api.get('/payment/myorders');
-        const orders = response.data?.data?.orders || response.data?.orders || [];
+        const response = await api.get('/payment/myorders', { params: { limit: 100 } });
+        const orders = response.data?.data?.orders || response.data?.orders || (Array.isArray(response.data?.data) ? response.data.data : []);
         const matched = orders.find(
-          (o: any) => o.orderNumber === orderNumber || o._id === orderNumber
+          (o: any) => String(o._id) === String(orderId) || String(o.orderNumber) === String(orderId) || String(o.shiprocketOrderId) === String(orderId)
         );
         if (matched) return matched;
       } catch (e) {}
 
-      // 3. Fetch from /order/track/:orderId
+      // 2. Fetch from /order/track/:orderId
       try {
-        const response = await api.get(`/order/track/${orderNumber}`);
+        const response = await api.get(`/order/track/${orderId}`);
         if (response.data?.data) return response.data.data;
       } catch (e) {}
 
-      // 4. Fetch from /orders/:orderNumber
+      // 3. Fetch from /orders/:orderId
       try {
-        const response = await api.get(`/orders/${orderNumber}`);
-        return response.data?.data?.order || response.data?.data || response.data;
+        const response = await api.get(`/orders/${orderId}`);
+        const orderData = response.data?.data?.order || response.data?.data || response.data;
+        if (orderData) return orderData;
       } catch (e) {}
 
-      // Fallback
-      return {
-        orderNumber,
-        orderStatus: 'CONFIRMED',
-        paymentStatus: 'PAID',
-        total: 387,
-        createdAt: new Date().toISOString(),
-      };
+      return null;
     },
-    enabled: !!orderNumber,
+    enabled: !!orderId,
   });
 };
 

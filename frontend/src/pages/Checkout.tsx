@@ -210,30 +210,12 @@ export const Checkout: React.FC = () => {
         const def = res.data.data.find((a: any) => a.isDefault) || res.data.data[0];
         setSelectedAddress(def);
       } else {
-        const defaultFallback: SavedAddress = {
-          addressLabel: 'Home',
-          fullName: user?.name || 'Amit',
-          phoneNumber: '8004116370',
-          streetAddress: 'NX-ONE, Hawelia Road, Techzone 4, Greater Noida West',
-          city: 'Greater Noida',
-          state: 'Uttar Pradesh',
-          pincode: '201318',
-          isDefault: true,
-        };
-        setSelectedAddress(defaultFallback);
+        setSavedAddresses([]);
+        setSelectedAddress(null);
       }
     } catch (err) {
-      const defaultFallback: SavedAddress = {
-        addressLabel: 'Home',
-        fullName: user?.name || 'Amit',
-        phoneNumber: '8004116370',
-        streetAddress: 'NX-ONE, Hawelia Road, Techzone 4, Greater Noida West',
-        city: 'Greater Noida',
-        state: 'Uttar Pradesh',
-        pincode: '201318',
-        isDefault: true,
-      };
-      setSelectedAddress(defaultFallback);
+      setSavedAddresses([]);
+      setSelectedAddress(null);
     }
   };
 

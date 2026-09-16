@@ -89,17 +89,17 @@ export const Orders: React.FC = () => {
 
             <ul className="divide-y divide-neutral-100">
               {orders.map((order: any) => {
-                const orderNum = order.orderNumber || (order._id ? 'KW-' + order._id.toString().slice(-8).toUpperCase() : 'KW-ORDER');
+                const orderNum = order._id ? `#${order._id}` : (order.orderNumber || order.shiprocketOrderId || 'Order');
                 const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
-                const orderStatus = order.orderStatus || order.status || 'CONFIRMED';
+                const orderStatus = String(order.orderStatus || order.status || 'CONFIRMED').toUpperCase();
                 const isCOD = (order.paymentMethod || '').toUpperCase() === 'COD';
-                const orderSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 387) * (it.quantity || 1), 0) || 387);
+                const orderSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 387) * (it.quantity || it.qty || 1), 0) || 387);
                 const shippingFee = Number(order.shipping ?? order.deliveryFee ?? (isCOD ? 77 : 0));
                 const taxFee = Number(order.tax ?? order.gstCharge ?? (isCOD ? 13 : 0));
                 const discountAmt = Number(order.discount ?? order.discountAmount ?? 0);
 
-                let orderTotal = Number(order.total ?? order.amount ?? 0);
-                if (!orderTotal || (isCOD && orderTotal <= orderSubtotal && (shippingFee > 0 || taxFee > 0))) {
+                let orderTotal = Number(order.amount ?? order.total ?? 0);
+                if (!orderTotal) {
                   orderTotal = orderSubtotal - discountAmt + shippingFee + taxFee;
                 }
 
@@ -107,7 +107,7 @@ export const Orders: React.FC = () => {
                   <li key={order._id || orderNum} className="p-5 sm:p-6 flex flex-col md:grid md:grid-cols-12 gap-4 items-center hover:bg-emerald-50/30 transition-colors">
                     <div className="col-span-3 w-full font-bold text-neutral-900 flex items-center gap-2">
                       <Package className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span className="font-mono text-xs sm:text-sm">{orderNum}</span>
+                      <span className="font-mono text-xs sm:text-sm truncate" title={orderNum}>{orderNum}</span>
                     </div>
 
                     <div className="col-span-3 w-full text-xs text-neutral-500 flex items-center gap-1.5">
@@ -135,12 +135,12 @@ export const Orders: React.FC = () => {
                       <span className="md:hidden text-neutral-400 text-xs font-normal mr-2">Total:</span>
                       <div className="font-extrabold text-sm text-[#064e3b]">{formatINR(orderTotal)}</div>
                       <div className="text-[10px] font-medium text-neutral-500">
-                        {isCOD ? `COD (incl. ₹${shippingFee + taxFee} fee)` : 'Prepaid (Free Del.)'}
+                        {isCOD ? `COD (incl. delivery)` : 'Prepaid (Free Del.)'}
                       </div>
                     </div>
 
                     <div className="col-span-2 w-full md:text-right">
-                      <Link to={`/orders/${order.orderNumber || order._id}`}>
+                      <Link to={`/orders/${order._id || order.orderNumber}`}>
                         <Button variant="outline" size="sm" className="w-full md:w-auto text-xs font-bold rounded-xl border-emerald-300 hover:bg-emerald-50 text-emerald-800 flex items-center justify-center gap-1">
                           <span>View Details</span>
                           <ChevronRight className="w-3.5 h-3.5" />
