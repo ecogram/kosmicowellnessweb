@@ -32,11 +32,12 @@ const authLimiter = rateLimit({
 
 router.use(authLimiter);
 
-// Documented Auth & Profile Endpoints (Section 2: A - F)
+// Documented Auth & Profile Endpoints (Section 1: 1 - 7)
 router.post('/register', authController.register);
 router.post('/signup-verify', authController.signupVerify);
 router.post('/login', authController.login);
 router.post('/login-verify', authController.loginVerify);
+router.post('/resend-otp', authController.resendOtp);
 router.get('/profile', protect, authController.getMe);
 router.put('/profile', protect, handleProfileUpload, authController.updateProfile);
 router.delete('/remove-profile-picture', protect, authController.removeProfilePicture);

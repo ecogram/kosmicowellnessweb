@@ -222,6 +222,34 @@ const rejectFriendRequest = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, { request }, 'Friend request rejected'));
 });
 
+const editPost = asyncHandler(async (req, res) => {
+  const { postId } = req.params;
+  const { content, privacyLevel, tags, location } = req.body;
+
+  const post = await Post.findOne({ _id: postId, user: req.user._id });
+  if (!post) {
+    throw new ApiError(404, 'Post not found or you are not authorized to edit it');
+  }
+
+  const file = req.file || (req.files && req.files.length > 0 ? req.files[0] : null);
+  let mediaUrl = req.body.mediaUrl;
+  if (file) {
+    post.mediaUrl = saveMediaFile(file, 'postMedia');
+  } else if (mediaUrl && (mediaUrl.startsWith('data:image/') || mediaUrl.startsWith('data:video/'))) {
+    post.mediaUrl = saveMediaFile(mediaUrl, 'postMedia');
+  }
+
+  if (content !== undefined) post.content = content;
+  if (privacyLevel !== undefined) post.privacyLevel = privacyLevel;
+  if (tags !== undefined) post.tags = tags;
+  if (location !== undefined) post.location = location;
+
+  await post.save();
+  const updatedPost = await Post.findById(post._id).populate('user', 'name profilePicture email');
+
+  res.status(200).json(new ApiResponse(200, { post: updatedPost }, 'Post updated successfully'));
+});
+
 module.exports = {
   createPost,
   getFeed,
@@ -229,6 +257,7 @@ module.exports = {
   toggleLike,
   getComments,
   addComment,
+  editPost,
   deletePost,
   sendFriendRequest,
   getFriends,

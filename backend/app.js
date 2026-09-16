@@ -71,6 +71,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const authRoutes = require('./routes/authRoutes');
 const orderActionRoutes = require('./routes/orderActionRoutes');
 const refundRoutes = require('./routes/refundRoutes');
+const returnRoutes = require('./routes/returnRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
@@ -81,6 +82,8 @@ const shiprocketRoutes = require('./routes/shiprocketRoutes');
 const glucoRoutes = require('./routes/glucoRoutes');
 const postRoutes = require('./routes/postRoutes');
 const systemRoutes = require('./routes/systemRoutes');
+const emergencyRoutes = require('./routes/emergencyRoutes');
+const updateRoutes = require('./routes/updateRoutes');
 
 // Helper to register routers on both /api and /api/v1 prefixes
 const registerRoutes = (prefix) => {
@@ -92,30 +95,34 @@ const registerRoutes = (prefix) => {
     });
   });
 
-  // 1. Core Catalog, Categories & Reviews
+  // 1. Core Catalog, Categories & Reviews (Module 3)
   app.use(`${prefix}/products`, productRoutes);
   app.use(`${prefix}/products/:productId/reviews`, reviewRoutes);
   app.use(`${prefix}/categories`, categoryRoutes);
 
-  // 2. Authentication & User Profile
+  // 2. Authentication & User Profile (Module 1)
   app.use(`${prefix}/auth`, authRoutes);
 
-  // 3. User Address, Wishlist, Coupons & Shipping
+  // 3. User Address, Wishlist, Coupons & Shipping (Modules 2, 4, 5, 8)
   app.use(`${prefix}/address`, addressRoutes);
   app.use(`${prefix}/wishlist`, wishlistRoutes);
   app.use(`${prefix}/coupons`, couponRoutes);
   app.use(`${prefix}/shiprocket`, shiprocketRoutes);
 
-  // 4. Orders, Payments, Tracking & Refunds
+  // 4. Orders, Payments, Tracking & Refunds/Returns (Modules 6, 7)
   app.use(`${prefix}/payment`, paymentRoutes);
+  app.use(`${prefix}/orders`, paymentRoutes); // alias for /orders
   app.use(`${prefix}/order`, orderActionRoutes);
   app.use(`${prefix}/refund`, refundRoutes);
+  app.use(`${prefix}/return`, returnRoutes);
 
-  // 5. Health Tracking, Community, Notifications & System
+  // 5. Health Tracking, Community, Notifications, Emergency & System (Modules 9, 10, 11, 12)
   app.use(`${prefix}/gluco`, glucoRoutes);
   app.use(`${prefix}/posts`, postRoutes);
   app.use(`${prefix}/notifications`, notificationRoutes);
   app.use(`${prefix}/system`, systemRoutes);
+  app.use(`${prefix}/emergency`, emergencyRoutes);
+  app.use(`${prefix}/updates`, updateRoutes);
 };
 
 // Mount both for App and Web clients

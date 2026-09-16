@@ -26,6 +26,8 @@ router.get('/user/:userId', postController.getUserPosts);
 router.post('/:postId/like', postController.toggleLike);
 router.get('/:postId/comments', postController.getComments);
 router.post('/:postId/comments', postController.addComment);
+router.put('/:postId', handleMediaUpload, postController.editPost);
+router.patch('/:postId', handleMediaUpload, postController.editPost);
 router.delete('/:postId', postController.deletePost);
 
 // Friend requests

@@ -1,6 +1,8 @@
 import React, { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useSocket } from '../../hooks/useSocket';
+import { useAuthStore } from '../../store/useAuthStore';
+import { api } from '../../services/api';
 
 export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { socket, isConnected } = useSocket();
@@ -9,13 +11,38 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     if (!socket || !isConnected) return;
 
-    // --- CUSTOMER EVENTS ---
+    // --- REALTIME CUSTOMER EVENTS ---
     socket.on('notification:new', () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     });
 
     socket.on('notification:unread-count', ({ count }) => {
       queryClient.setQueryData(['unread-notifications-count'], count);
+    });
+
+    // Wishlist Live Sync
+    socket.on('wishlist:updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['wishlist'] });
+    });
+
+    // Profile Live Sync
+    socket.on('profile:updated', async ({ user }: any) => {
+      if (user) {
+        useAuthStore.getState().updateUser(user);
+      } else {
+        try {
+          const res = await api.get('/auth/profile');
+          if (res.data?.data) {
+            useAuthStore.getState().updateUser(res.data.data.user || res.data.data);
+          }
+        } catch (_) {}
+      }
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    });
+
+    // Address Live Sync
+    socket.on('address:updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['address'] });
     });
 
     socket.on('order:created', () => {
@@ -68,6 +95,9 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => {
       socket.off('notification:new');
       socket.off('notification:unread-count');
+      socket.off('wishlist:updated');
+      socket.off('profile:updated');
+      socket.off('address:updated');
       socket.off('order:created');
       socket.off('order:processing');
       socket.off('order:shipped');

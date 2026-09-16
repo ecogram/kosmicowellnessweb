@@ -63,6 +63,15 @@ const loginVerify = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, { user, token: accessToken, accessToken }, 'Logged in successfully'));
 });
 
+const resendOtp = asyncHandler(async (req, res) => {
+  const { email, type } = req.body;
+  if (!email) {
+    throw new ApiError(400, 'Email is required');
+  }
+  const result = await authService.sendEmailOtp(email, type || 'auto');
+  res.status(200).json(new ApiResponse(200, result, 'OTP resent successfully'));
+});
+
 const { saveProfileImage } = require('../utils/profileStorage');
 
 const updateProfile = asyncHandler(async (req, res) => {
@@ -87,11 +96,30 @@ const updateProfile = asyncHandler(async (req, res) => {
     avatar: profilePicture,
     removePhoto: removePhoto === true || removePhoto === 'true',
   });
+
+  // Emit realtime profile updated event
+  try {
+    const { getIO } = require('../config/socket');
+    const io = getIO();
+    if (io) {
+      io.to(`user:${req.user._id}`).emit('profile:updated', { user });
+    }
+  } catch (_) {}
+
   res.status(200).json(new ApiResponse(200, { user, ...user }, 'Profile updated successfully'));
 });
 
 const removeProfilePicture = asyncHandler(async (req, res) => {
   const user = await authService.removeProfilePicture(req.user._id);
+
+  try {
+    const { getIO } = require('../config/socket');
+    const io = getIO();
+    if (io) {
+      io.to(`user:${req.user._id}`).emit('profile:updated', { user });
+    }
+  } catch (_) {}
+
   res.status(200).json(new ApiResponse(200, { user, ...user }, 'Profile picture removed successfully'));
 });
 
@@ -187,6 +215,7 @@ module.exports = {
   signupVerify,
   login,
   loginVerify,
+  resendOtp,
   updateProfile,
   removeProfilePicture,
   refresh,

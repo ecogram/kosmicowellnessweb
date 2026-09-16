@@ -227,10 +227,20 @@ export const Checkout: React.FC = () => {
 
   // Fetch dynamic Shiprocket delivery estimation when mode, address or cart items change
   useEffect(() => {
-    const pincodeToUse = (selectedAddress?.pincode || '201318').toString().trim();
+    const pincodeToUse = (selectedAddress?.pincode || (selectedAddress as any)?.postalCode || '').toString().trim();
     const itemsList = cart?.items || createdOrder?.items || [];
     const totalItemCount = itemsList.reduce((sum: number, it: any) => sum + (Number(it.quantity) || 1), 0) || 1;
     const estimatedWeightKg = Math.max(0.5, totalItemCount * 0.5); // 0.5 kg * total items
+
+    if (!pincodeToUse) {
+      setDeliveryEstimate({
+        expectedDate: '3-5 Business Days',
+        courierName: 'Shiprocket Express',
+        deliveryFee: paymentMode === 'ONLINE' ? 0 : 50,
+        gstCharge: paymentMode === 'ONLINE' ? 0 : 9,
+      });
+      return;
+    }
 
     const fetchEstimate = async () => {
       setIsCalculatingShipping(true);
@@ -246,16 +256,21 @@ export const Checkout: React.FC = () => {
         const resData = res.data?.data || res.data;
         if (resData) {
           setDeliveryEstimate({
-            expectedDate: resData.estimatedDeliveryDate || resData.expectedDate || '',
+            expectedDate: resData.estimatedDeliveryDate || resData.expectedDate || '3-5 Days',
             courierName: resData.courierName || resData.courierPartner || 'Shiprocket Express',
-            deliveryFee: typeof resData.deliveryFee === 'number' ? resData.deliveryFee : (paymentMode === 'ONLINE' ? 0 : 77),
-            gstCharge: typeof resData.gstCharge === 'number' ? resData.gstCharge : (paymentMode === 'ONLINE' ? 0 : 13),
+            deliveryFee: typeof resData.deliveryFee === 'number' ? resData.deliveryFee : (paymentMode === 'ONLINE' ? 0 : 50),
+            gstCharge: typeof resData.gstCharge === 'number' ? resData.gstCharge : (paymentMode === 'ONLINE' ? 0 : 9),
           });
         }
-      } catch (err) {
-        console.warn('Live Shiprocket estimation error, using fallback:', err);
+      } catch (e) {
+        setDeliveryEstimate({
+          expectedDate: '3-5 Days',
+          courierName: 'Shiprocket Express',
+          deliveryFee: paymentMode === 'ONLINE' ? 0 : 50,
+          gstCharge: paymentMode === 'ONLINE' ? 0 : 9,
+        });
       } finally {
-        setTimeout(() => setIsCalculatingShipping(false), 200);
+        setIsCalculatingShipping(false);
       }
     };
 
@@ -426,15 +441,7 @@ export const Checkout: React.FC = () => {
     }));
 
     try {
-      if (createdOrder) {
-        if (paymentMode === 'COD') {
-          navigate(`/order-success/${createdOrder.orderNumber}`);
-          return;
-        }
-        await processRazorpayPayment(createdOrder);
-        return;
-      }
-
+      setIsPaymentProcessing(true);
       const order = await createOrderMutation.mutateAsync({
         shippingAddress: addressPayload,
         billingAddress: addressPayload,
@@ -451,11 +458,14 @@ export const Checkout: React.FC = () => {
       setCreatedOrder(order);
 
       if (paymentMode === 'COD') {
-        navigate(`/order-success/${order.orderNumber}`);
+        localStorage.removeItem('kosmico_cart_v1');
+        setIsPaymentProcessing(false);
+        navigate(`/order-success/${order.orderNumber || order._id}`);
       } else {
         await processRazorpayPayment(order);
       }
     } catch (err: any) {
+      setIsPaymentProcessing(false);
       setError(err.response?.data?.message || 'Failed to place order. Please try again.');
     }
   };
@@ -617,30 +627,59 @@ export const Checkout: React.FC = () => {
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-bold text-base text-neutral-900">Shipping Address</h2>
             <button
-              onClick={() => setIsAddressModalOpen(true)}
-              className="text-[#0a7a40] font-bold text-sm hover:underline"
+              onClick={() => {
+                setIsAddAddressFormOpen(false);
+                setIsAddressModalOpen(true);
+              }}
+              className="text-[#0a7a40] font-bold text-sm hover:underline cursor-pointer"
             >
-              Change
+              {selectedAddress ? 'Change' : '+ Add Address'}
             </button>
           </div>
 
-          <div className="space-y-1.5 text-neutral-700 text-sm">
-            <div className="flex items-center gap-2">
-              <span className="bg-emerald-100 text-[#0a7a40] text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded">
-                {selectedAddress?.addressLabel || 'HOME'}
-              </span>
+          {selectedAddress ? (
+            <div className="space-y-1.5 text-neutral-700 text-sm">
+              <div className="flex items-center gap-2">
+                <span className="bg-emerald-100 text-[#0a7a40] text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded">
+                  {selectedAddress.addressLabel || (selectedAddress as any).type || 'HOME'}
+                </span>
+                {selectedAddress.isDefault && (
+                  <span className="bg-neutral-100 text-neutral-700 text-[10px] font-bold uppercase px-2 py-0.5 rounded">
+                    Default
+                  </span>
+                )}
+              </div>
+              <p className="font-bold text-neutral-900 text-base">
+                {selectedAddress.fullName || user?.name || ''}
+              </p>
+              <p className="text-neutral-600 text-xs leading-relaxed">
+                {selectedAddress.streetAddress || (selectedAddress as any).addressLine1 || ''}
+                {selectedAddress.city ? `, ${selectedAddress.city}` : ''}
+                {selectedAddress.state ? `, ${selectedAddress.state}` : ''}
+                {selectedAddress.pincode ? ` - ${selectedAddress.pincode}` : ''}
+              </p>
+              {selectedAddress.phoneNumber && (
+                <p className="text-neutral-700 font-medium text-xs">
+                  📞 {selectedAddress.phoneNumber}
+                </p>
+              )}
             </div>
-            <p className="font-bold text-neutral-900 text-base">
-              {selectedAddress?.fullName || user?.name || 'Amit'}
-            </p>
-            <p className="text-neutral-600 text-xs leading-relaxed">
-              {selectedAddress?.streetAddress || 'NX-ONE, Hawelia Road, Techzone 4, Greater Noida West'} -{' '}
-              {selectedAddress?.pincode || '201318'}
-            </p>
-            <p className="text-neutral-700 font-medium text-xs">
-              {selectedAddress?.phoneNumber || '8004116370'}
-            </p>
-          </div>
+          ) : (
+            <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-xl text-center space-y-2.5">
+              <p className="text-xs text-amber-900 font-medium">No saved delivery address found in your account.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsAddAddressFormOpen(true);
+                  setIsAddressModalOpen(true);
+                }}
+                className="px-4 py-2 bg-[#0a7a40] hover:bg-[#086333] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Add Delivery Address</span>
+              </button>
+            </div>
+          )}
 
           {/* Expected Delivery Date Banner */}
           <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center gap-2 text-xs font-semibold text-[#0a7a40]">
@@ -687,62 +726,87 @@ export const Checkout: React.FC = () => {
           </div>
         </div>
 
-        {/* 3. Payment Method (When Online - App Exact Match) */}
+        {/* 3. Payment Method (When Online) */}
         {paymentMode === 'ONLINE' && (
           <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 mb-4 shadow-sm">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-bold text-base text-neutral-900">Payment Method</h2>
-              <button
-                type="button"
+              {paymentMethods.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsAddingNewPaymentMethod(false);
+                    setIsPaymentMethodModalOpen(true);
+                  }}
+                  className="text-[#0a7a40] font-bold text-sm hover:underline cursor-pointer"
+                >
+                  Change
+                </button>
+              )}
+            </div>
+
+            {selectedPaymentMethod ? (
+              <div
                 onClick={() => {
                   setIsAddingNewPaymentMethod(false);
                   setIsPaymentMethodModalOpen(true);
                 }}
-                className="text-[#0a7a40] font-bold text-sm hover:underline cursor-pointer"
+                className="p-4 rounded-2xl bg-[#0a7a40] text-white shadow-md cursor-pointer hover:bg-[#086333] transition-all flex items-center justify-between group"
               >
-                Change
-              </button>
-            </div>
-
-            {/* Mobile App Style Green Payment Card */}
-            <div
-              onClick={() => {
-                setIsAddingNewPaymentMethod(false);
-                setIsPaymentMethodModalOpen(true);
-              }}
-              className="p-4 rounded-2xl bg-[#0a7a40] text-white shadow-md cursor-pointer hover:bg-[#086333] transition-all flex items-center justify-between group"
-            >
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="bg-white/20 text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded backdrop-blur-xs flex items-center gap-1">
-                    {selectedPaymentMethod?.type === 'BANK' ? <Building2 className="w-3 h-3" /> : <Smartphone className="w-3 h-3" />}
-                    {selectedPaymentMethod?.type === 'BANK' ? 'BANK' : 'UPI'}
-                  </span>
-                  {selectedPaymentMethod?.isDefault && (
-                    <span className="text-[10px] bg-emerald-200 text-emerald-950 font-bold px-1.5 py-0.2 rounded">
-                      DEFAULT
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-white/20 text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded backdrop-blur-xs flex items-center gap-1">
+                      {selectedPaymentMethod.type === 'BANK' ? <Building2 className="w-3 h-3" /> : <Smartphone className="w-3 h-3" />}
+                      {selectedPaymentMethod.type === 'BANK' ? 'BANK' : 'UPI'}
                     </span>
-                  )}
+                    {selectedPaymentMethod.isDefault && (
+                      <span className="text-[10px] bg-emerald-200 text-emerald-950 font-bold px-1.5 py-0.2 rounded">
+                        DEFAULT
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="font-bold text-base tracking-wide mt-1">
+                    {selectedPaymentMethod.type === 'BANK'
+                      ? `${selectedPaymentMethod.bankName || 'Bank Account'} - ${selectedPaymentMethod.accountNumber}`
+                      : selectedPaymentMethod.upiId}
+                  </p>
+
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-100 font-medium">
+                    <span className="text-[10px] uppercase font-bold text-emerald-200">DISPLAY NAME:</span>
+                    <span className="font-bold uppercase text-white">
+                      {selectedPaymentMethod.displayName || user?.name || 'User'}
+                    </span>
+                  </div>
                 </div>
 
-                <p className="font-bold text-base tracking-wide mt-1">
-                  {selectedPaymentMethod?.type === 'BANK'
-                    ? `${selectedPaymentMethod.bankName || 'Bank Account'} - ${selectedPaymentMethod.accountNumber}`
-                    : selectedPaymentMethod?.upiId || '7068368474@ybl'}
-                </p>
-
-                <div className="flex items-center gap-1.5 text-xs text-emerald-100 font-medium">
-                  <span className="text-[10px] uppercase font-bold text-emerald-200">DISPLAY NAME:</span>
-                  <span className="font-bold uppercase text-white">
-                    {selectedPaymentMethod?.displayName || user?.name || 'Saved Method'}
-                  </span>
+                <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-[#0a7a40] shadow-sm shrink-0">
+                  <Check className="w-4 h-4 stroke-[3]" />
                 </div>
               </div>
-
-              <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-[#0a7a40] shadow-sm shrink-0">
-                <Check className="w-4 h-4 stroke-[3]" />
+            ) : (
+              <div className="p-4 rounded-2xl bg-[#0a7a40] text-white shadow-md flex items-center justify-between">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-white/20 text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded backdrop-blur-xs">
+                      Razorpay Gateway
+                    </span>
+                    <span className="text-[10px] bg-emerald-200 text-emerald-950 font-bold px-1.5 py-0.2 rounded">
+                      SECURE
+                    </span>
+                  </div>
+                  <p className="font-bold text-sm tracking-wide mt-0.5">
+                    UPI, Cards, NetBanking &amp; Wallets
+                  </p>
+                  <p className="text-xs text-emerald-100">
+                    Pay securely using Google Pay, PhonePe, Paytm, Cards or NetBanking
+                  </p>
+                </div>
+                <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-[#0a7a40] shadow-sm shrink-0">
+                  <Check className="w-4 h-4 stroke-[3]" />
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 

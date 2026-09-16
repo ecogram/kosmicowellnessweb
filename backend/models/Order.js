@@ -1,60 +1,40 @@
 const mongoose = require('mongoose');
 
-const orderItemSchema = new mongoose.Schema({
-  product: {
-    type: mongoose.Schema.ObjectId,
-    ref: 'Product',
-    required: true,
-  },
-  name: {
-    type: String,
-    required: true,
-  },
-  image: {
-    type: String,
-  },
-  variant: {
-    type: String,
-  },
-  quantity: {
-    type: Number,
-    required: true,
-  },
-  priceSnapshot: {
-    type: Number,
-    required: true,
-  },
-});
-
-const addressSchema = new mongoose.Schema({
-  fullName: { type: String, required: true },
-  phone: { type: String, required: true },
-  addressLine1: { type: String, required: true },
-  addressLine2: String,
-  city: { type: String, required: true },
-  state: { type: String, required: true },
-  postalCode: { type: String, required: true },
-  country: { type: String, required: true, default: 'USA' },
-});
-
 const orderSchema = new mongoose.Schema(
   {
     orderNumber: {
       type: String,
-      required: true,
-      unique: true,
     },
     user: {
-      type: mongoose.Schema.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true, // Assuming orders require auth for now
+      index: true,
     },
-    items: [orderItemSchema],
+    userName: {
+      type: String,
+    },
+    userEmail: {
+      type: String,
+      index: true,
+    },
+    items: {
+      type: Array,
+      default: [],
+    },
+    amount: {
+      type: Number,
+    },
+    total: {
+      type: Number,
+    },
     subtotal: {
       type: Number,
-      required: true,
     },
     discount: {
+      type: Number,
+      default: 0,
+    },
+    discountAmount: {
       type: Number,
       default: 0,
     },
@@ -62,39 +42,41 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    deliveryFee: {
+      type: Number,
+      default: 0,
+    },
     tax: {
       type: Number,
       default: 0,
     },
-    total: {
+    gstCharge: {
       type: Number,
-      required: true,
+      default: 0,
     },
     shippingAddress: {
-      type: addressSchema,
-      required: true,
+      type: mongoose.Schema.Types.Mixed,
+    },
+    deliveryAddress: {
+      type: mongoose.Schema.Types.Mixed,
     },
     billingAddress: {
-      type: addressSchema,
-      required: true,
+      type: mongoose.Schema.Types.Mixed,
     },
     orderStatus: {
       type: String,
-      enum: ['PENDING', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'],
       default: 'PENDING',
     },
     paymentStatus: {
       type: String,
-      enum: ['PENDING', 'PAID', 'FAILED', 'REFUNDED'],
       default: 'PENDING',
     },
     paymentMethod: {
       type: String,
-      enum: ['ONLINE', 'COD'],
-      default: 'ONLINE',
+      default: 'COD',
     },
     paymentReference: {
-      type: String, // E.g., Razorpay order ID
+      type: String,
     },
     courierPartner: {
       type: String,
@@ -103,6 +85,20 @@ const orderSchema = new mongoose.Schema(
     trackingNumber: {
       type: String,
       default: '',
+    },
+    shiprocketOrderId: {
+      type: String,
+    },
+    shiprocketShipmentId: {
+      type: String,
+    },
+    upfrontAmount: {
+      type: Number,
+      default: 0,
+    },
+    upfrontPaymentStatus: {
+      type: String,
+      default: 'Pending',
     },
     cancelReason: {
       type: String,
@@ -114,17 +110,20 @@ const orderSchema = new mongoose.Schema(
     },
     refundStatus: {
       type: String,
-      enum: ['NONE', 'INITIATED', 'PROCESSED', 'REJECTED'],
       default: 'NONE',
     },
   },
   {
     timestamps: true,
+    strict: false,
   }
 );
 
 orderSchema.index({ user: 1 });
+orderSchema.index({ userEmail: 1 });
+orderSchema.index({ orderNumber: 1 });
+orderSchema.index({ shiprocketOrderId: 1 });
 orderSchema.index({ orderStatus: 1 });
 orderSchema.index({ createdAt: -1 });
 
-module.exports = mongoose.model('Order', orderSchema);
+module.exports = mongoose.model('Order', orderSchema, 'orders');

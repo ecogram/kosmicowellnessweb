@@ -28,7 +28,7 @@ class PaymentService {
   /**
    * Create a Razorpay Order and initialize our internal Payment record.
    */
-  async createPayment(orderId, userId) {
+  async createPayment(orderId, userId, customAmount) {
     const order = await Order.findOne({ _id: orderId, user: userId });
     
     if (!order) {
@@ -41,8 +41,8 @@ class PaymentService {
       throw new ApiError(400, 'Order is already paid');
     }
 
-    // Convert total to smallest currency unit (paise)
-    const numericTotal = Number(order.total) || Number(order.subtotal) || 1;
+    // Convert total or custom amount to smallest currency unit (paise)
+    const numericTotal = customAmount !== undefined ? Number(customAmount) : (Number(order.total) || Number(order.subtotal) || 1);
     const amountInSmallestUnit = Math.max(100, Math.round(numericTotal * 100));
     const currency = 'INR';
 
