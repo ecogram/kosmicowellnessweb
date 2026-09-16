@@ -34,9 +34,10 @@ export const useSocket = () => {
         auth: { token: accessToken },
         transports: ['websocket', 'polling'],
         reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 3000,
-        timeout: 10000,
+        reconnectionAttempts: 3,
+        reconnectionDelay: 5000,
+        timeout: 8000,
+        autoConnect: true,
       });
 
       socket.on('connect', () => {
