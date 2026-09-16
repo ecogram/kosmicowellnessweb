@@ -9,7 +9,8 @@ import { api } from '../services/api';
 import { 
   Package, Heart, Ticket, MapPin, CreditCard, RotateCcw, 
   Globe, Moon, HelpCircle, Info, LogOut, Edit3, X, Phone, MessageSquare, Mail, Building,
-  Plus, Trash2, Home, Briefcase, CheckCircle2, Smartphone, Camera, Upload, RefreshCw, Check, AlertCircle
+  Plus, Trash2, Home, Briefcase, CheckCircle2, Smartphone, Camera, RefreshCw, Check, AlertCircle,
+  Eye, Image as ImageIcon, User as UserIcon
 } from 'lucide-react';
 
 interface SavedAddress {
@@ -100,8 +101,9 @@ export const Profile: React.FC = () => {
   const [isProfileSaved, setIsProfileSaved] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
 
-  // Photo Selection & Live Camera State
+  // Photo Selection & Preview State
   const [isPhotoPickerOpen, setIsPhotoPickerOpen] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
   const [cameraFacing, setCameraFacing] = useState<'user' | 'environment'>('user');
   const [capturedLivePhoto, setCapturedLivePhoto] = useState<string | null>(null);
@@ -109,7 +111,6 @@ export const Profile: React.FC = () => {
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const editModalFileInputRef = useRef<HTMLInputElement>(null);
 
   // Address Management State
   const [addresses, setAddresses] = useState<SavedAddress[]>(() => {
@@ -173,32 +174,32 @@ export const Profile: React.FC = () => {
     if (userPhone) setPhone(userPhone);
   }, [user]);
 
-  // Fetch fresh user profile from API on mount
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const res = await api.get('/auth/profile');
-        const fetchedUser = res.data?.data?.user || res.data?.data;
-        if (fetchedUser) {
-          const freshName = fetchedUser.name || fetchedUser.fullName;
-          if (freshName) setFullName(freshName);
-          if (fetchedUser.email) setEmail(fetchedUser.email);
-          const freshPic = fetchedUser.profilePicture || fetchedUser.profileImage || fetchedUser.avatar;
-          if (freshPic !== undefined) {
-            setProfilePicture(freshPic || '');
-            setImageLoadError(false);
-          }
-          const p = fetchedUser.phoneNumber || fetchedUser.phone || fetchedUser.mobile || '';
-          if (p) setPhone(p);
-          updateUser(fetchedUser);
+  // Fetch fresh user profile from API
+  const fetchUserProfile = async () => {
+    try {
+      const res = await api.get('/auth/profile');
+      const fetchedUser = res.data?.data?.user || res.data?.data;
+      if (fetchedUser) {
+        const freshName = fetchedUser.name || fetchedUser.fullName;
+        if (freshName) setFullName(freshName);
+        if (fetchedUser.email) setEmail(fetchedUser.email);
+        const freshPic = fetchedUser.profilePicture || fetchedUser.profileImage || fetchedUser.avatar;
+        if (freshPic !== undefined) {
+          setProfilePicture(freshPic || '');
+          setImageLoadError(false);
         }
-      } catch (err) {
-        console.warn('Backend user profile fetch notice:', err);
+        const p = fetchedUser.phoneNumber || fetchedUser.phone || fetchedUser.mobile || '';
+        if (p) setPhone(p);
+        updateUser(fetchedUser);
       }
-    };
+    } catch (err) {
+      console.warn('Backend user profile fetch notice:', err);
+    }
+  };
 
+  useEffect(() => {
     fetchUserProfile();
-  }, [updateUser]);
+  }, []);
 
   // Fetch live addresses from backend
   const fetchLiveAddresses = async () => {
@@ -464,6 +465,7 @@ export const Profile: React.FC = () => {
           const serverPic = updatedUser.profilePicture || updatedUser.profileImage || updatedUser.avatar;
           if (serverPic) setProfilePicture(serverPic);
         }
+        await fetchUserProfile();
       }
     } catch (err) {
       console.warn('Profile picture save warning:', err);
@@ -483,6 +485,7 @@ export const Profile: React.FC = () => {
       const res = await api.delete('/auth/remove-profile-picture');
       const updatedUser = res.data?.data?.user || res.data?.data || { profilePicture: '' };
       updateUser(updatedUser);
+      await fetchUserProfile();
     } catch (err) {
       console.warn('Remove picture warning:', err);
       updateUser({ profilePicture: '' });
@@ -503,11 +506,6 @@ export const Profile: React.FC = () => {
         phoneNumber: cleanPhone,
         phone: cleanPhone,
       };
-      if (profilePicture && profilePicture.trim().length > 0) {
-        payload.profilePicture = profilePicture.trim();
-        payload.profileImage = profilePicture.trim();
-        payload.avatar = profilePicture.trim();
-      }
 
       const res = await api.put('/auth/profile', payload);
       const updatedUser = res.data?.data?.user || res.data?.data;
@@ -515,8 +513,6 @@ export const Profile: React.FC = () => {
         if (updatedUser.name) setFullName(updatedUser.name);
         const p = updatedUser.phoneNumber || updatedUser.phone || cleanPhone;
         if (p) setPhone(p);
-        const pic = updatedUser.profilePicture || updatedUser.profileImage || updatedUser.avatar || profilePicture;
-        if (pic) setProfilePicture(pic);
         updateUser(updatedUser);
       } else {
         updateUser({
@@ -526,6 +522,7 @@ export const Profile: React.FC = () => {
           phone: cleanPhone,
         });
       }
+      await fetchUserProfile();
     } catch (err) {
       console.warn('Backend update profile notice:', err);
       updateUser({
@@ -540,7 +537,7 @@ export const Profile: React.FC = () => {
     setTimeout(() => {
       setIsProfileSaved(false);
       setIsEditProfileOpen(false);
-    }, 1000);
+    }, 600);
   };
 
   const handleLogout = () => {
@@ -698,16 +695,20 @@ export const Profile: React.FC = () => {
         {/* User Header Info Card */}
         <div className={`p-4 sm:p-6 rounded-3xl border shadow-xs flex items-center justify-between gap-3 sm:gap-4 ${isDarkMode ? 'bg-neutral-800 border-neutral-700' : 'bg-surface border-border'}`}>
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <div className="relative group shrink-0">
+            <div 
+              onClick={() => setIsPhotoPickerOpen(true)}
+              className="relative group shrink-0 cursor-pointer"
+              title="Profile Picture Options"
+            >
               {profilePicture && !imageLoadError ? (
                 <img
                   src={profilePicture}
                   alt={user?.name || fullName || 'User'}
                   onError={() => setImageLoadError(true)}
-                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-emerald-600 shadow-md"
+                  className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border-2 border-emerald-600 shadow-md group-hover:opacity-90 transition-opacity"
                 />
               ) : (
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-800 text-amber-300 font-serif font-black text-lg sm:text-xl flex items-center justify-center border-2 border-emerald-600 shadow-md uppercase">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-800 text-amber-300 font-serif font-black text-lg sm:text-xl flex items-center justify-center border-2 border-emerald-600 shadow-md uppercase group-hover:opacity-90 transition-opacity">
                   {((user?.name || fullName || 'U').split(' ').filter(Boolean).map((n: string) => n[0]).join('') || 'U').slice(0, 2)}
                 </div>
               )}
@@ -715,9 +716,12 @@ export const Profile: React.FC = () => {
               {/* Camera Upload Badge */}
               <button
                 type="button"
-                onClick={() => setIsPhotoPickerOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsPhotoPickerOpen(true);
+                }}
                 className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#0a7a40] hover:bg-[#086334] text-white flex items-center justify-center shadow-md border-2 border-white transition-transform hover:scale-110 cursor-pointer"
-                title="Change Profile Picture (Camera / Upload)"
+                title="Change Profile Picture"
               >
                 <Camera className="w-3.5 h-3.5" />
               </button>
@@ -1027,138 +1031,83 @@ export const Profile: React.FC = () => {
 
       </Container>
 
-      {/* MODAL 1: EDIT PROFILE */}
+      {/* MODAL 1: EDIT PROFILE (MATCHING EXACT APP SCREENSHOT 2) */}
       {isEditProfileOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 space-y-6 shadow-2xl border border-neutral-200">
-            <div className="flex justify-between items-center border-b pb-3">
-              <h3 className="font-serif font-bold text-lg text-neutral-900">Edit Profile</h3>
-              <button onClick={() => setIsEditProfileOpen(false)} className="p-1 rounded-full text-neutral-400 hover:text-neutral-700 cursor-pointer">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-6 space-y-5 shadow-2xl border border-neutral-100 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center pb-2">
+              <h3 className="font-bold text-lg text-neutral-900">Edit Profile</h3>
+              <button 
+                onClick={() => setIsEditProfileOpen(false)} 
+                className="p-1 rounded-full text-neutral-400 hover:text-neutral-700 cursor-pointer transition-colors"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSaveProfile} className="space-y-4">
-              {/* Profile Photo Uploader Section */}
-              <div className="flex flex-col items-center justify-center pb-4 border-b border-neutral-100 space-y-3">
-                <div className="relative">
-                  {profilePicture && !imageLoadError ? (
-                    <img
-                      src={profilePicture}
-                      alt="Profile Preview"
-                      onError={() => setImageLoadError(true)}
-                      className="w-20 h-20 rounded-full object-cover border-2 border-emerald-600 shadow-md"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 rounded-full bg-emerald-800 text-amber-300 font-serif font-black text-2xl flex items-center justify-center border-2 border-emerald-600 shadow-md uppercase">
-                      {((fullName || user?.name || 'U').split(' ').filter(Boolean).map((n: string) => n[0]).join('') || 'U').slice(0, 2)}
-                    </div>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => setIsPhotoPickerOpen(true)}
-                    className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-[#0a7a40] text-white shadow-md border-2 border-white hover:bg-[#086334] cursor-pointer transition-transform hover:scale-110"
-                    title="Upload / Change Photo"
-                  >
-                    <Camera className="w-3.5 h-3.5" />
-                  </button>
+              {/* Full Name Field with User Icon */}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-neutral-600 block">Full Name</label>
+                <div className="relative flex items-center">
+                  <UserIcon className="w-4 h-4 text-neutral-400 absolute left-3.5 pointer-events-none" />
+                  <input
+                    type="text"
+                    required
+                    placeholder="Full Name"
+                    value={fullName}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (/^[a-zA-Z\s]*$/.test(val)) {
+                        setFullName(val);
+                      }
+                    }}
+                    className="w-full pl-10 pr-4 py-3 bg-neutral-50/70 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-900 focus:outline-none focus:border-emerald-700 focus:bg-white transition-all"
+                  />
                 </div>
+              </div>
 
-                <input
-                  type="file"
-                  ref={editModalFileInputRef}
-                  onChange={handleImageFileChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-
-                <div className="flex flex-wrap items-center justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => startLiveCamera('user')}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-800 text-white hover:bg-emerald-900 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
-                  >
-                    <Camera className="w-3.5 h-3.5" />
-                    <span>Take Live Photo</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => editModalFileInputRef.current?.click()}
-                    className="px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 border border-emerald-800/10"
-                  >
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Upload File</span>
-                  </button>
-
-                  {profilePicture && (
-                    <button
-                      type="button"
-                      onClick={handleRemovePhoto}
-                      className="px-3 py-1.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5 border border-rose-200"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Remove</span>
-                    </button>
-                  )}
+              {/* Email Address Field with Mail Icon (Read-only) */}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-neutral-600 block">Email Address</label>
+                <div className="relative flex items-center">
+                  <Mail className="w-4 h-4 text-neutral-400 absolute left-3.5 pointer-events-none" />
+                  <input
+                    type="email"
+                    value={user?.email || email}
+                    disabled
+                    readOnly
+                    className="w-full pl-10 pr-4 py-3 bg-neutral-100/80 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-600 cursor-not-allowed select-none"
+                  />
                 </div>
-
-                {isUploadingPhoto && (
-                  <p className="text-[11px] text-emerald-700 font-semibold animate-pulse">Saving photo...</p>
-                )}
               </div>
 
-              <div>
-                <label className="text-xs font-bold text-neutral-700 block mb-1">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Enter your name"
-                  value={fullName}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (/^[a-zA-Z\s]*$/.test(val)) {
-                      setFullName(val);
-                    }
-                  }}
-                  className="w-full px-4 py-2.5 border border-neutral-300 rounded-xl text-sm text-neutral-900 focus:ring-2 focus:ring-emerald-800 focus:border-emerald-800"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-neutral-700 block mb-1">Email Address</label>
-                <input
-                  type="email"
-                  value={user?.email || email}
-                  disabled
-                  readOnly
-                  className="w-full px-4 py-2.5 border border-neutral-200 bg-neutral-100 rounded-xl text-sm text-neutral-500 cursor-not-allowed select-none"
-                />
-                <p className="text-[10px] text-neutral-400 mt-1">Registered email address cannot be changed</p>
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-neutral-700 block mb-1">Phone Number</label>
-                <input
-                  type="tel"
-                  placeholder="Enter phone number (e.g. 9793170555)"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-4 py-2.5 border border-neutral-300 rounded-xl text-sm text-neutral-900 focus:ring-2 focus:ring-emerald-800 focus:border-emerald-800"
-                />
+              {/* Phone Number Field with Phone Icon */}
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-neutral-600 block">Phone Number</label>
+                <div className="relative flex items-center">
+                  <Phone className="w-4 h-4 text-neutral-400 absolute left-3.5 pointer-events-none" />
+                  <input
+                    type="tel"
+                    placeholder="+91 Phone Number"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-neutral-50/70 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-900 focus:outline-none focus:border-emerald-700 focus:bg-white transition-all"
+                  />
+                </div>
               </div>
 
               {isProfileSaved && (
-                <div className="p-3 bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold rounded-xl text-center flex items-center justify-center gap-2">
+                <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-xl text-center flex items-center justify-center gap-2">
                   <CheckCircle2 className="w-4 h-4 text-emerald-700" />
                   <span>Profile updated and saved successfully!</span>
                 </div>
               )}
 
+              {/* Save Changes Solid Green Button */}
               <button
                 type="submit"
-                className="w-full py-3.5 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-sm rounded-xl shadow-md transition-all cursor-pointer"
+                className="w-full py-3.5 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-sm rounded-2xl shadow-md transition-all cursor-pointer mt-4"
               >
                 Save Changes
               </button>
@@ -1771,91 +1720,123 @@ export const Profile: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL 5: PHOTO SELECTION ACTION SHEET */}
+      {/* MODAL 5: PHOTO SELECTION BOTTOM SHEET (MATCHING EXACT APP SCREENSHOT 1) */}
       {isPhotoPickerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-sm bg-white rounded-3xl p-6 space-y-4 shadow-2xl border border-neutral-200 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex justify-between items-center border-b pb-3">
-              <div>
-                <h3 className="font-serif font-bold text-lg text-neutral-900">Profile Picture</h3>
-                <p className="text-xs text-neutral-500">Choose how you want to update your picture</p>
-              </div>
-              <button 
-                onClick={() => setIsPhotoPickerOpen(false)} 
-                className="p-1 rounded-full text-neutral-400 hover:text-neutral-700 cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+        <div 
+          onClick={() => setIsPhotoPickerOpen(false)}
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-5 pt-3 pb-8 space-y-2 shadow-2xl border border-neutral-100 animate-in slide-in-from-bottom-5 duration-200"
+          >
+            {/* Grab Handle Bar matching screenshot */}
+            <div className="w-12 h-1.5 bg-neutral-300 rounded-full mx-auto mb-4" />
 
-            <div className="space-y-2.5 pt-1">
-              {/* Option 1: Live Camera */}
+            <div className="space-y-1">
+              {/* Option 1: Preview Picture */}
               <button
                 type="button"
-                onClick={() => startLiveCamera('user')}
-                className="w-full p-3.5 rounded-2xl bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-sm flex items-center justify-between transition-all shadow-md cursor-pointer group"
+                onClick={() => {
+                  setIsPhotoPickerOpen(false);
+                  setIsPreviewModalOpen(true);
+                }}
+                className="w-full p-3 rounded-2xl hover:bg-neutral-50 flex items-center gap-3.5 transition-colors cursor-pointer text-left group"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-                    <Camera className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <div className="text-sm font-extrabold">Take Live Photo</div>
-                    <div className="text-[11px] text-emerald-100 font-normal">Open webcam / phone camera</div>
-                  </div>
+                <div className="w-10 h-10 rounded-full bg-[#e8f5e9] text-[#2e7d32] flex items-center justify-center shrink-0">
+                  <Eye className="w-5 h-5 text-[#2e7d32]" />
                 </div>
-                <span className="text-white/70 group-hover:translate-x-0.5 transition-transform">&rsaquo;</span>
+                <span className="font-bold text-neutral-800 text-sm">Preview Picture</span>
               </button>
 
-              {/* Option 2: Upload from Device */}
+              {/* Option 2: Change Picture */}
               <button
                 type="button"
                 onClick={() => {
                   setIsPhotoPickerOpen(false);
                   fileInputRef.current?.click();
                 }}
-                className="w-full p-3.5 rounded-2xl bg-stone-50 hover:bg-stone-100 text-neutral-900 font-bold text-sm flex items-center justify-between transition-colors border border-stone-200 cursor-pointer group"
+                className="w-full p-3 rounded-2xl hover:bg-neutral-50 flex items-center gap-3.5 transition-colors cursor-pointer text-left group"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-800/10 flex items-center justify-center text-emerald-800">
-                    <Upload className="w-5 h-5" />
-                  </div>
-                  <div className="text-left">
-                    <div className="text-sm font-extrabold text-neutral-900">Upload from Device</div>
-                    <div className="text-[11px] text-neutral-500 font-normal">Choose JPG, PNG, or WEBP</div>
-                  </div>
+                <div className="w-10 h-10 rounded-full bg-[#e8f5e9] text-[#2e7d32] flex items-center justify-center shrink-0">
+                  <ImageIcon className="w-5 h-5 text-[#2e7d32]" />
                 </div>
-                <span className="text-neutral-400 group-hover:translate-x-0.5 transition-transform">&rsaquo;</span>
+                <span className="font-bold text-neutral-800 text-sm">Change Picture</span>
               </button>
 
-              {/* Option 3: Remove Current Photo */}
-              {profilePicture && (
-                <button
-                  type="button"
-                  onClick={handleRemovePhoto}
-                  className="w-full p-3.5 rounded-2xl bg-rose-50/70 hover:bg-rose-100 text-rose-600 font-bold text-sm flex items-center justify-between transition-colors border border-rose-200/80 cursor-pointer group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-rose-500/15 flex items-center justify-center text-rose-600">
-                      <Trash2 className="w-5 h-5" />
-                    </div>
-                    <div className="text-left">
-                      <div className="text-sm font-extrabold">Remove Current Photo</div>
-                      <div className="text-[11px] text-rose-400 font-normal">Reset to initials avatar</div>
-                    </div>
-                  </div>
-                  <span className="text-rose-400 group-hover:translate-x-0.5 transition-transform">&rsaquo;</span>
-                </button>
+              {/* Option 3: Remove Picture */}
+              <button
+                type="button"
+                onClick={() => {
+                  handleRemovePhoto();
+                }}
+                className="w-full p-3 rounded-2xl hover:bg-rose-50/50 flex items-center gap-3.5 transition-colors cursor-pointer text-left group"
+              >
+                <div className="w-10 h-10 rounded-full bg-[#ffebee] text-[#e53935] flex items-center justify-center shrink-0">
+                  <Trash2 className="w-5 h-5 text-[#e53935]" />
+                </div>
+                <span className="font-bold text-[#e53935] text-sm">Remove Picture</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 6: PREVIEW PICTURE FULL VIEW LIGHTBOX */}
+      {isPreviewModalOpen && (
+        <div 
+          onClick={() => setIsPreviewModalOpen(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+        >
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-sm sm:max-w-md w-full bg-neutral-900 rounded-3xl p-4 shadow-2xl border border-neutral-700 flex flex-col items-center space-y-4"
+          >
+            <div className="w-full flex items-center justify-between pb-2 border-b border-neutral-800 text-white">
+              <span className="text-sm font-bold truncate">{user?.name || fullName || 'Profile Picture'}</span>
+              <button 
+                onClick={() => setIsPreviewModalOpen(false)}
+                className="p-1 rounded-full text-neutral-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="w-full flex items-center justify-center p-2">
+              {profilePicture && !imageLoadError ? (
+                <img
+                  src={profilePicture}
+                  alt={user?.name || fullName || 'Profile Preview'}
+                  onError={() => setImageLoadError(true)}
+                  className="w-64 h-64 sm:w-80 sm:h-80 rounded-2xl object-cover shadow-2xl border border-neutral-700"
+                />
+              ) : (
+                <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-2xl bg-emerald-800 text-amber-300 font-serif font-black text-6xl flex items-center justify-center border border-emerald-600 shadow-2xl uppercase">
+                  {((user?.name || fullName || 'U').split(' ').filter(Boolean).map((n: string) => n[0]).join('') || 'U').slice(0, 2)}
+                </div>
               )}
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsPhotoPickerOpen(false)}
-              className="w-full py-2.5 text-center text-xs font-bold text-neutral-500 hover:text-neutral-800 cursor-pointer"
-            >
-              Cancel
-            </button>
+            <div className="w-full pt-2 flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsPreviewModalOpen(false);
+                  fileInputRef.current?.click();
+                }}
+                className="flex-1 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <ImageIcon className="w-4 h-4" />
+                <span>Change Picture</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPreviewModalOpen(false)}
+                className="px-5 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
