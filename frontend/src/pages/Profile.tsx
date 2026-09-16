@@ -6,6 +6,7 @@ import { useWishlist } from '../hooks/useWishlist';
 import { useOrders } from '../hooks/useOrders';
 import { useCoupons } from '../hooks/useCoupons';
 import { api } from '../services/api';
+import { normalizeImageUrl } from '../utils/imageUrl';
 import { 
   Package, Heart, Ticket, MapPin, CreditCard, RotateCcw, 
   Globe, Moon, HelpCircle, Info, LogOut, Edit3, X, Phone, MessageSquare, Mail, Building,
@@ -167,7 +168,7 @@ export const Profile: React.FC = () => {
     if (user?.email) setEmail(user.email);
     const currentPic = user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar;
     if (currentPic !== undefined) {
-      setProfilePicture(currentPic || '');
+      setProfilePicture(normalizeImageUrl(currentPic));
       setImageLoadError(false);
     }
     const userPhone = user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || '';
@@ -185,7 +186,7 @@ export const Profile: React.FC = () => {
         if (fetchedUser.email) setEmail(fetchedUser.email);
         const freshPic = fetchedUser.profilePicture || fetchedUser.profileImage || fetchedUser.avatar;
         if (freshPic !== undefined) {
-          setProfilePicture(freshPic || '');
+          setProfilePicture(normalizeImageUrl(freshPic));
           setImageLoadError(false);
         }
         const p = fetchedUser.phoneNumber || fetchedUser.phone || fetchedUser.mobile || '';

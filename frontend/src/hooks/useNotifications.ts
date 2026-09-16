@@ -23,12 +23,6 @@ export const useUnreadCount = () => {
     queryKey: ['notifications', 'unread-count'],
     queryFn: async () => {
       try {
-        const { data } = await api.get('/notifications/unread-count');
-        const count = data.data?.count ?? data.data?.unreadCount ?? (typeof data.data === 'number' ? data.data : null);
-        if (count !== null && count !== undefined) return count;
-      } catch (err) {}
-
-      try {
         const { data } = await api.get('/notifications', { params: { page: 1, limit: 100 } });
         const list = data.data?.notifications || data.data || [];
         if (Array.isArray(list)) {

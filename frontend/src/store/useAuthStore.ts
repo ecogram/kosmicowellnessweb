@@ -30,6 +30,18 @@ interface AuthState {
   setLoading: (loading: boolean) => void;
 }
 
+import { normalizeImageUrl } from '../utils/imageUrl';
+
+const sanitizeUser = (user: User | null): User | null => {
+  if (!user) return null;
+  const sanitized = { ...user };
+  if (sanitized.profilePicture) sanitized.profilePicture = normalizeImageUrl(sanitized.profilePicture);
+  if (sanitized.profileImage) sanitized.profileImage = normalizeImageUrl(sanitized.profileImage);
+  if (sanitized.avatar) sanitized.avatar = normalizeImageUrl(sanitized.avatar);
+  if (sanitized.avatarUrl) sanitized.avatarUrl = normalizeImageUrl(sanitized.avatarUrl);
+  return sanitized;
+};
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -38,12 +50,13 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       isLoading: false,
       setAuth: (user, accessToken) => {
-        set({ user, accessToken, isAuthenticated: true, isLoading: false });
+        set({ user: sanitizeUser(user), accessToken, isAuthenticated: true, isLoading: false });
       },
       updateUser: (updatedFields) => {
-        set((state) => ({
-          user: state.user ? { ...state.user, ...updatedFields } : (updatedFields as User),
-        }));
+        set((state) => {
+          const merged = state.user ? { ...state.user, ...updatedFields } : (updatedFields as User);
+          return { user: sanitizeUser(merged) };
+        });
       },
       setAccessToken: (accessToken) => set({ accessToken }),
       logout: () => {

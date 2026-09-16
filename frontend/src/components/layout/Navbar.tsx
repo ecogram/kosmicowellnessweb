@@ -11,6 +11,8 @@ import { useUnreadCount } from '../../hooks/useNotifications';
 import { PlayStoreModal } from '../ui/PlayStoreModal';
 import { HangingPlayStoreWidget } from './HangingPlayStoreWidget';
 
+import { normalizeImageUrl } from '../../utils/imageUrl';
+
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -131,7 +133,7 @@ export function Navbar() {
                 >
                   {(user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar) ? (
                     <img
-                      src={user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar}
+                      src={normalizeImageUrl(user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar)}
                       alt={user?.name || 'User'}
                       onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                       className="w-6 h-6 rounded-full object-cover border border-emerald-600"
