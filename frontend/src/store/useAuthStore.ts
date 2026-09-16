@@ -60,6 +60,11 @@ export const useAuthStore = create<AuthState>()(
       },
       setAccessToken: (accessToken) => set({ accessToken }),
       logout: () => {
+        try {
+          localStorage.removeItem('kosmico_auth_v1');
+          localStorage.removeItem('kosmico_saved_addresses');
+          localStorage.removeItem('kosmico_saved_payment_methods');
+        } catch (e) {}
         set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
       },
       setLoading: (isLoading) => set({ isLoading }),

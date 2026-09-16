@@ -53,25 +53,6 @@ export interface SavedPaymentMethod {
   isDefault: boolean;
 }
 
-const DEFAULT_PAYMENT_METHODS: SavedPaymentMethod[] = [
-  {
-    id: 'pm-1',
-    type: 'UPI',
-    displayName: 'AMIT KUMAR',
-    upiId: '7068368474@ybl',
-    isDefault: true,
-  },
-  {
-    id: 'pm-2',
-    type: 'BANK',
-    displayName: 'AMIT KUMAR',
-    bankName: 'State Bank of India',
-    accountNumber: '•••• •••• 5678',
-    ifscCode: 'SBIN0001234',
-    isDefault: false,
-  },
-];
-
 export const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { data: cart, isLoading: isCartLoading } = useCart();
@@ -86,7 +67,7 @@ export const Checkout: React.FC = () => {
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<any>(null);
 
-  // Online Payment Method state (UPI & Bank Account - App Exact Match)
+  // Online Payment Method state (UPI & Bank Account - dynamic per user)
   const [paymentMethods, setPaymentMethods] = useState<SavedPaymentMethod[]>(() => {
     const saved = localStorage.getItem('kosmico_saved_payment_methods');
     if (saved) {
@@ -94,10 +75,23 @@ export const Checkout: React.FC = () => {
         return JSON.parse(saved);
       } catch (e) {}
     }
-    return DEFAULT_PAYMENT_METHODS;
+    const userMethods = (user as any)?.savedPaymentMethods;
+    if (Array.isArray(userMethods) && userMethods.length > 0) {
+      return userMethods.map((m: any) => ({
+        id: m._id || m.id,
+        type: m.type || 'UPI',
+        displayName: m.displayName || user?.name || 'User',
+        upiId: m.upiId,
+        bankName: m.bankName,
+        accountNumber: m.accountNumber,
+        ifscCode: m.ifscCode,
+        isDefault: !!m.isDefault,
+      }));
+    }
+    return [];
   });
 
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<SavedPaymentMethod>(() => {
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<SavedPaymentMethod | undefined>(() => {
     return paymentMethods.find((m) => m.isDefault) || paymentMethods[0];
   });
 
@@ -106,7 +100,7 @@ export const Checkout: React.FC = () => {
   const [paymentTypeTab, setPaymentTypeTab] = useState<'BANK' | 'UPI'>('UPI');
 
   // Form states for Add Payment Method
-  const [bankAccountHolder, setBankAccountHolder] = useState(user?.name || 'Amit Kumar');
+  const [bankAccountHolder, setBankAccountHolder] = useState(user?.name || '');
   const [bankName, setBankName] = useState('');
   const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [bankIfscCode, setBankIfscCode] = useState('');

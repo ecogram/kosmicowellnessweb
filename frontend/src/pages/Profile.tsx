@@ -39,41 +39,6 @@ export interface SavedPaymentMethod {
   isDefault: boolean;
 }
 
-const DEFAULT_PAYMENT_METHODS: SavedPaymentMethod[] = [
-  {
-    id: 'pm-1',
-    type: 'UPI',
-    displayName: 'AMIT KUMAR',
-    upiId: '7068368474@ybl',
-    isDefault: true,
-  },
-  {
-    id: 'pm-2',
-    type: 'BANK',
-    displayName: 'AMIT KUMAR',
-    bankName: 'State Bank of India',
-    accountNumber: '•••• •••• 5678',
-    ifscCode: 'SBIN0001234',
-    isDefault: false,
-  },
-];
-
-const DEFAULT_ADDRESSES: SavedAddress[] = [
-  {
-    id: 'addr-1',
-    fullName: 'Amit Kumar',
-    phone: '+91 97931 70555',
-    addressLine1: 'Tower 3, NX One Commercial Complex, Suite 423',
-    addressLine2: 'Techzone 4, Greater Noida West',
-    city: 'Greater Noida',
-    state: 'Uttar Pradesh',
-    postalCode: '201306',
-    country: 'India',
-    type: 'HOME',
-    isDefault: true
-  }
-];
-
 export const Profile: React.FC = () => {
   const { user, logout, updateUser } = useAuthStore();
   const { data: wishlist } = useWishlist();
@@ -97,7 +62,7 @@ export const Profile: React.FC = () => {
   const [fullName, setFullName] = useState(user?.name || (user as any)?.fullName || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || '');
-  const [profilePicture, setProfilePicture] = useState(user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar || '');
+  const [profilePicture, setProfilePicture] = useState(normalizeImageUrl(user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar || ''));
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
@@ -113,13 +78,13 @@ export const Profile: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Address Management State
+  // Address Management State (Fetched dynamically per logged-in user)
   const [addresses, setAddresses] = useState<SavedAddress[]>(() => {
     const saved = localStorage.getItem('kosmico_saved_addresses');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
-    return DEFAULT_ADDRESSES;
+    return [];
   });
 
   const [isAddingAddress, setIsAddingAddress] = useState(false);
@@ -137,13 +102,26 @@ export const Profile: React.FC = () => {
   const [addrFormType, setAddrFormType] = useState<'HOME' | 'WORK' | 'OTHER'>('HOME');
   const [addrFormIsDefault, setAddrFormIsDefault] = useState(false);
 
-  // Payment Methods State (App Exact Match - UPI & Bank Account)
+  // Payment Methods State (App Exact Match - UPI & Bank Account, dynamic per user)
   const [paymentMethods, setPaymentMethods] = useState<SavedPaymentMethod[]>(() => {
     const saved = localStorage.getItem('kosmico_saved_payment_methods');
     if (saved) {
       try { return JSON.parse(saved); } catch (e) {}
     }
-    return DEFAULT_PAYMENT_METHODS;
+    const userMethods = (user as any)?.savedPaymentMethods;
+    if (Array.isArray(userMethods) && userMethods.length > 0) {
+      return userMethods.map((m: any) => ({
+        id: m._id || m.id,
+        type: m.type || 'UPI',
+        displayName: m.displayName || user?.name || 'User',
+        upiId: m.upiId,
+        bankName: m.bankName,
+        accountNumber: m.accountNumber,
+        ifscCode: m.ifscCode,
+        isDefault: !!m.isDefault,
+      }));
+    }
+    return [];
   });
 
   const [isAddingPaymentMethod, setIsAddingPaymentMethod] = useState(false);
