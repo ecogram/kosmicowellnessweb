@@ -35,10 +35,14 @@ import { normalizeImageUrl } from '../utils/imageUrl';
 const sanitizeUser = (user: User | null): User | null => {
   if (!user) return null;
   const sanitized = { ...user };
-  if (sanitized.profilePicture) sanitized.profilePicture = normalizeImageUrl(sanitized.profilePicture);
-  if (sanitized.profileImage) sanitized.profileImage = normalizeImageUrl(sanitized.profileImage);
-  if (sanitized.avatar) sanitized.avatar = normalizeImageUrl(sanitized.avatar);
-  if (sanitized.avatarUrl) sanitized.avatarUrl = normalizeImageUrl(sanitized.avatarUrl);
+  const rawPic = sanitized.profilePicture || sanitized.profileImage || sanitized.avatar || sanitized.avatarUrl || sanitized.image || '';
+  const normalized = normalizeImageUrl(rawPic);
+
+  sanitized.profilePicture = normalized;
+  sanitized.profileImage = normalized;
+  sanitized.avatar = normalized;
+  sanitized.avatarUrl = normalized;
+  sanitized.image = normalized;
   return sanitized;
 };
 
