@@ -39,39 +39,22 @@ export const useWishlist = () => {
   return useQuery({
     queryKey: ['wishlist', isAuthenticated],
     queryFn: async () => {
-      const localItems = getLocalWishlist();
-
       if (!isAuthenticated) {
-        return { items: localItems };
+        return { items: getLocalWishlist() };
       }
 
       try {
         const { data } = await api.get('/wishlist');
-        const serverWishlist = data.data.wishlist;
-        const serverItems = serverWishlist?.items || [];
-        
-        // Merge server items with any local items
-        const mergedMap = new Map<string, any>();
-        serverItems.forEach((item: any) => {
-          const id = (item?._id || item?.id || item)?.toString();
-          if (id) mergedMap.set(id, item);
-        });
-        localItems.forEach((item: any) => {
-          const id = (item?._id || item?.id || item)?.toString();
-          if (id && !mergedMap.has(id)) {
-            mergedMap.set(id, item);
-          }
-        });
-
-        const combinedItems = Array.from(mergedMap.values());
-        saveLocalWishlist(combinedItems);
-        return { ...serverWishlist, items: combinedItems };
+        const serverWishlist = data.data.wishlist || data.data;
+        const serverItems = Array.isArray(serverWishlist?.items) ? serverWishlist.items : (Array.isArray(serverWishlist) ? serverWishlist : []);
+        saveLocalWishlist(serverItems);
+        return { items: serverItems };
       } catch (err) {
-        // Fallback to local storage if API is unreachable
-        return { items: localItems };
+        return { items: [] };
       }
     },
-    initialData: () => ({ items: getLocalWishlist() }),
+    staleTime: 1000 * 60, // 1 min
+    initialData: () => ({ items: [] }),
   });
 };
 

@@ -32,7 +32,7 @@ const authLimiter = rateLimit({
 
 router.use(authLimiter);
 
-// 1. Documentation-specific Auth Endpoints
+// Documented Auth & Profile Endpoints (Section 2: A - F)
 router.post('/register', authController.register);
 router.post('/signup-verify', authController.signupVerify);
 router.post('/login', authController.login);
@@ -40,13 +40,6 @@ router.post('/login-verify', authController.loginVerify);
 router.get('/profile', protect, authController.getMe);
 router.put('/profile', protect, handleProfileUpload, authController.updateProfile);
 router.delete('/remove-profile-picture', protect, authController.removeProfilePicture);
-
-// 2. Existing Frontend Compatible Endpoints
-router.post('/send-otp', authController.sendOtp);
-router.post('/verify-otp', authController.verifyOtp);
-router.post('/refresh', authController.refresh);
-router.post('/logout', authController.logout);
-router.get('/me', protect, authController.getMe);
 
 module.exports = router;
 

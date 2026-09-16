@@ -48,13 +48,24 @@ const sanitizeUser = (user: User | null): User | null => {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       accessToken: null,
       isAuthenticated: false,
       isLoading: false,
-      setAuth: (user, accessToken) => {
-        set({ user: sanitizeUser(user), accessToken, isAuthenticated: true, isLoading: false });
+      setAuth: (newUser, accessToken) => {
+        const previousUser = get().user;
+        // If a different user is logging in on this browser, clear prior user's local caches
+        if (previousUser && (previousUser.email !== newUser.email || previousUser._id !== newUser._id || previousUser.id !== newUser.id)) {
+          try {
+            localStorage.removeItem('kosmico_saved_addresses');
+            localStorage.removeItem('kosmico_saved_payment_methods');
+            localStorage.removeItem('kosmico_user_orders');
+            localStorage.removeItem('kosmico_wishlist');
+            localStorage.removeItem('kosmico_cart_v1');
+          } catch (_) {}
+        }
+        set({ user: sanitizeUser(newUser), accessToken, isAuthenticated: true, isLoading: false });
       },
       updateUser: (updatedFields) => {
         set((state) => {
@@ -68,6 +79,9 @@ export const useAuthStore = create<AuthState>()(
           localStorage.removeItem('kosmico_auth_v1');
           localStorage.removeItem('kosmico_saved_addresses');
           localStorage.removeItem('kosmico_saved_payment_methods');
+          localStorage.removeItem('kosmico_user_orders');
+          localStorage.removeItem('kosmico_wishlist');
+          localStorage.removeItem('kosmico_cart_v1');
         } catch (e) {}
         set({ user: null, accessToken: null, isAuthenticated: false, isLoading: false });
       },

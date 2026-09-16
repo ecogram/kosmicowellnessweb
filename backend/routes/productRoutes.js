@@ -2,17 +2,8 @@ const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/productController');
 
-router.route('/')
-  .get(productController.getProducts)
-  .post(productController.createProduct);
-
+// Documented Product Catalog Endpoint (Section 3: A)
 router.get('/user/list', productController.getProducts);
-
-router.route('/:slug')
-  .get(productController.getProductBySlug);
-
-router.route('/:id')
-  .patch(productController.updateProduct)
-  .delete(productController.deleteProduct);
+router.get('/:slug', productController.getProductBySlug);
 
 module.exports = router;

@@ -64,30 +64,7 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       queryClient.invalidateQueries({ queryKey: ['reviews'] });
     });
 
-    // --- ADMIN EVENTS ---
-    socket.on('admin:new-order', () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
-      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboardStats'] });
-    });
-
-    socket.on('admin:order-updated', () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
-      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboardStats'] });
-    });
-
-    socket.on('admin:payment-updated', () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
-      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboardStats'] });
-    });
-
-    socket.on('admin:new-review', () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'reviews'] });
-    });
-
-    socket.on('admin:review-updated', () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'reviews'] });
-    });
-
+    // Cleanup on unmount
     return () => {
       socket.off('notification:new');
       socket.off('notification:unread-count');
@@ -101,12 +78,6 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       socket.off('review:new');
       socket.off('review:approved');
       socket.off('review:rejected');
-      
-      socket.off('admin:new-order');
-      socket.off('admin:order-updated');
-      socket.off('admin:payment-updated');
-      socket.off('admin:new-review');
-      socket.off('admin:review-updated');
     };
   }, [socket, isConnected, queryClient]);
 

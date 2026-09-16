@@ -67,14 +67,8 @@ export const Checkout: React.FC = () => {
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<any>(null);
 
-  // Online Payment Method state (UPI & Bank Account - dynamic per user)
+  // Online Payment Method state (UPI & Bank Account - dynamic strictly for this authenticated user)
   const [paymentMethods, setPaymentMethods] = useState<SavedPaymentMethod[]>(() => {
-    const saved = localStorage.getItem('kosmico_saved_payment_methods');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {}
-    }
     const userMethods = (user as any)?.savedPaymentMethods;
     if (Array.isArray(userMethods) && userMethods.length > 0) {
       return userMethods.map((m: any) => ({
@@ -106,7 +100,7 @@ export const Checkout: React.FC = () => {
   const [bankIfscCode, setBankIfscCode] = useState('');
   const [bankSetDefault, setBankSetDefault] = useState(true);
 
-  const [upiDisplayName, setUpiDisplayName] = useState(user?.name || 'AMIT KUMAR');
+  const [upiDisplayName, setUpiDisplayName] = useState(user?.name || '');
   const [upiIdInput, setUpiIdInput] = useState('');
   const [upiSetDefault, setUpiSetDefault] = useState(true);
 
@@ -118,28 +112,24 @@ export const Checkout: React.FC = () => {
       const newMethod: SavedPaymentMethod = {
         id: `pm-${Date.now()}`,
         type: 'UPI',
-        displayName: (upiDisplayName || user?.name || 'AMIT KUMAR').toUpperCase(),
+        displayName: (upiDisplayName || user?.name || 'User').toUpperCase(),
         upiId: upiIdInput.trim(),
         isDefault: upiSetDefault,
       };
-
-      let updatedList = paymentMethods;
-      if (upiSetDefault) {
-        updatedList = updatedList.map((m) => ({ ...m, isDefault: false }));
-      }
-      updatedList = [newMethod, ...updatedList];
+      const updatedList = upiSetDefault
+        ? [newMethod, ...paymentMethods.map((m) => ({ ...m, isDefault: false }))]
+        : [...paymentMethods, newMethod];
       setPaymentMethods(updatedList);
       setSelectedPaymentMethod(newMethod);
       localStorage.setItem('kosmico_saved_payment_methods', JSON.stringify(updatedList));
       setIsAddingNewPaymentMethod(false);
-      setIsPaymentMethodModalOpen(false);
       setUpiIdInput('');
     } else {
       if (!bankAccountNumber.trim() || !bankIfscCode.trim()) return;
       const newMethod: SavedPaymentMethod = {
         id: `pm-${Date.now()}`,
         type: 'BANK',
-        displayName: (bankAccountHolder || user?.name || 'AMIT KUMAR').toUpperCase(),
+        displayName: (bankAccountHolder || user?.name || 'User').toUpperCase(),
         bankName: bankName.trim() || 'Bank Account',
         accountNumber: bankAccountNumber.trim(),
         ifscCode: bankIfscCode.trim().toUpperCase(),
@@ -744,7 +734,7 @@ export const Checkout: React.FC = () => {
                 <div className="flex items-center gap-1.5 text-xs text-emerald-100 font-medium">
                   <span className="text-[10px] uppercase font-bold text-emerald-200">DISPLAY NAME:</span>
                   <span className="font-bold uppercase text-white">
-                    {selectedPaymentMethod?.displayName || user?.name || 'AMIT KUMAR'}
+                    {selectedPaymentMethod?.displayName || user?.name || 'Saved Method'}
                   </span>
                 </div>
               </div>

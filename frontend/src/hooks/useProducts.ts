@@ -22,7 +22,7 @@ export const useProducts = (params: FetchProductsParams) => {
       );
 
       try {
-        const { data } = await api.get('/products', { params: cleanParams });
+        const { data } = await api.get('/products/user/list', { params: cleanParams });
         const fetchedList = data?.data?.products || (Array.isArray(data?.data) ? data.data : []);
         if (Array.isArray(fetchedList) && fetchedList.length > 0) {
           return {
@@ -31,7 +31,18 @@ export const useProducts = (params: FetchProductsParams) => {
           };
         }
       } catch (err) {
-        console.warn('Backend API not reachable for products list. Serving catalog fallback.', err);
+        try {
+          const { data } = await api.get('/products', { params: cleanParams });
+          const fetchedList = data?.data?.products || (Array.isArray(data?.data) ? data.data : []);
+          if (Array.isArray(fetchedList) && fetchedList.length > 0) {
+            return {
+              products: fetchedList,
+              pagination: data.meta || { total: fetchedList.length, page: params.page || 1, pages: 1 }
+            };
+          }
+        } catch (innerErr) {
+          console.warn('Backend API not reachable for products list. Serving catalog fallback.', innerErr);
+        }
       }
 
       // Filter DEFAULT_PRODUCTS if search/category params applied
@@ -91,12 +102,17 @@ export const useCategories = () => {
     queryKey: ['categories'],
     queryFn: async () => {
       try {
-        const { data } = await api.get('/categories');
+        const { data } = await api.get('/categories/user/list');
         if (data && data.data && data.data.categories && data.data.categories.length > 0) {
           return data.data.categories;
         }
       } catch (err) {
-        console.warn('Backend API not reachable for categories. Serving defaults.', err);
+        try {
+          const { data } = await api.get('/categories');
+          if (data && data.data && data.data.categories && data.data.categories.length > 0) {
+            return data.data.categories;
+          }
+        } catch (_) {}
       }
       return DEFAULT_CATEGORIES;
     },

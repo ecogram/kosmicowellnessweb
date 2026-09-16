@@ -78,52 +78,25 @@ export const Profile: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Address Management State (Fetched dynamically per logged-in user)
-  const [addresses, setAddresses] = useState<SavedAddress[]>(() => {
-    const saved = localStorage.getItem('kosmico_saved_addresses');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
-    }
-    return [];
-  });
-
+  // Address Management State (Fetched strictly from MongoDB database per logged-in user)
+  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [addressSuccessMsg, setAddressSuccessMsg] = useState('');
   
-  // Address Form State
-  const [addrFormName, setAddrFormName] = useState(fullName);
-  const [addrFormPhone, setAddrFormPhone] = useState(phone);
+  // Address Form State (blank defaults for new entry)
+  const [addrFormName, setAddrFormName] = useState(fullName || '');
+  const [addrFormPhone, setAddrFormPhone] = useState(phone || '');
   const [addrFormLine1, setAddrFormLine1] = useState('');
   const [addrFormLine2, setAddrFormLine2] = useState('');
-  const [addrFormCity, setAddrFormCity] = useState('Noida');
-  const [addrFormState, setAddrFormState] = useState('Uttar Pradesh');
-  const [addrFormPincode, setAddrFormPincode] = useState('201301');
+  const [addrFormCity, setAddrFormCity] = useState('');
+  const [addrFormState, setAddrFormState] = useState('');
+  const [addrFormPincode, setAddrFormPincode] = useState('');
   const [addrFormType, setAddrFormType] = useState<'HOME' | 'WORK' | 'OTHER'>('HOME');
   const [addrFormIsDefault, setAddrFormIsDefault] = useState(false);
 
-  // Payment Methods State (App Exact Match - UPI & Bank Account, dynamic per user)
-  const [paymentMethods, setPaymentMethods] = useState<SavedPaymentMethod[]>(() => {
-    const saved = localStorage.getItem('kosmico_saved_payment_methods');
-    if (saved) {
-      try { return JSON.parse(saved); } catch (e) {}
-    }
-    const userMethods = (user as any)?.savedPaymentMethods;
-    if (Array.isArray(userMethods) && userMethods.length > 0) {
-      return userMethods.map((m: any) => ({
-        id: m._id || m.id,
-        type: m.type || 'UPI',
-        displayName: m.displayName || user?.name || 'User',
-        upiId: m.upiId,
-        bankName: m.bankName,
-        accountNumber: m.accountNumber,
-        ifscCode: m.ifscCode,
-        isDefault: !!m.isDefault,
-      }));
-    }
-    return [];
-  });
-
+  // Payment Methods State (dynamic strictly per logged-in user from DB)
+  const [paymentMethods, setPaymentMethods] = useState<SavedPaymentMethod[]>([]);
   const [isAddingPaymentMethod, setIsAddingPaymentMethod] = useState(false);
   const [paymentTypeTab, setPaymentTypeTab] = useState<'BANK' | 'UPI'>('UPI');
   const [paymentSuccessMsg, setPaymentSuccessMsg] = useState('');
@@ -206,20 +179,15 @@ export const Profile: React.FC = () => {
     }
   };
 
+  // Fetch live addresses on user change
   useEffect(() => {
     if (user) {
       fetchLiveAddresses();
+    } else {
+      setAddresses([]);
+      setPaymentMethods([]);
     }
   }, [user]);
-
-  // Save to localStorage when modified
-  useEffect(() => {
-    localStorage.setItem('kosmico_saved_addresses', JSON.stringify(addresses));
-  }, [addresses]);
-
-  useEffect(() => {
-    localStorage.setItem('kosmico_saved_payment_methods', JSON.stringify(paymentMethods));
-  }, [paymentMethods]);
 
   // Image compressor utility to resize & compress image files
   const compressImage = (file: File, maxWidth = 800, maxHeight = 800, quality = 0.85): Promise<string> => {
@@ -716,11 +684,6 @@ export const Profile: React.FC = () => {
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h1 className="text-lg sm:text-xl font-bold font-serif truncate">{user?.name || fullName || 'User'}</h1>
-                {user?.role === 'admin' && (
-                  <span className="px-2 py-0.5 bg-amber-500/15 text-amber-800 text-[10px] sm:text-[11px] font-black rounded-full border border-amber-500/30 shrink-0">
-                    👑 ADMIN
-                  </span>
-                )}
               </div>
               <p className={`text-xs truncate ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>{user?.email || email}</p>
               {(user?.phoneNumber || phone) && (
@@ -745,33 +708,6 @@ export const Profile: React.FC = () => {
             <Edit3 className="w-5 h-5 text-emerald-700" />
           </button>
         </div>
-
-        {/* Admin Dashboard Quick Banner (Only for admin users) */}
-        {user?.role === 'admin' && (
-          <Link
-            to="/admin"
-            className="p-4 rounded-3xl bg-linear-to-r from-amber-500/15 via-emerald-500/10 to-amber-500/15 border-2 border-amber-500/40 flex items-center justify-between hover:border-amber-500 transition-all shadow-xs group"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white font-bold flex items-center justify-center text-lg shadow-xs">
-                👑
-              </div>
-              <div>
-                <div className="font-extrabold text-sm text-neutral-900 flex items-center gap-2">
-                  <span>Admin Dashboard</span>
-                  <span className="px-2 py-0.5 bg-amber-100 text-amber-900 text-[10px] font-black rounded-full uppercase">Admin Control</span>
-                </div>
-                <div className="text-xs text-neutral-600">
-                  Manage products, orders, user roles & live analytics
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-1 text-emerald-800 font-bold text-xs group-hover:translate-x-1 transition-transform">
-              <span>Open Panel</span>
-              <span>&rsaquo;</span>
-            </div>
-          </Link>
-        )}
 
         {/* 3 Stat Counters Grid */}
         <div className="grid grid-cols-3 gap-4">
@@ -1456,7 +1392,7 @@ export const Profile: React.FC = () => {
                     const newMethod: SavedPaymentMethod = {
                       id: `pm-${Date.now()}`,
                       type: 'UPI',
-                      displayName: (upiDisplayName || fullName || 'AMIT KUMAR').toUpperCase(),
+                      displayName: (upiDisplayName || fullName || user?.name || 'User').toUpperCase(),
                       upiId: upiIdInput.trim(),
                       isDefault: upiSetDefault,
                     };
@@ -1469,7 +1405,7 @@ export const Profile: React.FC = () => {
                     const newMethod: SavedPaymentMethod = {
                       id: `pm-${Date.now()}`,
                       type: 'BANK',
-                      displayName: (bankAccountHolder || fullName || 'AMIT KUMAR').toUpperCase(),
+                      displayName: (bankAccountHolder || fullName || user?.name || 'User').toUpperCase(),
                       bankName: bankName.trim() || 'Bank Account',
                       accountNumber: bankAccountNumber.trim(),
                       ifscCode: bankIfscCode.trim().toUpperCase(),

@@ -3,9 +3,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import React, { useEffect, Suspense, lazy } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MainLayout } from './layouts/MainLayout';
-import { AdminLayout } from './components/layout/AdminLayout';
 import { ProtectedRoute } from './components/layout/ProtectedRoute';
-import { AdminRoute } from './components/layout/AdminRoute';
 import { RealtimeProvider } from './components/layout/RealtimeProvider';
 import { useAuthStore } from './store/useAuthStore';
 import { api } from './services/api';
@@ -34,14 +32,6 @@ const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage').then(m => ({ 
 const FaqPage = lazy(() => import('./pages/FaqPage').then(m => ({ default: m.FaqPage })));
 const Contact = lazy(() => import('./pages/Contact').then(m => ({ default: m.Contact })));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
-
-// Admin Pages
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
-const AdminOrders = lazy(() => import('./pages/admin/AdminOrders').then(m => ({ default: m.AdminOrders })));
-const AdminProducts = lazy(() => import('./pages/admin/AdminProducts').then(m => ({ default: m.AdminProducts })));
-const AdminCoupons = lazy(() => import('./pages/admin/AdminCoupons').then(m => ({ default: m.AdminCoupons })));
-const AdminUsers = lazy(() => import('./pages/admin/AdminUsers').then(m => ({ default: m.AdminUsers })));
-const AdminReviews = lazy(() => import('./pages/admin/AdminReviews').then(m => ({ default: m.AdminReviews })));
 
 // Global Loading Fallback
 const PageLoadingFallback = () => (
@@ -97,18 +87,6 @@ function App() {
             <RealtimeProvider>
               <Suspense fallback={<PageLoadingFallback />}>
                 <Routes>
-                  {/* Admin Routes with distinct Layout */}
-                  <Route element={<AdminRoute />}>
-                    <Route element={<AdminLayout />}>
-                      <Route path="/admin" element={<AdminDashboard />} />
-                      <Route path="/admin/orders" element={<AdminOrders />} />
-                      <Route path="/admin/products" element={<AdminProducts />} />
-                      <Route path="/admin/coupons" element={<AdminCoupons />} />
-                      <Route path="/admin/users" element={<AdminUsers />} />
-                      <Route path="/admin/reviews" element={<AdminReviews />} />
-                    </Route>
-                  </Route>
-
                   {/* Public/Customer Routes */}
                   <Route element={<MainLayout />}>
                     <Route path="/" element={<Home />} />

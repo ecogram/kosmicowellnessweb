@@ -13,17 +13,9 @@ const addSchema = {
 
 router.use(protect); // Authentication required
 
-router.route('/')
-  .get(wishlistController.getWishlist)
-  .delete(wishlistController.clearWishlist);
-
+// Documented Wishlist Endpoints (Section 5: A, B, C)
+router.get('/', wishlistController.getWishlist);
 router.post('/add', wishlistController.addToWishlist);
 router.post('/remove', wishlistController.removeWishlistFromBody);
-
-router.route('/items')
-  .post(validate(addSchema), wishlistController.addToWishlist);
-
-router.route('/items/:productId')
-  .delete(wishlistController.removeWishlistItem);
 
 module.exports = router;

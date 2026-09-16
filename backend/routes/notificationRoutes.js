@@ -5,18 +5,13 @@ const { protect } = require('../middleware/authMiddleware');
 
 router.use(protect); // All notification routes require authentication
 
+// Documented Notifications Endpoints (Section 11: A, B, C, D)
 router.route('/')
   .get(notificationController.getNotifications)
   .delete(notificationController.clearAllNotifications);
 
 router.get('/unread-count', notificationController.getUnreadCount);
-router.patch('/read-all', notificationController.markAllAsRead);
-
-router.route('/:id/read')
-  .patch(notificationController.markAsRead)
-  .put(notificationController.markAsRead);
-
-router.route('/:id')
-  .delete(notificationController.deleteNotification);
+router.put('/:id/read', notificationController.markAsRead);
+router.delete('/:id', notificationController.deleteNotification);
 
 module.exports = router;

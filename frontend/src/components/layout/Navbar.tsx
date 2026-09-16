@@ -101,15 +101,6 @@ export function Navbar() {
 
             {isAuthenticated ? (
               <div className="hidden sm:flex items-center space-x-3 lg:space-x-4">
-                {user?.role === 'admin' && (
-                  <Link
-                    to="/admin"
-                    className="flex items-center gap-1 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20 px-2.5 py-1 rounded-lg text-xs font-bold transition-all border border-amber-500/30"
-                    title="Go to Admin Dashboard"
-                  >
-                    👑 Admin
-                  </Link>
-                )}
                 <Link
                   to="/orders"
                   className="text-text-main hover:text-primary transition-colors font-medium text-sm"
@@ -248,15 +239,6 @@ export function Navbar() {
               <div className="pt-2 border-t border-neutral-200">
                 {isAuthenticated ? (
                   <div className="space-y-2">
-                    {user?.role === 'admin' && (
-                      <Link
-                        to="/admin"
-                        className="px-4 py-3 rounded-xl bg-amber-50 text-amber-900 font-bold text-sm border border-amber-300 block"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        👑 Admin Dashboard
-                      </Link>
-                    )}
                     <Link
                       to="/wishlist"
                       className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm flex items-center justify-between"

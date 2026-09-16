@@ -2,17 +2,8 @@ const express = require('express');
 const router = express.Router();
 const categoryController = require('../controllers/categoryController');
 
-router.route('/')
-  .get(categoryController.getCategories)
-  .post(categoryController.createCategory);
-
+// Documented Categories Catalog Endpoint (Section 3: B)
 router.get('/user/list', categoryController.getCategories);
-
-router.route('/:slug')
-  .get(categoryController.getCategoryBySlug);
-
-router.route('/:id')
-  .patch(categoryController.updateCategory)
-  .delete(categoryController.deleteCategory);
+router.get('/:slug', categoryController.getCategoryBySlug);
 
 module.exports = router;
