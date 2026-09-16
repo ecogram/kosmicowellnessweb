@@ -71,8 +71,8 @@ const mealLogSchema = new mongoose.Schema(
   }
 );
 
-const GlucoReading = mongoose.model('GlucoReading', glucoReadingSchema);
-const MealLog = mongoose.model('MealLog', mealLogSchema);
+const GlucoReading = mongoose.model('GlucoReading', glucoReadingSchema, 'glucosereadings');
+const MealLog = mongoose.model('MealLog', mealLogSchema, 'meallogs');
 
 module.exports = {
   GlucoReading,
