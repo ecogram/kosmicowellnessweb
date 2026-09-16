@@ -22,8 +22,23 @@ export const useUnreadCount = () => {
   return useQuery({
     queryKey: ['notifications', 'unread-count'],
     queryFn: async () => {
-      const { data } = await api.get('/notifications/unread-count');
-      return data.data.count;
+      try {
+        const { data } = await api.get('/notifications/unread-count');
+        const count = data.data?.count ?? data.data?.unreadCount ?? (typeof data.data === 'number' ? data.data : null);
+        if (count !== null && count !== undefined) return count;
+      } catch (err) {}
+
+      try {
+        const { data } = await api.get('/notifications', { params: { page: 1, limit: 100 } });
+        const list = data.data?.notifications || data.data || [];
+        if (Array.isArray(list)) {
+          const unread = list.filter((n: any) => n.isRead === false || n.read === false).length;
+          return unread || list.length || 0;
+        }
+        return data.data?.pagination?.total ?? 0;
+      } catch (err) {
+        return 0;
+      }
     },
     enabled: isAuthenticated,
     refetchInterval: 30000,

@@ -121,7 +121,7 @@ export function Navbar() {
                   <Bell className="h-5 w-5" />
                   {unreadCount > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 bg-error text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
-                      {unreadCount > 9 ? '9+' : unreadCount}
+                      {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
                 </Link>
@@ -280,7 +280,7 @@ export function Navbar() {
                         <span>Coupons &amp; Offers</span>
                       </div>
                       <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full">
-                        4 Active
+                        Offers
                       </span>
                     </Link>
                     <Link
@@ -294,7 +294,7 @@ export function Navbar() {
                       </div>
                       {unreadCount > 0 && (
                         <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                          {unreadCount > 9 ? '9+' : unreadCount}
+                          {unreadCount > 99 ? '99+' : unreadCount}
                         </span>
                       )}
                     </Link>
