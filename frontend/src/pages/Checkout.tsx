@@ -198,9 +198,11 @@ export const Checkout: React.FC = () => {
   const fetchAddresses = async () => {
     try {
       const res = await api.get('/address');
-      if (res.data?.data && Array.isArray(res.data.data) && res.data.data.length > 0) {
-        setSavedAddresses(res.data.data);
-        const def = res.data.data.find((a: any) => a.isDefault) || res.data.data[0];
+      const list = res.data?.data?.addresses ?? res.data?.data ?? (Array.isArray(res.data) ? res.data : []);
+      
+      if (Array.isArray(list) && list.length > 0) {
+        setSavedAddresses(list);
+        const def = list.find((a: any) => a.isDefault) || list[0];
         setSelectedAddress(def);
       } else {
         setSavedAddresses([]);
