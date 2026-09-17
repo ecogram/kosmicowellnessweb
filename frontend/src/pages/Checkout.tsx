@@ -29,7 +29,9 @@ import { useAuthStore } from '../store/useAuthStore';
 import { formatINR } from '../utils/currency';
 
 import { api } from '../services/api';
+
 import { useCoupons } from '../hooks/useCoupons';
+import toast from 'react-hot-toast';
 
 interface SavedAddress {
   _id?: string;
@@ -65,7 +67,6 @@ export const Checkout: React.FC = () => {
 
   // Selected payment mode: 'ONLINE' or 'COD'
   const [paymentMode, setPaymentMode] = useState<'ONLINE' | 'COD'>('ONLINE');
-  const [error, setError] = useState<string | null>(null);
   const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<any>(null);
@@ -179,7 +180,6 @@ export const Checkout: React.FC = () => {
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
   const [couponCodeInput, setCouponCodeInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
-  const [couponError, setCouponError] = useState<string | null>(null);
 
   // Delivery estimation from Shiprocket API (dynamic based on pincode & weight)
   const [deliveryEstimate, setDeliveryEstimate] = useState<{
@@ -328,7 +328,7 @@ export const Checkout: React.FC = () => {
     setIsPaymentProcessing(true);
     const loaded = await loadRazorpay();
     if (!loaded) {
-      setError('Razorpay SDK failed to load. Please check your internet connection.');
+      toast.error('Razorpay SDK failed to load. Please check your internet connection.');
       setIsPaymentProcessing(false);
       return;
     }
@@ -370,7 +370,7 @@ export const Checkout: React.FC = () => {
       modal: {
         ondismiss: function () {
           setIsPaymentProcessing(false);
-          setError('Payment window closed. You can retry payment anytime.');
+          toast.error('Payment window closed. You can retry payment anytime.');
         },
       },
       handler: async function (response: any) {
@@ -410,13 +410,13 @@ export const Checkout: React.FC = () => {
       const rzpInstance = new (window as any).Razorpay(options);
       rzpInstance.on('payment.failed', function (resp: any) {
         setIsPaymentProcessing(false);
-        setError(resp.error?.description || 'Payment failed. Please try again.');
+        toast.error(resp.error?.description || 'Payment failed. Please try again.');
       });
       rzpInstance.open();
     } catch (rzpErr: any) {
       console.error('Razorpay open error:', rzpErr);
       setIsPaymentProcessing(false);
-      setError(
+      toast.error(
         'Unable to initialize Razorpay checkout. Please ensure valid credentials are configured or select Cash on Delivery.'
       );
     }
@@ -426,7 +426,7 @@ export const Checkout: React.FC = () => {
     setIsPaymentProcessing(true);
     const loaded = await loadRazorpay();
     if (!loaded) {
-      setError('Razorpay SDK failed to load. Please check your internet connection.');
+      toast.error('Razorpay SDK failed to load. Please check your internet connection.');
       setIsPaymentProcessing(false);
       return;
     }
@@ -459,7 +459,7 @@ export const Checkout: React.FC = () => {
       modal: {
         ondismiss: function () {
           setIsPaymentProcessing(false);
-          setError('Payment window closed. Your order was not placed.');
+          toast.error('Payment window closed. Your order was not placed.');
         },
       },
       handler: async function (response: any) {
@@ -486,20 +486,20 @@ export const Checkout: React.FC = () => {
       const rzpInstance = new (window as any).Razorpay(options);
       rzpInstance.on('payment.failed', function (resp: any) {
         setIsPaymentProcessing(false);
-        setError(resp.error?.description || 'Payment failed. Please try again.');
+        toast.error(resp.error?.description || 'Payment failed. Please try again.');
       });
       rzpInstance.open();
     } catch (rzpErr: any) {
       console.error('Razorpay open error:', rzpErr);
       setIsPaymentProcessing(false);
-      setError('Unable to initialize Razorpay checkout for COD advance.');
+      toast.error('Unable to initialize Razorpay checkout for COD advance.');
     }
   };
 
   const handlePlaceOrder = async () => {
-    setError(null);
+    toast.dismiss();
     if (!selectedAddress) {
-      setError('Please select or add a shipping address.');
+      toast.error('Please select or add a shipping address.');
       return;
     }
 
@@ -511,7 +511,7 @@ export const Checkout: React.FC = () => {
     })).filter((it) => !!it.productId);
 
     if (itemsToOrder.length === 0) {
-      setError('Your cart is empty. Please add items before placing an order.');
+      toast.error('Your cart is empty. Please add items before placing an order.');
       return;
     }
 
@@ -552,17 +552,17 @@ export const Checkout: React.FC = () => {
       }
     } catch (err: any) {
       setIsPaymentProcessing(false);
-      setError(err.response?.data?.message || 'Failed to place order. Please try again.');
+      toast.error(err.response?.data?.message || 'Failed to place order. Please try again.');
     }
   };
 
   const { data: dbCoupons } = useCoupons();
 
   const handleApplyCoupon = async (code: string) => {
-    setCouponError(null);
+    toast.dismiss();
     const cleanCode = code.trim().toUpperCase();
     if (!cleanCode) {
-      setCouponError('Please enter a coupon code');
+      toast.error('Please enter a coupon code');
       return;
     }
 
@@ -575,7 +575,7 @@ export const Checkout: React.FC = () => {
     } catch (apiErr: any) {
       const serverMsg = apiErr.response?.data?.message;
       if (serverMsg) {
-        setCouponError(serverMsg);
+        toast.error(serverMsg);
         return;
       }
     }
@@ -583,7 +583,7 @@ export const Checkout: React.FC = () => {
     const matchedCoupon = dbCoupons?.find((c) => c.code === cleanCode && c.isActive);
     if (matchedCoupon) {
       if (matchedCoupon.minOrderAmount && subtotal < matchedCoupon.minOrderAmount) {
-        setCouponError(`Minimum order amount of ₹${matchedCoupon.minOrderAmount} required for this coupon`);
+        toast.error(`Minimum order amount of ₹${matchedCoupon.minOrderAmount} required for this coupon`);
         return;
       }
       let disc = 0;
@@ -601,7 +601,7 @@ export const Checkout: React.FC = () => {
       return;
     }
 
-    setCouponError('Invalid or expired coupon code');
+    toast.error('Invalid or expired coupon code');
   };
 
   const handleEditAddress = (addr: SavedAddress, e: React.MouseEvent) => {
@@ -711,12 +711,6 @@ export const Checkout: React.FC = () => {
           <h1 className="font-bold text-xl text-neutral-900">Checkout</h1>
           <div className="w-10" />
         </div>
-
-        {error && (
-          <div className="bg-red-50 text-red-700 p-4 rounded-2xl mb-4 border border-red-200 text-sm">
-            {error}
-          </div>
-        )}
 
         {/* 1. Shipping Address Card */}
         <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 mb-4 shadow-sm">
@@ -1318,8 +1312,6 @@ export const Checkout: React.FC = () => {
                   Apply
                 </button>
               </div>
-
-              {couponError && <p className="text-red-600 text-xs mb-3">{couponError}</p>}
 
               <div className="space-y-3">
                 <p className="text-xs font-bold text-neutral-500 uppercase tracking-wider">AVAILABLE COUPONS</p>
