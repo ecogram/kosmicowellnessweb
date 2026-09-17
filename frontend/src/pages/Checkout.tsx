@@ -1129,6 +1129,7 @@ export const Checkout: React.FC = () => {
                 </div>
               ) : (
                 <form onSubmit={handleSaveNewAddress} className="space-y-4">
+                  {/* Address Label */}
                   <div>
                     <label className="block text-xs font-semibold text-neutral-700 mb-1">
                       Address Label (e.g. Home, Office)
@@ -1143,6 +1144,7 @@ export const Checkout: React.FC = () => {
                     />
                   </div>
 
+                  {/* Full Name */}
                   <div>
                     <label className="block text-xs font-semibold text-neutral-700 mb-1">Full Name</label>
                     <input
@@ -1155,6 +1157,7 @@ export const Checkout: React.FC = () => {
                     />
                   </div>
 
+                  {/* Street Address */}
                   <div>
                     <label className="block text-xs font-semibold text-neutral-700 mb-1">Street Address / Landmark</label>
                     <input
@@ -1167,7 +1170,19 @@ export const Checkout: React.FC = () => {
                     />
                   </div>
 
+                  {/* City | Pincode */}
                   <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-700 mb-1">City</label>
+                      <input
+                        type="text"
+                        value={newAddress.city}
+                        onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
+                        className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:border-[#0a7a40]"
+                        placeholder="Noida"
+                        required
+                      />
+                    </div>
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="block text-xs font-semibold text-neutral-700">Pincode</label>
@@ -1207,31 +1222,9 @@ export const Checkout: React.FC = () => {
                         required
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs font-semibold text-neutral-700 mb-1">City</label>
-                      <input
-                        type="text"
-                        value={newAddress.city}
-                        onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                        className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:border-[#0a7a40]"
-                        placeholder="Greater Noida"
-                        required
-                      />
-                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1">State</label>
-                    <input
-                      type="text"
-                      value={newAddress.state || ''}
-                      onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })}
-                      className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:border-[#0a7a40]"
-                      placeholder="Uttar Pradesh"
-                      required
-                    />
-                  </div>
-
+                  {/* Phone Number */}
                   <div>
                     <label className="block text-xs font-semibold text-neutral-700 mb-1">Phone Number</label>
                     <input
@@ -1244,22 +1237,36 @@ export const Checkout: React.FC = () => {
                     />
                   </div>
 
-                  <div className="flex gap-3 pt-3">
+                  {/* Set as Default Address (Toggle) */}
+                  <div className="flex items-center justify-between pt-2 pb-1">
+                    <label className="text-sm font-semibold text-neutral-700 cursor-pointer" htmlFor="isDefaultCheck">
+                      Set as Default Address
+                    </label>
+                    <div 
+                      className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${newAddress.isDefault ? 'bg-[#0a7a40]' : 'bg-neutral-300'}`}
+                      onClick={() => setNewAddress({ ...newAddress, isDefault: !newAddress.isDefault })}
+                    >
+                      <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${newAddress.isDefault ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </div>
+                  </div>
+
+                  {/* Save Button */}
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      className="w-full py-3.5 bg-[#0a7a40] text-white font-bold text-sm rounded-xl hover:bg-[#086333]"
+                    >
+                      {editingAddressId ? 'Update Address' : 'Save Address'}
+                    </button>
                     <button
                       type="button"
                       onClick={() => {
                         setIsAddAddressFormOpen(false);
                         setEditingAddressId(null);
                       }}
-                      className="flex-1 py-3 border border-neutral-300 text-neutral-700 font-bold text-sm rounded-xl hover:bg-neutral-50"
+                      className="w-full mt-2 py-3 text-neutral-600 font-bold text-sm hover:text-neutral-900 text-center"
                     >
-                      Back
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 py-3 bg-[#0a7a40] text-white font-bold text-sm rounded-xl hover:bg-[#086333]"
-                    >
-                      {editingAddressId ? 'Update Address' : 'Save Address'}
+                      Cancel
                     </button>
                   </div>
                 </form>

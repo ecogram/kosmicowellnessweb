@@ -1056,69 +1056,6 @@ export const Profile: React.FC = () => {
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-bold text-neutral-700 block mb-1">Full Name *</label>
-                    <input
-                      type="text"
-                      required
-                      value={addrFormName}
-                      onChange={(e) => setAddrFormName(e.target.value)}
-                      placeholder="Receiver name"
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-neutral-700 block mb-1">Phone Number *</label>
-                    <input
-                      type="text"
-                      required
-                      value={addrFormPhone}
-                      onChange={(e) => setAddrFormPhone(e.target.value)}
-                      placeholder="+91 98765 43210"
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  {/* API field: streetAddress */}
-                  <label className="text-xs font-bold text-neutral-700 block mb-1">Street Address *</label>
-                  <input
-                    type="text"
-                    required
-                    value={addrFormStreet}
-                    onChange={(e) => setAddrFormStreet(e.target.value)}
-                    placeholder="e.g. Flat 402, Green Valley Apartments, Sector 62"
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs font-bold text-neutral-700 block mb-1">PIN Code *</label>
-                    <input
-                      type="text"
-                      required
-                      value={addrFormPincode}
-                      onChange={(e) => setAddrFormPincode(e.target.value)}
-                      placeholder="201301"
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-neutral-700 block mb-1">City *</label>
-                    <input
-                      type="text"
-                      required
-                      value={addrFormCity}
-                      onChange={(e) => setAddrFormCity(e.target.value)}
-                      placeholder="Delhi"
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
-                    />
-                  </div>
-                </div>
-
                 {/* Address Label Selector — API field: addressLabel (Home | Work | Other) */}
                 <div>
                   <label className="text-xs font-bold text-neutral-700 block mb-1.5">Address Label</label>
@@ -1142,17 +1079,80 @@ export const Profile: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 pt-1">
+                <div>
+                  <label className="text-xs font-bold text-neutral-700 block mb-1">Full Name</label>
                   <input
-                    type="checkbox"
-                    id="isDefaultAddr"
-                    checked={addrFormIsDefault}
-                    onChange={(e) => setAddrFormIsDefault(e.target.checked)}
-                    className="rounded text-emerald-800 focus:ring-emerald-800 w-4 h-4 cursor-pointer"
+                    type="text"
+                    required
+                    value={addrFormName}
+                    onChange={(e) => setAddrFormName(e.target.value)}
+                    placeholder="Receiver name"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
                   />
-                  <label htmlFor="isDefaultAddr" className="text-xs text-neutral-700 font-semibold cursor-pointer">
-                    Make this my default shipping address
+                </div>
+
+                <div>
+                  {/* API field: streetAddress */}
+                  <label className="text-xs font-bold text-neutral-700 block mb-1">Street Address / Landmark</label>
+                  <input
+                    type="text"
+                    required
+                    value={addrFormStreet}
+                    onChange={(e) => setAddrFormStreet(e.target.value)}
+                    placeholder="e.g. Flat 402, Green Valley Apartments, Sector 62"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-bold text-neutral-700 block mb-1">City</label>
+                    <input
+                      type="text"
+                      required
+                      value={addrFormCity}
+                      onChange={(e) => setAddrFormCity(e.target.value)}
+                      placeholder="Delhi"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-neutral-700 block mb-1">PIN Code</label>
+                    <input
+                      type="text"
+                      required
+                      value={addrFormPincode}
+                      onChange={(e) => setAddrFormPincode(e.target.value)}
+                      placeholder="201301"
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-neutral-700 block mb-1">Phone Number</label>
+                  <input
+                    type="text"
+                    required
+                    value={addrFormPhone}
+                    onChange={(e) => setAddrFormPhone(e.target.value)}
+                    placeholder="+91 98765 43210"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
+                  />
+                </div>
+
+                {/* Set as Default Address (Toggle) */}
+                <div className="flex items-center justify-between pt-2 pb-1">
+                  <label className="text-sm font-semibold text-neutral-700 cursor-pointer" htmlFor="isDefaultCheckProfile">
+                    Set as Default Address
                   </label>
+                  <div 
+                    id="isDefaultCheckProfile"
+                    className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${addrFormIsDefault ? 'bg-emerald-800' : 'bg-neutral-300'}`}
+                    onClick={() => setAddrFormIsDefault(!addrFormIsDefault)}
+                  >
+                    <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${addrFormIsDefault ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </div>
                 </div>
 
                 <button
