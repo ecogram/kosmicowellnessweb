@@ -100,7 +100,7 @@ export const Orders: React.FC = () => {
                 const recipientName = order.shippingAddress?.fullName || order.userName || 'Customer';
                 const recipientCity = order.shippingAddress?.city || order.shippingAddress?.state || '';
 
-                let orderTotal = Number(order.amount ?? order.total ?? 0);
+                let orderTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
                 if (!orderTotal) {
                   orderTotal = orderSubtotal - discountAmt + shippingFee + taxFee;
                 }

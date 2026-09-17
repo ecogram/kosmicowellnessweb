@@ -116,7 +116,7 @@ export const OrderDetails = () => {
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           <div className="w-full lg:w-2/3">
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-primary mb-2 break-all">
-              Order #{order._id || order.orderNumber || order.shiprocketOrderId}
+              Order #{order.orderNumber || (order._id ? (order._id.startsWith('ord_') ? order._id : order._id) : (order.shiprocketOrderId || 'Order'))}
             </h1>
             <p className="text-text-muted mb-8">Placed on {new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
             
@@ -148,8 +148,8 @@ export const OrderDetails = () => {
             <div className="bg-surface rounded-2xl border border-border p-6">
               <h2 className="font-bold text-lg mb-4">Shipping Address</h2>
               <address className="not-italic text-text-main text-sm space-y-1">
-                <p className="font-medium">{order.shippingAddress?.fullName || order.deliveryAddress?.fullName || order.userName || user?.name || 'Customer'}</p>
-                <p>{order.shippingAddress?.addressLine1 || order.shippingAddress?.streetAddress || order.deliveryAddress?.streetAddress || order.deliveryAddress?.addressLine1 || ''}</p>
+                <p className="font-bold text-base text-neutral-900">{order.shippingAddress?.fullName || order.deliveryAddress?.fullName || order.userName || user?.name || 'Customer'}</p>
+                <p>{order.shippingAddress?.streetAddress || order.shippingAddress?.addressLine1 || order.deliveryAddress?.streetAddress || order.deliveryAddress?.addressLine1 || ''}</p>
                 {(order.shippingAddress?.addressLine2 || order.deliveryAddress?.addressLine2) && (
                   <p>{order.shippingAddress?.addressLine2 || order.deliveryAddress?.addressLine2}</p>
                 )}
@@ -157,12 +157,12 @@ export const OrderDetails = () => {
                   {[
                     order.shippingAddress?.city || order.deliveryAddress?.city,
                     order.shippingAddress?.state || order.deliveryAddress?.state,
-                    order.shippingAddress?.postalCode || order.shippingAddress?.pincode || order.deliveryAddress?.pincode || order.deliveryAddress?.postalCode
+                    order.shippingAddress?.pincode || order.shippingAddress?.postalCode || order.deliveryAddress?.pincode || order.deliveryAddress?.postalCode
                   ].filter(Boolean).join(', ')}
                 </p>
                 <p>{order.shippingAddress?.country || order.deliveryAddress?.country || 'India'}</p>
                 {(order.shippingAddress?.phone || order.shippingAddress?.phoneNumber || order.deliveryAddress?.phoneNumber || order.deliveryAddress?.phone) && (
-                  <p className="pt-2 text-text-muted">
+                  <p className="pt-2 text-text-muted font-medium">
                     📞 {order.shippingAddress?.phone || order.shippingAddress?.phoneNumber || order.deliveryAddress?.phoneNumber || order.deliveryAddress?.phone}
                   </p>
                 )}
@@ -180,7 +180,7 @@ export const OrderDetails = () => {
                 const taxFee = Number(order.tax ?? order.gstCharge ?? (isCOD ? 13 : 0));
                 const discountAmt = Number(order.discount ?? order.discountAmount ?? 0);
 
-                let orderTotal = Number(order.total ?? order.amount ?? 0);
+                let orderTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
                 if (!orderTotal || (isCOD && orderTotal <= orderSubtotal && (shippingFee > 0 || taxFee > 0))) {
                   orderTotal = orderSubtotal - discountAmt + shippingFee + taxFee;
                 }
