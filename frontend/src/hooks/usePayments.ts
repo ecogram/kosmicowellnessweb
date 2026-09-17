@@ -19,6 +19,20 @@ export interface SavedPaymentMethod {
   isDefault: boolean;
 }
 
+export const useCreatePayment = () => {
+  return useMutation({
+    mutationFn: async (orderPayload: any) => {
+      if (typeof orderPayload === 'string') {
+        const { data } = await api.post('/payment/create', { orderId: orderPayload });
+        return data?.data ?? data;
+      } else {
+        const { data } = await api.post('/payment/razorpay/create', orderPayload);
+        return data?.data ?? data;
+      }
+    },
+  });
+};
+
 export interface SavePaymentMethodPayload {
   type: 'UPI' | 'BANK';
   displayName: string;

@@ -52,7 +52,7 @@ export const OrderDetails = () => {
     }
 
     createPaymentMutation.mutate(order._id, {
-      onSuccess: (paymentData) => {
+      onSuccess: (paymentData: any) => {
         const options = {
           key: paymentData.keyId,
           amount: paymentData.amount,

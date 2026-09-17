@@ -402,7 +402,6 @@ export const Profile: React.FC = () => {
       setIsUploadingPhoto(false);
     }
   };
-  };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
