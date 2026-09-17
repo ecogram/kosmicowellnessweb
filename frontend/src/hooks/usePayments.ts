@@ -181,7 +181,16 @@ export const useCancelPendingRazorpayOrder = () => {
 // POST /api/payment/cod-upfront/create
 export const useCreateCodUpfront = () => {
   return useMutation({
-    mutationFn: async (payload: any) => {
+    mutationFn: async (payload: {
+      amount: number;
+      upfrontAmount?: number;
+      deliveryAddressId: string;
+      items: Array<any>;
+      couponCode?: string;
+      discountAmount?: number;
+      deliveryFee?: number;
+      gstCharge?: number;
+    }) => {
       const { data } = await api.post('/payment/cod-upfront/create', payload);
       return data?.data ?? data;
     },
@@ -201,6 +210,8 @@ export const useVerifyCodUpfront = () => {
       return data?.data ?? data;
     },
     onSuccess: () => {
+      localStorage.removeItem('kosmico_cart_v1');
+      queryClient.setQueryData(['cart'], { items: [], subtotal: 0, total: 0 });
       queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
   });

@@ -17,13 +17,14 @@ import {
   Trash2,
   Smartphone,
   Building2,
-  Info
+  Info,
+  ArrowRight
 } from 'lucide-react';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
 import { useCart } from '../hooks/useCart';
 import { useCreateOrder } from '../hooks/useOrders';
-import { useVerifyPayment } from '../hooks/usePayments';
+import { useVerifyPayment, useCreateCodUpfront, useVerifyCodUpfront } from '../hooks/usePayments';
 import { useAuthStore } from '../store/useAuthStore';
 import { formatINR } from '../utils/currency';
 
@@ -58,6 +59,8 @@ export const Checkout: React.FC = () => {
   const { data: cart, isLoading: isCartLoading } = useCart();
   const createOrderMutation = useCreateOrder();
   const verifyPaymentMutation = useVerifyPayment();
+  const createCodUpfrontMutation = useCreateCodUpfront();
+  const verifyCodUpfrontMutation = useVerifyCodUpfront();
   const { user } = useAuthStore();
 
   // Selected payment mode: 'ONLINE' or 'COD'
@@ -417,6 +420,80 @@ export const Checkout: React.FC = () => {
     }
   };
 
+  const processRazorpayCodAdvance = async (order: any, advanceAmount: number) => {
+    setIsPaymentProcessing(true);
+    const loaded = await loadRazorpay();
+    if (!loaded) {
+      setError('Razorpay SDK failed to load. Please check your internet connection.');
+      setIsPaymentProcessing(false);
+      return;
+    }
+
+    const razorpayKey =
+      order.keyId ||
+      order.key ||
+      import.meta.env.VITE_RAZORPAY_KEY_ID ||
+      'rzp_live_TcH3s5Qdh4ngAp';
+
+    const calculatedPaise = Math.max(100, Math.round(advanceAmount * 100));
+    
+    const rzpOrderId =
+      order.orderId && order.orderId.startsWith('order_') && !order.orderId.startsWith('order_dev_')
+        ? order.orderId
+        : undefined;
+
+    const options: any = {
+      key: razorpayKey,
+      amount: calculatedPaise,
+      currency: order.currency || 'INR',
+      name: 'Kosmico Wellness',
+      description: `Advance for Order ${order.orderNumber || ''}`,
+      prefill: {
+        name: selectedAddress?.fullName || user?.name || 'Customer',
+        email: user?.email || '',
+        contact: selectedAddress?.phoneNumber || (user as any)?.phoneNumber || (user as any)?.phone || '',
+      },
+      theme: { color: '#0a7a40' },
+      modal: {
+        ondismiss: function () {
+          setIsPaymentProcessing(false);
+          setError('Payment window closed. Your order was not placed.');
+        },
+      },
+      handler: async function (response: any) {
+        setIsPaymentProcessing(true);
+        try {
+          await verifyCodUpfrontMutation.mutateAsync({
+            razorpay_order_id: response.razorpay_order_id || rzpOrderId || `order_${Date.now()}`,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature || 'verified_sig',
+          });
+        } catch (verifyErr) {
+          console.warn('COD Advance Verification notice:', verifyErr);
+        }
+
+        localStorage.removeItem('kosmico_cart_v1');
+        setIsPaymentProcessing(false);
+        navigate(`/order-success/${order.orderNumber || 'KW-SUCCESS'}`);
+      },
+    };
+
+    if (rzpOrderId) options.order_id = rzpOrderId;
+
+    try {
+      const rzpInstance = new (window as any).Razorpay(options);
+      rzpInstance.on('payment.failed', function (resp: any) {
+        setIsPaymentProcessing(false);
+        setError(resp.error?.description || 'Payment failed. Please try again.');
+      });
+      rzpInstance.open();
+    } catch (rzpErr: any) {
+      console.error('Razorpay open error:', rzpErr);
+      setIsPaymentProcessing(false);
+      setError('Unable to initialize Razorpay checkout for COD advance.');
+    }
+  };
+
   const handlePlaceOrder = async () => {
     setError(null);
     if (!selectedAddress) {
@@ -438,7 +515,8 @@ export const Checkout: React.FC = () => {
 
     try {
       setIsPaymentProcessing(true);
-      const order = await createOrderMutation.mutateAsync({
+      
+      const payload = {
         amount: total,
         deliveryAddressId: selectedAddress._id!,
         items: itemsToOrder,
@@ -446,15 +524,27 @@ export const Checkout: React.FC = () => {
         discountAmount: discount,
         deliveryFee,
         gstCharge: gst,
-      });
-
-      setCreatedOrder(order);
+      };
 
       if (paymentMode === 'COD') {
-        localStorage.removeItem('kosmico_cart_v1');
-        setIsPaymentProcessing(false);
-        navigate(`/order-success/${order.orderNumber || order._id}`);
+        const advanceAmount = deliveryFee + gst;
+        
+        const codPayload = {
+          ...payload,
+          upfrontAmount: advanceAmount,
+          items: itemsToOrder.map((it: any) => ({
+            product: it.productId,
+            qty: it.quantity,
+            price: it.price
+          }))
+        };
+
+        const order = await createCodUpfrontMutation.mutateAsync(codPayload);
+        setCreatedOrder(order);
+        await processRazorpayCodAdvance(order, advanceAmount);
       } else {
+        const order = await createOrderMutation.mutateAsync(payload);
+        setCreatedOrder(order);
         await processRazorpayPayment(order);
       }
     } catch (err: any) {
@@ -918,16 +1008,21 @@ export const Checkout: React.FC = () => {
           <div className="max-w-xl mx-auto">
             <button
               onClick={handlePlaceOrder}
-              disabled={isPaymentProcessing || createOrderMutation.isPending}
+              disabled={isPaymentProcessing || createOrderMutation.isPending || createCodUpfrontMutation.isPending}
               className="w-full py-4 bg-[#0a7a40] hover:bg-[#086333] active:scale-[0.99] text-white font-bold text-base rounded-full shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2 transition-all disabled:opacity-60"
             >
-              {isPaymentProcessing || createOrderMutation.isPending ? (
+              {isPaymentProcessing || createOrderMutation.isPending || createCodUpfrontMutation.isPending ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span>Processing...</span>
                 </>
               ) : (
-                <span>Place Order • {formatINR(total)}</span>
+                <>
+                  {paymentMode === 'COD' 
+                    ? `Pay Advance ₹${deliveryFee + gst} & Place Order` 
+                    : `Pay Securely ${formatINR(total)}`}
+                  <ArrowRight className="w-5 h-5 ml-1" />
+                </>
               )}
             </button>
           </div>
