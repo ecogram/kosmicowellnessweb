@@ -8,7 +8,7 @@ export const useReviews = (productId: string, page = 1, limit = 10, sort = 'newe
       const { data } = await api.get(`/products/${productId}/reviews`, {
         params: { page, limit, sort },
       });
-      return data.data;
+      return Array.isArray(data) ? data : (data?.data?.reviews ?? data?.data ?? []);
     },
   });
 };
@@ -18,7 +18,7 @@ export const useReviewStats = (productId: string) => {
     queryKey: ['reviews', 'stats', productId],
     queryFn: async () => {
       const { data } = await api.get(`/products/${productId}/reviews/stats`);
-      return data.data.stats;
+      return data?.data?.stats ?? data?.stats ?? data ?? {};
     },
   });
 };

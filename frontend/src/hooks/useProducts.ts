@@ -22,8 +22,8 @@ export const useProducts = (params: FetchProductsParams) => {
       );
 
       const { data } = await api.get('/products/user/list', { params: cleanParams });
-      const products = data?.data?.products ?? (Array.isArray(data?.data) ? data.data : []);
-      const pagination = data?.data?.pagination ?? data?.meta ?? {
+      const products = Array.isArray(data) ? data : (data?.data?.products ?? (Array.isArray(data?.data) ? data.data : []));
+      const pagination = data?.pagination ?? data?.data?.pagination ?? data?.meta ?? {
         total: products.length,
         page: params.page ?? 1,
         pages: 1,
@@ -57,7 +57,7 @@ export const useCategories = () => {
     queryFn: async () => {
       try {
         const { data } = await api.get('/categories/user/list');
-        return (data?.data?.categories ?? data?.data ?? []) as any[];
+        return (Array.isArray(data) ? data : (data?.data?.categories ?? data?.data ?? [])) as any[];
       } catch {
         // Return empty list — no fake fallback categories
         return [] as any[];

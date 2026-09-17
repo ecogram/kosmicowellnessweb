@@ -6,7 +6,7 @@ export const useGlobalReviews = (limit = 3, sort = 'helpful') => {
     queryKey: ['global-reviews', limit, sort],
     queryFn: async () => {
       const { data } = await api.get('/reviews', { params: { limit, sort } });
-      return data.data;
+      return Array.isArray(data) ? data : (data?.data?.reviews ?? data?.data ?? []);
     },
   });
 };
