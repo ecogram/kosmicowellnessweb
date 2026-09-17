@@ -2,52 +2,46 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 
+// GET /api/notifications?page=1&limit=20
 export const useNotifications = (page = 1, limit = 20) => {
   const { isAuthenticated } = useAuthStore();
-  
+
   return useQuery({
     queryKey: ['notifications', page, limit],
     queryFn: async () => {
       const { data } = await api.get('/notifications', { params: { page, limit } });
-      return data.data;
-    },
-    enabled: isAuthenticated,
-    refetchInterval: 30000, // Poll every 30 seconds
-  });
-};
-
-export const useUnreadCount = () => {
-  const { isAuthenticated } = useAuthStore();
-  
-  return useQuery({
-    queryKey: ['notifications', 'unread-count'],
-    queryFn: async () => {
-      try {
-        const { data } = await api.get('/notifications', { params: { page: 1, limit: 100 } });
-        const list = data.data?.notifications || data.data || [];
-        if (Array.isArray(list)) {
-          const unread = list.filter((n: any) => n.isRead === false || n.read === false).length;
-          return unread || list.length || 0;
-        }
-        return data.data?.pagination?.total ?? 0;
-      } catch (err) {
-        return 0;
-      }
+      return data?.data;
     },
     enabled: isAuthenticated,
     refetchInterval: 30000,
+    retry: 1,
   });
 };
 
+// Compute unread count from notification list
+export const useUnreadCount = () => {
+  const { isAuthenticated } = useAuthStore();
+
+  return useQuery({
+    queryKey: ['notifications', 'unread-count'],
+    queryFn: async () => {
+      const { data } = await api.get('/notifications', { params: { page: 1, limit: 100 } });
+      const list: any[] = data?.data?.notifications ?? (Array.isArray(data?.data) ? data.data : []);
+      const unread = list.filter((n) => n.isRead === false || n.read === false).length;
+      return unread;
+    },
+    enabled: isAuthenticated,
+    refetchInterval: 30000,
+    retry: 1,
+  });
+};
+
+// PUT /api/notifications/{notificationId}/read
 export const useMarkAsRead = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      try {
-        await api.put(`/notifications/${id}/read`);
-      } catch (err) {
-        await api.patch(`/notifications/${id}/read`);
-      }
+      await api.put(`/notifications/${id}/read`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -55,22 +49,7 @@ export const useMarkAsRead = () => {
   });
 };
 
-export const useMarkAllAsRead = () => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async () => {
-      try {
-        await api.patch('/notifications/read-all');
-      } catch (err) {
-        await api.put('/notifications/read-all');
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    },
-  });
-};
-
+// DELETE /api/notifications/{notificationId}
 export const useDeleteNotification = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -83,6 +62,7 @@ export const useDeleteNotification = () => {
   });
 };
 
+// DELETE /api/notifications — clear all
 export const useClearAllNotifications = () => {
   const queryClient = useQueryClient();
   return useMutation({

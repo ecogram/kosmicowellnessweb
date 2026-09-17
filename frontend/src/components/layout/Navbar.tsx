@@ -23,7 +23,7 @@ export function Navbar() {
   const { user, isAuthenticated } = useAuthStore();
   const { data: cart } = useCart();
   const { data: wishlist } = useWishlist();
-  const { data: unreadCount } = useUnreadCount();
+  const { data: unreadCount = 0 } = useUnreadCount();
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();

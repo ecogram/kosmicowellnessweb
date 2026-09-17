@@ -3,7 +3,7 @@ import { ProductCard } from '../../components/ui/ProductCard';
 import { useProducts } from '../../hooks/useProducts';
 
 export function ProductShowcase() {
-  const { data, isLoading } = useProducts({ page: 1, limit: 4, sort: '-rating' });
+  const { data, isLoading } = useProducts({ page: 1, limit: 4, sortBy: '-rating' });
 
   return (
     <section className="py-16 md:py-24 bg-background">

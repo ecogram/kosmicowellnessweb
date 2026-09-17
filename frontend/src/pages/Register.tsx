@@ -97,6 +97,23 @@ export const Register: React.FC = () => {
     }
   };
 
+  // Resend OTP during signup — uses /api/auth/resend-otp per API docs
+  const handleResendOtp = async () => {
+    const cleanEmail = email.trim().toLowerCase();
+    try {
+      setIsLoading(true);
+      setErrorMessage(null);
+      await api.post('/auth/resend-otp', { email: cleanEmail });
+      setResendTimer(30);
+      setCanResend(false);
+    } catch (error: any) {
+      const msg = error.response?.data?.message || 'Failed to resend OTP. Please try again.';
+      setErrorMessage(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleOtpChange = (index: number, value: string) => {
     const cleanedValue = value.replace(/\D/g, '');
     if (!cleanedValue && value !== '') return;
@@ -407,7 +424,7 @@ export const Register: React.FC = () => {
                 <div className="space-y-1">
                   <p className="text-neutral-500">Didn't receive the email?</p>
                   <button
-                    onClick={() => handleSendOtp()}
+                    onClick={() => handleResendOtp()}
                     className="text-emerald-600 font-bold underline hover:text-emerald-800 cursor-pointer"
                   >
                     Resend 6-Digit Code

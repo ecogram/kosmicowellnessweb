@@ -2,7 +2,6 @@ import { Container } from '../components/ui/Container';
 import { 
   useNotifications, 
   useMarkAsRead, 
-  useMarkAllAsRead, 
   useDeleteNotification, 
   useClearAllNotifications 
 } from '../hooks/useNotifications';
@@ -22,7 +21,6 @@ export function Notifications() {
   const [page, setPage] = useState(1);
   const { data: notificationsData, isLoading } = useNotifications(page, 20);
   const markAsRead = useMarkAsRead();
-  const markAllAsRead = useMarkAllAsRead();
   const deleteNotification = useDeleteNotification();
   const clearAllNotifications = useClearAllNotifications();
 
@@ -32,8 +30,11 @@ export function Notifications() {
     }
   };
 
+  // Mark each unread notification individually (no bulk endpoint in API)
   const handleMarkAllRead = () => {
-    markAllAsRead.mutate();
+    notificationsList
+      .filter((n: any) => !n.isRead)
+      .forEach((n: any) => markAsRead.mutate(n._id));
   };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
@@ -67,7 +68,7 @@ export function Notifications() {
           {hasUnread && (
             <button
               onClick={handleMarkAllRead}
-              disabled={markAllAsRead.isPending}
+              disabled={markAsRead.isPending}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-[#eefbf3] text-[#0a7a40] hover:bg-emerald-100 rounded-xl text-xs font-bold transition-all cursor-pointer"
             >
               <CheckCheck className="w-4 h-4" />

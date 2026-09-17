@@ -424,32 +424,25 @@ export const Checkout: React.FC = () => {
       return;
     }
 
-    const addressPayload = {
-      fullName: selectedAddress.fullName,
-      phone: selectedAddress.phoneNumber,
-      addressLine1: selectedAddress.streetAddress,
-      city: selectedAddress.city,
-      state: selectedAddress.state || selectedAddress.city,
-      postalCode: selectedAddress.pincode,
-      country: 'India',
-    };
 
     const itemsToOrder = (cart?.items || []).map((it: any) => ({
-      productId: it.productId || it.product?._id || it.product?.id || '6a857e761f6a56c05581fbd8',
+      productId: it.productId || it.product?._id || it.product?.id,
       quantity: it.quantity || 1,
-      price: it.price || it.priceSnapshot || 387,
-    }));
+      price: it.price || it.priceSnapshot || 0,
+    })).filter((it) => !!it.productId);
+
+    if (itemsToOrder.length === 0) {
+      setError('Your cart is empty. Please add items before placing an order.');
+      return;
+    }
 
     try {
       setIsPaymentProcessing(true);
       const order = await createOrderMutation.mutateAsync({
-        shippingAddress: addressPayload,
-        billingAddress: addressPayload,
-        deliveryAddressId: selectedAddress._id || 'addr_default',
-        paymentMethod: paymentMode,
-        items: itemsToOrder.length > 0 ? itemsToOrder : [{ productId: '6a857e761f6a56c05581fbd8', quantity: 1, price: 387 }],
         amount: total,
-        couponCode: appliedCoupon?.code || '',
+        deliveryAddressId: selectedAddress._id!,
+        items: itemsToOrder,
+        couponCode: appliedCoupon?.code || undefined,
         discountAmount: discount,
         deliveryFee,
         gstCharge: gst,

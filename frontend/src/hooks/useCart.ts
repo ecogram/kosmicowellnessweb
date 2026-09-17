@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../services/api';
 import { useCartDrawerStore } from '../store/useCartDrawerStore';
+
+// Cart is localStorage-based (no /api/cart endpoint in API docs)
+// All product data (name, price, image) MUST be passed in from the caller — no hardcoded defaults
 
 export interface CartItem {
   _id: string;
@@ -49,35 +51,14 @@ const saveLocalCart = (cart: CartData) => {
 };
 
 const calculateTotals = (items: CartItem[]): CartData => {
-  const subtotal = items.reduce((sum, item) => sum + (item.price || item.priceSnapshot || 387) * item.quantity, 0);
-  return {
-    items,
-    subtotal,
-    total: subtotal,
-  };
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  return { items, subtotal, total: subtotal };
 };
 
 export const useCart = () => {
   return useQuery<CartData>({
     queryKey: ['cart'],
-    queryFn: async () => {
-      const local = getLocalCart();
-
-      try {
-        const res = await api.get('/cart');
-        if (res?.data?.data?.cart) {
-          const backendCart = res.data.data.cart;
-          if (Array.isArray(backendCart.items) && backendCart.items.length > 0) {
-            saveLocalCart(backendCart);
-            return backendCart;
-          }
-        }
-      } catch (_) {
-        // Backend /cart route not present on live AWS server, seamlessly use local storage cart
-      }
-
-      return local;
-    },
+    queryFn: () => getLocalCart(),
     initialData: getLocalCart,
     staleTime: 1000,
   });
@@ -95,22 +76,22 @@ export const useAddToCart = () => {
       name,
       price,
       image,
+      images,
+      slug,
     }: {
       productId: string;
       quantity: number;
       variant?: string;
-      name?: string;
-      price?: number;
+      name: string;       // Required — caller must provide real product name
+      price: number;      // Required — caller must provide real product price
       image?: string;
+      images?: string[];
+      slug?: string;
     }) => {
       const currentCart = getLocalCart();
       const existingIdx = currentCart.items.findIndex(
-        (it) => it.productId === productId && (it.variant || '') === (variant || '')
+        (it) => it.productId === productId && (it.variant ?? '') === (variant ?? '')
       );
-
-      const itemPrice = price || 387;
-      const itemName = name || 'Sweet Monk (250ml)';
-      const itemImage = image || '/assets/products/product-box.jpg';
 
       let updatedItems = [...currentCart.items];
 
@@ -126,15 +107,16 @@ export const useAddToCart = () => {
           product: {
             _id: productId,
             id: productId,
-            name: itemName,
-            title: itemName,
-            price: itemPrice,
-            image: itemImage,
-            images: [itemImage],
+            name,
+            title: name,
+            price,
+            image: image ?? images?.[0],
+            images: images ?? (image ? [image] : []),
+            slug,
           },
           quantity,
-          price: itemPrice,
-          priceSnapshot: itemPrice,
+          price,
+          priceSnapshot: price,
           variant,
         };
         updatedItems = [newItem, ...updatedItems];
@@ -142,11 +124,6 @@ export const useAddToCart = () => {
 
       const updatedCart = calculateTotals(updatedItems);
       saveLocalCart(updatedCart);
-
-      try {
-        await api.post('/cart/items', { productId, quantity, variant });
-      } catch (_) {}
-
       return updatedCart;
     },
     onSuccess: (updatedCart) => {
@@ -160,11 +137,19 @@ export const useUpdateCartItem = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ productId, quantity, variant }: { productId: string; quantity: number; variant?: string }) => {
+    mutationFn: async ({
+      productId,
+      quantity,
+      variant,
+    }: {
+      productId: string;
+      quantity: number;
+      variant?: string;
+    }) => {
       const currentCart = getLocalCart();
       const updatedItems = currentCart.items
         .map((it) => {
-          if (it.productId === productId && (it.variant || '') === (variant || '')) {
+          if (it.productId === productId && (it.variant ?? '') === (variant ?? '')) {
             return { ...it, quantity: Math.max(1, quantity) };
           }
           return it;
@@ -173,11 +158,6 @@ export const useUpdateCartItem = () => {
 
       const updatedCart = calculateTotals(updatedItems);
       saveLocalCart(updatedCart);
-
-      try {
-        await api.patch(`/cart/items/${productId}`, { quantity, variant });
-      } catch (_) {}
-
       return updatedCart;
     },
     onSuccess: (updatedCart) => {
@@ -193,16 +173,11 @@ export const useRemoveCartItem = () => {
     mutationFn: async ({ productId, variant }: { productId: string; variant?: string }) => {
       const currentCart = getLocalCart();
       const updatedItems = currentCart.items.filter(
-        (it) => !(it.productId === productId && (it.variant || '') === (variant || ''))
+        (it) => !(it.productId === productId && (it.variant ?? '') === (variant ?? ''))
       );
 
       const updatedCart = calculateTotals(updatedItems);
       saveLocalCart(updatedCart);
-
-      try {
-        await api.delete(`/cart/items/${productId}`, { data: { variant } });
-      } catch (_) {}
-
       return updatedCart;
     },
     onSuccess: (updatedCart) => {
@@ -218,11 +193,6 @@ export const useClearCart = () => {
     mutationFn: async () => {
       const emptyCart: CartData = { items: [], subtotal: 0, total: 0 };
       saveLocalCart(emptyCart);
-
-      try {
-        await api.delete('/cart');
-      } catch (_) {}
-
       return emptyCart;
     },
     onSuccess: (emptyCart) => {

@@ -1,3 +1,4 @@
+// Product type interface — matches API response shape from GET /api/products/user/list
 export interface ProductItem {
   _id: string;
   name: string;
@@ -16,32 +17,11 @@ export interface ProductItem {
   variants?: { size: string; price: number; compareAtPrice?: number; stock: number }[];
 }
 
-export const DEFAULT_CATEGORIES = [
-  { _id: 'cat-liquid', name: 'Liquid Drops', slug: 'liquid-drops' },
-  { _id: 'cat-classic', name: 'Classic Blends', slug: 'classic-blends' },
-  { _id: 'cat-golden', name: 'Golden Blends', slug: 'golden-blends' },
-  { _id: 'cat-bakers', name: "Baker's Special", slug: 'bakers-special' },
-  { _id: 'cat-value', name: 'Value Packs', slug: 'value-packs' },
-];
-
-export const DEFAULT_PRODUCTS: ProductItem[] = [
-  {
-    _id: '6a9bbb3522b5ba9231e5ce3e',
-    name: 'Sweet Monk (250ml)',
-    slug: 'sweet-monk-sweetener-250ml',
-    description: 'Our flagship 100% natural Zero-Calorie Sweet Monk sweetener. Bakes, stirs, and sweetens just like real sugar without any blood sugar spikes. 100% natural, keto, diabetic, and vegan certified.',
-    shortDescription: '1:1 direct sugar substitute. Zero calories, zero net carbs.',
-    price: 387,
-    images: ['/assets/products/product-box.jpg', '/assets/products/product-front-back.jpg'],
-    stock: 500,
-    rating: 4.9,
-    numReviews: 289,
-    category: 'cat-classic',
-    isFeatured: true,
-    variants: [
-      { size: '250ml Bottle', price: 387, stock: 300 },
-      { size: '500ml Value Pack', price: 699, stock: 200 },
-    ],
-  },
-];
-
+// Category type interface — matches API response shape from GET /api/categories/user/list
+export interface CategoryItem {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+}

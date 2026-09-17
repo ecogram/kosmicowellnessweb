@@ -13,6 +13,10 @@ export const api = axios.create({
   baseURL: getBaseURL(),
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'x-platform': 'web',
+    'x-app-version': '1.0.3',
+    'User-Agent': 'KosmicoApp/1.0',
   },
 });
 

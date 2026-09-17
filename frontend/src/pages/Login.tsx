@@ -49,7 +49,7 @@ export const Login: React.FC = () => {
     }
   };
 
-  // Handle Send OTP
+  // Handle Send OTP (initial)
   const handleSendOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const cleanEmail = email.trim().toLowerCase();
@@ -74,6 +74,23 @@ export const Login: React.FC = () => {
       }, 150);
     } catch (error: any) {
       const msg = error.response?.data?.message || 'Failed to send OTP. Please check your email and try again.';
+      setErrorMessage(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle Resend OTP — uses /api/auth/resend-otp per API docs
+  const handleResendOtp = async () => {
+    const cleanEmail = email.trim().toLowerCase();
+    try {
+      setIsLoading(true);
+      setErrorMessage(null);
+      await api.post('/auth/resend-otp', { email: cleanEmail });
+      setResendTimer(30);
+      setCanResend(false);
+    } catch (error: any) {
+      const msg = error.response?.data?.message || 'Failed to resend OTP. Please try again.';
       setErrorMessage(msg);
     } finally {
       setIsLoading(false);
@@ -382,7 +399,7 @@ export const Login: React.FC = () => {
                 <div className="space-y-1">
                   <p className="text-neutral-500">Didn't receive the email?</p>
                   <button
-                    onClick={() => handleSendOtp()}
+                    onClick={() => handleResendOtp()}
                     className="text-emerald-600 font-bold underline hover:text-emerald-800 cursor-pointer"
                   >
                     Resend 6-Digit Code

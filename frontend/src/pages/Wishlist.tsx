@@ -103,7 +103,7 @@ export function Wishlist() {
           const prodId = product._id || product.id;
           const prodImage = product.image || (product.images?.length ? product.images[0] : '/assets/products/product-box.jpg');
           const prodSlug = product.slug || prodId;
-          const prodPrice = product.price || 499;
+          const prodPrice = product.price;
 
           return (
             <div 

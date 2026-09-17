@@ -26,9 +26,11 @@ export const useReviewStats = (productId: string) => {
 export const useCreateReview = (productId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (reviewData: { rating: number; title: string; content: string }) => {
+    // API docs: POST /api/products/{productId}/reviews
+    // Body: { "rating": 4.5, "comment": "Great product!" }
+    mutationFn: async (reviewData: { rating: number; comment: string }) => {
       const { data } = await api.post(`/products/${productId}/reviews`, reviewData);
-      return data.data.review;
+      return data?.data?.review ?? data?.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reviews', productId] });
@@ -36,6 +38,7 @@ export const useCreateReview = (productId: string) => {
     },
   });
 };
+
 
 export const useToggleHelpful = (productId: string) => {
   const queryClient = useQueryClient();

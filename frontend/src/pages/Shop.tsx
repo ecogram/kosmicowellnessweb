@@ -12,7 +12,7 @@ export const Shop = () => {
   const category = searchParams.get('category') || '';
   const sort = searchParams.get('sort') || '-createdAt';
   
-  const { data, isLoading, isError } = useProducts({ page, limit: 12, search, category, sort });
+  const { data, isLoading, isError } = useProducts({ page, limit: 12, search, category, sortBy: sort });
   const { data: categoriesData } = useCategories();
 
   const handlePageChange = (newPage: number) => {

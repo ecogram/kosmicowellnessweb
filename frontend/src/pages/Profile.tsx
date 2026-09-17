@@ -5,7 +5,8 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useWishlist } from '../hooks/useWishlist';
 import { useOrders } from '../hooks/useOrders';
 import { useCoupons } from '../hooks/useCoupons';
-import { api } from '../services/api';
+import { useProfile, useUpdateProfile, useRemoveProfilePicture, dataUrlToFile } from '../hooks/useProfile';
+import { useSavedPaymentMethods, useSavePaymentMethod, useDeletePaymentMethod } from '../hooks/usePayments';
 import { normalizeImageUrl } from '../utils/imageUrl';
 import { 
   Package, Heart, Ticket, MapPin, CreditCard, RotateCcw, 
@@ -14,22 +15,21 @@ import {
   Eye, Image as ImageIcon, User as UserIcon
 } from 'lucide-react';
 
+// API docs address fields: addressLabel, fullName, streetAddress, city, pincode, phoneNumber, isDefault
 interface SavedAddress {
-  id: string;
+  _id: string;
+  addressLabel: 'Home' | 'Work' | 'Other';
   fullName: string;
-  phone: string;
-  addressLine1: string;
-  addressLine2?: string;
+  streetAddress: string;
   city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-  type: 'HOME' | 'WORK' | 'OTHER';
+  pincode: string;
+  phoneNumber: string;
   isDefault: boolean;
 }
 
 export interface SavedPaymentMethod {
-  id: string;
+  _id?: string;
+  id?: string;
   type: 'UPI' | 'BANK';
   displayName: string;
   upiId?: string;
@@ -40,11 +40,22 @@ export interface SavedPaymentMethod {
 }
 
 export const Profile: React.FC = () => {
-  const { user, logout, updateUser } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { data: wishlist } = useWishlist();
   const { data: ordersData } = useOrders({ page: 1, limit: 100 });
   const { data: couponsData } = useCoupons();
   const navigate = useNavigate();
+
+  // Real-time profile sync — polls /auth/profile every 30s
+  // So changes from mobile app / other platforms appear within 30s on website
+  useProfile();
+
+  // Payment methods from API
+  const { data: paymentMethodsData, refetch: refetchPaymentMethods } = useSavedPaymentMethods();
+  const savePaymentMethodMutation = useSavePaymentMethod();
+  const deletePaymentMethodMutation = useDeletePaymentMethod();
+  const updateProfileMutation = useUpdateProfile();
+  const removeProfilePictureMutation = useRemoveProfilePicture();
 
   const ordersCount = ordersData?.orders ? ordersData.orders.length : (ordersData?.pagination?.total ?? 0);
   const wishlistCount = wishlist?.items?.length || 0;
@@ -78,30 +89,28 @@ export const Profile: React.FC = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Address Management State (Fetched strictly from MongoDB database per logged-in user)
+  // Address Management State — API fields: addressLabel, fullName, streetAddress, city, pincode, phoneNumber, isDefault
   const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [addressSuccessMsg, setAddressSuccessMsg] = useState('');
   
-  // Address Form State (blank defaults for new entry)
-  const [addrFormName, setAddrFormName] = useState(fullName || '');
-  const [addrFormPhone, setAddrFormPhone] = useState(phone || '');
-  const [addrFormLine1, setAddrFormLine1] = useState('');
-  const [addrFormLine2, setAddrFormLine2] = useState('');
+  // Address Form State (API-aligned field names)
+  const [addrFormName, setAddrFormName] = useState('');
+  const [addrFormPhone, setAddrFormPhone] = useState('');
+  const [addrFormStreet, setAddrFormStreet] = useState('');
   const [addrFormCity, setAddrFormCity] = useState('');
-  const [addrFormState, setAddrFormState] = useState('');
   const [addrFormPincode, setAddrFormPincode] = useState('');
-  const [addrFormType, setAddrFormType] = useState<'HOME' | 'WORK' | 'OTHER'>('HOME');
+  const [addrFormLabel, setAddrFormLabel] = useState<'Home' | 'Work' | 'Other'>('Home');
   const [addrFormIsDefault, setAddrFormIsDefault] = useState(false);
 
-  // Payment Methods State (dynamic strictly per logged-in user from DB)
-  const [paymentMethods, setPaymentMethods] = useState<SavedPaymentMethod[]>([]);
+  // Payment Methods State — loaded from API
+  const paymentMethods: SavedPaymentMethod[] = (paymentMethodsData ?? []) as SavedPaymentMethod[];
   const [isAddingPaymentMethod, setIsAddingPaymentMethod] = useState(false);
   const [paymentTypeTab, setPaymentTypeTab] = useState<'BANK' | 'UPI'>('UPI');
   const [paymentSuccessMsg, setPaymentSuccessMsg] = useState('');
 
-  // Form fields
+  // Payment form fields
   const [bankAccountHolder, setBankAccountHolder] = useState(fullName);
   const [bankName, setBankName] = useState('');
   const [bankAccountNumber, setBankAccountNumber] = useState('');
@@ -112,7 +121,7 @@ export const Profile: React.FC = () => {
   const [upiIdInput, setUpiIdInput] = useState('');
   const [upiSetDefault, setUpiSetDefault] = useState(true);
 
-  // Synchronize state when store user changes
+  // Synchronize form state when Zustand store user changes (driven by useProfile polling)
   useEffect(() => {
     const currentName = user?.name || (user as any)?.fullName;
     if (currentName) setFullName(currentName);
@@ -126,66 +135,36 @@ export const Profile: React.FC = () => {
     if (userPhone) setPhone(userPhone);
   }, [user]);
 
-  // Fetch fresh user profile from API
-  const fetchUserProfile = async () => {
-    try {
-      const res = await api.get('/auth/profile');
-      const fetchedUser = res.data?.data?.user || res.data?.data;
-      if (fetchedUser) {
-        const freshName = fetchedUser.name || fetchedUser.fullName;
-        if (freshName) setFullName(freshName);
-        if (fetchedUser.email) setEmail(fetchedUser.email);
-        const freshPic = fetchedUser.profilePicture || fetchedUser.profileImage || fetchedUser.avatar;
-        if (freshPic !== undefined) {
-          setProfilePicture(normalizeImageUrl(freshPic));
-          setImageLoadError(false);
-        }
-        const p = fetchedUser.phoneNumber || fetchedUser.phone || fetchedUser.mobile || '';
-        if (p) setPhone(p);
-        updateUser(fetchedUser);
-      }
-    } catch (err) {
-      console.warn('Backend user profile fetch notice:', err);
-    }
-  };
-
-  useEffect(() => {
-    fetchUserProfile();
-  }, []);
-
-  // Fetch live addresses from backend
+  // Fetch live addresses from backend (API-aligned field mapping)
   const fetchLiveAddresses = async () => {
     try {
+      const { api } = await import('../services/api');
       const res = await api.get('/address');
-      const list = res.data?.data || (Array.isArray(res.data) ? res.data : []);
-      if (Array.isArray(list) && list.length > 0) {
+      const list: any[] = res.data?.data?.addresses ?? res.data?.data ?? (Array.isArray(res.data) ? res.data : []);
+      if (Array.isArray(list)) {
         const formatted: SavedAddress[] = list.map((a: any) => ({
-          id: a._id || a.id,
-          fullName: a.fullName || fullName,
-          phone: a.phoneNumber || a.phone || phone,
-          addressLine1: a.streetAddress || a.addressLine1 || '',
-          addressLine2: a.addressLine2 || '',
-          city: a.city || 'Noida',
-          state: a.state || 'Uttar Pradesh',
-          postalCode: a.pincode || a.postalCode || '201301',
-          country: a.country || 'India',
-          type: (a.addressLabel?.toUpperCase() === 'WORK' ? 'WORK' : a.addressLabel?.toUpperCase() === 'OTHER' ? 'OTHER' : 'HOME') as 'HOME' | 'WORK' | 'OTHER',
-          isDefault: !!a.isDefault
+          _id: a._id || a.id || '',
+          addressLabel: (a.addressLabel as 'Home' | 'Work' | 'Other') || 'Home',
+          fullName: a.fullName || '',
+          streetAddress: a.streetAddress || '',
+          city: a.city || '',
+          pincode: a.pincode || '',
+          phoneNumber: a.phoneNumber || '',
+          isDefault: !!a.isDefault,
         }));
         setAddresses(formatted);
       }
     } catch (err) {
-      console.warn('Backend address fetch notice:', err);
+      console.warn('Address fetch notice:', err);
     }
   };
 
-  // Fetch live addresses on user change
+  // Fetch addresses on user change
   useEffect(() => {
     if (user) {
       fetchLiveAddresses();
     } else {
       setAddresses([]);
-      setPaymentMethods([]);
     }
   }, [user]);
 
@@ -339,34 +318,38 @@ export const Profile: React.FC = () => {
     setCapturedLivePhoto(dataUrl);
   };
 
-  // Apply Captured Live Photo
+  // Apply Captured Live Photo — convert canvas dataURL → File → multipart/form-data
+  // API docs: PUT /api/auth/profile uses multipart/form-data with profilePicture as binary File
   const handleApplyCapturedPhoto = async () => {
     if (!capturedLivePhoto) return;
-    const photo = capturedLivePhoto;
-    setProfilePicture(photo);
+    const previewDataUrl = capturedLivePhoto;
+    setProfilePicture(previewDataUrl);  // show preview immediately
     setImageLoadError(false);
     stopLiveCamera();
 
     try {
       setIsUploadingPhoto(true);
-      const res = await api.put('/auth/profile', {
+      // Convert base64 dataURL → File (required for multipart/form-data)
+      const photoFile = dataUrlToFile(previewDataUrl, 'profile-photo.jpg');
+      const updatedUser = await updateProfileMutation.mutateAsync({
         name: fullName.trim() || user?.name,
         phoneNumber: phone.trim() || user?.phoneNumber,
-        profilePicture: photo,
+        profilePictureFile: photoFile,
       });
-      const updatedUser = res.data?.data?.user || res.data?.data || { profilePicture: photo };
-      updateUser(updatedUser);
-      const serverPic = updatedUser.profilePicture || updatedUser.profileImage || updatedUser.avatar;
-      if (serverPic) setProfilePicture(serverPic);
+      if (updatedUser) {
+        const serverPic = normalizeImageUrl(
+          updatedUser.profilePicture || updatedUser.profileImage || updatedUser.avatar || ''
+        );
+        if (serverPic) setProfilePicture(serverPic);
+      }
     } catch (err) {
       console.warn('Profile picture save warning:', err);
-      updateUser({ profilePicture: photo });
     } finally {
       setIsUploadingPhoto(false);
     }
   };
 
-  // Image File Upload Handlers (Gallery / File Explorer)
+  // Image File Upload — multipart/form-data (API docs requirement)
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -380,65 +363,45 @@ export const Profile: React.FC = () => {
       setIsUploadingPhoto(true);
       const compressedDataUrl = await compressImage(file);
       if (compressedDataUrl) {
-        setProfilePicture(compressedDataUrl);
+        setProfilePicture(compressedDataUrl);  // show preview
         setImageLoadError(false);
         setIsPhotoPickerOpen(false);
+      }
 
-        // Send via FormData for 100% native mobile app compatibility
-        const formData = new FormData();
-        formData.append('name', fullName.trim() || user?.name || '');
-        formData.append('phoneNumber', phone.trim() || user?.phoneNumber || '');
-        formData.append('profilePicture', file);
-
-        try {
-          const res = await api.put('/auth/profile', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
-          const updatedUser = res.data?.data?.user || res.data?.data;
-          if (updatedUser) {
-            updateUser(updatedUser);
-            const serverPic = updatedUser.profilePicture || updatedUser.profileImage || updatedUser.avatar;
-            if (serverPic) setProfilePicture(serverPic);
-          }
-        } catch (formErr) {
-          // Fallback to JSON payload if multipart proxy error
-          const res = await api.put('/auth/profile', {
-            name: fullName.trim() || user?.name,
-            phoneNumber: phone.trim() || user?.phoneNumber,
-            profilePicture: compressedDataUrl,
-          });
-          const updatedUser = res.data?.data?.user || res.data?.data || { profilePicture: compressedDataUrl };
-          updateUser(updatedUser);
-          const serverPic = updatedUser.profilePicture || updatedUser.profileImage || updatedUser.avatar;
-          if (serverPic) setProfilePicture(serverPic);
-        }
-        await fetchUserProfile();
+      // API docs: PUT /api/auth/profile → multipart/form-data
+      const updatedUser = await updateProfileMutation.mutateAsync({
+        name: fullName.trim() || user?.name,
+        phoneNumber: phone.trim() || user?.phoneNumber,
+        profilePictureFile: file,  // original file — server resizes
+      });
+      if (updatedUser) {
+        const serverPic = normalizeImageUrl(
+          updatedUser.profilePicture || updatedUser.profileImage || updatedUser.avatar || ''
+        );
+        if (serverPic) setProfilePicture(serverPic);
       }
     } catch (err) {
       console.warn('Profile picture save warning:', err);
     } finally {
       setIsUploadingPhoto(false);
-      // Reset input value so same file can be re-selected if needed
       if (e.target) e.target.value = '';
     }
   };
 
+  // Remove profile picture — DELETE /api/auth/remove-profile-picture
   const handleRemovePhoto = async () => {
     setProfilePicture('');
     setImageLoadError(false);
     setIsPhotoPickerOpen(false);
     try {
       setIsUploadingPhoto(true);
-      const res = await api.delete('/auth/remove-profile-picture');
-      const updatedUser = res.data?.data?.user || res.data?.data || { profilePicture: '' };
-      updateUser(updatedUser);
-      await fetchUserProfile();
+      await removeProfilePictureMutation.mutateAsync();
     } catch (err) {
       console.warn('Remove picture warning:', err);
-      updateUser({ profilePicture: '' });
     } finally {
       setIsUploadingPhoto(false);
     }
+  };
   };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -447,37 +410,16 @@ export const Profile: React.FC = () => {
     const cleanPhone = phone.trim();
 
     try {
-      const payload: any = {
+      // API docs: PUT /api/auth/profile → multipart/form-data
+      // Fields: name (String), phoneNumber (String), profilePicture (File binary)
+      const updatedUser = await updateProfileMutation.mutateAsync({
         name: cleanName,
-        fullName: cleanName,
         phoneNumber: cleanPhone,
-        phone: cleanPhone,
-      };
-
-      const res = await api.put('/auth/profile', payload);
-      const updatedUser = res.data?.data?.user || res.data?.data;
-      if (updatedUser) {
-        if (updatedUser.name) setFullName(updatedUser.name);
-        const p = updatedUser.phoneNumber || updatedUser.phone || cleanPhone;
-        if (p) setPhone(p);
-        updateUser(updatedUser);
-      } else {
-        updateUser({
-          name: cleanName,
-          fullName: cleanName,
-          phoneNumber: cleanPhone,
-          phone: cleanPhone,
-        });
-      }
-      await fetchUserProfile();
+      });
+      if (updatedUser?.name) setFullName(updatedUser.name);
+      if (updatedUser?.phoneNumber) setPhone(updatedUser.phoneNumber);
     } catch (err) {
       console.warn('Backend update profile notice:', err);
-      updateUser({
-        name: cleanName,
-        fullName: cleanName,
-        phoneNumber: cleanPhone,
-        phone: cleanPhone,
-      });
     }
 
     setIsProfileSaved(true);
@@ -492,41 +434,36 @@ export const Profile: React.FC = () => {
     navigate('/login');
   };
 
-  // Address Handlers
+  // Address Handlers — API fields: addressLabel, fullName, streetAddress, city, pincode, phoneNumber, isDefault
   const handleOpenAddAddress = () => {
     setEditingAddressId(null);
     setAddrFormName(fullName);
     setAddrFormPhone(phone);
-    setAddrFormLine1('');
-    setAddrFormLine2('');
-    setAddrFormCity('Noida');
-    setAddrFormState('Uttar Pradesh');
-    setAddrFormPincode('201301');
-    setAddrFormType('HOME');
+    setAddrFormStreet('');
+    setAddrFormCity('');
+    setAddrFormPincode('');
+    setAddrFormLabel('Home');
     setAddrFormIsDefault(addresses.length === 0);
     setIsAddingAddress(true);
   };
 
   const handleEditAddress = (addr: SavedAddress) => {
-    setEditingAddressId(addr.id);
+    setEditingAddressId(addr._id);
     setAddrFormName(addr.fullName);
-    setAddrFormPhone(addr.phone);
-    setAddrFormLine1(addr.addressLine1);
-    setAddrFormLine2(addr.addressLine2 || '');
+    setAddrFormPhone(addr.phoneNumber);
+    setAddrFormStreet(addr.streetAddress);
     setAddrFormCity(addr.city);
-    setAddrFormState(addr.state);
-    setAddrFormPincode(addr.postalCode);
-    setAddrFormType(addr.type);
+    setAddrFormPincode(addr.pincode);
+    setAddrFormLabel(addr.addressLabel);
     setAddrFormIsDefault(addr.isDefault);
     setIsAddingAddress(true);
   };
 
-  const handleDeleteAddress = async (id: string) => {
-    setAddresses(prev => prev.filter(a => a.id !== id));
+  const handleDeleteAddress = async (_id: string) => {
+    setAddresses(prev => prev.filter(a => a._id !== _id));
     try {
-      if (!id.startsWith('addr-')) {
-        await api.delete(`/address/${id}`);
-      }
+      const { api } = await import('../services/api');
+      await api.delete(`/address/${_id}`);
     } catch (err) {
       console.warn('Backend delete address notice:', err);
     }
@@ -534,15 +471,12 @@ export const Profile: React.FC = () => {
     setTimeout(() => setAddressSuccessMsg(''), 2500);
   };
 
-  const handleSetDefaultAddress = async (id: string) => {
-    setAddresses(prev => prev.map(a => ({
-      ...a,
-      isDefault: a.id === id
-    })));
+  const handleSetDefaultAddress = async (_id: string) => {
+    setAddresses(prev => prev.map(a => ({ ...a, isDefault: a._id === _id })));
     try {
-      if (!id.startsWith('addr-')) {
-        await api.put(`/address/set-default/${id}`);
-      }
+      const { api } = await import('../services/api');
+      // API docs: PUT /api/address/set-default/{addressId}
+      await api.put(`/address/set-default/${_id}`);
     } catch (err) {
       console.warn('Backend set default address notice:', err);
     }
@@ -552,81 +486,35 @@ export const Profile: React.FC = () => {
 
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addrFormLine1 || !addrFormPincode) return;
+    if (!addrFormStreet || !addrFormPincode || !addrFormCity) return;
 
+    // API docs: POST/PUT /api/address
+    // Body: { addressLabel, fullName, streetAddress, city, pincode, phoneNumber, isDefault }
     const payload = {
-      addressLabel: addrFormType === 'HOME' ? 'Home' : addrFormType === 'WORK' ? 'Work' : 'Other',
+      addressLabel: addrFormLabel,
       fullName: addrFormName,
-      streetAddress: addrFormLine1 + (addrFormLine2 ? ', ' + addrFormLine2 : ''),
+      streetAddress: addrFormStreet,
       city: addrFormCity,
-      state: addrFormState,
       pincode: addrFormPincode,
       phoneNumber: addrFormPhone,
-      isDefault: addrFormIsDefault
+      isDefault: addrFormIsDefault,
     };
 
-    if (editingAddressId) {
-      setAddresses(prev => prev.map(a => {
-        if (a.id === editingAddressId) {
-          return {
-            ...a,
-            fullName: addrFormName,
-            phone: addrFormPhone,
-            addressLine1: addrFormLine1,
-            addressLine2: addrFormLine2,
-            city: addrFormCity,
-            state: addrFormState,
-            postalCode: addrFormPincode,
-            type: addrFormType,
-            isDefault: addrFormIsDefault
-          };
-        }
-        return addrFormIsDefault ? { ...a, isDefault: false } : a;
-      }));
-
-      try {
-        if (!editingAddressId.startsWith('addr-')) {
-          await api.put(`/address/${editingAddressId}`, payload);
-        } else {
-          const res = await api.post('/address', payload);
-          if (res.data?.data?._id) {
-            setAddresses(prev => prev.map(a => a.id === editingAddressId ? { ...a, id: res.data.data._id } : a));
-          }
-        }
-      } catch (err) {
-        console.warn('Backend update address notice:', err);
+    try {
+      const { api } = await import('../services/api');
+      if (editingAddressId) {
+        // Update existing — PUT /api/address/{addressId}
+        await api.put(`/address/${editingAddressId}`, payload);
+        setAddressSuccessMsg('Address updated successfully');
+      } else {
+        // Add new — POST /api/address
+        await api.post('/address', payload);
+        setAddressSuccessMsg('New address added successfully');
       }
-      setAddressSuccessMsg('Address updated successfully');
-    } else {
-      const tempId = `addr-${Date.now()}`;
-      const newAddr: SavedAddress = {
-        id: tempId,
-        fullName: addrFormName,
-        phone: addrFormPhone,
-        addressLine1: addrFormLine1,
-        addressLine2: addrFormLine2,
-        city: addrFormCity,
-        state: addrFormState,
-        postalCode: addrFormPincode,
-        country: 'India',
-        type: addrFormType,
-        isDefault: addrFormIsDefault || addresses.length === 0
-      };
-
-      setAddresses(prev => {
-        const list = addrFormIsDefault ? prev.map(a => ({ ...a, isDefault: false })) : [...prev];
-        return [newAddr, ...list];
-      });
-
-      try {
-        const res = await api.post('/address', payload);
-        if (res.data?.data?._id) {
-          setAddresses(prev => prev.map(a => a.id === tempId ? { ...a, id: res.data.data._id } : a));
-        }
-      } catch (err) {
-        console.warn('Backend add address notice:', err);
-      }
-      setAddressSuccessMsg('New address added successfully');
+      // Refetch from API (source of truth)
+      await fetchLiveAddresses();
+    } catch (err) {
+      console.warn('Backend save address notice:', err);
     }
 
     setIsAddingAddress(false);
@@ -1084,7 +972,7 @@ export const Profile: React.FC = () => {
                   <div className="space-y-3">
                     {addresses.map((addr) => (
                       <div
-                        key={addr.id}
+                        key={addr._id}
                         className={`p-4 rounded-2xl border transition-all ${
                           addr.isDefault 
                             ? 'border-emerald-600 bg-emerald-50/40 shadow-xs' 
@@ -1096,12 +984,12 @@ export const Profile: React.FC = () => {
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-sm text-neutral-900">{addr.fullName}</span>
                               <span className={`px-2 py-0.5 text-[10px] font-extrabold rounded-md flex items-center gap-1 ${
-                                addr.type === 'HOME' ? 'bg-amber-100 text-amber-800' :
-                                addr.type === 'WORK' ? 'bg-blue-100 text-blue-800' : 'bg-neutral-100 text-neutral-700'
+                                addr.addressLabel === 'Home' ? 'bg-amber-100 text-amber-800' :
+                                addr.addressLabel === 'Work' ? 'bg-blue-100 text-blue-800' : 'bg-neutral-100 text-neutral-700'
                               }`}>
-                                {addr.type === 'HOME' && <Home className="w-2.5 h-2.5" />}
-                                {addr.type === 'WORK' && <Briefcase className="w-2.5 h-2.5" />}
-                                {addr.type}
+                                {addr.addressLabel === 'Home' && <Home className="w-2.5 h-2.5" />}
+                                {addr.addressLabel === 'Work' && <Briefcase className="w-2.5 h-2.5" />}
+                                {addr.addressLabel}
                               </span>
                               {addr.isDefault && (
                                 <span className="px-2 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 rounded-md">
@@ -1110,13 +998,13 @@ export const Profile: React.FC = () => {
                               )}
                             </div>
                             <p className="text-xs text-neutral-700 leading-snug">
-                              {addr.addressLine1}{addr.addressLine2 ? `, ${addr.addressLine2}` : ''}
+                              {addr.streetAddress}
                             </p>
                             <p className="text-xs text-neutral-600 font-medium">
-                              {addr.city}, {addr.state} - <span className="font-bold text-neutral-800">{addr.postalCode}</span>
+                              {addr.city} - <span className="font-bold text-neutral-800">{addr.pincode}</span>
                             </p>
                             <p className="text-xs text-neutral-500 pt-0.5">
-                              Phone: <span className="text-neutral-800 font-semibold">{addr.phone}</span>
+                              Phone: <span className="text-neutral-800 font-semibold">{addr.phoneNumber}</span>
                             </p>
                           </div>
 
@@ -1129,7 +1017,7 @@ export const Profile: React.FC = () => {
                               <Edit3 className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => handleDeleteAddress(addr.id)}
+                              onClick={() => handleDeleteAddress(addr._id)}
                               className="p-1.5 text-neutral-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                               title="Delete"
                             >
@@ -1141,7 +1029,7 @@ export const Profile: React.FC = () => {
                         {!addr.isDefault && (
                           <div className="mt-3 pt-2 border-t border-neutral-100 flex justify-end">
                             <button
-                              onClick={() => handleSetDefaultAddress(addr.id)}
+                              onClick={() => handleSetDefaultAddress(addr._id)}
                               className="text-[11px] font-bold text-emerald-800 hover:text-emerald-900 hover:underline cursor-pointer"
                             >
                               Set as Default Delivery Address
@@ -1195,29 +1083,19 @@ export const Profile: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-neutral-700 block mb-1">House / Flat / Street Address *</label>
+                  {/* API field: streetAddress */}
+                  <label className="text-xs font-bold text-neutral-700 block mb-1">Street Address *</label>
                   <input
                     type="text"
                     required
-                    value={addrFormLine1}
-                    onChange={(e) => setAddrFormLine1(e.target.value)}
+                    value={addrFormStreet}
+                    onChange={(e) => setAddrFormStreet(e.target.value)}
                     placeholder="e.g. Flat 402, Green Valley Apartments, Sector 62"
                     className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
                   />
                 </div>
 
-                <div>
-                  <label className="text-xs font-bold text-neutral-700 block mb-1">Landmark / Area (Optional)</label>
-                  <input
-                    type="text"
-                    value={addrFormLine2}
-                    onChange={(e) => setAddrFormLine2(e.target.value)}
-                    placeholder="e.g. Near Metro Station / Behind Mall"
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs font-bold text-neutral-700 block mb-1">PIN Code *</label>
                     <input
@@ -1236,39 +1114,30 @@ export const Profile: React.FC = () => {
                       required
                       value={addrFormCity}
                       onChange={(e) => setAddrFormCity(e.target.value)}
-                      placeholder="Noida"
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-neutral-700 block mb-1">State *</label>
-                    <input
-                      type="text"
-                      required
-                      value={addrFormState}
-                      onChange={(e) => setAddrFormState(e.target.value)}
-                      placeholder="UP"
+                      placeholder="Delhi"
                       className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
                     />
                   </div>
                 </div>
 
-                {/* Address Type Selector */}
+                {/* Address Label Selector — API field: addressLabel (Home | Work | Other) */}
                 <div>
-                  <label className="text-xs font-bold text-neutral-700 block mb-1.5">Address Type</label>
+                  <label className="text-xs font-bold text-neutral-700 block mb-1.5">Address Label</label>
                   <div className="flex gap-2">
-                    {(['HOME', 'WORK', 'OTHER'] as const).map((type) => (
+                    {(['Home', 'Work', 'Other'] as const).map((label) => (
                       <button
-                        key={type}
+                        key={label}
                         type="button"
-                        onClick={() => setAddrFormType(type)}
+                        onClick={() => setAddrFormLabel(label)}
                         className={`flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                          addrFormType === type 
+                          addrFormLabel === label 
                             ? 'bg-emerald-800 text-white border-emerald-800' 
                             : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'
                         }`}
                       >
-                        {type}
+                        {label === 'Home' && <Home className="w-3 h-3 inline mr-1" />}
+                        {label === 'Work' && <Briefcase className="w-3 h-3 inline mr-1" />}
+                        {label}
                       </button>
                     ))}
                   </div>
@@ -1339,9 +1208,11 @@ export const Profile: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {paymentMethods.map((pm) => (
+                  {paymentMethods.length === 0 ? (
+                    <p className="text-center text-xs text-neutral-400 py-4">No saved payment methods yet.</p>
+                  ) : paymentMethods.map((pm) => (
                     <div
-                      key={pm.id}
+                      key={pm._id || pm.id}
                       className="p-4 bg-[#0a7a40] text-white rounded-2xl shadow-sm flex items-center justify-between"
                     >
                       <div className="space-y-1">
@@ -1368,11 +1239,18 @@ export const Profile: React.FC = () => {
                       </div>
 
                       <button
-                        onClick={() => {
-                          setPaymentMethods(prev => prev.filter(m => m.id !== pm.id));
-                          setPaymentSuccessMsg('Payment method removed');
-                          setTimeout(() => setPaymentSuccessMsg(''), 2000);
+                        onClick={async () => {
+                          const id = pm._id || pm.id || '';
+                          if (!id) return;
+                          try {
+                            await deletePaymentMethodMutation.mutateAsync(id);
+                            setPaymentSuccessMsg('Payment method removed');
+                            setTimeout(() => setPaymentSuccessMsg(''), 2000);
+                          } catch (err) {
+                            console.warn('Delete payment method error:', err);
+                          }
                         }}
+                        disabled={deletePaymentMethodMutation.isPending}
                         className="p-2 text-emerald-200 hover:text-white transition-colors cursor-pointer"
                         title="Remove"
                       >
@@ -1383,44 +1261,45 @@ export const Profile: React.FC = () => {
                 </div>
               </div>
             ) : (
-              /* ADD PAYMENT METHOD FORM (BANK ACCOUNT & UPI ID TABS) */
+              /* ADD PAYMENT METHOD FORM — POST /api/payment/save-method */
               <form
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
-                  if (paymentTypeTab === 'UPI') {
-                    if (!upiIdInput.trim()) return;
-                    const newMethod: SavedPaymentMethod = {
-                      id: `pm-${Date.now()}`,
-                      type: 'UPI',
-                      displayName: (upiDisplayName || fullName || user?.name || 'User').toUpperCase(),
-                      upiId: upiIdInput.trim(),
-                      isDefault: upiSetDefault,
-                    };
-                    let list = paymentMethods;
-                    if (upiSetDefault) list = list.map(m => ({ ...m, isDefault: false }));
-                    setPaymentMethods([newMethod, ...list]);
-                    setUpiIdInput('');
-                  } else {
-                    if (!bankAccountNumber.trim() || !bankIfscCode.trim()) return;
-                    const newMethod: SavedPaymentMethod = {
-                      id: `pm-${Date.now()}`,
-                      type: 'BANK',
-                      displayName: (bankAccountHolder || fullName || user?.name || 'User').toUpperCase(),
-                      bankName: bankName.trim() || 'Bank Account',
-                      accountNumber: bankAccountNumber.trim(),
-                      ifscCode: bankIfscCode.trim().toUpperCase(),
-                      isDefault: bankSetDefault,
-                    };
-                    let list = paymentMethods;
-                    if (bankSetDefault) list = list.map(m => ({ ...m, isDefault: false }));
-                    setPaymentMethods([newMethod, ...list]);
-                    setBankAccountNumber('');
-                    setBankIfscCode('');
-                    setBankName('');
+                  try {
+                    if (paymentTypeTab === 'UPI') {
+                      if (!upiIdInput.trim()) return;
+                      // API docs: POST /api/payment/save-method
+                      // Body: { type, displayName, upiId, isDefault }
+                      await savePaymentMethodMutation.mutateAsync({
+                        type: 'UPI',
+                        displayName: (upiDisplayName || fullName || user?.name || 'User').toUpperCase(),
+                        upiId: upiIdInput.trim(),
+                        isDefault: upiSetDefault,
+                      });
+                      setUpiIdInput('');
+                    } else {
+                      if (!bankAccountNumber.trim() || !bankIfscCode.trim()) return;
+                      // API docs: POST /api/payment/save-method
+                      // Body: { type, displayName, bankName, accountNumber, ifscCode, isDefault }
+                      await savePaymentMethodMutation.mutateAsync({
+                        type: 'BANK',
+                        displayName: (bankAccountHolder || fullName || user?.name || 'User').toUpperCase(),
+                        bankName: bankName.trim() || 'Bank Account',
+                        accountNumber: bankAccountNumber.trim(),
+                        ifscCode: bankIfscCode.trim().toUpperCase(),
+                        isDefault: bankSetDefault,
+                      });
+                      setBankAccountNumber('');
+                      setBankIfscCode('');
+                      setBankName('');
+                    }
+                    setIsAddingPaymentMethod(false);
+                    setPaymentSuccessMsg('New payment method added successfully');
+                    setTimeout(() => setPaymentSuccessMsg(''), 2500);
+                    refetchPaymentMethods();
+                  } catch (err) {
+                    console.warn('Save payment method error:', err);
                   }
-                  setIsAddingPaymentMethod(false);
-                  setPaymentSuccessMsg('New payment method added successfully');
-                  setTimeout(() => setPaymentSuccessMsg(''), 2500);
                 }}
                 className="space-y-4"
               >

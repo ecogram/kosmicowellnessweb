@@ -16,17 +16,15 @@ export function ProductReviews({ productId }: { productId: string }) {
   const toggleHelpfulMutation = useToggleHelpful(productId);
 
   const [rating, setRating] = useState(5);
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [comment, setComment] = useState('');
   const [showForm, setShowForm] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createReviewMutation.mutate({ rating, title, content }, {
+    createReviewMutation.mutate({ rating, comment }, {
       onSuccess: () => {
         setShowForm(false);
-        setTitle('');
-        setContent('');
+        setComment('');
         setRating(5);
       },
       onError: (err: any) => {
@@ -117,23 +115,12 @@ export function ProductReviews({ productId }: { productId: string }) {
               ))}
             </div>
           </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-2">Title</label>
-            <input 
-              required
-              type="text" 
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full border border-border rounded-lg px-4 py-2"
-              placeholder="Summary of your experience"
-            />
-          </div>
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2">Review</label>
             <textarea 
               required
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
               className="w-full border border-border rounded-lg px-4 py-2 h-32 resize-none"
               placeholder="What did you like or dislike?"
             />
@@ -156,7 +143,6 @@ export function ProductReviews({ productId }: { productId: string }) {
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <div className="flex">{renderStars(review.rating)}</div>
-                    <span className="font-bold">{review.title}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-text-muted mb-3">
                     <span className="font-medium text-text-main">{review.user?.name || 'Anonymous'}</span>
@@ -173,7 +159,7 @@ export function ProductReviews({ productId }: { productId: string }) {
                   </div>
                 </div>
               </div>
-              <p className="text-text-main leading-relaxed mb-4">{review.content}</p>
+              <p className="text-text-main leading-relaxed mb-4">{review.comment || review.content}</p>
               
               <div className="flex items-center gap-4 text-sm text-text-muted">
                 <button 
