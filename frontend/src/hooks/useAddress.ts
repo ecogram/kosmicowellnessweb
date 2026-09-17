@@ -23,6 +23,7 @@ export const useAddresses = () => {
       return addresses;
     },
     staleTime: 5 * 60 * 1000,
+    refetchInterval: 5000,
     retry: 1,
   });
 };

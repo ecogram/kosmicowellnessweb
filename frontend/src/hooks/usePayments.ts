@@ -53,6 +53,7 @@ export const useSavedPaymentMethods = () => {
       return list as SavedPaymentMethod[];
     },
     staleTime: 5 * 60 * 1000,
+    refetchInterval: 5000,
     retry: 1,
   });
 };

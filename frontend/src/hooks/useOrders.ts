@@ -33,6 +33,7 @@ export const useOrders = (params: { page?: number; limit?: number } = {}) => {
     },
     enabled: hasAuth,
     staleTime: 5000,
+    refetchInterval: 5000,
     retry: 1,
   });
 };
@@ -70,6 +71,7 @@ export const useOrder = (orderId: string) => {
     },
     enabled: !!orderId,
     staleTime: 5000,
+    refetchInterval: 5000,
     retry: 1,
   });
 };

@@ -24,7 +24,7 @@ export const useProfile = () => {
     },
     enabled: !!accessToken,
     // Poll every 30 seconds — so changes from mobile app / other platforms update here instantly
-    refetchInterval: 30_000,
+    refetchInterval: 5000,
     staleTime: 10_000,
     retry: 1,
   });

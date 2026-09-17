@@ -25,6 +25,7 @@ export const useMyRefunds = () => {
       return data?.data?.refunds ?? (Array.isArray(data?.data) ? data.data : []);
     },
     staleTime: 60 * 1000,
+    refetchInterval: 5000,
     retry: 1,
   });
 };
@@ -53,6 +54,7 @@ export const useMyReturns = () => {
       return data?.data?.returns ?? (Array.isArray(data?.data) ? data.data : []);
     },
     staleTime: 60 * 1000,
+    refetchInterval: 5000,
     retry: 1,
   });
 };
