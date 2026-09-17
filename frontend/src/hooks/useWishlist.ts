@@ -70,7 +70,7 @@ export const useToggleWishlist = () => {
 
       if (existsInWishlist) {
         // POST /api/wishlist/remove — exact per API docs
-        await api.post('/wishlist/remove', { productId });
+        await api.delete('/wishlist/remove', { data: { productId } });
         return { action: 'removed', productId };
       } else {
         // POST /api/wishlist/add — exact per API docs

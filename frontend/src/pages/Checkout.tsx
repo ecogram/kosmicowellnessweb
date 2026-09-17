@@ -565,7 +565,7 @@ export const Checkout: React.FC = () => {
     }
 
     try {
-      const res = await api.post('/coupons/apply', { code: cleanCode, orderAmount: subtotal });
+      const res = await api.post('/coupons/verify', { code: cleanCode, orderAmount: subtotal });
       const disc = res.data?.data?.discountAmount ?? 0;
       setAppliedCoupon({ code: cleanCode, discount: disc });
       setIsCouponModalOpen(false);

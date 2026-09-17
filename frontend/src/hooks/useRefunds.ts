@@ -7,7 +7,7 @@ export const useInitiateRefund = () => {
 
   return useMutation({
     mutationFn: async ({ orderId, reason }: { orderId: string; reason: string }) => {
-      const { data } = await api.post('/refund/initiate', { orderId, reason });
+      const { data } = await api.post('/refund/request', { orderId, reason });
       return data?.data ?? data;
     },
     onSuccess: () => {
@@ -36,7 +36,7 @@ export const useInitiateReturn = () => {
 
   return useMutation({
     mutationFn: async ({ orderId, reason }: { orderId: string; reason: string }) => {
-      const { data } = await api.post('/return/initiate', { orderId, reason });
+      const { data } = await api.post('/return/request', { orderId, reason });
       return data?.data ?? data;
     },
     onSuccess: () => {

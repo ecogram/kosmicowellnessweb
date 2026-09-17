@@ -3,14 +3,14 @@ import { api } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 import { normalizeImageUrl } from '../utils/imageUrl';
 
-// ─── GET /api/auth/profile ───────────────────────────────────────────────────
+// ─── GET /api/users/profile ───────────────────────────────────────────────────
 export const useProfile = () => {
   const { updateUser, accessToken } = useAuthStore();
 
   return useQuery({
     queryKey: ['auth-profile'],
     queryFn: async () => {
-      const { data } = await api.get('/auth/profile');
+      const { data } = await api.get('/users/profile');
       const user = data?.data?.user ?? data?.data;
       if (user) {
         // Normalize image URL and update Zustand store
@@ -30,7 +30,7 @@ export const useProfile = () => {
   });
 };
 
-// ─── PUT /api/auth/profile (multipart/form-data) ─────────────────────────────
+// ─── PUT /api/users/profile (multipart/form-data) ─────────────────────────────
 // API docs: Content-Type: multipart/form-data
 // Form fields: name (String), phoneNumber (String), profilePicture (File binary)
 export const useUpdateProfile = () => {
@@ -52,7 +52,7 @@ export const useUpdateProfile = () => {
       if (phoneNumber)        formData.append('phoneNumber', phoneNumber);
       if (profilePictureFile) formData.append('profilePicture', profilePictureFile);
 
-      const { data } = await api.put('/auth/profile', formData, {
+      const { data } = await api.put('/users/profile', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return data?.data?.user ?? data?.data;

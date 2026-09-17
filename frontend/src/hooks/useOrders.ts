@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 
-// GET /api/payment/myorders?page=1&limit=10
+// GET /api/payments/myorders?page=1&limit=10
 export const useOrders = (params: { page?: number; limit?: number } = {}) => {
   const { isAuthenticated, accessToken } = useAuthStore();
   const hasAuth =
@@ -11,7 +11,7 @@ export const useOrders = (params: { page?: number; limit?: number } = {}) => {
   return useQuery({
     queryKey: ['orders', params],
     queryFn: async () => {
-      const response = await api.get('/payment/myorders', { params });
+      const response = await api.get('/payments/myorders', { params });
       const resData = response.data?.data ?? response.data ?? {};
       const orders: any[] = resData.orders ?? (Array.isArray(resData) ? resData : []);
       const pagination = resData.pagination ?? {
@@ -39,7 +39,7 @@ export const useOrders = (params: { page?: number; limit?: number } = {}) => {
 };
 
 // GET /api/order/track/{orderId}  (primary)
-// Fallback: search within GET /api/payment/myorders
+// Fallback: search within GET /api/payments/myorders
 export const useOrder = (orderId: string) => {
   return useQuery({
     queryKey: ['orders', orderId],
@@ -55,7 +55,7 @@ export const useOrder = (orderId: string) => {
 
       // 2. Search inside myorders list as secondary lookup
       try {
-        const response = await api.get('/payment/myorders', { params: { limit: 100 } });
+        const response = await api.get('/payments/myorders', { params: { limit: 100 } });
         const orders: any[] =
           response.data?.data?.orders ??
           (Array.isArray(response.data?.data) ? response.data.data : []);

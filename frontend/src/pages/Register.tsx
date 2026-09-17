@@ -193,7 +193,7 @@ export const Register: React.FC = () => {
       if (authToken) {
         setAuth(userObj, authToken);
         try {
-          const profileRes = await api.get('/auth/profile', {
+          const profileRes = await api.get('/users/profile', {
             headers: { Authorization: `Bearer ${authToken}` },
           });
           if (profileRes.data?.data) {
