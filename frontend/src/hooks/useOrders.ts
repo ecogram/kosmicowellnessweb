@@ -106,24 +106,33 @@ export const useCreateOrder = () => {
 const saveLocalOrder = (order: any) => {
   try {
     const existing = JSON.parse(localStorage.getItem('kosmico_user_orders') || '[]');
-    const filtered = existing.filter((o: any) => (o.orderNumber || o._id) !== (order.orderNumber || order._id));
+    const targetKey = order.orderNumber || order._id || order.id;
+    const filtered = existing.filter((o: any) => (o.orderNumber || o._id || o.id) !== targetKey);
     localStorage.setItem('kosmico_user_orders', JSON.stringify([order, ...filtered]));
   } catch (e) {}
 };
 
+const getLocalOrders = (): any[] => {
+  try {
+    const raw = localStorage.getItem('kosmico_user_orders');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) {}
+  return [];
+};
+
 export const useOrders = (params: { page?: number; limit?: number }) => {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, accessToken } = useAuthStore();
+  const hasAuth = isAuthenticated || !!accessToken || !!localStorage.getItem('kosmico_auth_v1');
 
   return useQuery({
     queryKey: ['orders', params],
     queryFn: async () => {
       let ordersList: any[] = [];
       let pagination = { total: 0, page: 1, limit: 20, totalPages: 1 };
-
-      // Clear any legacy mock orders from localStorage
-      try {
-        localStorage.removeItem('kosmico_user_orders');
-      } catch (e) {}
+      const localOrders = getLocalOrders();
 
       try {
         const response = await api.get('/payment/myorders', { params });
@@ -141,8 +150,30 @@ export const useOrders = (params: { page?: number; limit?: number }) => {
         }
       }
 
+      // Merge backend orders with local orders without duplicates
+      const orderMap = new Map<string, any>();
+      // First insert local orders
+      localOrders.forEach((o: any) => {
+        const key = String(o.orderNumber || o._id || o.id || '');
+        if (key) orderMap.set(key, o);
+      });
+      // Then insert/override with backend verified orders
+      ordersList.forEach((o: any) => {
+        const key = String(o.orderNumber || o._id || o.id || '');
+        if (key) orderMap.set(key, o);
+      });
+
+      const combinedOrders = Array.from(orderMap.values());
+
+      // Save combined orders back to local cache
+      if (combinedOrders.length > 0) {
+        try {
+          localStorage.setItem('kosmico_user_orders', JSON.stringify(combinedOrders));
+        } catch (_) {}
+      }
+
       // Strictly sort all orders descending by createdAt (latest / newest order first on top)
-      ordersList.sort((a: any, b: any) => {
+      combinedOrders.sort((a: any, b: any) => {
         const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         if (!isNaN(timeA) && !isNaN(timeB) && timeA !== timeB) {
@@ -152,11 +183,15 @@ export const useOrders = (params: { page?: number; limit?: number }) => {
       });
 
       return {
-        orders: ordersList,
-        pagination,
+        orders: combinedOrders,
+        pagination: {
+          ...pagination,
+          total: Math.max(pagination.total, combinedOrders.length),
+        },
       };
     },
-    enabled: isAuthenticated,
+    enabled: hasAuth,
+    staleTime: 5000,
   });
 };
 
@@ -166,7 +201,14 @@ export const useOrder = (orderId: string) => {
     queryFn: async () => {
       if (!orderId) return null;
 
-      // 1. Fetch from /payment/myorders
+      // 1. Fetch from /orders/:orderId
+      try {
+        const response = await api.get(`/orders/${orderId}`);
+        const orderData = response.data?.data?.order || response.data?.data || response.data;
+        if (orderData && (orderData._id || orderData.orderNumber)) return orderData;
+      } catch (e) {}
+
+      // 2. Fetch from /payment/myorders
       try {
         const response = await api.get('/payment/myorders', { params: { limit: 100 } });
         const orders = response.data?.data?.orders || response.data?.orders || (Array.isArray(response.data?.data) ? response.data.data : []);
@@ -176,22 +218,23 @@ export const useOrder = (orderId: string) => {
         if (matched) return matched;
       } catch (e) {}
 
-      // 2. Fetch from /order/track/:orderId
+      // 3. Fetch from /order/track/:orderId
       try {
         const response = await api.get(`/order/track/${orderId}`);
         if (response.data?.data) return response.data.data;
       } catch (e) {}
 
-      // 3. Fetch from /orders/:orderId
-      try {
-        const response = await api.get(`/orders/${orderId}`);
-        const orderData = response.data?.data?.order || response.data?.data || response.data;
-        if (orderData) return orderData;
-      } catch (e) {}
+      // 4. Fallback to localStorage orders
+      const localOrders = getLocalOrders();
+      const localMatched = localOrders.find(
+        (o: any) => String(o._id) === String(orderId) || String(o.orderNumber) === String(orderId) || String(o.id) === String(orderId)
+      );
+      if (localMatched) return localMatched;
 
       return null;
     },
     enabled: !!orderId,
+    staleTime: 5000,
   });
 };
 

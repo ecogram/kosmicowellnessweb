@@ -89,7 +89,7 @@ export const Orders: React.FC = () => {
 
             <ul className="divide-y divide-neutral-100">
               {orders.map((order: any) => {
-                const orderNum = order._id ? `#${order._id}` : (order.orderNumber || order.shiprocketOrderId || 'Order');
+                const orderNum = order.orderNumber || (order._id ? `#${order._id}` : (order.shiprocketOrderId || 'Order'));
                 const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
                 const orderStatus = String(order.orderStatus || order.status || 'CONFIRMED').toUpperCase();
                 const isCOD = (order.paymentMethod || '').toUpperCase() === 'COD';
@@ -97,6 +97,8 @@ export const Orders: React.FC = () => {
                 const shippingFee = Number(order.shipping ?? order.deliveryFee ?? (isCOD ? 77 : 0));
                 const taxFee = Number(order.tax ?? order.gstCharge ?? (isCOD ? 13 : 0));
                 const discountAmt = Number(order.discount ?? order.discountAmount ?? 0);
+                const recipientName = order.shippingAddress?.fullName || order.userName || 'Customer';
+                const recipientCity = order.shippingAddress?.city || order.shippingAddress?.state || '';
 
                 let orderTotal = Number(order.amount ?? order.total ?? 0);
                 if (!orderTotal) {
@@ -105,13 +107,18 @@ export const Orders: React.FC = () => {
 
                 return (
                   <li key={order._id || orderNum} className="p-5 sm:p-6 flex flex-col md:grid md:grid-cols-12 gap-4 items-center hover:bg-emerald-50/30 transition-colors">
-                    <div className="col-span-3 w-full font-bold text-neutral-900 flex items-center gap-2">
-                      <Package className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span className="font-mono text-xs sm:text-sm truncate" title={orderNum}>{orderNum}</span>
+                    <div className="col-span-3 w-full">
+                      <div className="font-bold text-neutral-900 flex items-center gap-2 mb-1">
+                        <Package className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span className="font-mono text-xs sm:text-sm font-bold text-[#064e3b] truncate" title={orderNum}>{orderNum}</span>
+                      </div>
+                      <div className="text-[11px] text-neutral-500 truncate">
+                        Deliver to: <span className="font-medium text-neutral-700">{recipientName}</span>{recipientCity ? ` (${recipientCity})` : ''}
+                      </div>
                     </div>
 
                     <div className="col-span-3 w-full text-xs text-neutral-500 flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-neutral-400" />
+                      <Calendar className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
                       <span>{orderDate}</span>
                     </div>
 
@@ -135,7 +142,7 @@ export const Orders: React.FC = () => {
                       <span className="md:hidden text-neutral-400 text-xs font-normal mr-2">Total:</span>
                       <div className="font-extrabold text-sm text-[#064e3b]">{formatINR(orderTotal)}</div>
                       <div className="text-[10px] font-medium text-neutral-500">
-                        {isCOD ? `COD (incl. delivery)` : 'Prepaid (Free Del.)'}
+                        {isCOD ? `💵 COD` : '💳 Prepaid (Free Del.)'}
                       </div>
                     </div>
 

@@ -25,6 +25,9 @@ router.post('/verify', protect, paymentController.verifyPayment);
 
 // 5. User Orders & Webhook
 router.get('/myorders', protect, paymentController.getMyOrders);
+router.get('/', protect, paymentController.getMyOrders);
+router.post('/', protect, paymentController.placeCodOrder);
+router.get('/:orderId', protect, paymentController.getOrderById);
 router.post('/webhook', paymentController.handleWebhook);
 
 module.exports = router;

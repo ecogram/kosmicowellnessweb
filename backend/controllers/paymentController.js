@@ -64,12 +64,14 @@ const placeCodOrder = asyncHandler(async (req, res) => {
       let pImage = it.image || '';
 
       if (pId) {
-        const dbProd = await Product.findById(pId);
-        if (dbProd) {
-          pName = dbProd.title || dbProd.name || pName;
-          pPrice = dbProd.discountPrice || dbProd.price || pPrice;
-          pImage = (dbProd.images && dbProd.images[0]?.url) || dbProd.image || pImage;
-        }
+        try {
+          const dbProd = await Product.findById(pId);
+          if (dbProd) {
+            pName = dbProd.title || dbProd.name || pName;
+            pPrice = dbProd.discountPrice || dbProd.price || pPrice;
+            pImage = (dbProd.images && dbProd.images[0]?.url) || dbProd.image || pImage;
+          }
+        } catch (_) {}
       }
 
       const qty = Number(it.quantity) || 1;
@@ -79,7 +81,9 @@ const placeCodOrder = asyncHandler(async (req, res) => {
         product: pId || req.user._id,
         name: pName,
         priceSnapshot: pPrice,
+        price: pPrice,
         quantity: qty,
+        qty: qty,
         image: pImage,
       });
     }
@@ -90,12 +94,17 @@ const placeCodOrder = asyncHandler(async (req, res) => {
   const order = await Order.create({
     orderNumber: generateOrderNumber(),
     user: req.user._id,
+    userName: req.user.name || (addressData && addressData.fullName) || 'Customer',
+    userEmail: req.user.email ? req.user.email.toLowerCase().trim() : '',
     items: formattedItems,
     subtotal: calculatedSubtotal || finalTotal,
     discount: Number(discountAmount) || 0,
     shipping: Number(deliveryFee) || 0,
+    deliveryFee: Number(deliveryFee) || 0,
     tax: Number(gstCharge) || 0,
+    gstCharge: Number(gstCharge) || 0,
     total: finalTotal,
+    amount: finalTotal,
     shippingAddress: addressData,
     billingAddress: addressData,
     orderStatus: 'PROCESSING',
@@ -106,7 +115,9 @@ const placeCodOrder = asyncHandler(async (req, res) => {
 
   // Attempt to send email async
   try {
-    await sendOrderConfirmationEmail(order, req.user);
+    if (req.user && req.user.email) {
+      await sendOrderConfirmationEmail(order, req.user);
+    }
   } catch (err) {
     console.error('Email error:', err);
   }
@@ -157,12 +168,14 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
       let pImage = it.image || '';
 
       if (pId) {
-        const dbProd = await Product.findById(pId);
-        if (dbProd) {
-          pName = dbProd.title || dbProd.name || pName;
-          pPrice = dbProd.discountPrice || dbProd.price || pPrice;
-          pImage = (dbProd.images && dbProd.images[0]?.url) || dbProd.image || pImage;
-        }
+        try {
+          const dbProd = await Product.findById(pId);
+          if (dbProd) {
+            pName = dbProd.title || dbProd.name || pName;
+            pPrice = dbProd.discountPrice || dbProd.price || pPrice;
+            pImage = (dbProd.images && dbProd.images[0]?.url) || dbProd.image || pImage;
+          }
+        } catch (_) {}
       }
 
       const qty = Number(it.quantity) || 1;
@@ -172,7 +185,9 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
         product: pId || req.user._id,
         name: pName,
         priceSnapshot: pPrice,
+        price: pPrice,
         quantity: qty,
+        qty: qty,
         image: pImage,
       });
     }
@@ -183,12 +198,17 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
   const order = await Order.create({
     orderNumber: generateOrderNumber(),
     user: req.user._id,
+    userName: req.user.name || (addressData && addressData.fullName) || 'Customer',
+    userEmail: req.user.email ? req.user.email.toLowerCase().trim() : '',
     items: formattedItems,
     subtotal: calculatedSubtotal || finalTotal,
     discount: Number(discountAmount) || 0,
     shipping: Number(deliveryFee) || 0,
+    deliveryFee: Number(deliveryFee) || 0,
     tax: Number(gstCharge) || 0,
+    gstCharge: Number(gstCharge) || 0,
     total: finalTotal,
+    amount: finalTotal,
     shippingAddress: addressData,
     billingAddress: addressData,
     orderStatus: 'PENDING',
@@ -606,16 +626,33 @@ const cancelPendingRazorpayOrder = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, null, 'Pending order cancelled successfully'));
 });
 
-const handleWebhook = asyncHandler(async (req, res) => {
-  const signature = req.headers['x-razorpay-signature'];
-  if (!signature) {
-    throw new ApiError(400, 'Missing webhook signature');
+const getOrderById = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+  const isObjectId = /^[0-9a-fA-F]{24}$/.test(orderId);
+  const userEmail = req.user?.email ? req.user.email.toLowerCase().trim() : '';
+
+  const idCondition = isObjectId
+    ? [{ _id: orderId }, { orderNumber: orderId }, { shiprocketOrderId: orderId }]
+    : [{ orderNumber: orderId }, { shiprocketOrderId: orderId }];
+
+  const userCondition = req.user
+    ? [
+        { user: req.user._id },
+        { user: String(req.user._id) },
+        ...(userEmail ? [{ userEmail: new RegExp(`^${userEmail}$`, 'i') }] : []),
+      ]
+    : [];
+
+  const query = userCondition.length > 0
+    ? { $and: [{ $or: idCondition }, { $or: userCondition }] }
+    : { $or: idCondition };
+
+  const order = await Order.findOne(query).lean();
+  if (!order) {
+    throw new ApiError(404, 'Order not found');
   }
-  if (!req.rawBody) {
-    throw new ApiError(400, 'Raw body missing');
-  }
-  await paymentService.handleWebhook(req.rawBody, signature);
-  res.status(200).json({ status: 'ok' });
+
+  res.status(200).json(new ApiResponse(200, { order }, 'Order retrieved successfully'));
 });
 
 module.exports = {
@@ -623,6 +660,7 @@ module.exports = {
   createRazorpayOrder,
   verifyPayment,
   getMyOrders,
+  getOrderById,
   getSavedPaymentMethods,
   savePaymentMethod,
   updateSavedPaymentMethod,
