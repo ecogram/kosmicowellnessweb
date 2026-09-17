@@ -640,16 +640,26 @@ export const Checkout: React.FC = () => {
     }
   };
 
-  const handleSaveNewAddress = async (e: React.FormEvent) => {
+    const handleSaveNewAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAddress.fullName || !newAddress.phoneNumber || !newAddress.streetAddress || !newAddress.pincode) {
       return;
     }
+    
+    const addressPayload = {
+      addressLabel: newAddress.addressLabel,
+      fullName: newAddress.fullName,
+      streetAddress: newAddress.streetAddress,
+      city: newAddress.city,
+      pincode: newAddress.pincode,
+      phoneNumber: newAddress.phoneNumber
+    };
+
     try {
       if (editingAddressId) {
         // Edit existing address
-        const res = await api.put(`/address/${editingAddressId}`, newAddress);
-        const updated = res.data?.data || { ...newAddress, _id: editingAddressId };
+        const res = await api.put(`/address/${editingAddressId}`, addressPayload);
+        const updated = res.data?.data || { ...addressPayload, _id: editingAddressId, isDefault: newAddress.isDefault };
         setSavedAddresses((prev) =>
           prev.map((a) => (a._id === editingAddressId ? updated : a))
         );
@@ -658,8 +668,8 @@ export const Checkout: React.FC = () => {
         }
       } else {
         // Create new address
-        const res = await api.post('/address', newAddress);
-        const created = res.data?.data || newAddress;
+        const res = await api.post('/address', addressPayload);
+        const created = res.data?.data || { ...addressPayload, isDefault: newAddress.isDefault };
         setSavedAddresses((prev) => [created, ...prev]);
         setSelectedAddress(created);
       }

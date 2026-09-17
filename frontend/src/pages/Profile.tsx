@@ -496,7 +496,6 @@ export const Profile: React.FC = () => {
       city: addrFormCity,
       pincode: addrFormPincode,
       phoneNumber: addrFormPhone,
-      isDefault: addrFormIsDefault,
     };
 
     try {
