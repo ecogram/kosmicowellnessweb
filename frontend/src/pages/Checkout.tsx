@@ -531,6 +531,7 @@ export const Checkout: React.FC = () => {
         
         const codPayload = {
           ...payload,
+          deliveryAddress: selectedAddress._id,
           upfrontAmount: advanceAmount,
           items: itemsToOrder.map((it: any) => ({
             product: it.productId,

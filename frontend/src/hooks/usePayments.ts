@@ -185,6 +185,7 @@ export const useCreateCodUpfront = () => {
       amount: number;
       upfrontAmount?: number;
       deliveryAddressId: string;
+      deliveryAddress?: string;
       items: Array<any>;
       couponCode?: string;
       discountAmount?: number;
