@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
+import { normalizeImageUrl } from '../utils/imageUrl';
 
 export interface FetchProductsParams {
   page?: number;
@@ -22,7 +23,18 @@ export const useProducts = (params: FetchProductsParams) => {
       );
 
       const { data } = await api.get('/products/user/list', { params: cleanParams });
-      const products = Array.isArray(data) ? data : (data?.data?.products ?? (Array.isArray(data?.data) ? data.data : []));
+      let products = Array.isArray(data) ? data : (data?.data?.products ?? (Array.isArray(data?.data) ? data.data : []));
+      
+      // Temporary: ONLY show Sweet Monk products
+      products = products.filter((p: any) => p.name?.toLowerCase().includes('sweet monk'));
+
+      // Normalize images
+      products = products.map((p: any) => ({
+        ...p,
+        image: normalizeImageUrl(p.image),
+        images: Array.isArray(p.images) ? p.images.map(normalizeImageUrl) : [],
+      }));
+
       const pagination = data?.pagination ?? data?.data?.pagination ?? data?.meta ?? {
         total: products.length,
         page: params.page ?? 1,
@@ -43,6 +55,12 @@ export const useProduct = (slug: string) => {
       const { data } = await api.get(`/products/${slug}`);
       const product = data?.data?.product ?? data?.data;
       if (!product) throw new Error('Product not found');
+      
+      product.image = normalizeImageUrl(product.image);
+      if (Array.isArray(product.images)) {
+        product.images = product.images.map(normalizeImageUrl);
+      }
+      
       return product;
     },
     enabled: !!slug,
@@ -57,7 +75,11 @@ export const useCategories = () => {
     queryFn: async () => {
       try {
         const { data } = await api.get('/categories/user/list');
-        return (Array.isArray(data) ? data : (data?.data?.categories ?? data?.data ?? [])) as any[];
+        let categories = (Array.isArray(data) ? data : (data?.data?.categories ?? data?.data ?? [])) as any[];
+        return categories.map(c => ({
+          ...c,
+          image: normalizeImageUrl(c.image),
+        }));
       } catch {
         // Return empty list — no fake fallback categories
         return [] as any[];
