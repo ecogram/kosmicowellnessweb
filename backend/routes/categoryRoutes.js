@@ -9,8 +9,4 @@ router.get('/', categoryController.getCategories);
 // 2. GET /categories/:slug
 router.get('/:slug', categoryController.getCategoryBySlug);
 
-// 3. Admin routes
-router.post('/admin/add-category', categoryController.createCategory);
-router.delete('/admin/delete-category/:id', categoryController.deleteCategory);
-
 module.exports = router;

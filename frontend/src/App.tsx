@@ -93,6 +93,7 @@ function App() {
                   <Route element={<MainLayout />}>
                     <Route path="/" element={<Home />} />
                     <Route path="/shop" element={<Shop />} />
+                    <Route path="/products" element={<Shop />} />
                     <Route path="/care" element={<CarePage />} />
                     <Route path="/ai-consultant" element={<AiConsultantPage />} />
                     <Route path="/products/:slug" element={<ProductDetails />} />

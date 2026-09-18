@@ -53,8 +53,10 @@ export const useProduct = (slug: string) => {
     queryKey: ['product', slug],
     queryFn: async () => {
       const { data } = await api.get(`/products/${slug}`);
-      const product = data?.data?.product ?? data?.data;
-      if (!product) throw new Error('Product not found');
+      const product = data?.data?.product ?? data?.data ?? data;
+      if (!product || (!product.name && !product._id && !product.id)) {
+        throw new Error('Product not found');
+      }
       
       product.image = normalizeImageUrl(product.image);
       if (Array.isArray(product.images)) {

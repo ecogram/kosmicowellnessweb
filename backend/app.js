@@ -14,7 +14,14 @@ const limiter = rateLimit({
 });
 
 // Middleware
-const allowedOrigins = ['http://localhost:5173', 'http://localhost'];
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost',
+  'https://www.kosmicowellness.com',
+  'https://kosmicowellness.com',
+  'https://api.kosmicowellness.com',
+];
 if (process.env.CLIENT_URL && !allowedOrigins.includes(process.env.CLIENT_URL)) {
   allowedOrigins.push(process.env.CLIENT_URL);
 }
@@ -84,7 +91,6 @@ const postRoutes = require('./routes/postRoutes');
 const systemRoutes = require('./routes/systemRoutes');
 const emergencyRoutes = require('./routes/emergencyRoutes');
 const updateRoutes = require('./routes/updateRoutes');
-const adminRoutes = require('./routes/adminRoutes');
 
 // Helper to register routers on both /api and /api/v1 prefixes
 const registerRoutes = (prefix) => {
@@ -96,10 +102,7 @@ const registerRoutes = (prefix) => {
     });
   });
 
-  // Admin Module
-  app.use(`${prefix}/admin`, adminRoutes);
-
-  // 1. Core Catalog, Categories & Reviews (Module 3)
+  // 1. Core Catalog, Categories & Reviews (User Facing)
   app.use(`${prefix}/products`, productRoutes);
   app.use(`${prefix}/products/:productId/reviews`, reviewRoutes);
   app.use(`${prefix}/categories`, categoryRoutes);

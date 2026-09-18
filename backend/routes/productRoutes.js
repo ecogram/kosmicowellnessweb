@@ -19,33 +19,20 @@ const handleUpload = (req, res, next) => {
   });
 };
 
-// 1. Specific Product Catalog Endpoints (User Side)
+// 1. User Catalog Endpoints
 router.get('/user/list', productController.getProducts);
 router.get('/categories', productController.getDistinctCategories);
 router.get('/bestsellers', productController.getBestsellers);
 
-// 2. Admin Product Management (/api/products/admin/*)
-router.get('/admin/list', productController.getAdminProducts);
-router.post('/admin/add-product', handleUpload, productController.addProduct);
-router.put('/admin/update-product/:id', handleUpload, productController.updateProduct);
-router.put('/admin/toggle-visibility/:id', productController.toggleVisibility);
-router.delete('/admin/delete-product/:id', productController.deleteProduct);
-router.post('/admin/extract-url', productController.extractProductUrl);
-
-// 3. Product Reviews (GET & POST /products/:productId/reviews or /products/:id/reviews)
+// 2. Product Reviews (User Facing)
 router.get('/:productId/reviews', reviewController.getReviews);
 router.post('/:productId/reviews', protect, reviewController.createReview);
 router.get('/:id/reviews', reviewController.getReviews);
 router.post('/:id/reviews', protect, reviewController.createReview);
 
-// 4. Single Product Details & Root
+// 3. Single Product Details & Root (User Facing)
 router.get('/:slug', productController.getProductBySlug);
 router.get('/:id', productController.getProductBySlug);
 router.get('/', productController.getProducts);
-
-// 5. REST write operations
-router.post('/', handleUpload, productController.addProduct);
-router.put('/:id', handleUpload, productController.updateProduct);
-router.delete('/:id', productController.deleteProduct);
 
 module.exports = router;
