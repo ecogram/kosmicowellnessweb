@@ -6,6 +6,9 @@ const { sendOtpEmail } = require('../utils/email');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
+const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
+const isValidEmail = (email) => emailRegex.test(email);
+
 class AuthService {
   generateAccessToken(userId) {
     const secret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'Kosmico_Secret_Key_123';
@@ -23,30 +26,26 @@ class AuthService {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  async sendEmailOtp(email, type = 'auto') {
+  async sendEmailOtp(email, type = 'auto', name = '') {
     if (!email) {
-      throw new ApiError(400, 'Email address is required');
+      throw new ApiError(400, 'Email is required');
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
-    if (!emailRegex.test(normalizedEmail)) {
-      throw new ApiError(400, 'Please provide a valid lowercase email address');
+
+    if (!isValidEmail(normalizedEmail)) {
+      throw new ApiError(400, 'Please enter a valid email address');
     }
 
-    // 1. Validation for Registration: Ensure single account per email
+    const existingUser = await User.findOne({ email: normalizedEmail });
+
     if (type === 'register') {
-      const existingUser = await User.findOne({ email: normalizedEmail });
       if (existingUser) {
         throw new ApiError(400, 'An account with this email already exists. Please log in instead.');
       }
-    }
-
-    // 2. Validation for Login: Ensure account exists
-    if (type === 'login') {
-      const existingUser = await User.findOne({ email: normalizedEmail });
+    } else if (type === 'login') {
       if (!existingUser) {
-        throw new ApiError(404, 'No account found with this email. Please create an account first.');
+        throw new ApiError(404, 'No account found with this email. Please register first.');
       }
       if (!existingUser.isActive) {
         throw new ApiError(403, 'This account is disabled. Please contact support.');
@@ -59,11 +58,12 @@ class AuthService {
     // Remove any previous OTPs for this email
     await Otp.deleteMany({ email: normalizedEmail });
 
-    // Store new OTP
+    // Store new OTP with name if provided
     await Otp.create({
       email: normalizedEmail,
       otp,
       expiresAt,
+      ...(name ? { name } : {}),
     });
 
     // Send email
@@ -102,6 +102,8 @@ class AuthService {
       throw new ApiError(400, 'Incorrect OTP code. Please enter the valid 6-digit code sent to your email.');
     }
 
+    const savedOtpName = otpRecord.name;
+
     // OTP is valid -> delete OTP record so it cannot be reused
     await Otp.deleteMany({ email: normalizedEmail });
 
@@ -114,7 +116,7 @@ class AuthService {
       }
       const defaultName = name && name.trim().length > 0 
         ? name.trim() 
-        : normalizedEmail.split('@')[0];
+        : (savedOtpName || normalizedEmail.split('@')[0]);
 
       user = await User.create({
         name: defaultName,
@@ -131,7 +133,7 @@ class AuthService {
       if (!user) {
         const defaultName = name && name.trim().length > 0 
           ? name.trim() 
-          : normalizedEmail.split('@')[0];
+          : (savedOtpName || normalizedEmail.split('@')[0]);
 
         user = await User.create({
           name: defaultName,

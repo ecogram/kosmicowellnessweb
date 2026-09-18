@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const couponController = require('../controllers/couponController');
-const { protect, authorizeRoles } = require('../middleware/authMiddleware');
+const { protect, optionalProtect } = require('../middleware/authMiddleware');
 
-// Public & Customer Routes (Doc API #16 & #17)
+// Customer & Public Coupon Routes (Doc API #16 & #17)
 router.get('/', couponController.getCoupons);
-router.post('/apply', protect, couponController.applyCoupon);
+router.post('/verify', optionalProtect, couponController.applyCoupon);
+router.post('/apply', optionalProtect, couponController.applyCoupon);
 
 module.exports = router;

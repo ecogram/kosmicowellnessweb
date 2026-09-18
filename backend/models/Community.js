@@ -36,10 +36,22 @@ const postSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    mediaUrls: {
+      type: [String],
+      default: [],
+    },
     privacyLevel: {
       type: String,
       enum: ['public', 'friends', 'private'],
       default: 'public',
+    },
+    tags: {
+      type: [String],
+      default: [],
+    },
+    location: {
+      type: String,
+      default: '',
     },
     likes: [
       {
@@ -51,6 +63,7 @@ const postSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    strict: false,
   }
 );
 
@@ -65,7 +78,11 @@ const friendRequestSchema = new mongoose.Schema(
     recipient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
+      index: true,
+    },
+    receiver: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
       index: true,
     },
     status: {
@@ -76,6 +93,7 @@ const friendRequestSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    strict: false,
   }
 );
 

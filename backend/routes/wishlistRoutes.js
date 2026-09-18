@@ -13,9 +13,11 @@ const addSchema = {
 
 router.use(protect); // Authentication required
 
-// Documented Wishlist Endpoints (Section 5: A, B, C)
+// Documented Wishlist Endpoints (Section 4)
 router.get('/', wishlistController.getWishlist);
 router.post('/add', wishlistController.addToWishlist);
-router.post('/remove', wishlistController.removeWishlistFromBody);
+router.delete('/remove', wishlistController.removeWishlistFromBody);
+router.post('/remove', wishlistController.removeWishlistFromBody); // fallback support
+router.delete('/:productId', wishlistController.removeWishlistItem); // REST alias
 
 module.exports = router;

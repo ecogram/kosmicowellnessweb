@@ -68,6 +68,17 @@ const setDefaultAddress = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, address, 'Default address updated successfully'));
 });
 
+const getAddressById = asyncHandler(async (req, res) => {
+  const { addressId } = req.params;
+  const address = await Address.findOne({ _id: addressId, user: req.user._id });
+
+  if (!address) {
+    throw new ApiError(404, 'Address not found');
+  }
+
+  res.status(200).json(new ApiResponse(200, address, 'Address fetched successfully'));
+});
+
 const deleteAddress = asyncHandler(async (req, res) => {
   const { addressId } = req.params;
   const address = await Address.findOneAndDelete({ _id: addressId, user: req.user._id });
@@ -81,6 +92,7 @@ const deleteAddress = asyncHandler(async (req, res) => {
 
 module.exports = {
   getAddresses,
+  getAddressById,
   addAddress,
   updateAddress,
   setDefaultAddress,

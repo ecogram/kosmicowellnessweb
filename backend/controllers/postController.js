@@ -6,14 +6,15 @@ const User = require('../models/User');
 const { saveMediaFile } = require('../utils/profileStorage');
 
 const createPost = asyncHandler(async (req, res) => {
-  const { content, privacyLevel = 'public' } = req.body;
-  let mediaUrl = req.body.mediaUrl || '';
+  const { content, privacyLevel = 'public', tags = [], location = '' } = req.body;
+  let mediaUrls = Array.isArray(req.body.mediaUrls)
+    ? req.body.mediaUrls
+    : (req.body.mediaUrl ? [req.body.mediaUrl] : []);
 
   const file = req.file || (req.files && req.files.length > 0 ? req.files[0] : null);
   if (file) {
-    mediaUrl = saveMediaFile(file, 'postMedia');
-  } else if (mediaUrl && (mediaUrl.startsWith('data:image/') || mediaUrl.startsWith('data:video/'))) {
-    mediaUrl = saveMediaFile(mediaUrl, 'postMedia');
+    const saved = saveMediaFile(file, 'postMedia');
+    mediaUrls.push(saved);
   }
 
   if (!content || content.trim().length === 0) {
@@ -24,12 +25,28 @@ const createPost = asyncHandler(async (req, res) => {
     user: req.user._id,
     content,
     privacyLevel,
-    mediaUrl,
+    mediaUrl: mediaUrls[0] || '',
+    mediaUrls,
+    tags: Array.isArray(tags) ? tags : [tags].filter(Boolean),
+    location,
   });
 
   const populated = await Post.findById(post._id).populate('user', 'name profilePicture email');
 
   res.status(201).json(new ApiResponse(201, { post: populated }, 'Post created successfully'));
+});
+
+const getPostById = asyncHandler(async (req, res) => {
+  const targetId = req.params.postId || req.params.id;
+  const post = await Post.findById(targetId)
+    .populate('user', 'name profilePicture email')
+    .populate('comments.user', 'name profilePicture');
+
+  if (!post) {
+    throw new ApiError(404, 'Post not found');
+  }
+
+  res.status(200).json(new ApiResponse(200, { post }, 'Post details retrieved'));
 });
 
 const getFeed = asyncHandler(async (req, res) => {
@@ -75,8 +92,8 @@ const getUserPosts = asyncHandler(async (req, res) => {
 });
 
 const toggleLike = asyncHandler(async (req, res) => {
-  const { postId } = req.params;
-  const post = await Post.findById(postId);
+  const targetId = req.params.postId || req.params.id;
+  const post = await Post.findById(targetId);
 
   if (!post) {
     throw new ApiError(404, 'Post not found');
@@ -100,8 +117,8 @@ const toggleLike = asyncHandler(async (req, res) => {
 });
 
 const getComments = asyncHandler(async (req, res) => {
-  const { postId } = req.params;
-  const post = await Post.findById(postId).populate('comments.user', 'name profilePicture');
+  const targetId = req.params.postId || req.params.id;
+  const post = await Post.findById(targetId).populate('comments.user', 'name profilePicture');
 
   if (!post) {
     throw new ApiError(404, 'Post not found');
@@ -111,14 +128,14 @@ const getComments = asyncHandler(async (req, res) => {
 });
 
 const addComment = asyncHandler(async (req, res) => {
-  const { postId } = req.params;
+  const targetId = req.params.postId || req.params.id;
   const { text } = req.body;
 
   if (!text || text.trim().length === 0) {
     throw new ApiError(400, 'Comment text is required');
   }
 
-  const post = await Post.findById(postId);
+  const post = await Post.findById(targetId);
   if (!post) {
     throw new ApiError(404, 'Post not found');
   }
@@ -132,14 +149,14 @@ const addComment = asyncHandler(async (req, res) => {
   post.comments.push(newComment);
   await post.save();
 
-  const updatedPost = await Post.findById(postId).populate('comments.user', 'name profilePicture');
+  const updatedPost = await Post.findById(targetId).populate('comments.user', 'name profilePicture');
 
   res.status(201).json(new ApiResponse(201, updatedPost.comments, 'Comment added successfully'));
 });
 
 const deletePost = asyncHandler(async (req, res) => {
-  const { postId } = req.params;
-  const post = await Post.findOneAndDelete({ _id: postId, user: req.user._id });
+  const targetId = req.params.postId || req.params.id;
+  const post = await Post.findOneAndDelete({ _id: targetId, user: req.user._id });
 
   if (!post) {
     throw new ApiError(404, 'Post not found or unauthorized');
@@ -150,26 +167,33 @@ const deletePost = asyncHandler(async (req, res) => {
 
 // Friend Requests
 const sendFriendRequest = asyncHandler(async (req, res) => {
-  const { friendId } = req.params;
+  const friendId = req.params.userId || req.params.friendId;
 
   if (friendId === req.user._id.toString()) {
     throw new ApiError(400, 'Cannot send friend request to yourself');
   }
 
-  const existing = await FriendRequest.findOne({
+  let request = await FriendRequest.findOne({
     sender: req.user._id,
-    recipient: friendId,
-    status: 'pending',
+    $or: [{ recipient: friendId }, { receiver: friendId }],
   });
 
-  if (existing) {
-    throw new ApiError(400, 'Friend request already sent');
+  if (request) {
+    if (request.status === 'pending') {
+      throw new ApiError(400, 'Friend request already sent');
+    }
+    request.status = 'pending';
+    request.recipient = friendId;
+    request.receiver = friendId;
+    await request.save();
+  } else {
+    request = await FriendRequest.create({
+      sender: req.user._id,
+      recipient: friendId,
+      receiver: friendId,
+      status: 'pending',
+    });
   }
-
-  const request = await FriendRequest.create({
-    sender: req.user._id,
-    recipient: friendId,
-  });
 
   res.status(201).json(new ApiResponse(201, { request }, 'Friend request sent successfully'));
 });
@@ -181,7 +205,7 @@ const getFriends = asyncHandler(async (req, res) => {
 
 const getFriendRequests = asyncHandler(async (req, res) => {
   const requests = await FriendRequest.find({
-    recipient: req.user._id,
+    $or: [{ recipient: req.user._id }, { receiver: req.user._id }],
     status: 'pending',
   }).populate('sender', 'name email profilePicture');
 
@@ -189,8 +213,12 @@ const getFriendRequests = asyncHandler(async (req, res) => {
 });
 
 const acceptFriendRequest = asyncHandler(async (req, res) => {
-  const { requestId } = req.params;
-  const request = await FriendRequest.findOne({ _id: requestId, recipient: req.user._id, status: 'pending' });
+  const targetId = req.params.requestId || req.params.id;
+  const request = await FriendRequest.findOne({
+    _id: targetId,
+    $or: [{ recipient: req.user._id }, { receiver: req.user._id }],
+    status: 'pending',
+  });
 
   if (!request) {
     throw new ApiError(404, 'Friend request not found');
@@ -199,18 +227,24 @@ const acceptFriendRequest = asyncHandler(async (req, res) => {
   request.status = 'accepted';
   await request.save();
 
+  const recipientId = request.recipient || request.receiver;
+
   // Add to friends list for both
   await Promise.all([
-    User.findByIdAndUpdate(request.sender, { $addToSet: { friends: request.recipient } }),
-    User.findByIdAndUpdate(request.recipient, { $addToSet: { friends: request.sender } }),
+    User.findByIdAndUpdate(request.sender, { $addToSet: { friends: recipientId } }),
+    User.findByIdAndUpdate(recipientId, { $addToSet: { friends: request.sender } }),
   ]);
 
   res.status(200).json(new ApiResponse(200, { request }, 'Friend request accepted'));
 });
 
 const rejectFriendRequest = asyncHandler(async (req, res) => {
-  const { requestId } = req.params;
-  const request = await FriendRequest.findOne({ _id: requestId, recipient: req.user._id, status: 'pending' });
+  const targetId = req.params.requestId || req.params.id;
+  const request = await FriendRequest.findOne({
+    _id: targetId,
+    $or: [{ recipient: req.user._id }, { receiver: req.user._id }],
+    status: 'pending',
+  });
 
   if (!request) {
     throw new ApiError(404, 'Friend request not found');
@@ -223,10 +257,10 @@ const rejectFriendRequest = asyncHandler(async (req, res) => {
 });
 
 const editPost = asyncHandler(async (req, res) => {
-  const { postId } = req.params;
+  const targetId = req.params.postId || req.params.id;
   const { content, privacyLevel, tags, location } = req.body;
 
-  const post = await Post.findOne({ _id: postId, user: req.user._id });
+  const post = await Post.findOne({ _id: targetId, user: req.user._id });
   if (!post) {
     throw new ApiError(404, 'Post not found or you are not authorized to edit it');
   }
@@ -252,6 +286,7 @@ const editPost = asyncHandler(async (req, res) => {
 
 module.exports = {
   createPost,
+  getPostById,
   getFeed,
   getUserPosts,
   toggleLike,

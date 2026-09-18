@@ -84,6 +84,7 @@ const postRoutes = require('./routes/postRoutes');
 const systemRoutes = require('./routes/systemRoutes');
 const emergencyRoutes = require('./routes/emergencyRoutes');
 const updateRoutes = require('./routes/updateRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // Helper to register routers on both /api and /api/v1 prefixes
 const registerRoutes = (prefix) => {
@@ -95,6 +96,9 @@ const registerRoutes = (prefix) => {
     });
   });
 
+  // Admin Module
+  app.use(`${prefix}/admin`, adminRoutes);
+
   // 1. Core Catalog, Categories & Reviews (Module 3)
   app.use(`${prefix}/products`, productRoutes);
   app.use(`${prefix}/products/:productId/reviews`, reviewRoutes);
@@ -102,8 +106,10 @@ const registerRoutes = (prefix) => {
 
   // 2. Authentication & User Profile (Module 1)
   app.use(`${prefix}/auth`, authRoutes);
+  app.use(`${prefix}/users`, authRoutes);
 
   // 3. User Address, Wishlist, Coupons & Shipping (Modules 2, 4, 5, 8)
+  app.use(`${prefix}/addresses`, addressRoutes);
   app.use(`${prefix}/address`, addressRoutes);
   app.use(`${prefix}/wishlist`, wishlistRoutes);
   app.use(`${prefix}/coupons`, couponRoutes);
@@ -111,6 +117,7 @@ const registerRoutes = (prefix) => {
 
   // 4. Orders, Payments, Tracking & Refunds/Returns (Modules 6, 7)
   app.use(`${prefix}/payment`, paymentRoutes);
+  app.use(`${prefix}/payments`, paymentRoutes); // alias for /payments
   app.use(`${prefix}/orders`, paymentRoutes); // alias for /orders
   app.use(`${prefix}/order`, orderActionRoutes);
   app.use(`${prefix}/refund`, refundRoutes);

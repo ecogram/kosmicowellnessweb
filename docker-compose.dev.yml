@@ -38,7 +38,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
-    command: nodemon worker.js
+    command: npx nodemon worker.js
     env_file:
       - .env
     environment:

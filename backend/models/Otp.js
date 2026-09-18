@@ -8,6 +8,10 @@ const otpSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    name: {
+      type: String,
+      trim: true,
+    },
     otp: {
       type: String,
       required: true,

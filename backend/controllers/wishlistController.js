@@ -27,7 +27,7 @@ const clearWishlist = asyncHandler(async (req, res) => {
 });
 
 const removeWishlistFromBody = asyncHandler(async (req, res) => {
-  const { productId } = req.body;
+  const productId = req.body?.productId || req.query?.productId || req.params?.productId;
   const wishlist = await wishlistService.removeItem(getUserId(req), productId);
   res.status(200).json(new ApiResponse(200, { wishlist }, 'Item removed from wishlist'));
 });

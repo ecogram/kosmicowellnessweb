@@ -10,8 +10,10 @@ router.route('/')
   .post(addressController.addAddress);
 
 router.put('/set-default/:addressId', addressController.setDefaultAddress);
+router.put('/:addressId/set-default', addressController.setDefaultAddress);
 
 router.route('/:addressId')
+  .get(addressController.getAddressById)
   .put(addressController.updateAddress)
   .delete(addressController.deleteAddress);
 

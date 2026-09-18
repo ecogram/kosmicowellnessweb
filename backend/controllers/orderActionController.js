@@ -250,12 +250,81 @@ const getMyReturns = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, returns, 'Returns retrieved successfully'));
 });
 
+// Return Request (POST /api/return/request)
+const requestReturn = asyncHandler(async (req, res) => {
+  const { orderId, reason } = req.body;
+  const targetId = orderId || req.params?.orderId;
+  const query = buildOrderQuery(targetId, req.user);
+
+  const order = await Order.findOne(query);
+
+  if (!order) {
+    throw new ApiError(404, 'Order not found');
+  }
+
+  order.returnReason = reason || 'Product was damaged';
+  order.refundStatus = 'RETURN_REQUESTED';
+  await order.save();
+
+  const orderNum = order.orderNumber || order.shiprocketOrderId || order._id.toString();
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        returnId: 'RET-' + Date.now().toString().slice(-6),
+        orderNumber: orderNum,
+        status: order.refundStatus,
+        reason: order.returnReason,
+      },
+      'Return request submitted successfully'
+    )
+  );
+});
+
+// Refund Request (POST /api/refund/request)
+const requestRefund = asyncHandler(async (req, res) => {
+  const { orderId, reason } = req.body;
+  const targetId = orderId || req.params?.orderId;
+  const query = buildOrderQuery(targetId, req.user);
+
+  const order = await Order.findOne(query);
+
+  if (!order) {
+    throw new ApiError(404, 'Order not found');
+  }
+
+  order.refundStatus = 'REFUND_REQUESTED';
+  order.returnReason = reason || 'Did not like the product';
+  await order.save();
+
+  const orderNum = order.orderNumber || order.shiprocketOrderId || order._id.toString();
+  const refundAmount = order.total !== undefined ? order.total : (order.amount !== undefined ? order.amount : 0);
+
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        refundId: 'REF-' + Date.now().toString().slice(-6),
+        orderNumber: orderNum,
+        refundAmount,
+        status: 'REFUND_REQUESTED',
+        reason: order.returnReason,
+        expectedDays: '5 - 7 Business Days',
+      },
+      'Refund request submitted successfully'
+    )
+  );
+});
+
 module.exports = {
   trackOrder,
   cancelOrder,
   returnOrder,
   initiateRefund,
+  requestRefund,
   getMyRefunds,
   initiateReturn,
+  requestReturn,
   getMyReturns,
 };

@@ -34,7 +34,7 @@ const register = asyncHandler(async (req, res) => {
   if (!nameRegex.test(name.trim())) {
     throw new ApiError(400, 'Name should only contain alphabets (no numbers or special characters allowed)');
   }
-  const result = await authService.sendEmailOtp(email, 'register');
+  const result = await authService.sendEmailOtp(email, 'register', name.trim());
   res.status(200).json(new ApiResponse(200, { ...result, name: name.trim() }, 'Registration OTP sent successfully'));
 });
 
@@ -64,11 +64,11 @@ const loginVerify = asyncHandler(async (req, res) => {
 });
 
 const resendOtp = asyncHandler(async (req, res) => {
-  const { email, type } = req.body;
+  const { email, type, purpose } = req.body;
   if (!email) {
     throw new ApiError(400, 'Email is required');
   }
-  const result = await authService.sendEmailOtp(email, type || 'auto');
+  const result = await authService.sendEmailOtp(email, purpose || type || 'auto');
   res.status(200).json(new ApiResponse(200, result, 'OTP resent successfully'));
 });
 

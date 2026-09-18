@@ -185,66 +185,101 @@ This document provides a comprehensive reference for all client/user-side API en
 
 ### 1. Get Available Coupons
 - **Endpoint:** `GET /api/coupons`
-- **Auth Required:** Yes
+- **Auth Required:** No
 
-### 2. Apply Coupon
-- **Endpoint:** `POST /api/coupons/apply`
-- **Auth Required:** Yes
+### 2. Verify / Apply Coupon
+- **Endpoint:** `POST /api/coupons/verify` *(also `/api/coupons/apply`)*
+- **Auth Required:** Optional (`Bearer Token`)
 - **Request Body:**
   ```json
   {
-    "code": "KOSMICO10",
-    "orderAmount": 500.0
+    "code": "WELCOME10",
+    "orderAmount": 1500
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "statusCode": 200,
+    "data": {
+      "code": "WELCOME10",
+      "discountAmount": 150,
+      "finalAmount": 1350,
+      "originalAmount": 1500,
+      "description": "Welcome 10% Discount"
+    },
+    "message": "Coupon applied successfully",
+    "success": true
   }
   ```
 
 ---
 
-## 6. Payment & Orders Module (`/api/payment`, `/api/orders`, `/api/order`)
+## 6. Payment & Orders Module (`/api/payment`, `/api/payments`, `/api/orders`)
 
-### 1. Saved Payment Methods
-- **GET /api/payment/saved-methods** (Get saved payment methods)
-- **POST /api/payment/save-method** (Save payment method)
-- **PUT /api/payment/save-method/{methodId}** (Update saved method)
-- **DELETE /api/payment/save-method/{methodId}** (Delete saved method)
+### 1. Place Order via Razorpay
+- **Create Order:** `POST /api/payment/razorpay/create` (Protected)
+  ```json
+  {
+    "amount": 999,
+    "deliveryAddressId": "60d5ec49c...",
+    "items": [{ "product": "60d5ec49c...", "name": "Vitamin C Serum", "qty": 2, "price": 499 }],
+    "couponCode": "WELCOME10",
+    "discountAmount": 100,
+    "deliveryFee": 50
+  }
+  ```
+- **Verify Payment:** `POST /api/payment/razorpay/verify` & `POST /api/payment/verify` (Protected)
+  ```json
+  {
+    "razorpay_order_id": "order_...",
+    "razorpay_payment_id": "pay_...",
+    "razorpay_signature": "..."
+  }
+  ```
+- **Cancel Pending Order:** `POST /api/payment/razorpay/cancel-pending` (Protected)
 
 ### 2. Place COD Order
-- **Endpoint:** `POST /api/payment/cod`
-- **Auth Required:** Yes
+- **Endpoint:** `POST /api/payment/cod` (Protected)
 - **Request Body:**
   ```json
   {
-    "amount": 499.0,
-    "deliveryAddressId": "address_id",
-    "items": [{"productId": "...", "quantity": 1, "price": 499.0}],
-    "couponCode": "...",
-    "discountAmount": 0.0,
-    "deliveryFee": 50.0,
-    "gstCharge": 0.0
+    "amount": 899,
+    "deliveryAddressId": "60d5ec49c...",
+    "items": [{ "product": "60d5ec49c...", "name": "Vitamin C Serum", "qty": 1, "price": 899 }],
+    "couponCode": "WELCOME10",
+    "discountAmount": 100,
+    "deliveryFee": 50
   }
   ```
 
 ### 3. COD Upfront Payment (Partial COD via Razorpay)
-- **Create:** `POST /api/payment/cod-upfront/create`
-- **Verify:** `POST /api/payment/cod-upfront/verify`
-
-### 4. Razorpay Orders
-- **Create Order:** `POST /api/payment/razorpay/create`
-- **Cancel Pending Order:** `POST /api/payment/razorpay/cancel-pending`
-- **Verify Payment:** `POST /api/payment/verify`
+- **Create:** `POST /api/payment/cod-upfront/create` (Protected)
   ```json
   {
-    "razorpay_payment_id": "pay_...",
+    "amount": 1500,
+    "upfrontAmount": 150,
+    "deliveryAddressId": "60d5ec49c...",
+    "items": [{ "product": "60d5ec49c...", "name": "Vitamin C Serum", "qty": 2, "price": 750 }]
+  }
+  ```
+- **Verify:** `POST /api/payment/cod-upfront/verify` (Protected)
+  ```json
+  {
     "razorpay_order_id": "order_...",
+    "razorpay_payment_id": "pay_...",
     "razorpay_signature": "..."
   }
   ```
 
-### 5. User Orders & Tracking
-- **Get My Orders:** `GET /api/payment/myorders?page=1&limit=10`
-- **Track Order:** `GET /api/order/track/{orderId}`
-- **Cancel Order:** `POST /api/order/cancel/{orderId}`
-- **Return Order:** `POST /api/order/return/{orderId}` (Body: `{"reason": "..."}`)
+### 4. User Orders History
+- **Get My Orders:** `GET /api/payments/myorders` & `GET /api/payment/myorders` (Protected)
+
+### 5. Saved Payment Methods
+- **GET /api/payment/saved-methods** (Get saved payment methods)
+- **POST /api/payment/save-method** (Save payment method)
+- **PUT /api/payment/save-method/{methodId}** (Update saved method)
+- **DELETE /api/payment/save-method/{methodId}** (Delete saved method)
 
 ---
 
@@ -307,11 +342,12 @@ This document provides a comprehensive reference for all client/user-side API en
 - **Edit Post:** `PUT /api/posts/{postId}` or `PATCH /api/posts/{postId}`
 - **Delete Post:** `DELETE /api/posts/{postId}`
 - **Friends / Requests:**
-  - Send Request: `POST /api/posts/friend-request/send/{friendId}`
-  - Get Friends: `GET /api/posts/friends`
-  - Get Requests: `GET /api/posts/friend-requests`
-  - Accept Request: `POST /api/posts/friend-request/accept/{requestId}`
-  - Reject Request: `POST /api/posts/friend-request/reject/{requestId}`
+  - Send Request: `POST /api/posts/friend-request/send/{userId}` (Protected)
+  - List Pending Requests: `GET /api/posts/friend-request/pending` (Protected)
+  - Accept Request: `POST /api/posts/friend-request/accept/{requestId}` (Protected)
+  - Reject Request: `POST /api/posts/friend-request/reject/{requestId}` (Protected)
+  - Get Friends List: `GET /api/posts/friends` (Protected)
+  - Get Requests List: `GET /api/posts/friend-requests` (Protected)
 
 ---
 
@@ -327,6 +363,24 @@ This document provides a comprehensive reference for all client/user-side API en
 ## 12. Emergency & System Status (`/api/emergency`, `/api/system`)
 
 - **Emergency Message Generator:** `POST /api/emergency/generate-message` (Fallback to GET)
-  - **Body:** `{"latitude": 28.6139, "longitude": 77.2090}`
+  - **Body:** `{"latitude": 28.7041, "longitude": 77.1025}`
+  - **Response:**
+    ```json
+    {
+      "statusCode": 200,
+      "data": {
+        "message": "EMERGENCY ALERT: User requires urgent medical assistance. Current Location: https://maps.google.com/?q=28.7041,77.1025...",
+        "smsText": "...",
+        "location": {
+          "latitude": 28.7041,
+          "longitude": 77.1025,
+          "mapsUrl": "https://maps.google.com/?q=28.7041,77.1025"
+        },
+        "helplineNumbers": ["112", "108", "102"]
+      },
+      "message": "Emergency SOS message generated successfully",
+      "success": true
+    }
+    ```
 - **System Status / Maintenance:** `GET /api/system/status`
 - **App Update Check:** `GET /api/updates/check?version=1.0.3`

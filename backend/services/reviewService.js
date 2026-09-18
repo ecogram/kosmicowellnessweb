@@ -19,16 +19,23 @@ class ReviewService {
   }
 
   async createReview(productId, userId, rating, title, content) {
-    const product = await Product.findById(productId);
+    let product = null;
+    if (mongoose.isValidObjectId(productId)) {
+      product = await Product.findById(productId);
+    }
+    if (!product) {
+      product = await Product.findOne({ slug: productId });
+    }
     if (!product) {
       throw new ApiError(404, 'Product not found');
     }
 
-    const isVerifiedPurchase = await this.checkVerifiedPurchase(userId, productId);
+    const realProductId = product._id;
+    const isVerifiedPurchase = await this.checkVerifiedPurchase(userId, realProductId);
 
     try {
       const review = await Review.create({
-        product: productId,
+        product: realProductId,
         user: userId,
         rating,
         title,

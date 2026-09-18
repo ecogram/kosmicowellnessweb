@@ -511,22 +511,26 @@ const createCodUpfrontOrder = asyncHandler(async (req, res) => {
       let pImage = it.image || '';
 
       if (pId) {
-        const dbProd = await Product.findById(pId);
-        if (dbProd) {
-          pName = dbProd.title || dbProd.name || pName;
-          pPrice = dbProd.discountPrice || dbProd.price || pPrice;
-          pImage = (dbProd.images && dbProd.images[0]?.url) || dbProd.image || pImage;
-        }
+        try {
+          const dbProd = await Product.findById(pId);
+          if (dbProd) {
+            pName = dbProd.title || dbProd.name || pName;
+            pPrice = dbProd.discountPrice || dbProd.price || pPrice;
+            pImage = (dbProd.images && dbProd.images[0]?.url) || dbProd.image || pImage;
+          }
+        } catch (_) {}
       }
 
-      const qty = Number(it.quantity) || 1;
+      const qty = Number(it.qty || it.quantity) || 1;
       calculatedSubtotal += pPrice * qty;
 
       formattedItems.push({
         product: pId || req.user._id,
         name: pName,
         priceSnapshot: pPrice,
+        price: pPrice,
         quantity: qty,
+        qty: qty,
         image: pImage,
       });
     }
@@ -653,6 +657,14 @@ const getOrderById = asyncHandler(async (req, res) => {
   }
 
   res.status(200).json(new ApiResponse(200, { order }, 'Order retrieved successfully'));
+});
+
+// 8. Razorpay Webhook Handler (POST /api/payment/webhook)
+const handleWebhook = asyncHandler(async (req, res) => {
+  const signature = req.headers['x-razorpay-signature'];
+  const rawBody = req.rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
+  await paymentService.handleWebhook(rawBody, signature);
+  res.status(200).json(new ApiResponse(200, null, 'Webhook processed successfully'));
 });
 
 module.exports = {
