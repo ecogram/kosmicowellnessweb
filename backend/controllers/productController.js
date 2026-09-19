@@ -51,7 +51,14 @@ const getDistinctCategories = asyncHandler(async (req, res) => {
 
 // 4. GET Bestseller Products (GET /api/products/bestsellers)
 const getBestsellers = asyncHandler(async (req, res) => {
-  const products = await Product.find({ isActive: true })
+  const products = await Product.find({
+    isActive: true,
+    $or: [
+      { name: { $regex: /sweet monk|monk fruit|monk/i } },
+      { title: { $regex: /sweet monk|monk fruit|monk/i } },
+      { slug: { $regex: /sweet-monk|monk/i } },
+    ],
+  })
     .sort({ rating: -1, reviewsCount: -1, createdAt: -1 })
     .limit(8)
     .lean();

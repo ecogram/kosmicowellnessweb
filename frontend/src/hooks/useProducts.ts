@@ -25,6 +25,12 @@ export const useProducts = (params: FetchProductsParams) => {
       const { data } = await api.get('/products/user/list', { params: cleanParams });
       let products = Array.isArray(data) ? data : (data?.data?.products ?? (Array.isArray(data?.data) ? data.data : []));
 
+      // Filter: Strictly keep ONLY Sweet Monk products
+      products = products.filter((p: any) => {
+        const str = (p.name || p.title || p.slug || '').toLowerCase();
+        return str.includes('sweet monk') || str.includes('monk');
+      });
+
       // Normalize images
       products = products.map((p: any) => ({
         ...p,
