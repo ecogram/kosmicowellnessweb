@@ -22,11 +22,36 @@ export const useProducts = (params: FetchProductsParams) => {
         Object.entries(params).filter(([_, v]) => v !== undefined && v !== '')
       );
 
-      const { data } = await api.get('/products/user/list', { params: cleanParams });
+      let data: any;
+      try {
+        const res = await api.get('/products/user/list', { params: cleanParams });
+        data = res.data;
+      } catch (err) {
+        // Fallback to /products/bestsellers if /user/list fails on live server
+        try {
+          const res = await api.get('/products/bestsellers');
+          data = res.data;
+        } catch {
+          data = [];
+        }
+      }
+
       let products = Array.isArray(data) ? data : (data?.data?.products ?? (Array.isArray(data?.data) ? data.data : []));
 
-      // Temporary: ONLY show Sweet Monk products
-      products = products.filter((p: any) => p.name?.toLowerCase().includes('sweet monk'));
+      // Filter by search query locally if fallback was triggered
+      if (params.search) {
+        const s = params.search.toLowerCase();
+        products = products.filter((p: any) =>
+          p.name?.toLowerCase().includes(s) ||
+          p.description?.toLowerCase().includes(s)
+        );
+      }
+
+      // Filter: strictly show Monk Fruit / Sweet Monk products
+      products = products.filter((p: any) => {
+        const str = (p.name || p.title || p.slug || '').toLowerCase();
+        return str.includes('sweet monk') || str.includes('monk') || str.includes('sweetener');
+      });
 
       // Normalize images
       products = products.map((p: any) => ({
@@ -52,8 +77,19 @@ export const useProduct = (slug: string) => {
   return useQuery({
     queryKey: ['product', slug],
     queryFn: async () => {
-      const { data } = await api.get(`/products/${slug}`);
-      const product = data?.data?.product ?? data?.data ?? data;
+      let product: any;
+      try {
+        const { data } = await api.get(`/products/${slug}`);
+        product = data?.data?.product ?? data?.data ?? data;
+      } catch (e) {
+        // Fallback lookup if /products/:slug failed (e.g. live server non-ObjectId slug error)
+        try {
+          const { data } = await api.get('/products/bestsellers');
+          const list = Array.isArray(data) ? data : (data?.data?.products ?? (Array.isArray(data?.data) ? data.data : []));
+          product = list.find((p: any) => p.slug === slug || p._id === slug || p.id === slug);
+        } catch { }
+      }
+
       if (!product || (!product.name && !product._id && !product.id)) {
         throw new Error('Product not found');
       }
@@ -83,8 +119,17 @@ export const useCategories = () => {
           image: normalizeImageUrl(c.image),
         }));
       } catch {
-        // Return empty list — no fake fallback categories
-        return [] as any[];
+        try {
+          const { data } = await api.get('/products/categories');
+          const categories = Array.isArray(data) ? data : [];
+          return categories.map((cat: any, idx: number) => ({
+            _id: typeof cat === 'string' ? `cat_${idx}` : cat._id,
+            name: typeof cat === 'string' ? cat : cat.name,
+            slug: typeof cat === 'string' ? cat.toLowerCase() : cat.slug,
+          }));
+        } catch {
+          return [] as any[];
+        }
       }
     },
     staleTime: 60 * 60 * 1000, // 1 hour
