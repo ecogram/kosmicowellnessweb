@@ -115,7 +115,57 @@ This document provides a comprehensive reference for all client/user-side API en
 
 ---
 
-## 2. Address Management Module (`/api/address`)
+## 2. Products & Categories Module (`/api/products` & `/api/categories`)
+
+### 1. Get All Active Products (with Filters)
+- **Endpoint:** `GET /api/products/`
+- **Auth Required:** No
+- **Query Parameters:** `category`, `search`, `minPrice`, `maxPrice`, `sortBy`, `page`, `limit`
+
+### 2. Get Products for User List
+- **Endpoint:** `GET /api/products/user/list`
+- **Auth Required:** No
+- **Query Parameters:** `page` (default: 1), `limit` (default: 12), `category`, `search`, `sortBy`
+
+### 3. Get Distinct Product Categories
+- **Endpoint:** `GET /api/products/categories`
+- **Auth Required:** No
+
+### 4. Get Bestseller Products
+- **Endpoint:** `GET /api/products/bestsellers`
+- **Auth Required:** No
+
+### 5. Get Single Product Details
+- **Endpoint:** `GET /api/products/:id` *(also supports slug: `GET /api/products/:slug`)*
+- **Auth Required:** No
+
+### 6. Get Reviews for a Product
+- **Endpoint:** `GET /api/products/:id/reviews`
+- **Auth Required:** No
+- **Query Parameters:** `page`, `limit`
+
+### 7. Add Review to a Product (Protected)
+- **Endpoint:** `POST /api/products/:id/reviews`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body:**
+  ```json
+  {
+    "rating": 5,
+    "comment": "Amazing product!"
+  }
+  ```
+
+### 8. Get All Categories
+- **Endpoint:** `GET /api/categories/`
+- **Auth Required:** No
+
+### 9. Get User-Facing Categories List
+- **Endpoint:** `GET /api/categories/user/list`
+- **Auth Required:** No
+
+---
+
+## 3. Address Management Module (`/api/address`)
 
 ### 1. Save Address
 - **Endpoint:** `POST /api/address`
@@ -149,35 +199,6 @@ This document provides a comprehensive reference for all client/user-side API en
 ### 5. Delete Address
 - **Endpoint:** `DELETE /api/address/{addressId}`
 - **Auth Required:** Yes
-
----
-
-## 3. Products & Categories Module (`/api/products`, `/api/categories`)
-
-### 1. Get User Products List
-- **Endpoint:** `GET /api/products/user/list`
-- **Query Parameters:**
-  - `page` (default: 1)
-  - `limit` (default: 12)
-  - `category` (optional)
-  - `search` (optional)
-  - `sortBy` (optional)
-  - `minPrice`, `maxPrice`, `minRating` (optional filters)
-
-### 2. Get Categories List
-- **Endpoint:** `GET /api/categories/user/list`
-- **Auth Required:** No
-
-### 3. Submit Product Review
-- **Endpoint:** `POST /api/products/{productId}/reviews`
-- **Auth Required:** Yes
-- **Request Body:**
-  ```json
-  {
-    "rating": 4.5,
-    "comment": "Great product!"
-  }
-  ```
 
 ---
 
