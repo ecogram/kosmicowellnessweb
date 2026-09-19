@@ -86,68 +86,13 @@ export const useRemoveProfilePicture = () => {
 
   return useMutation({
     mutationFn: async () => {
-      const { data } = await api.delete('/auth/remove-profile-picture');
-      return data?.data?.user ?? data?.data;
-    },
-    onSuccess: (updatedUser) => {
-      const cleared = {
-        profilePicture: '',
-        profileImage: '',
-        avatar: '',
-        avatarUrl: '',
-        image: '',
-      };
-      updateUser(updatedUser ?? cleared);
-      queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
-    },
-  });
-};
-
-// ─── Helper: base64 data-URL → File object ───────────────────────────────────
-// Used when camera captures a snap (canvas → dataURL) and we need a File for FormData
-export const dataUrlToFile = (dataUrl: string, filename = 'profile.jpg'): File => {
-  const [header, base64] = dataUrl.split(',');
-  const mime = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-  return new File([bytes], filename, { type: mime });
-};
-        } catch (err) {
-  res = await api.put('/users/profile', payload);
-}
-      }
-return res?.data?.data?.user ?? res?.data?.data ?? res?.data;
-    },
-onSuccess: (updatedUser) => {
-  if (updatedUser) {
-    const pic = updatedUser.profilePicture ?? updatedUser.profileImage ?? '';
-    updatedUser.profilePicture = normalizeImageUrl(pic);
-    updatedUser.profileImage = updatedUser.profilePicture;
-    updateUser(updatedUser);
-  }
-  // Refetch to get latest from server
-  queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
-},
-  });
-};
-
-// ─── DELETE /api/auth/remove-profile-picture ────────────────────────────────
-export const useRemoveProfilePicture = () => {
-  const queryClient = useQueryClient();
-  const { updateUser } = useAuthStore();
-
-  return useMutation({
-    mutationFn: async () => {
       let res;
-      // 1. DELETE /api/auth/remove-profile-picture
       try {
         res = await api.delete('/auth/remove-profile-picture');
       } catch (e) {
         console.warn('DELETE remove picture notice:', e);
       }
 
-      // 2. PUT /api/auth/profile with empty picture & removePhoto flag
       try {
         const updateRes = await api.put('/auth/profile', {
           removePhoto: true,
@@ -165,6 +110,9 @@ export const useRemoveProfilePicture = () => {
       const cleared = {
         profilePicture: '',
         profileImage: '',
+        avatar: '',
+        avatarUrl: '',
+        image: '',
       };
       updateUser(updatedUser ?? cleared);
       queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
