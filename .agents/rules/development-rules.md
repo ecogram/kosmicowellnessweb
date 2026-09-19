@@ -19,3 +19,4 @@ Jab bhi is repository me kaam karein, strictly in 4 rules ko follow karein:
    - Web application sirf usi existing database se data fetch/read aur sync karegi.
 
 4. **Rule 4 (testing nhi krna hai tumko jo bhi testing hogi sab manual testing hogi meri side se )
+5.koi bhi backend ke ke code file me chnages nhi krna hai  do not modify any code file  feched data  
