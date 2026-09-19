@@ -72,7 +72,7 @@ export const Profile: React.FC = () => {
   const [fullName, setFullName] = useState(liveProfile?.name || user?.name || (user as any)?.fullName || '');
   const [email, setEmail] = useState(liveProfile?.email || user?.email || '');
   const [phone, setPhone] = useState(liveProfile?.phoneNumber || liveProfile?.phone || user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || '');
-  const [profilePicture, setProfilePicture] = useState(normalizeImageUrl(liveProfile?.profilePicture || user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar || ''));
+  const [profilePicture, setProfilePicture] = useState(normalizeImageUrl(liveProfile?.profilePicture || user?.profilePicture || (user as any)?.profileImage || ''));
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
@@ -285,7 +285,7 @@ export const Profile: React.FC = () => {
       });
       if (updatedUser) {
         const serverPic = normalizeImageUrl(
-          updatedUser.profilePicture || updatedUser.profileImage || updatedUser.avatar || ''
+          updatedUser.profilePicture || updatedUser.profileImage || ''
         );
         if (serverPic) setProfilePicture(serverPic);
       }
@@ -324,7 +324,7 @@ export const Profile: React.FC = () => {
       });
       if (updatedUser) {
         const serverPic = normalizeImageUrl(
-          updatedUser.profilePicture || updatedUser.profileImage || updatedUser.avatar || ''
+          updatedUser.profilePicture || updatedUser.profileImage || ''
         );
         if (serverPic) setProfilePicture(serverPic);
       }
@@ -542,7 +542,7 @@ export const Profile: React.FC = () => {
               setFullName(user?.name || (user as any)?.fullName || fullName || '');
               setEmail(user?.email || email || '');
               setPhone(user?.phoneNumber || (user as any)?.phone || phone || '');
-              setProfilePicture(profilePicture || user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar || '');
+              setProfilePicture(profilePicture || user?.profilePicture || (user as any)?.profileImage || '');
               setIsEditProfileOpen(true);
             }}
             className="p-2.5 rounded-2xl bg-emerald-800/10 hover:bg-emerald-800/20 text-emerald-800 transition-colors cursor-pointer"

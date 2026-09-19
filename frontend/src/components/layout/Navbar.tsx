@@ -122,9 +122,9 @@ export function Navbar() {
                   to="/profile"
                   className="text-text-main hover:text-primary transition-colors font-medium text-sm flex items-center gap-1.5"
                 >
-                  {(user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar) ? (
+                  {(user?.profilePicture || (user as any)?.profileImage) ? (
                     <img
-                      src={normalizeImageUrl(user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar)}
+                      src={normalizeImageUrl(user?.profilePicture || (user as any)?.profileImage)}
                       alt={user?.name || 'User'}
                       onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                       className="w-6 h-6 rounded-full object-cover border border-emerald-600"

@@ -13,9 +13,6 @@ export interface User {
   mobile?: string;
   profilePicture?: string;
   profileImage?: string;
-  avatar?: string;
-  avatarUrl?: string;
-  image?: string;
 }
 
 interface AuthState {
@@ -35,14 +32,11 @@ import { normalizeImageUrl } from '../utils/imageUrl';
 const sanitizeUser = (user: User | null): User | null => {
   if (!user) return null;
   const sanitized = { ...user };
-  const rawPic = sanitized.profilePicture || sanitized.profileImage || sanitized.avatar || sanitized.avatarUrl || sanitized.image || '';
+  const rawPic = sanitized.profilePicture || sanitized.profileImage || '';
   const normalized = normalizeImageUrl(rawPic);
 
   sanitized.profilePicture = normalized;
   sanitized.profileImage = normalized;
-  sanitized.avatar = normalized;
-  sanitized.avatarUrl = normalized;
-  sanitized.image = normalized;
   return sanitized;
 };
 

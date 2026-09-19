@@ -21,10 +21,9 @@ export const useProfile = () => {
         const user = res.data?.data?.user ?? res.data?.data ?? res.data;
         if (user && (user.name || user.email || user._id || user.id)) {
           // Normalize image URL
-          const pic = user.profilePicture ?? user.profileImage ?? user.avatar ?? '';
+          const pic = user.profilePicture ?? user.profileImage ?? '';
           user.profilePicture = normalizeImageUrl(pic);
           user.profileImage   = user.profilePicture;
-          user.avatar         = user.profilePicture;
 
           const cleanName = user.name || user.fullName || '';
           const cleanPhone = user.phoneNumber || user.phone || '';
@@ -39,7 +38,6 @@ export const useProfile = () => {
             phone: cleanPhone,
             profilePicture: user.profilePicture,
             profileImage: user.profilePicture,
-            avatar: user.profilePicture,
           };
 
           updateUser(synchronizedUser);
@@ -95,7 +93,7 @@ export const useUpdateProfile = () => {
 
           res = await api.put('/auth/profile', formData);
           const u = res?.data?.data?.user ?? res?.data?.data ?? res?.data;
-          if (u && (u.profilePicture || u.profileImage || u.avatar)) {
+          if (u && (u.profilePicture || u.profileImage)) {
             uploadSucceeded = true;
           }
         } catch (err) {
@@ -112,7 +110,6 @@ export const useUpdateProfile = () => {
               phone: phoneNumber,
               profilePicture,
               profileImage: profilePicture,
-              avatar: profilePicture,
             });
           } catch (err2) {
             console.warn('JSON picture save notice:', err2);
@@ -132,7 +129,6 @@ export const useUpdateProfile = () => {
         if (profilePicture !== undefined) {
           payload.profilePicture = profilePicture;
           payload.profileImage = profilePicture;
-          payload.avatar = profilePicture;
         }
         try {
           res = await api.put('/auth/profile', payload);
@@ -144,10 +140,9 @@ export const useUpdateProfile = () => {
     },
     onSuccess: (updatedUser) => {
       if (updatedUser) {
-        const pic = updatedUser.profilePicture ?? updatedUser.profileImage ?? updatedUser.avatar ?? '';
+        const pic = updatedUser.profilePicture ?? updatedUser.profileImage ?? '';
         updatedUser.profilePicture = normalizeImageUrl(pic);
         updatedUser.profileImage   = updatedUser.profilePicture;
-        updatedUser.avatar         = updatedUser.profilePicture;
         updateUser(updatedUser);
       }
       // Refetch to get latest from server
@@ -175,7 +170,6 @@ export const useRemoveProfilePicture = () => {
           removePhoto: true,
           profilePicture: '',
           profileImage: '',
-          avatar: '',
         });
         if (!res) res = updateRes;
       } catch (e) {
@@ -188,9 +182,6 @@ export const useRemoveProfilePicture = () => {
       const cleared = {
         profilePicture: '',
         profileImage: '',
-        avatar: '',
-        avatarUrl: '',
-        image: '',
       };
       updateUser(updatedUser ?? cleared);
       queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
