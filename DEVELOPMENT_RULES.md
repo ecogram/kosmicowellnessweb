@@ -5,7 +5,7 @@ Yeh document hamare project ke development, API updates, database handling aur l
 ---
 
 ### 🔹 Rule 1: Code Complete Hone ke Baad Build Verify, Commit aur Push Karna
-* **Pehle Testing & Verification:**
+* **Pehle Build & Verification:**
   * Jab bhi koi naya code ya feature banega, pehle frontend build (`npm run build`) aur backend integrity check kiya jayega taaki 0 errors rahein.
 * **Commit aur Push:**
   * Verification ke baad code ko proper meaningful commit message ke sath `git commit` aur `git push origin main` kiya jayega taaki live production server par direct deploy kiya ja sake.
@@ -28,10 +28,13 @@ Yeh document hamare project ke development, API updates, database handling aur l
 
 ---
 
-### 🔹 Rule 4: Admin Side aur Admin APIs me Kuch Nahi Karna
-* **Admin Panel Isolation:**
-  * Admin panel, admin controllers, aur admin APIs me koi bhi unapproved changes ya modifications nahi kiye jayenge.
-  * Admin system fully isolated aur untouched rahega. Saara kaam sirf user-facing web features aur APIs par hoga.
+### 🔹 Rule 4: No Test Data Creation & No Admin Side Work (Strict Manual User Testing)
+* **No Automated Test Data / No Test Users / No Test Orders:**
+  * Aage se koi bhi testing user, test orders, test payments, dummy products ya automated database mutation scripts run/create nahi karna hai.
+  * Jo bhi testing hogi, wo user dwara actual application par manual testing se hogi.
+* **Complete Admin Code Removal:**
+  * Admin side ka sara code, unused admin controllers aur admin endpoints web repository se completely remove kar diya gaya hai.
+  * Web codebase strictly **100% User-Facing** rahega.
 
 ---
 

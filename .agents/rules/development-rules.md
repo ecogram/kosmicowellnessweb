@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Kosmico Wellness - Agent Development Rules (Hinglish)
 
 Jab bhi is repository me kaam karein, strictly in 4 rules ko follow karein:
@@ -14,5 +18,4 @@ Jab bhi is repository me kaam karein, strictly in 4 rules ko follow karein:
    - MongoDB me mobile app ka jo database/schema chal raha hai, use drop/alter nahi karna.
    - Web application sirf usi existing database se data fetch/read aur sync karegi.
 
-4. **Rule 4 (Admin Side me Kuch Nahi Karna):**
-   - Admin controllers, admin routes aur admin APIs ko bilkul touch nahi karna hai. Saara kaam sirf user-side par hoga.
+4. **Rule 4 (testing nhi krna hai tumko jo bhi testing hogi sab manual testing hogi meri side se )
