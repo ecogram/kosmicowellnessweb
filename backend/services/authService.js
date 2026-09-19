@@ -218,43 +218,48 @@ class AuthService {
       throw new ApiError(404, 'User not found');
     }
 
+    const updateFields = {};
     const updatedName = name || fullName;
     if (updatedName && typeof updatedName === 'string' && updatedName.trim().length > 0) {
-      user.name = updatedName.trim();
+      updateFields.name = updatedName.trim();
+      updateFields.fullName = updatedName.trim();
     }
 
     const updatedPhone = phoneNumber !== undefined ? phoneNumber : phone;
     if (updatedPhone !== undefined && updatedPhone !== null) {
       const cleanPhone = updatedPhone.toString().trim();
-      user.phoneNumber = cleanPhone;
-      user.phone = cleanPhone;
+      updateFields.phoneNumber = cleanPhone;
+      updateFields.phone = cleanPhone;
     }
 
     const updatedPic = profilePicture || profileImage || avatar;
     if (removePhoto === true) {
-      user.profilePicture = '';
-      user.profileImage = '';
-      user.avatar = '';
+      updateFields.profilePicture = '';
+      updateFields.profileImage = '';
+      updateFields.avatar = '';
     } else if (updatedPic && typeof updatedPic === 'string' && updatedPic.trim().length > 0) {
       const cleanPic = updatedPic.trim();
-      user.profilePicture = cleanPic;
-      user.profileImage = cleanPic;
-      user.avatar = cleanPic;
+      updateFields.profilePicture = cleanPic;
+      updateFields.profileImage = cleanPic;
+      updateFields.avatar = cleanPic;
     }
-    // Note: If updatedPic is empty/undefined and removePhoto is not true, we DO NOT wipe the existing photo!
 
-    await user.save();
+    const savedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateFields },
+      { new: true }
+    );
 
-    const pic = user.profilePicture || user.profileImage || user.avatar || '';
-    const finalPhone = user.phoneNumber || user.phone || '';
+    const pic = savedUser.profilePicture || savedUser.profileImage || savedUser.avatar || '';
+    const finalPhone = savedUser.phoneNumber || savedUser.phone || '';
 
     return {
-      id: user._id,
-      _id: user._id,
-      name: user.name,
-      fullName: user.name,
-      email: user.email,
-      role: user.role,
+      id: savedUser._id,
+      _id: savedUser._id,
+      name: savedUser.name,
+      fullName: savedUser.name,
+      email: savedUser.email,
+      role: savedUser.role,
       phoneNumber: finalPhone,
       phone: finalPhone,
       mobile: finalPhone,
@@ -263,7 +268,7 @@ class AuthService {
       avatar: pic,
       avatarUrl: pic,
       image: pic,
-      isActive: user.isActive,
+      isActive: savedUser.isActive,
     };
   }
 

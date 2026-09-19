@@ -38,9 +38,8 @@ export const useProfile = () => {
   });
 };
 
-// ─── PUT /api/users/profile (multipart/form-data) ─────────────────────────────
-// API docs: Content-Type: multipart/form-data
-// Form fields: name (String), phoneNumber (String), profilePicture (File binary)
+// ─── PUT /api/users/profile ──────────────────────────────────────────────────
+// Supports both application/json (text fields) and multipart/form-data (photo upload)
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
   const { updateUser } = useAuthStore();
@@ -55,15 +54,24 @@ export const useUpdateProfile = () => {
       phoneNumber?: string;
       profilePictureFile?: File;
     }) => {
-      const formData = new FormData();
-      if (name)               formData.append('name', name);
-      if (phoneNumber)        formData.append('phoneNumber', phoneNumber);
-      if (profilePictureFile) formData.append('profilePicture', profilePictureFile);
+      let res;
+      if (profilePictureFile) {
+        const formData = new FormData();
+        if (name)        formData.append('name', name);
+        if (phoneNumber) formData.append('phoneNumber', phoneNumber);
+        formData.append('profilePicture', profilePictureFile);
 
-      const { data } = await api.put('/users/profile', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return data?.data?.user ?? data?.data;
+        // Do not pass manual Content-Type header so Axios sets the boundary automatically
+        res = await api.put('/users/profile', formData);
+      } else {
+        res = await api.put('/users/profile', {
+          name,
+          fullName: name,
+          phoneNumber,
+          phone: phoneNumber,
+        });
+      }
+      return res.data?.data?.user ?? res.data?.data ?? res.data;
     },
     onSuccess: (updatedUser) => {
       if (updatedUser) {
