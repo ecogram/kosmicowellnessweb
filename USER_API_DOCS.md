@@ -368,7 +368,83 @@ Complete CRUD API endpoints for managing User Delivery Addresses. (Protected)
 
 ---
 
-## 7. Coupons & Discounts (`/api/coupons`)
+## 7. Posts & Social (`/api/posts`)
+
+### 1. Get Post Feed (Protected)
+- **Endpoint:** `GET /api/posts/feed`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Query Parameters:** `page`, `limit`
+
+### 2. Get Posts for a Specific User (Protected)
+- **Endpoint:** `GET /api/posts/user/:userId`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+
+### 3. Get Details of a Single Post (Protected)
+- **Endpoint:** `GET /api/posts/:id` *(also `GET /api/posts/:postId`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+
+### 4. Create a New Post (Protected)
+- **Endpoint:** `POST /api/posts/`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body (JSON / Multipart):**
+  ```json
+  {
+    "content": "Hello friends!",
+    "mediaUrls": ["image1.jpg"],
+    "privacyLevel": "friends",
+    "tags": ["chilling"],
+    "location": "Mumbai"
+  }
+  ```
+
+### 5. Edit a Post (Protected)
+- **Endpoint:** `PUT /api/posts/:id` *(also `PATCH /api/posts/:id`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body:**
+  ```json
+  {
+    "content": "Updated caption",
+    "privacyLevel": "public"
+  }
+  ```
+
+### 6. Delete a Post (Protected)
+- **Endpoint:** `DELETE /api/posts/:id`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+
+### 7. Like / Unlike a Post (Protected)
+- **Endpoint:** `POST /api/posts/:id/like`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+
+### 8. Add a Comment to a Post (Protected)
+- **Endpoint:** `POST /api/posts/:id/comments`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body:**
+  ```json
+  {
+    "text": "Nice post!"
+  }
+  ```
+
+### 9. Send a Friend Request (Protected)
+- **Endpoint:** `POST /api/posts/friend-request/send/:userId`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+
+### 10. Accept Friend Request (Protected)
+- **Endpoint:** `POST /api/posts/friend-request/accept/:requestId`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+
+### 11. Reject Friend Request (Protected)
+- **Endpoint:** `POST /api/posts/friend-request/reject/:requestId`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+
+### 12. List Pending Friend Requests (Protected)
+- **Endpoint:** `GET /api/posts/friend-request/pending` *(also `GET /api/posts/friend-requests`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+
+---
+
+## 8. Coupons & Discounts (`/api/coupons`)
 
 ### 1. Get Available Coupons
 - **Endpoint:** `GET /api/coupons`
@@ -399,55 +475,6 @@ Complete CRUD API endpoints for managing User Delivery Addresses. (Protected)
     "success": true
   }
   ```
-
----
-
-## 8. Shipping & Delivery Estimation (`/api/shiprocket`)
-
-- **Estimate Delivery:** `POST /api/shiprocket/estimate-delivery`
-  - **Request Body:**
-    ```json
-    {
-      "deliveryPincode": "110001",
-      "weight": 0.5,
-      "paymentMethod": "COD"
-    }
-    ```
-
----
-
-## 9. GlucoRhythm Module (`/api/gluco`)
-
-- **Dashboard:** `GET /api/gluco/dashboard`
-- **Log Glucose Reading:** `POST /api/gluco/reading`
-  ```json
-  {
-    "glucoseLevel": 110.5,
-    "timeOfDay": "Morning",
-    "readingTime": "2023-10-25T10:00:00.000Z",
-    "readingType": "Fasting",
-    "notes": "Feeling good"
-  }
-  ```
-- **Log Meal:** `POST /api/gluco/meal`
-  ```json
-  {
-    "mealType": "Breakfast",
-    "carbs": 45.0,
-    "logTime": "...",
-    "status": "Logged"
-  }
-  ```
-
----
-
-## 10. Social / Community Posts Module (`/api/posts`)
-
-- **Create Post:** `POST /api/posts` (Multipart, fields: `content`, `privacyLevel`, `tags`, `location`, file: `media`)
-- **Get Feed:** `GET /api/posts/feed?page=1&limit=10`
-- **Get User Posts:** `GET /api/posts/user/{userId}`
-- **Like Post:** `POST /api/posts/{postId}/like`
-- **Get Comments:** `GET /api/posts/{postId}/comments`
 - **Add Comment:** `POST /api/posts/{postId}/comments` (Body: `{"text": "..."}`)
 - **Edit Post:** `PUT /api/posts/{postId}` or `PATCH /api/posts/{postId}`
 - **Delete Post:** `DELETE /api/posts/{postId}`
