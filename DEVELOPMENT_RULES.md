@@ -1,57 +1,52 @@
-# 📋 Kosmico Wellness - Development Rules & Guidelines
+# 📋 Kosmico Wellness - Development Rules (Hinglish)
 
-Yeh document is project ke development, API management, database handling aur live deployment ke core rules define karta hai. Har developer aur AI assistant ko in rules ko strictly follow karna anivarya (mandatory) hai.
-
----
-
-## 🛑 Rule 1: Code Verification & Live Production Deployment Standard
-1. **Zero-Error Validation Before Deployment:**
-   - Kisi bhi new code, bug fix, ya feature addition ke baad **Frontend Build (`npm run build`)** aur **Backend Integrity** ko verify kiya jayega.
-   - Koi bhi broken code, untested changes, ya syntax errors live branch (`main`) par push nahi honge.
-2. **Direct-to-Production Readiness:**
-   - Code clean, optimized aur production server (`api.kosmicowellness.com` / `kosmicowellness.com`) par direct deploy hone ke liye fully compatible hona chahiye.
-   - Secrets (`.env`, private keys) kabhi bhi Git me commit nahi honge.
+Yeh document hamare project ke development, API updates, database handling aur live production deployment ke core rules define karta hai. In sabhi rules ko strictly follow karna mandatory hai:
 
 ---
 
-## 📖 Rule 2: API Documentation Auto-Sync
-1. **Mandatory Documentation Update:**
-   - Jab bhi koi nayi API banegi ya existing API me parameters/response change hoga, uski complete details turant [`USER_API_DOCS.md`](./USER_API_DOCS.md) me document ki jayegi.
-2. **Documentation Structure:**
-   - Endpoint URL & Method (e.g., `POST /api/auth/login`)
-   - Headers (Auth Token, Content-Type)
-   - Request Body (Payload structure with examples)
-   - Success & Error Response formats (with status codes).
+### 🔹 Rule 1: Code Complete Hone ke Baad Build Verify, Commit aur Push Karna
+* **Pehle Testing & Verification:**
+  * Jab bhi koi naya code ya feature banega, pehle frontend build (`npm run build`) aur backend integrity check kiya jayega taaki 0 errors rahein.
+* **Commit aur Push:**
+  * Verification ke baad code ko proper meaningful commit message ke sath `git commit` aur `git push origin main` kiya jayega taaki live production server par direct deploy kiya ja sake.
+  * Koi bhi broken ya untested code push nahi hoga.
 
 ---
 
-## 🗄️ Rule 3: Database Integrity (Mobile App Database Fetch & Sync Policy)
-1. **No Destructive Database Changes:**
-   - MongoDB database me existing Mobile App ka live data aur collections chal rahe hain.
-   - Database schema ko alter karna, collections delete/drop karna, ya existing fields ko unapproved format me mutate karna sakht mana hai.
-2. **Read / Fetch & Safe Data Consumption:**
-   - Web frontend aur backend ka mukhya kaam Mobile App ke existing database schema ko **fetch/read** karna aur existing standards ke anusaar hi sync karna hai.
-   - Har naya model ya field existing Mobile App data structure ke sath 100% backward-compatible hona chahiye.
+### 🔹 Rule 2: Nayi API Bante hi API Documentation Update Karna
+* **Documentation Sync:**
+  * Agar koi bhi nayi API banayi jati hai ya existing API me parameters/response badalta hai, toh uski complete details turant [`USER_API_DOCS.md`](./USER_API_DOCS.md) me update ki jayegi.
+  * Endpoint URL, Method (GET/POST/PUT/DELETE), Headers, Request Body, aur Success/Error Response format likhna zaroori hai.
 
 ---
 
-## 🛡️ Rule 4: Admin Panel & Admin APIs No-Touch Policy
-1. **Isolated Admin System:**
-   - Admin side ka panel, Admin controllers, aur Admin-specific APIs me koi bhi unapproved modification, overwrite, ya tampering nahi ki jayegi.
-   - Admin authentication, admin routes, aur backend access control untouched rahenge.
-2. **Separation of Concerns:**
-   - User-facing web application sirf User APIs aur Customer operations par focus karegi. Admin system ki internal functioning independent rahegi.
+### 🔹 Rule 3: Database me Kuch Chhed-chhad Nahi Karna (Sirf App ka Data Fetch Karna)
+* **Mobile App Database Protection:**
+  * MongoDB database me jo mobile app ka live data aur schema chal raha hai, use kisi bhi haal me modify, drop, ya delete nahi karna hai.
+* **Safe Fetch & Sync:**
+  * Web backend aur frontend sirf app ke existing database se data **fetch/read** karega aur usi structure ke anusaar data save/sync karega taaki mobile app me koi issue na aaye.
 
 ---
 
-## 🚀 Standard Git & Deployment Workflow
+### 🔹 Rule 4: Admin Side aur Admin APIs me Kuch Nahi Karna
+* **Admin Panel Isolation:**
+  * Admin panel, admin controllers, aur admin APIs me koi bhi unapproved changes ya modifications nahi kiye jayenge.
+  * Admin system fully isolated aur untouched rahega. Saara kaam sirf user-facing web features aur APIs par hoga.
+
+---
+
+### 🚀 Standard Deployment Workflow:
 1. Code change complete karein.
-2. `npm run build` se production bundle verify karein.
-3. Agar nayi API hai toh `USER_API_DOCS.md` update karein.
-4. Git commit & push karein:
+2. `npm run build` se check karein ki build pass ho raha hai.
+3. Agar API me change hua hai toh `USER_API_DOCS.md` update karein.
+4. Code ko commit aur push karein:
    ```bash
    git add .
-   git commit -m "feat/fix: <description>"
+   git commit -m "feat/fix: aapka message"
    git push origin main
    ```
-5. Live server par pull karke restart karein (`git pull origin main && pm2 restart all`).
+5. Live server par pull karke restart karein:
+   ```bash
+   git pull origin main
+   pm2 restart all
+   ```

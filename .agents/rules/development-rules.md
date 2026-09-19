@@ -1,18 +1,18 @@
-# Kosmico Wellness - Agent Development Rules
+# Kosmico Wellness - Agent Development Rules (Hinglish)
 
-Whenever working in this repository, strictly adhere to these 4 core rules:
+Jab bhi is repository me kaam karein, strictly in 4 rules ko follow karein:
 
-1. **Rule 1 (Verification & Production Readiness):**
-   - Always verify and test new code (run frontend build `npm run build` and backend syntax/lint checks) before staging/committing.
-   - Code must be 100% production ready for deployment to the live server.
-   - Never commit `.env` or sensitive secret keys.
+1. **Rule 1 (Build Verify, Commit aur Push):**
+   - Naya code/fix complete hone ke baad `npm run build` verify karein.
+   - Uske baad code ko `git commit` aur `git push origin main` ke liye ready/push karein taaki live production server par deploy ho sake.
+   - `.env` ya secret keys ko commit nahi karna hai.
 
-2. **Rule 2 (API Documentation Synchronization):**
-   - Whenever creating a new API or modifying an existing API endpoint, request schema, or response schema, immediately update `USER_API_DOCS.md` with complete details (method, endpoint, params, request body, headers, and responses).
+2. **Rule 2 (API Documentation Update):**
+   - Agar koi nayi API banegi ya existing API badlegi, toh saath ke saath `USER_API_DOCS.md` file me complete endpoint details update karni hai.
 
-3. **Rule 3 (Database Integrity & Mobile App Compatibility):**
-   - Do NOT alter, drop, or disrupt existing MongoDB collections, indexes, or field structures used by the mobile app.
-   - Fetch and read the existing mobile app database schema safely. Maintain 100% backward compatibility for all data operations.
+3. **Rule 3 (Database Chhed-chhad Mana Hai - Sirf App ka Data Fetch Hoga):**
+   - MongoDB me mobile app ka jo database/schema chal raha hai, use drop/alter nahi karna.
+   - Web application sirf usi existing database se data fetch/read aur sync karegi.
 
-4. **Rule 4 (Admin Side & Admin APIs Isolation):**
-   - Do NOT modify, delete, or tamper with Admin-side controllers, Admin routes, or Admin endpoints. Keep admin functionality isolated and untouched.
+4. **Rule 4 (Admin Side me Kuch Nahi Karna):**
+   - Admin controllers, admin routes aur admin APIs ko bilkul touch nahi karna hai. Saara kaam sirf user-side par hoga.
