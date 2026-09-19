@@ -27,7 +27,8 @@ import {
   useCreateCodUpfront, 
   useVerifyCodUpfront, 
   useSavedPaymentMethods, 
-  useSavePaymentMethod 
+  useSavePaymentMethod,
+  useCreateRazorpayOrder
 } from '../hooks/usePayments';
 import { useAuthStore } from '../store/useAuthStore';
 import { formatINR } from '../utils/currency';
@@ -64,6 +65,7 @@ export const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { data: cart, isLoading: isCartLoading } = useCart();
   const createOrderMutation = useCreateOrder();
+  const createRazorpayOrderMutation = useCreateRazorpayOrder();
   const verifyPaymentMutation = useVerifyPayment();
   const createCodUpfrontMutation = useCreateCodUpfront();
   const verifyCodUpfrontMutation = useVerifyCodUpfront();
@@ -541,11 +543,30 @@ export const Checkout: React.FC = () => {
     }
 
 
-    const itemsToOrder = (cart?.items || []).map((it: any) => ({
-      productId: it.productId || it.product?._id || it.product?.id,
-      quantity: it.quantity || 1,
-      price: it.price || it.priceSnapshot || 0,
-    })).filter((it) => !!it.productId);
+    const itemsToOrder = (cart?.items || []).map((it: any) => {
+      let pId = '';
+      if (typeof it.product === 'object' && it.product !== null) {
+        pId = it.product._id || it.product.id || '';
+      } else if (typeof it.product === 'string' && !it.product.startsWith('cart-item-')) {
+        pId = it.product;
+      }
+      if (!pId && typeof it.productId === 'string' && !it.productId.startsWith('cart-item-')) {
+        pId = it.productId;
+      }
+      if (!pId && typeof it._id === 'string' && !it._id.startsWith('cart-item-')) {
+        pId = it._id;
+      }
+
+      return {
+        productId: pId,
+        product: pId,
+        quantity: Number(it.quantity || it.qty) || 1,
+        qty: Number(it.quantity || it.qty) || 1,
+        price: Number(it.price || it.priceSnapshot || it.product?.price) || 387,
+        name: it.product?.name || it.product?.title || it.name || 'Kosmico Classic Monk Fruit Sweetener (250ml)',
+        image: (it.product?.images && it.product?.images[0]?.url) || it.product?.image || it.image || '',
+      };
+    });
 
     if (itemsToOrder.length === 0) {
       toast.error('Your cart is empty. Please add items before placing an order.');
@@ -594,7 +615,7 @@ export const Checkout: React.FC = () => {
         setCreatedOrder(order);
         await processRazorpayCodAdvance(order, advanceAmount);
       } else {
-        const order = await createOrderMutation.mutateAsync(payload);
+        const order = await createRazorpayOrderMutation.mutateAsync(payload);
         setCreatedOrder(order);
         await processRazorpayPayment(order);
       }

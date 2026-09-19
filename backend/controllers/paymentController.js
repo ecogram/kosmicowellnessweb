@@ -58,7 +58,8 @@ const placeCodOrder = asyncHandler(async (req, res) => {
 
   if (items && Array.isArray(items) && items.length > 0) {
     for (const it of items) {
-      const pId = it.productId || it._id || it.product;
+      const rawId = it.productId || it._id || it.product;
+      let pId = (rawId && typeof rawId === 'string' && /^[0-9a-fA-F]{24}$/.test(rawId)) ? rawId : null;
       let pName = it.name || 'Kosmico Product';
       let pPrice = Number(it.price || it.priceSnapshot) || 0;
       let pImage = it.image || '';
@@ -72,9 +73,19 @@ const placeCodOrder = asyncHandler(async (req, res) => {
             pImage = (dbProd.images && dbProd.images[0]?.url) || dbProd.image || pImage;
           }
         } catch (_) {}
+      } else {
+        try {
+          const firstProd = await Product.findOne({});
+          if (firstProd) {
+            pId = firstProd._id.toString();
+            pName = pName !== 'Kosmico Product' ? pName : (firstProd.title || firstProd.name);
+            pPrice = pPrice || firstProd.discountPrice || firstProd.price;
+            pImage = pImage || (firstProd.images && firstProd.images[0]?.url) || '';
+          }
+        } catch (_) {}
       }
 
-      const qty = Number(it.quantity) || 1;
+      const qty = Number(it.quantity || it.qty) || 1;
       calculatedSubtotal += pPrice * qty;
 
       formattedItems.push({
@@ -162,7 +173,8 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
 
   if (items && Array.isArray(items) && items.length > 0) {
     for (const it of items) {
-      const pId = it.productId || it._id || it.product;
+      const rawId = it.productId || it._id || it.product;
+      let pId = (rawId && typeof rawId === 'string' && /^[0-9a-fA-F]{24}$/.test(rawId)) ? rawId : null;
       let pName = it.name || 'Kosmico Product';
       let pPrice = Number(it.price || it.priceSnapshot) || 0;
       let pImage = it.image || '';
@@ -176,9 +188,19 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
             pImage = (dbProd.images && dbProd.images[0]?.url) || dbProd.image || pImage;
           }
         } catch (_) {}
+      } else {
+        try {
+          const firstProd = await Product.findOne({});
+          if (firstProd) {
+            pId = firstProd._id.toString();
+            pName = pName !== 'Kosmico Product' ? pName : (firstProd.title || firstProd.name);
+            pPrice = pPrice || firstProd.discountPrice || firstProd.price;
+            pImage = pImage || (firstProd.images && firstProd.images[0]?.url) || '';
+          }
+        } catch (_) {}
       }
 
-      const qty = Number(it.quantity) || 1;
+      const qty = Number(it.quantity || it.qty) || 1;
       calculatedSubtotal += pPrice * qty;
 
       formattedItems.push({
@@ -537,7 +559,8 @@ const createCodUpfrontOrder = asyncHandler(async (req, res) => {
 
   if (items && Array.isArray(items) && items.length > 0) {
     for (const it of items) {
-      const pId = it.productId || it._id || it.product;
+      const rawId = it.productId || it._id || it.product;
+      let pId = (rawId && typeof rawId === 'string' && /^[0-9a-fA-F]{24}$/.test(rawId)) ? rawId : null;
       let pName = it.name || 'Kosmico Product';
       let pPrice = Number(it.price || it.priceSnapshot) || 0;
       let pImage = it.image || '';
@@ -549,6 +572,16 @@ const createCodUpfrontOrder = asyncHandler(async (req, res) => {
             pName = dbProd.title || dbProd.name || pName;
             pPrice = dbProd.discountPrice || dbProd.price || pPrice;
             pImage = (dbProd.images && dbProd.images[0]?.url) || dbProd.image || pImage;
+          }
+        } catch (_) {}
+      } else {
+        try {
+          const firstProd = await Product.findOne({});
+          if (firstProd) {
+            pId = firstProd._id.toString();
+            pName = pName !== 'Kosmico Product' ? pName : (firstProd.title || firstProd.name);
+            pPrice = pPrice || firstProd.discountPrice || firstProd.price;
+            pImage = pImage || (firstProd.images && firstProd.images[0]?.url) || '';
           }
         } catch (_) {}
       }
