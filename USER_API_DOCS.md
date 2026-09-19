@@ -165,7 +165,104 @@ This document provides a comprehensive reference for all client/user-side API en
 
 ---
 
-## 3. Address Management Module (`/api/address`)
+## 3. Payments, Orders & Cart (`/api/payment` & `/api/payments`)
+
+### 1. Create Razorpay Order (Protected)
+- **Endpoint:** `POST /api/payment/razorpay/create`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body:**
+  ```json
+  {
+    "amount": 999,
+    "deliveryAddressId": "60d5ec49c...",
+    "items": [
+      {
+        "product": "60d5ec49c...",
+        "name": "Vitamin C Serum",
+        "qty": 2,
+        "price": 499
+      }
+    ],
+    "couponCode": "WELCOME10",
+    "discountAmount": 100,
+    "deliveryFee": 50
+  }
+  ```
+
+### 2. Verify Razorpay Payment (Protected)
+- **Endpoint:** `POST /api/payment/razorpay/verify` *(also `/api/payment/verify`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body:**
+  ```json
+  {
+    "razorpay_order_id": "order_...",
+    "razorpay_payment_id": "pay_...",
+    "razorpay_signature": "..."
+  }
+  ```
+
+### 3. Create Cash on Delivery (COD) Order (Protected)
+- **Endpoint:** `POST /api/payment/cod`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body:**
+  ```json
+  {
+    "amount": 899,
+    "deliveryAddressId": "60d5ec49c...",
+    "items": [
+      {
+        "product": "60d5ec49c...",
+        "name": "Vitamin C Serum",
+        "qty": 1,
+        "price": 899
+      }
+    ],
+    "couponCode": "WELCOME10",
+    "discountAmount": 100,
+    "deliveryFee": 50
+  }
+  ```
+
+### 4. Create COD Order with Upfront Payment (Protected)
+- **Endpoint:** `POST /api/payment/cod-upfront/create`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body:**
+  ```json
+  {
+    "amount": 1500,
+    "upfrontAmount": 150,
+    "deliveryAddressId": "60d5ec49c...",
+    "items": [
+      {
+        "product": "60d5ec49c...",
+        "name": "Vitamin C Serum",
+        "qty": 2,
+        "price": 750
+      }
+    ]
+  }
+  ```
+
+### 5. Verify Upfront Razorpay Payment (Protected)
+- **Endpoint:** `POST /api/payment/cod-upfront/verify`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body:**
+  ```json
+  {
+    "razorpay_order_id": "order_...",
+    "razorpay_payment_id": "pay_...",
+    "razorpay_signature": "..."
+  }
+  ```
+
+### 6. Get User Orders History (Protected)
+- **Endpoint:** `GET /api/payments/myorders` *(also `GET /api/payment/myorders` and `GET /api/orders`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Query Parameters:** `page`, `limit`
+
+---
+
+## 4. Address Management Module (`/api/address`)
 
 ### 1. Save Address
 - **Endpoint:** `POST /api/address`
@@ -202,7 +299,7 @@ This document provides a comprehensive reference for all client/user-side API en
 
 ---
 
-## 4. Wishlist Module (`/api/wishlist`)
+## 5. Wishlist Module (`/api/wishlist`)
 
 ### 1. Get Wishlist
 - **Endpoint:** `GET /api/wishlist`
@@ -230,7 +327,7 @@ This document provides a comprehensive reference for all client/user-side API en
 
 ---
 
-## 5. Coupons & Discounts (`/api/coupons`)
+## 6. Coupons & Discounts (`/api/coupons`)
 
 ### 1. Get Available Coupons
 - **Endpoint:** `GET /api/coupons`
@@ -261,74 +358,6 @@ This document provides a comprehensive reference for all client/user-side API en
     "success": true
   }
   ```
-
----
-
-## 6. Payment & Orders Module (`/api/payment`, `/api/payments`, `/api/orders`)
-
-### 1. Place Order via Razorpay
-- **Create Order:** `POST /api/payment/razorpay/create` (Protected)
-  ```json
-  {
-    "amount": 999,
-    "deliveryAddressId": "60d5ec49c...",
-    "items": [{ "product": "60d5ec49c...", "name": "Vitamin C Serum", "qty": 2, "price": 499 }],
-    "couponCode": "WELCOME10",
-    "discountAmount": 100,
-    "deliveryFee": 50
-  }
-  ```
-- **Verify Payment:** `POST /api/payment/razorpay/verify` & `POST /api/payment/verify` (Protected)
-  ```json
-  {
-    "razorpay_order_id": "order_...",
-    "razorpay_payment_id": "pay_...",
-    "razorpay_signature": "..."
-  }
-  ```
-- **Cancel Pending Order:** `POST /api/payment/razorpay/cancel-pending` (Protected)
-
-### 2. Place COD Order
-- **Endpoint:** `POST /api/payment/cod` (Protected)
-- **Request Body:**
-  ```json
-  {
-    "amount": 899,
-    "deliveryAddressId": "60d5ec49c...",
-    "items": [{ "product": "60d5ec49c...", "name": "Vitamin C Serum", "qty": 1, "price": 899 }],
-    "couponCode": "WELCOME10",
-    "discountAmount": 100,
-    "deliveryFee": 50
-  }
-  ```
-
-### 3. COD Upfront Payment (Partial COD via Razorpay)
-- **Create:** `POST /api/payment/cod-upfront/create` (Protected)
-  ```json
-  {
-    "amount": 1500,
-    "upfrontAmount": 150,
-    "deliveryAddressId": "60d5ec49c...",
-    "items": [{ "product": "60d5ec49c...", "name": "Vitamin C Serum", "qty": 2, "price": 750 }]
-  }
-  ```
-- **Verify:** `POST /api/payment/cod-upfront/verify` (Protected)
-  ```json
-  {
-    "razorpay_order_id": "order_...",
-    "razorpay_payment_id": "pay_...",
-    "razorpay_signature": "..."
-  }
-  ```
-
-### 4. User Orders History
-- **Get My Orders:** `GET /api/payments/myorders` & `GET /api/payment/myorders` (Protected)
-
-### 5. Saved Payment Methods
-- **GET /api/payment/saved-methods** (Get saved payment methods)
-- **POST /api/payment/save-method** (Save payment method)
-- **PUT /api/payment/save-method/{methodId}** (Update saved method)
-- **DELETE /api/payment/save-method/{methodId}** (Delete saved method)
 
 ---
 
