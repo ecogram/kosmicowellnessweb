@@ -334,7 +334,41 @@ Complete CRUD API endpoints for managing User Delivery Addresses. (Protected)
 
 ---
 
-## 6. Coupons & Discounts (`/api/coupons`)
+## 6. Returns & Refunds (`/api/return` & `/api/refund`)
+
+### 1. Request a Return for an Order (Protected)
+- **Endpoint:** `POST /api/return/request` *(also `POST /api/return/initiate`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body:**
+  ```json
+  {
+    "orderId": "60d5ec49c...",
+    "reason": "Product was damaged"
+  }
+  ```
+
+### 2. Request a Refund (Protected)
+- **Endpoint:** `POST /api/refund/request` *(also `POST /api/refund/initiate`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body:**
+  ```json
+  {
+    "orderId": "60d5ec49c...",
+    "reason": "Did not like the product"
+  }
+  ```
+
+### 3. Get My Returns History (Protected)
+- **Endpoint:** `GET /api/return/my-returns`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+
+### 4. Get My Refunds History (Protected)
+- **Endpoint:** `GET /api/refund/my-refunds`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+
+---
+
+## 7. Coupons & Discounts (`/api/coupons`)
 
 ### 1. Get Available Coupons
 - **Endpoint:** `GET /api/coupons`
@@ -365,15 +399,6 @@ Complete CRUD API endpoints for managing User Delivery Addresses. (Protected)
     "success": true
   }
   ```
-
----
-
-## 7. Refunds & Replacements (`/api/refund`, `/api/return`)
-
-- **Initiate Refund:** `POST /api/refund/initiate` (Body: `{"orderId": "...", "reason": "..."}`)
-- **Get My Refunds:** `GET /api/refund/my-refunds`
-- **Initiate Replacement:** `POST /api/return/initiate` (Body: `{"orderId": "...", "reason": "..."}`)
-- **Get My Returns:** `GET /api/return/my-returns`
 
 ---
 
