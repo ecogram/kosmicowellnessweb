@@ -190,6 +190,8 @@ export function ProductDetails() {
                 setSelectedBundleId(bundle.id);
                 setSelectedBundle(bundle);
               }}
+              basePrice={product.price}
+              variants={product.variants}
             />
 
             {/* Delivery Pincode Checker Component */}

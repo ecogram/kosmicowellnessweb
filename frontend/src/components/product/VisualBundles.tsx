@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Check, Sparkles, Flame } from 'lucide-react';
 
 export interface BundleOption {
@@ -10,39 +11,54 @@ export interface BundleOption {
   isPopular?: boolean;
 }
 
-const bundles: BundleOption[] = [
-  {
-    id: 'single',
-    name: 'Single Pack (250ml Bottle)',
-    quantity: 1,
-    price: 387,
-    unitPrice: '₹387 / pack'
-  },
-  {
-    id: 'twin',
-    name: 'Pack of 2 (500ml Total)',
-    quantity: 2,
-    price: 699,
-    badge: 'TWIN PACK',
-    unitPrice: '₹349.5 / pack',
-    isPopular: true
-  },
-  {
-    id: 'family',
-    name: 'Family 3-Pack (750ml Total)',
-    quantity: 3,
-    price: 999,
-    badge: 'FAMILY PACK',
-    unitPrice: '₹333 / pack'
-  }
-];
-
 interface VisualBundlesProps {
   selectedBundleId: string;
   onSelectBundle: (bundle: BundleOption) => void;
+  basePrice?: number;
+  variants?: Array<{ size: string; price: number }>;
 }
 
-export function VisualBundles({ selectedBundleId, onSelectBundle }: VisualBundlesProps) {
+export function VisualBundles({ selectedBundleId, onSelectBundle, basePrice = 389, variants }: VisualBundlesProps) {
+  const singlePrice = basePrice;
+  const twinPrice = variants?.find(v => (v.size || '').toLowerCase().includes('500ml') || (v.size || '').includes('2'))?.price 
+    || (basePrice === 387 ? 699 : Math.round(basePrice * 1.8));
+  const familyPrice = variants?.find(v => (v.size || '').toLowerCase().includes('750ml') || (v.size || '').includes('3'))?.price 
+    || (basePrice === 387 ? 999 : Math.round(basePrice * 2.57));
+
+  const bundles: BundleOption[] = [
+    {
+      id: 'single',
+      name: 'Single Pack (250ml Bottle)',
+      quantity: 1,
+      price: singlePrice,
+      unitPrice: `₹${singlePrice} / pack`
+    },
+    {
+      id: 'twin',
+      name: 'Pack of 2 (500ml Total)',
+      quantity: 2,
+      price: twinPrice,
+      badge: 'TWIN PACK',
+      unitPrice: `₹${(twinPrice / 2).toFixed(1).replace(/\.0$/, '')} / pack`,
+      isPopular: true
+    },
+    {
+      id: 'family',
+      name: 'Family 3-Pack (750ml Total)',
+      quantity: 3,
+      price: familyPrice,
+      badge: 'FAMILY PACK',
+      unitPrice: `₹${Math.round(familyPrice / 3)} / pack`
+    }
+  ];
+
+  useEffect(() => {
+    const current = bundles.find(b => b.id === selectedBundleId) || bundles[0];
+    if (current && current.price) {
+      onSelectBundle(current);
+    }
+  }, [basePrice]);
+
   return (
     <div className="space-y-3 my-5">
       <div className="flex items-center justify-between">
