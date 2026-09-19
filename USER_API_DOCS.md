@@ -479,7 +479,44 @@ Complete CRUD API endpoints for managing User Delivery Addresses. (Protected)
 
 ---
 
-## 11. Notifications Module (`/api/notifications`)
+## 9. Emergency APIs (`/api/emergency`)
+
+### 1. Generate Emergency Shareable Message
+- **Endpoint:** `POST /api/emergency/generate-message` *(also supports `GET /api/emergency/generate-message`)*
+- **Auth Required:** Optional (`Bearer Token`)
+- **Request Body:**
+  ```json
+  {
+    "latitude": 28.7041,
+    "longitude": 77.1025
+  }
+  ```
+- **Response:**
+  ```json
+  {
+    "statusCode": 200,
+    "data": {
+      "message": "EMERGENCY ALERT: User requires urgent medical assistance. Current Location: https://maps.google.com/?q=28.7041,77.1025. Coordinates: (28.7041, 77.1025). Please send help immediately.",
+      "smsText": "EMERGENCY ALERT: User requires urgent medical assistance. Current Location: https://maps.google.com/?q=28.7041,77.1025. Coordinates: (28.7041, 77.1025). Please send help immediately.",
+      "location": {
+        "latitude": 28.7041,
+        "longitude": 77.1025,
+        "mapsUrl": "https://maps.google.com/?q=28.7041,77.1025"
+      },
+      "helplineNumbers": [
+        "112",
+        "108",
+        "102"
+      ]
+    },
+    "message": "Emergency SOS message generated successfully",
+    "success": true
+  }
+  ```
+
+---
+
+## 10. Notifications Module (`/api/notifications`)
 
 - **Get Notifications:** `GET /api/notifications?page=1&limit=20`
 - **Mark as Read:** `PUT /api/notifications/{notificationId}/read`
@@ -488,27 +525,21 @@ Complete CRUD API endpoints for managing User Delivery Addresses. (Protected)
 
 ---
 
-## 12. Emergency & System Status (`/api/emergency`, `/api/system`)
+## 11. Shipping & Delivery Estimation (`/api/shiprocket`)
 
-- **Emergency Message Generator:** `POST /api/emergency/generate-message` (Fallback to GET)
-  - **Body:** `{"latitude": 28.7041, "longitude": 77.1025}`
-  - **Response:**
+- **Estimate Delivery:** `POST /api/shiprocket/estimate-delivery`
+  - **Request Body:**
     ```json
     {
-      "statusCode": 200,
-      "data": {
-        "message": "EMERGENCY ALERT: User requires urgent medical assistance. Current Location: https://maps.google.com/?q=28.7041,77.1025...",
-        "smsText": "...",
-        "location": {
-          "latitude": 28.7041,
-          "longitude": 77.1025,
-          "mapsUrl": "https://maps.google.com/?q=28.7041,77.1025"
-        },
-        "helplineNumbers": ["112", "108", "102"]
-      },
-      "message": "Emergency SOS message generated successfully",
-      "success": true
+      "deliveryPincode": "110001",
+      "weight": 0.5,
+      "paymentMethod": "COD"
     }
     ```
+
+---
+
+## 12. System Status & App Updates (`/api/system`, `/api/updates`)
+
 - **System Status / Maintenance:** `GET /api/system/status`
 - **App Update Check:** `GET /api/updates/check?version=1.0.3`
