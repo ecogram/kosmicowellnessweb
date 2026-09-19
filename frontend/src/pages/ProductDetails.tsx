@@ -45,8 +45,8 @@ export function ProductDetails() {
     );
   }
 
-  const images = product.images?.length 
-    ? product.images 
+  const images = product.images?.length
+    ? product.images
     : ['/assets/products/product-box.jpg', '/assets/products/product-front-back.jpg', '/assets/products/lifestyle-tea.jpg'];
 
   const isWishlisted = wishlist?.items?.some((item: any) => {
@@ -58,7 +58,7 @@ export function ProductDetails() {
   const displayPrice = selectedBundle ? selectedBundle.price : product.price;
 
   const handleAddToCart = () => {
-    const variantStr = selectedBundle ? selectedBundle.name : 'Single (10ml)';
+    const variantStr = selectedBundle ? selectedBundle.name : 'Single (250ml)';
     addToCartMutation.mutate({
       productId: product._id || product.id,
       quantity: selectedBundle ? selectedBundle.quantity * quantity : quantity,
@@ -89,8 +89,8 @@ export function ProductDetails() {
   return (
     <div className="py-12 bg-background min-h-[90vh]">
       <Container>
-        <Link 
-          to="/shop" 
+        <Link
+          to="/shop"
           className="inline-flex items-center text-sm font-medium text-text-muted hover:text-primary mb-8 transition-colors group"
         >
           <ArrowLeft className="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" />
@@ -101,9 +101,9 @@ export function ProductDetails() {
           {/* Gallery */}
           <div className="w-full md:w-1/2 md:sticky md:top-28">
             <div className="aspect-square bg-surface rounded-3xl border border-border p-8 mb-4 flex items-center justify-center overflow-hidden shadow-xs">
-              <img 
-                src={activeImage} 
-                alt={product.name} 
+              <img
+                src={activeImage}
+                alt={product.name}
                 className="w-full h-full object-contain mix-blend-multiply hover:scale-105 transition-transform duration-500"
               />
             </div>
@@ -113,9 +113,8 @@ export function ProductDetails() {
                   <button
                     key={idx}
                     onClick={() => setActiveImage(img)}
-                    className={`aspect-square rounded-2xl border-2 p-2 bg-surface overflow-hidden transition-all cursor-pointer ${
-                      activeImage === img ? 'border-primary shadow-xs ring-2 ring-primary/20' : 'border-border hover:border-text-muted'
-                    }`}
+                    className={`aspect-square rounded-2xl border-2 p-2 bg-surface overflow-hidden transition-all cursor-pointer ${activeImage === img ? 'border-primary shadow-xs ring-2 ring-primary/20' : 'border-border hover:border-text-muted'
+                      }`}
                   >
                     <img src={img} alt="" className="w-full h-full object-contain mix-blend-multiply" />
                   </button>
@@ -190,8 +189,6 @@ export function ProductDetails() {
                 setSelectedBundleId(bundle.id);
                 setSelectedBundle(bundle);
               }}
-              basePrice={product.price}
-              variants={product.variants}
             />
 
             {/* Delivery Pincode Checker Component */}
@@ -228,15 +225,14 @@ export function ProductDetails() {
                     {addToCartMutation.isPending ? 'Adding to Cart...' : 'Add to Cart'}
                   </button>
 
-                  <button 
+                  <button
                     type="button"
                     onClick={handleToggleWishlist}
                     disabled={toggleWishlistMutation.isPending}
-                    className={`w-12 h-12 flex items-center justify-center border rounded-xl transition-all shrink-0 cursor-pointer shadow-xs active:scale-95 disabled:opacity-50 ${
-                      isWishlisted 
-                        ? 'bg-rose-50 border-rose-300 text-rose-600 shadow-rose-100' 
+                    className={`w-12 h-12 flex items-center justify-center border rounded-xl transition-all shrink-0 cursor-pointer shadow-xs active:scale-95 disabled:opacity-50 ${isWishlisted
+                        ? 'bg-rose-50 border-rose-300 text-rose-600 shadow-rose-100'
                         : 'border-border bg-background hover:bg-neutral-100 text-text-main hover:text-rose-500'
-                    }`}
+                      }`}
                     title={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
                     aria-label="Toggle Wishlist"
                   >
@@ -277,7 +273,7 @@ export function ProductDetails() {
             </div>
           </div>
         </div>
-        
+
         <ProductReviews productId={product._id} />
       </Container>
     </div>

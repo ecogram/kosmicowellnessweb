@@ -3,8 +3,13 @@ import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '../store/useAuthStore';
 
 const getSocketURL = (): string => {
-  const apiUrl = import.meta.env.VITE_API_URL || 'https://api.kosmicowellness.com/api';
-  return apiUrl.replace(/\/api\/?$/, '');
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:5000';
+    }
+    return 'https://api.kosmicowellness.com';
+  }
+  return 'https://api.kosmicowellness.com';
 };
 
 export const useSocket = () => {

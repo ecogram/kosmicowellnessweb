@@ -8,8 +8,8 @@ import { useCoupons } from '../hooks/useCoupons';
 import { useProfile, useUpdateProfile, useRemoveProfilePicture, dataUrlToFile } from '../hooks/useProfile';
 import { useSavedPaymentMethods, useSavePaymentMethod, useDeletePaymentMethod } from '../hooks/usePayments';
 import { normalizeImageUrl } from '../utils/imageUrl';
-import { 
-  Package, Heart, Ticket, MapPin, CreditCard, RotateCcw, 
+import {
+  Package, Heart, Ticket, MapPin, CreditCard, RotateCcw,
   Globe, Moon, HelpCircle, Info, LogOut, Edit3, X, Phone, MessageSquare, Mail, Building,
   Plus, Trash2, Home, Briefcase, CheckCircle2, Smartphone, Camera, RefreshCw, Check, AlertCircle,
   Eye, Image as ImageIcon, User as UserIcon
@@ -40,14 +40,15 @@ export interface SavedPaymentMethod {
 }
 
 export const Profile: React.FC = () => {
-  const { user, logout, updateUser } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const { data: wishlist } = useWishlist();
   const { data: ordersData } = useOrders({ page: 1, limit: 100 });
   const { data: couponsData } = useCoupons();
   const navigate = useNavigate();
 
-  // Real-time profile sync — polls /users/profile every 4s and syncs socket updates
-  const { data: liveProfile } = useProfile();
+  // Real-time profile sync — polls /auth/profile every 30s
+  // So changes from mobile app / other platforms appear within 30s on website
+  useProfile();
 
   // Payment methods from API
   const { data: paymentMethodsData, refetch: refetchPaymentMethods } = useSavedPaymentMethods();
@@ -69,10 +70,10 @@ export const Profile: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Edit Profile Form State
-  const [fullName, setFullName] = useState(liveProfile?.name || user?.name || (user as any)?.fullName || '');
-  const [email, setEmail] = useState(liveProfile?.email || user?.email || '');
-  const [phone, setPhone] = useState(liveProfile?.phoneNumber || liveProfile?.phone || user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || '');
-  const [profilePicture, setProfilePicture] = useState(normalizeImageUrl(liveProfile?.profilePicture || user?.profilePicture || (user as any)?.profileImage || ''));
+  const [fullName, setFullName] = useState(user?.name || (user as any)?.fullName || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [phone, setPhone] = useState(user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || '');
+  const [profilePicture, setProfilePicture] = useState(normalizeImageUrl(user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar || ''));
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
@@ -93,7 +94,7 @@ export const Profile: React.FC = () => {
   const [isAddingAddress, setIsAddingAddress] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
   const [addressSuccessMsg, setAddressSuccessMsg] = useState('');
-  
+
   // Address Form State (API-aligned field names)
   const [addrFormName, setAddrFormName] = useState('');
   const [addrFormPhone, setAddrFormPhone] = useState('');
@@ -120,20 +121,19 @@ export const Profile: React.FC = () => {
   const [upiIdInput, setUpiIdInput] = useState('');
   const [upiSetDefault, setUpiSetDefault] = useState(true);
 
-  // Synchronize form state when Zustand store user or liveProfile changes (driven by real-time polling)
+  // Synchronize form state when Zustand store user changes (driven by useProfile polling)
   useEffect(() => {
-    const currentName = liveProfile?.name || liveProfile?.fullName || user?.name || (user as any)?.fullName;
+    const currentName = user?.name || (user as any)?.fullName;
     if (currentName) setFullName(currentName);
-    const currentEmail = liveProfile?.email || user?.email;
-    if (currentEmail) setEmail(currentEmail);
-    const currentPic = liveProfile?.profilePicture || (liveProfile as any)?.profileImage || user?.profilePicture || (user as any)?.profileImage;
+    if (user?.email) setEmail(user.email);
+    const currentPic = user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar;
     if (currentPic !== undefined) {
       setProfilePicture(normalizeImageUrl(currentPic));
       setImageLoadError(false);
     }
-    const userPhone = liveProfile?.phoneNumber || (liveProfile as any)?.phone || user?.phoneNumber || (user as any)?.phone || '';
+    const userPhone = user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || '';
     if (userPhone) setPhone(userPhone);
-  }, [user, liveProfile]);
+  }, [user]);
 
   // Fetch live addresses from backend (API-aligned field mapping)
   const fetchLiveAddresses = async () => {
@@ -191,20 +191,22 @@ export const Profile: React.FC = () => {
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, width, height);
-            resolve(canvas.toDataURL('image/jpeg', quality));
-          } else {
+          if (!ctx) {
             resolve(event.target?.result as string);
+            return;
           }
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', quality));
         };
+        img.onerror = () => resolve(event.target?.result as string);
         img.src = event.target?.result as string;
       };
+      reader.onerror = () => resolve('');
       reader.readAsDataURL(file);
     });
   };
 
-  // Camera Handlers
+  // Start Live Camera feed
   const startLiveCamera = async (facing: 'user' | 'environment' = 'user') => {
     setCameraError(null);
     setCapturedLivePhoto(null);
@@ -213,79 +215,130 @@ export const Profile: React.FC = () => {
     setIsCameraModalOpen(true);
 
     if (cameraStream) {
-      cameraStream.getTracks().forEach((track) => track.stop());
+      cameraStream.getTracks().forEach(t => t.stop());
       setCameraStream(null);
     }
 
     try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera not supported by your browser or connection is not secure (HTTPS / Localhost required).');
+      }
+
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: facing, width: { ideal: 720 }, height: { ideal: 720 } },
+        video: {
+          facingMode: facing,
+          width: { ideal: 720 },
+          height: { ideal: 720 },
+        },
         audio: false,
       });
+
       setCameraStream(stream);
-      setTimeout(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          videoRef.current.play().catch((e) => console.warn('Video play notice:', e));
-        }
-      }, 200);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(e => console.warn('Video play notice:', e));
+      }
     } catch (err: any) {
       console.error('Camera access error:', err);
-      setCameraError('Unable to access camera. Please check permissions or upload from files.');
+      let msg = 'Could not access camera device.';
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        msg = 'Camera permission was denied. Please allow camera access in your browser address bar/settings to take a live photo.';
+      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+        msg = 'No camera found on this device.';
+      } else if (err.message) {
+        msg = err.message;
+      }
+      setCameraError(msg);
     }
   };
 
+  // Toggle Front / Back Camera
+  const toggleCameraFacing = () => {
+    const nextFacing = cameraFacing === 'user' ? 'environment' : 'user';
+    startLiveCamera(nextFacing);
+  };
+
+  // Stop Camera & Close Modal
   const stopLiveCamera = () => {
     if (cameraStream) {
-      cameraStream.getTracks().forEach((track) => track.stop());
+      cameraStream.getTracks().forEach(t => t.stop());
       setCameraStream(null);
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
     }
     setIsCameraModalOpen(false);
     setCapturedLivePhoto(null);
     setCameraError(null);
   };
 
-  const toggleCameraFacing = () => {
-    const nextFacing = cameraFacing === 'user' ? 'environment' : 'user';
-    startLiveCamera(nextFacing);
-  };
-
-  const handleSnapPhoto = () => {
-    if (!videoRef.current) return;
-    const video = videoRef.current;
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 640;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-      if (cameraFacing === 'user') {
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-      }
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      setCapturedLivePhoto(dataUrl);
+  // Bind video srcObject when modal is active
+  useEffect(() => {
+    if (isCameraModalOpen && videoRef.current && cameraStream && !capturedLivePhoto) {
+      videoRef.current.srcObject = cameraStream;
+      videoRef.current.play().catch(e => console.warn('Video play notice:', e));
     }
+  }, [isCameraModalOpen, cameraStream, capturedLivePhoto]);
+
+  // Clean up camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(t => t.stop());
+      }
+    };
+  }, [cameraStream]);
+
+  // Snap Snapshot from Live Video
+  const handleSnapPhoto = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const canvas = document.createElement('canvas');
+    const width = video.videoWidth || 640;
+    const height = video.videoHeight || 640;
+    const size = Math.min(width, height);
+
+    canvas.width = 500;
+    canvas.height = 500;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    // Center crop to make square avatar
+    const sx = (width - size) / 2;
+    const sy = (height - size) / 2;
+
+    if (cameraFacing === 'user') {
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
+
+    ctx.drawImage(video, sx, sy, size, size, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    setCapturedLivePhoto(dataUrl);
   };
 
+  // Apply Captured Live Photo — convert canvas dataURL → File → multipart/form-data
+  // API docs: PUT /api/auth/profile uses multipart/form-data with profilePicture as binary File
   const handleApplyCapturedPhoto = async () => {
     if (!capturedLivePhoto) return;
-    setProfilePicture(capturedLivePhoto);
+    const previewDataUrl = capturedLivePhoto;
+    setProfilePicture(previewDataUrl);  // show preview immediately
     setImageLoadError(false);
     stopLiveCamera();
 
     try {
       setIsUploadingPhoto(true);
-      const file = dataUrlToFile(capturedLivePhoto, `profile-${Date.now()}.jpg`);
+      // Convert base64 dataURL → File (required for multipart/form-data)
+      const photoFile = dataUrlToFile(previewDataUrl, 'profile-photo.jpg');
       const updatedUser = await updateProfileMutation.mutateAsync({
         name: fullName.trim() || user?.name,
         phoneNumber: phone.trim() || user?.phoneNumber,
-        profilePictureFile: file,
-        profilePicture: capturedLivePhoto,
+        profilePictureFile: photoFile,
       });
       if (updatedUser) {
         const serverPic = normalizeImageUrl(
-          updatedUser.profilePicture || updatedUser.profileImage || ''
+          updatedUser.profilePicture || updatedUser.profileImage || updatedUser.avatar || ''
         );
         if (serverPic) setProfilePicture(serverPic);
       }
@@ -320,11 +373,10 @@ export const Profile: React.FC = () => {
         name: fullName.trim() || user?.name,
         phoneNumber: phone.trim() || user?.phoneNumber,
         profilePictureFile: file,  // original file — server resizes
-        profilePicture: compressedDataUrl,
       });
       if (updatedUser) {
         const serverPic = normalizeImageUrl(
-          updatedUser.profilePicture || updatedUser.profileImage || ''
+          updatedUser.profilePicture || updatedUser.profileImage || updatedUser.avatar || ''
         );
         if (serverPic) setProfilePicture(serverPic);
       }
@@ -356,18 +408,9 @@ export const Profile: React.FC = () => {
     const cleanName = fullName.trim();
     const cleanPhone = phone.trim();
 
-    // 1. Immediately update Zustand store synchronously so UI updates with ZERO delay
-    if (cleanName || cleanPhone) {
-      updateUser({
-        name: cleanName || user?.name || '',
-        fullName: cleanName || (user as any)?.fullName || '',
-        phoneNumber: cleanPhone || user?.phoneNumber || '',
-        phone: cleanPhone || (user as any)?.phone || '',
-      });
-    }
-
     try {
-      // 2. Persist to API
+      // API docs: PUT /api/auth/profile → multipart/form-data
+      // Fields: name (String), phoneNumber (String), profilePicture (File binary)
       const updatedUser = await updateProfileMutation.mutateAsync({
         name: cleanName,
         phoneNumber: cleanPhone,
@@ -481,11 +524,11 @@ export const Profile: React.FC = () => {
   return (
     <div className={`py-8 md:py-14 min-h-screen transition-colors ${isDarkMode ? 'bg-neutral-900 text-white' : 'bg-background text-neutral-900'}`}>
       <Container className="max-w-3xl mx-auto space-y-6">
-        
+
         {/* User Header Info Card */}
         <div className={`p-4 sm:p-6 rounded-3xl border shadow-xs flex items-center justify-between gap-3 sm:gap-4 ${isDarkMode ? 'bg-neutral-800 border-neutral-700' : 'bg-surface border-border'}`}>
           <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-            <div 
+            <div
               onClick={() => setIsPhotoPickerOpen(true)}
               className="relative group shrink-0 cursor-pointer"
               title="Profile Picture Options"
@@ -526,12 +569,12 @@ export const Profile: React.FC = () => {
 
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-bold font-serif truncate">{fullName || user?.name || 'User'}</h1>
+                <h1 className="text-lg sm:text-xl font-bold font-serif truncate">{user?.name || fullName || 'User'}</h1>
               </div>
-              <p className={`text-xs truncate ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>{email || user?.email}</p>
-              {(phone || user?.phoneNumber) && (
+              <p className={`text-xs truncate ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>{user?.email || email}</p>
+              {(user?.phoneNumber || phone) && (
                 <p className={`text-[11px] font-medium mt-0.5 truncate ${isDarkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>
-                  📞 {phone || user?.phoneNumber}
+                  📞 {user?.phoneNumber || phone}
                 </p>
               )}
             </div>
@@ -542,7 +585,7 @@ export const Profile: React.FC = () => {
               setFullName(user?.name || (user as any)?.fullName || fullName || '');
               setEmail(user?.email || email || '');
               setPhone(user?.phoneNumber || (user as any)?.phone || phone || '');
-              setProfilePicture(profilePicture || user?.profilePicture || (user as any)?.profileImage || '');
+              setProfilePicture(profilePicture || user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar || '');
               setIsEditProfileOpen(true);
             }}
             className="p-2.5 rounded-2xl bg-emerald-800/10 hover:bg-emerald-800/20 text-emerald-800 transition-colors cursor-pointer"
@@ -698,7 +741,7 @@ export const Profile: React.FC = () => {
           </h2>
 
           <div className="space-y-3">
-            
+
             {/* Language Switcher */}
             <div className="flex items-center justify-between p-3.5">
               <div className="flex items-center gap-3">
@@ -795,8 +838,8 @@ export const Profile: React.FC = () => {
           <div className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-6 space-y-5 shadow-2xl border border-neutral-100 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center pb-2">
               <h3 className="font-bold text-lg text-neutral-900">Edit Profile</h3>
-              <button 
-                onClick={() => setIsEditProfileOpen(false)} 
+              <button
+                onClick={() => setIsEditProfileOpen(false)}
                 className="p-1 rounded-full text-neutral-400 hover:text-neutral-700 cursor-pointer transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -883,8 +926,8 @@ export const Profile: React.FC = () => {
                 <MapPin className="w-5 h-5 text-emerald-800" />
                 <h3 className="font-serif font-bold text-lg text-neutral-900">Delivery Addresses</h3>
               </div>
-              <button 
-                onClick={() => { setIsAddressesOpen(false); setIsAddingAddress(false); }} 
+              <button
+                onClick={() => { setIsAddressesOpen(false); setIsAddingAddress(false); }}
                 className="p-1 rounded-full text-neutral-400 hover:text-neutral-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
@@ -928,20 +971,18 @@ export const Profile: React.FC = () => {
                     {addresses.map((addr) => (
                       <div
                         key={addr._id}
-                        className={`p-4 rounded-2xl border transition-all ${
-                          addr.isDefault 
-                            ? 'border-emerald-600 bg-emerald-50/40 shadow-xs' 
+                        className={`p-4 rounded-2xl border transition-all ${addr.isDefault
+                            ? 'border-emerald-600 bg-emerald-50/40 shadow-xs'
                             : 'border-neutral-200 hover:border-neutral-300 bg-white'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <span className="font-bold text-sm text-neutral-900">{addr.fullName}</span>
-                              <span className={`px-2 py-0.5 text-[10px] font-extrabold rounded-md flex items-center gap-1 ${
-                                addr.addressLabel === 'Home' ? 'bg-amber-100 text-amber-800' :
-                                addr.addressLabel === 'Work' ? 'bg-blue-100 text-blue-800' : 'bg-neutral-100 text-neutral-700'
-                              }`}>
+                              <span className={`px-2 py-0.5 text-[10px] font-extrabold rounded-md flex items-center gap-1 ${addr.addressLabel === 'Home' ? 'bg-amber-100 text-amber-800' :
+                                  addr.addressLabel === 'Work' ? 'bg-blue-100 text-blue-800' : 'bg-neutral-100 text-neutral-700'
+                                }`}>
                                 {addr.addressLabel === 'Home' && <Home className="w-2.5 h-2.5" />}
                                 {addr.addressLabel === 'Work' && <Briefcase className="w-2.5 h-2.5" />}
                                 {addr.addressLabel}
@@ -1021,11 +1062,10 @@ export const Profile: React.FC = () => {
                         key={label}
                         type="button"
                         onClick={() => setAddrFormLabel(label)}
-                        className={`flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                          addrFormLabel === label 
-                            ? 'bg-emerald-800 text-white border-emerald-800' 
+                        className={`flex-1 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${addrFormLabel === label
+                            ? 'bg-emerald-800 text-white border-emerald-800'
                             : 'bg-neutral-50 text-neutral-700 border-neutral-200 hover:bg-neutral-100'
-                        }`}
+                          }`}
                       >
                         {label === 'Home' && <Home className="w-3 h-3 inline mr-1" />}
                         {label === 'Work' && <Briefcase className="w-3 h-3 inline mr-1" />}
@@ -1102,7 +1142,7 @@ export const Profile: React.FC = () => {
                   <label className="text-sm font-semibold text-neutral-700 cursor-pointer" htmlFor="isDefaultCheckProfile">
                     Set as Default Address
                   </label>
-                  <div 
+                  <div
                     id="isDefaultCheckProfile"
                     className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${addrFormIsDefault ? 'bg-emerald-800' : 'bg-neutral-300'}`}
                     onClick={() => setAddrFormIsDefault(!addrFormIsDefault)}
@@ -1134,8 +1174,8 @@ export const Profile: React.FC = () => {
                   {isAddingPaymentMethod ? 'Add Payment Method' : 'Payment Methods'}
                 </h3>
               </div>
-              <button 
-                onClick={() => { setIsPaymentMethodsOpen(false); setIsAddingPaymentMethod(false); }} 
+              <button
+                onClick={() => { setIsPaymentMethodsOpen(false); setIsAddingPaymentMethod(false); }}
                 className="p-1 rounded-full text-neutral-400 hover:text-neutral-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
@@ -1264,11 +1304,10 @@ export const Profile: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setPaymentTypeTab('BANK')}
-                      className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
-                        paymentTypeTab === 'BANK'
+                      className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${paymentTypeTab === 'BANK'
                           ? 'border-[#0a7a40] bg-emerald-50 text-[#0a7a40] font-bold'
                           : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50'
-                      }`}
+                        }`}
                     >
                       <Building className="w-6 h-6 mb-1.5" />
                       <span className="text-xs font-bold">Bank Account</span>
@@ -1277,11 +1316,10 @@ export const Profile: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setPaymentTypeTab('UPI')}
-                      className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
-                        paymentTypeTab === 'UPI'
+                      className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${paymentTypeTab === 'UPI'
                           ? 'border-[#0a7a40] bg-emerald-50 text-[#0a7a40] font-bold'
                           : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50'
-                      }`}
+                        }`}
                     >
                       <Smartphone className="w-6 h-6 mb-1.5" />
                       <span className="text-xs font-bold">UPI ID</span>
@@ -1471,11 +1509,11 @@ export const Profile: React.FC = () => {
 
       {/* MODAL 5: PHOTO SELECTION BOTTOM SHEET (MATCHING EXACT APP SCREENSHOT 1) */}
       {isPhotoPickerOpen && (
-        <div 
+        <div
           onClick={() => setIsPhotoPickerOpen(false)}
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
         >
-          <div 
+          <div
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-md bg-white rounded-t-3xl sm:rounded-3xl p-5 pt-3 pb-8 space-y-2 shadow-2xl border border-neutral-100 animate-in slide-in-from-bottom-5 duration-200"
           >
@@ -1533,17 +1571,17 @@ export const Profile: React.FC = () => {
 
       {/* MODAL 6: PREVIEW PICTURE FULL VIEW LIGHTBOX */}
       {isPreviewModalOpen && (
-        <div 
+        <div
           onClick={() => setIsPreviewModalOpen(false)}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
         >
-          <div 
+          <div
             onClick={(e) => e.stopPropagation()}
             className="relative max-w-sm sm:max-w-md w-full bg-neutral-900 rounded-3xl p-4 shadow-2xl border border-neutral-700 flex flex-col items-center space-y-4"
           >
             <div className="w-full flex items-center justify-between pb-2 border-b border-neutral-800 text-white">
               <span className="text-sm font-bold truncate">{user?.name || fullName || 'Profile Picture'}</span>
-              <button 
+              <button
                 onClick={() => setIsPreviewModalOpen(false)}
                 className="p-1 rounded-full text-neutral-400 hover:text-white transition-colors cursor-pointer"
               >
@@ -1609,8 +1647,8 @@ export const Profile: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <button 
-                onClick={stopLiveCamera} 
+              <button
+                onClick={stopLiveCamera}
                 className="p-1 rounded-full text-neutral-400 hover:text-neutral-700 cursor-pointer"
                 title="Close Camera"
               >

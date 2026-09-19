@@ -62,12 +62,7 @@ const AuthInit = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       try {
-        let response;
-        try {
-          response = await api.get('/auth/profile');
-        } catch (e) {
-          response = await api.get('/users/profile');
-        }
+        const response = await api.get('/users/profile');
         if (response.data?.data) {
           const user = response.data.data.user || response.data.data;
           setAuth(user, accessToken);
@@ -106,7 +101,7 @@ function App() {
                     <Route path="/coupons" element={<Coupons />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
-                    
+
                     {/* Marketing & Info Pages */}
                     <Route path="/about" element={<About />} />
                     <Route path="/benefits" element={<BenefitsPage />} />

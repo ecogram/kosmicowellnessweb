@@ -13,7 +13,7 @@ export const OrderDetails = () => {
   const { orderNumber } = useParams();
   const { data: order, isLoading, isError } = useOrder(orderNumber as string);
   const cancelMutation = useCancelOrder();
-  
+
   const createPaymentMutation = useCreatePayment();
   const verifyPaymentMutation = useVerifyPayment();
   const { user } = useAuthStore();
@@ -23,7 +23,7 @@ export const OrderDetails = () => {
   useEffect(() => {
     if (isConnected && order && socket) {
       socket.emit('join:order', order._id);
-      
+
       return () => {
         socket.emit('leave:order', order._id);
       };
@@ -43,7 +43,7 @@ export const OrderDetails = () => {
   const handlePayment = async () => {
     if (!order) return;
     setIsPaymentProcessing(true);
-    
+
     const res = await loadRazorpay();
     if (!res) {
       alert('Razorpay SDK failed to load. Are you online?');
@@ -70,16 +70,15 @@ export const OrderDetails = () => {
             });
           },
           prefill: {
-            name: user?.name || order.shippingAddress?.fullName || 'Customer',
-            email: user?.email || '',
-            contact: order.shippingAddress?.phone || order.shippingAddress?.phoneNumber || (user as any)?.phoneNumber || (user as any)?.phone || '',
+            name: user?.name || order.shippingAddress.fullName,
+            email: user?.email,
+            contact: order.shippingAddress.phone,
           },
-          offers: [],
           theme: {
             color: '#c25e00',
           },
           modal: {
-            ondismiss: function() {
+            ondismiss: function () {
               setIsPaymentProcessing(false);
             }
           }
@@ -120,15 +119,15 @@ export const OrderDetails = () => {
               Order #{order.orderNumber || (order._id ? (order._id.startsWith('ord_') ? order._id : order._id) : (order.shiprocketOrderId || 'Order'))}
             </h1>
             <p className="text-text-muted mb-8">Placed on {new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-            
+
             <div className="bg-surface rounded-2xl border border-border p-6 mb-8">
               <h2 className="font-bold text-lg mb-6">Items</h2>
               <ul className="divide-y divide-border">
                 {(order.items || []).map((item: any, idx: number) => (
                   <li key={item._id || idx} className="py-4 flex gap-4 items-center">
                     <div className="w-16 h-16 bg-background rounded border border-border p-1 flex-shrink-0">
-                      <img 
-                        src={item.image || (item.product && item.product.images && item.product.images[0]) || '/assets/products/product-box.jpg'} 
+                      <img
+                        src={item.image || (item.product && item.product.images && item.product.images[0]) || '/assets/products/product-box.jpg'}
                         alt={item.name || item.title || 'Product'}
                         className="w-full h-full object-contain mix-blend-multiply"
                       />
@@ -219,13 +218,13 @@ export const OrderDetails = () => {
                   </>
                 );
               })()}
-              
+
               <div className="space-y-4">
                 <div className="flex justify-between items-center bg-neutral-50 p-3 rounded-lg border border-border">
                   <span className="text-sm font-medium">Order Status</span>
                   <span className="text-sm font-bold uppercase tracking-wide">{order.orderStatus || 'CONFIRMED'}</span>
                 </div>
-                
+
                 <div className="flex justify-between items-center bg-neutral-50 p-3 rounded-lg border border-border">
                   <span className="text-sm font-medium">Payment Method</span>
                   <span className="text-sm font-bold text-emerald-800">
@@ -241,8 +240,8 @@ export const OrderDetails = () => {
                 </div>
 
                 {order.paymentMethod !== 'COD' && order.paymentStatus !== 'PAID' && order.orderStatus !== 'CANCELLED' && (
-                  <Button 
-                    variant="solid" 
+                  <Button
+                    variant="solid"
                     className="w-full"
                     onClick={handlePayment}
                     disabled={isPaymentProcessing || createPaymentMutation.isPending || verifyPaymentMutation.isPending}
@@ -252,8 +251,8 @@ export const OrderDetails = () => {
                 )}
 
                 {order.orderStatus === 'PENDING' && (
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full text-error border-error/20 hover:bg-error/5"
                     onClick={handleCancel}
                     disabled={cancelMutation.isPending}

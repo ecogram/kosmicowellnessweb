@@ -12,36 +12,18 @@ export interface Address {
   isDefault?: boolean;
 }
 
-import { useAuthStore } from '../store/useAuthStore';
-
 // GET /api/address
 export const useAddresses = () => {
-  const { isAuthenticated, accessToken } = useAuthStore();
-  const hasAuth = isAuthenticated || !!accessToken || !!localStorage.getItem('kosmico_auth_v1');
-
   return useQuery({
     queryKey: ['addresses'],
     queryFn: async () => {
-      try {
-        const { data } = await api.get('/address');
-        const addresses: Address[] =
-          data?.data?.addresses ?? data?.data ?? (Array.isArray(data) ? data : []);
-        return (Array.isArray(addresses) ? addresses : []).map((a: any) => ({
-          _id: a._id || a.id,
-          addressLabel: a.addressLabel || 'Home',
-          fullName: a.fullName || '',
-          streetAddress: a.streetAddress || '',
-          city: a.city || '',
-          pincode: a.pincode || '',
-          phoneNumber: a.phoneNumber || '',
-          isDefault: !!a.isDefault,
-        }));
-      } catch (err) {
-        return [] as Address[];
-      }
+      const { data } = await api.get('/address');
+      const addresses: Address[] =
+        data?.data?.addresses ?? (Array.isArray(data?.data) ? data.data : []);
+      return addresses;
     },
-    enabled: hasAuth,
-    staleTime: 30 * 1000,
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5000,
     retry: 1,
   });
 };

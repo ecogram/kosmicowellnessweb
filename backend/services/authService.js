@@ -114,8 +114,8 @@ class AuthService {
       if (user) {
         throw new ApiError(400, 'An account with this email already exists. Please log in instead.');
       }
-      const defaultName = name && name.trim().length > 0 
-        ? name.trim() 
+      const defaultName = name && name.trim().length > 0
+        ? name.trim()
         : (savedOtpName || normalizedEmail.split('@')[0]);
 
       user = await User.create({
@@ -131,8 +131,8 @@ class AuthService {
     } else {
       // Auto mode (backward compatible)
       if (!user) {
-        const defaultName = name && name.trim().length > 0 
-          ? name.trim() 
+        const defaultName = name && name.trim().length > 0
+          ? name.trim()
           : (savedOtpName || normalizedEmail.split('@')[0]);
 
         user = await User.create({
@@ -218,49 +218,43 @@ class AuthService {
       throw new ApiError(404, 'User not found');
     }
 
-    const updateFields = {};
     const updatedName = name || fullName;
     if (updatedName && typeof updatedName === 'string' && updatedName.trim().length > 0) {
-      updateFields.name = updatedName.trim();
-      updateFields.fullName = updatedName.trim();
+      user.name = updatedName.trim();
     }
 
     const updatedPhone = phoneNumber !== undefined ? phoneNumber : phone;
     if (updatedPhone !== undefined && updatedPhone !== null) {
       const cleanPhone = updatedPhone.toString().trim();
-      updateFields.phoneNumber = cleanPhone;
-      updateFields.phone = cleanPhone;
+      user.phoneNumber = cleanPhone;
+      user.phone = cleanPhone;
     }
 
     const updatedPic = profilePicture || profileImage || avatar;
     if (removePhoto === true) {
-      updateFields.profilePicture = '';
-      updateFields.profileImage = '';
-      updateFields.avatar = '';
-    } else if (updatedPic !== undefined && typeof updatedPic === 'string' && updatedPic.trim().length > 0) {
+      user.profilePicture = '';
+      user.profileImage = '';
+      user.avatar = '';
+    } else if (updatedPic && typeof updatedPic === 'string' && updatedPic.trim().length > 0) {
       const cleanPic = updatedPic.trim();
-      updateFields.profilePicture = cleanPic;
-      updateFields.profileImage = cleanPic;
-      updateFields.avatar = cleanPic;
+      user.profilePicture = cleanPic;
+      user.profileImage = cleanPic;
+      user.avatar = cleanPic;
     }
-    // If updatedPic is undefined, we don't touch profilePicture — preserves existing value
+    // Note: If updatedPic is empty/undefined and removePhoto is not true, we DO NOT wipe the existing photo!
 
-    const savedUser = await User.findByIdAndUpdate(
-      userId,
-      { $set: updateFields },
-      { new: true }
-    );
+    await user.save();
 
-    const pic = savedUser.profilePicture || savedUser.profileImage || savedUser.avatar || '';
-    const finalPhone = savedUser.phoneNumber || savedUser.phone || '';
+    const pic = user.profilePicture || user.profileImage || user.avatar || '';
+    const finalPhone = user.phoneNumber || user.phone || '';
 
     return {
-      id: savedUser._id,
-      _id: savedUser._id,
-      name: savedUser.name,
-      fullName: savedUser.name,
-      email: savedUser.email,
-      role: savedUser.role,
+      id: user._id,
+      _id: user._id,
+      name: user.name,
+      fullName: user.name,
+      email: user.email,
+      role: user.role,
       phoneNumber: finalPhone,
       phone: finalPhone,
       mobile: finalPhone,
@@ -269,7 +263,7 @@ class AuthService {
       avatar: pic,
       avatarUrl: pic,
       image: pic,
-      isActive: savedUser.isActive,
+      isActive: user.isActive,
     };
   }
 
@@ -351,4 +345,5 @@ class AuthService {
   }
 }
 
+module.exports = new AuthService();
 module.exports = new AuthService();

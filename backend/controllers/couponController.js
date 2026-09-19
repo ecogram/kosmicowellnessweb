@@ -60,7 +60,65 @@ const getCoupons = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, coupons, 'Coupons fetched successfully'));
 });
 
+// Admin Controllers
+const getAllAdminCoupons = asyncHandler(async (req, res) => {
+  const coupons = await Coupon.find().sort({ createdAt: -1 });
+  res.status(200).json(new ApiResponse(200, coupons, 'All coupons fetched successfully'));
+});
+
+const createCoupon = asyncHandler(async (req, res) => {
+  const { code, description, discountType, discountValue, maxDiscount, minOrderAmount, expiresAt, isActive } = req.body;
+
+  if (!code || !discountValue) {
+    throw new ApiError(400, 'Coupon code and discount value are required');
+  }
+
+  const existing = await Coupon.findOne({ code: code.trim().toUpperCase() });
+  if (existing) {
+    throw new ApiError(400, 'Coupon code already exists');
+  }
+
+  const coupon = await Coupon.create({
+    code: code.trim().toUpperCase(),
+    description: description || '',
+    discountType: discountType || 'percentage',
+    discountValue: Number(discountValue),
+    maxDiscount: maxDiscount ? Number(maxDiscount) : null,
+    minOrderAmount: minOrderAmount ? Number(minOrderAmount) : 0,
+    expiresAt: expiresAt ? new Date(expiresAt) : new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+    isActive: isActive !== undefined ? isActive : true,
+  });
+
+  res.status(201).json(new ApiResponse(201, coupon, 'Coupon created successfully'));
+});
+
+const updateCoupon = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const coupon = await Coupon.findByIdAndUpdate(id, req.body, { new: true, runValidators: true });
+
+  if (!coupon) {
+    throw new ApiError(404, 'Coupon not found');
+  }
+
+  res.status(200).json(new ApiResponse(200, coupon, 'Coupon updated successfully'));
+});
+
+const deleteCoupon = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const coupon = await Coupon.findByIdAndDelete(id);
+
+  if (!coupon) {
+    throw new ApiError(404, 'Coupon not found');
+  }
+
+  res.status(200).json(new ApiResponse(200, null, 'Coupon deleted successfully'));
+});
+
 module.exports = {
   getCoupons,
   applyCoupon,
+  getAllAdminCoupons,
+  createCoupon,
+  updateCoupon,
+  deleteCoupon,
 };

@@ -7,7 +7,7 @@ import { useOrders } from '../hooks/useOrders';
 import { Package, Calendar, ChevronRight } from 'lucide-react';
 
 export const Orders: React.FC = () => {
-  const { data, isLoading, isError, refetch } = useOrders({ page: 1, limit: 20 });
+  const { data, isLoading, isError } = useOrders({ page: 1, limit: 20 });
 
   const rawOrders = data?.orders || [];
   const orders = React.useMemo(() => {
@@ -33,8 +33,8 @@ export const Orders: React.FC = () => {
   if (isError) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
-        <p className="text-sm font-medium text-red-600 mb-4">Unable to load orders at this moment.</p>
-        <Button onClick={() => refetch()} variant="outline" size="sm">
+        <p className="text-sm font-medium text-red-600 mb-4">Failed to load orders.</p>
+        <Button onClick={() => window.location.reload()} variant="outline" size="sm">
           Retry
         </Button>
       </div>
@@ -124,15 +124,14 @@ export const Orders: React.FC = () => {
 
                     <div className="col-span-2 w-full">
                       <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${
-                          orderStatus === 'DELIVERED'
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${orderStatus === 'DELIVERED'
                             ? 'bg-emerald-100 text-emerald-800'
                             : orderStatus === 'CANCELLED'
-                            ? 'bg-red-100 text-red-800'
-                            : orderStatus === 'SHIPPED'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-amber-100 text-amber-800'
-                        }`}
+                              ? 'bg-red-100 text-red-800'
+                              : orderStatus === 'SHIPPED'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-amber-100 text-amber-800'
+                          }`}
                       >
                         {orderStatus}
                       </span>

@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { 
-  ArrowLeft, 
-  Truck, 
-  CreditCard, 
-  Tag, 
-  ChevronRight, 
-  Plus, 
-  Check, 
-  X, 
-  ShoppingBag, 
-  Loader2, 
+import {
+  ArrowLeft,
+  Truck,
+  CreditCard,
+  Tag,
+  ChevronRight,
+  Plus,
+  Check,
+  X,
+  ShoppingBag,
+  Loader2,
   Pencil,
   Trash2,
   Smartphone,
@@ -22,14 +22,7 @@ import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
 import { useCart } from '../hooks/useCart';
 import { useCreateOrder } from '../hooks/useOrders';
-import { 
-  useVerifyPayment, 
-  useCreateCodUpfront, 
-  useVerifyCodUpfront, 
-  useSavedPaymentMethods, 
-  useSavePaymentMethod,
-  useCreateRazorpayOrder
-} from '../hooks/usePayments';
+import { useVerifyPayment, useCreateCodUpfront, useVerifyCodUpfront } from '../hooks/usePayments';
 import { useAuthStore } from '../store/useAuthStore';
 import { formatINR } from '../utils/currency';
 
@@ -65,12 +58,9 @@ export const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { data: cart, isLoading: isCartLoading } = useCart();
   const createOrderMutation = useCreateOrder();
-  const createRazorpayOrderMutation = useCreateRazorpayOrder();
   const verifyPaymentMutation = useVerifyPayment();
   const createCodUpfrontMutation = useCreateCodUpfront();
   const verifyCodUpfrontMutation = useVerifyCodUpfront();
-  const { data: savedMethodsFromApi } = useSavedPaymentMethods();
-  const savePaymentMethodMutation = useSavePaymentMethod();
   const { user } = useAuthStore();
 
   // Selected payment mode: 'ONLINE' or 'COD'
@@ -80,12 +70,11 @@ export const Checkout: React.FC = () => {
   const [createdOrder, setCreatedOrder] = useState<any>(null);
 
   // Online Payment Method state (UPI & Bank Account - dynamic strictly for this authenticated user)
-  const [paymentMethods, setPaymentMethods] = useState<SavedPaymentMethod[]>([]);
-
-  useEffect(() => {
-    if (savedMethodsFromApi && savedMethodsFromApi.length > 0) {
-      const formatted: SavedPaymentMethod[] = savedMethodsFromApi.map((m) => ({
-        id: m._id || m.id || `pm-${Math.random()}`,
+  const [paymentMethods, setPaymentMethods] = useState<SavedPaymentMethod[]>(() => {
+    const userMethods = (user as any)?.savedPaymentMethods;
+    if (Array.isArray(userMethods) && userMethods.length > 0) {
+      return userMethods.map((m: any) => ({
+        id: m._id || m.id,
         type: m.type || 'UPI',
         displayName: m.displayName || user?.name || 'User',
         upiId: m.upiId,
@@ -94,12 +83,13 @@ export const Checkout: React.FC = () => {
         ifscCode: m.ifscCode,
         isDefault: !!m.isDefault,
       }));
-      setPaymentMethods(formatted);
-      setSelectedPaymentMethod((prev) => prev || formatted.find((m) => m.isDefault) || formatted[0]);
     }
-  }, [savedMethodsFromApi, user]);
+    return [];
+  });
 
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<SavedPaymentMethod | undefined>(undefined);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<SavedPaymentMethod | undefined>(() => {
+    return paymentMethods.find((m) => m.isDefault) || paymentMethods[0];
+  });
 
   const [isPaymentMethodModalOpen, setIsPaymentMethodModalOpen] = useState(false);
   const [isAddingNewPaymentMethod, setIsAddingNewPaymentMethod] = useState(false);
@@ -117,17 +107,15 @@ export const Checkout: React.FC = () => {
   const [upiSetDefault, setUpiSetDefault] = useState(true);
 
   // Save Payment Method Helper
-  const handleSavePaymentMethod = async (e: React.FormEvent) => {
+  const handleSavePaymentMethod = (e: React.FormEvent) => {
     e.preventDefault();
     if (paymentTypeTab === 'UPI') {
       if (!upiIdInput.trim()) return;
-      const cleanUpi = upiIdInput.trim();
-      const cleanName = (upiDisplayName || user?.name || 'User').toUpperCase();
       const newMethod: SavedPaymentMethod = {
         id: `pm-${Date.now()}`,
         type: 'UPI',
-        displayName: cleanName,
-        upiId: cleanUpi,
+        displayName: (upiDisplayName || user?.name || 'User').toUpperCase(),
+        upiId: upiIdInput.trim(),
         isDefault: upiSetDefault,
       };
       const updatedList = upiSetDefault
@@ -135,33 +123,18 @@ export const Checkout: React.FC = () => {
         : [...paymentMethods, newMethod];
       setPaymentMethods(updatedList);
       setSelectedPaymentMethod(newMethod);
+      localStorage.setItem('kosmico_saved_payment_methods', JSON.stringify(updatedList));
       setIsAddingNewPaymentMethod(false);
       setUpiIdInput('');
-
-      try {
-        await savePaymentMethodMutation.mutateAsync({
-          type: 'UPI',
-          displayName: cleanName,
-          upiId: cleanUpi,
-          isDefault: upiSetDefault,
-        });
-      } catch (err) {
-        console.warn('Save payment method notice:', err);
-      }
     } else {
       if (!bankAccountNumber.trim() || !bankIfscCode.trim()) return;
-      const cleanName = (bankAccountHolder || user?.name || 'User').toUpperCase();
-      const cleanBank = bankName.trim() || 'Bank Account';
-      const cleanAcc = bankAccountNumber.trim();
-      const cleanIfsc = bankIfscCode.trim().toUpperCase();
-
       const newMethod: SavedPaymentMethod = {
         id: `pm-${Date.now()}`,
         type: 'BANK',
-        displayName: cleanName,
-        bankName: cleanBank,
-        accountNumber: cleanAcc,
-        ifscCode: cleanIfsc,
+        displayName: (bankAccountHolder || user?.name || 'User').toUpperCase(),
+        bankName: bankName.trim() || 'Bank Account',
+        accountNumber: bankAccountNumber.trim(),
+        ifscCode: bankIfscCode.trim().toUpperCase(),
         isDefault: bankSetDefault,
       };
 
@@ -172,24 +145,12 @@ export const Checkout: React.FC = () => {
       updatedList = [newMethod, ...updatedList];
       setPaymentMethods(updatedList);
       setSelectedPaymentMethod(newMethod);
+      localStorage.setItem('kosmico_saved_payment_methods', JSON.stringify(updatedList));
       setIsAddingNewPaymentMethod(false);
       setIsPaymentMethodModalOpen(false);
       setBankAccountNumber('');
       setBankIfscCode('');
       setBankName('');
-
-      try {
-        await savePaymentMethodMutation.mutateAsync({
-          type: 'BANK',
-          displayName: cleanName,
-          bankName: cleanBank,
-          accountNumber: cleanAcc,
-          ifscCode: cleanIfsc,
-          isDefault: bankSetDefault,
-        });
-      } catch (err) {
-        console.warn('Save payment method notice:', err);
-      }
     }
   };
 
@@ -236,7 +197,7 @@ export const Checkout: React.FC = () => {
     try {
       const res = await api.get('/address');
       const list = res.data?.data?.addresses ?? res.data?.data ?? (Array.isArray(res.data) ? res.data : []);
-      
+
       if (Array.isArray(list) && list.length > 0) {
         setSavedAddresses(list);
         const def = list.find((a: any) => a.isDefault) || list[0];
@@ -385,8 +346,8 @@ export const Checkout: React.FC = () => {
 
     const rzpOrderId =
       order.orderId &&
-      order.orderId.startsWith('order_') &&
-      !order.orderId.startsWith('order_dev_')
+        order.orderId.startsWith('order_') &&
+        !order.orderId.startsWith('order_dev_')
         ? order.orderId
         : undefined;
 
@@ -399,9 +360,8 @@ export const Checkout: React.FC = () => {
       prefill: {
         name: selectedAddress?.fullName || user?.name || 'Customer',
         email: user?.email || '',
-        contact: selectedAddress?.phoneNumber || (selectedAddress as any)?.phone || (user as any)?.phoneNumber || (user as any)?.phone || '',
+        contact: selectedAddress?.phoneNumber || (user as any)?.phoneNumber || (user as any)?.phone || '',
       },
-      offers: [],
       theme: {
         color: '#0a7a40',
       },
@@ -432,7 +392,7 @@ export const Checkout: React.FC = () => {
               : o
           );
           localStorage.setItem('kosmico_user_orders', JSON.stringify(updated));
-        } catch (e) {}
+        } catch (e) { }
 
         localStorage.removeItem('kosmico_cart_v1');
         setIsPaymentProcessing(false);
@@ -476,7 +436,7 @@ export const Checkout: React.FC = () => {
       'rzp_live_TcH3s5Qdh4ngAp';
 
     const calculatedPaise = Math.max(100, Math.round(advanceAmount * 100));
-    
+
     const rzpOrderId =
       order.orderId && order.orderId.startsWith('order_') && !order.orderId.startsWith('order_dev_')
         ? order.orderId
@@ -491,9 +451,8 @@ export const Checkout: React.FC = () => {
       prefill: {
         name: selectedAddress?.fullName || user?.name || 'Customer',
         email: user?.email || '',
-        contact: selectedAddress?.phoneNumber || (selectedAddress as any)?.phone || (user as any)?.phoneNumber || (user as any)?.phone || '',
+        contact: selectedAddress?.phoneNumber || (user as any)?.phoneNumber || (user as any)?.phone || '',
       },
-      offers: [],
       theme: { color: '#0a7a40' },
       modal: {
         ondismiss: function () {
@@ -543,30 +502,11 @@ export const Checkout: React.FC = () => {
     }
 
 
-    const itemsToOrder = (cart?.items || []).map((it: any) => {
-      let pId = '';
-      if (typeof it.product === 'object' && it.product !== null) {
-        pId = it.product._id || it.product.id || '';
-      } else if (typeof it.product === 'string' && !it.product.startsWith('cart-item-')) {
-        pId = it.product;
-      }
-      if (!pId && typeof it.productId === 'string' && !it.productId.startsWith('cart-item-')) {
-        pId = it.productId;
-      }
-      if (!pId && typeof it._id === 'string' && !it._id.startsWith('cart-item-')) {
-        pId = it._id;
-      }
-
-      return {
-        productId: pId,
-        product: pId,
-        quantity: Number(it.quantity || it.qty) || 1,
-        qty: Number(it.quantity || it.qty) || 1,
-        price: Number(it.price || it.priceSnapshot || it.product?.price) || 387,
-        name: it.product?.name || it.product?.title || it.name || 'Kosmico Classic Monk Fruit Sweetener (250ml)',
-        image: (it.product?.images && it.product?.images[0]?.url) || it.product?.image || it.image || '',
-      };
-    });
+    const itemsToOrder = (cart?.items || []).map((it: any) => ({
+      productId: it.productId || it.product?._id || it.product?.id,
+      quantity: it.quantity || 1,
+      price: it.price || it.priceSnapshot || 0,
+    })).filter((it) => !!it.productId);
 
     if (itemsToOrder.length === 0) {
       toast.error('Your cart is empty. Please add items before placing an order.');
@@ -575,21 +515,10 @@ export const Checkout: React.FC = () => {
 
     try {
       setIsPaymentProcessing(true);
-      
-      const shippingAddrObj = selectedAddress ? {
-        fullName: selectedAddress.fullName || user?.name || 'Customer',
-        phone: selectedAddress.phoneNumber || (selectedAddress as any)?.phone || (user as any)?.phoneNumber || (user as any)?.phone || '',
-        addressLine1: selectedAddress.streetAddress || '',
-        city: selectedAddress.city || '',
-        state: selectedAddress.state || selectedAddress.city || '',
-        postalCode: selectedAddress.pincode || '',
-        country: 'India',
-      } : undefined;
 
       const payload = {
         amount: total,
         deliveryAddressId: selectedAddress._id!,
-        shippingAddress: shippingAddrObj,
         items: itemsToOrder,
         couponCode: appliedCoupon?.code || undefined,
         discountAmount: discount,
@@ -599,7 +528,7 @@ export const Checkout: React.FC = () => {
 
       if (paymentMode === 'COD') {
         const advanceAmount = deliveryFee + gst;
-        
+
         const codPayload = {
           ...payload,
           deliveryAddress: selectedAddress._id,
@@ -615,7 +544,7 @@ export const Checkout: React.FC = () => {
         setCreatedOrder(order);
         await processRazorpayCodAdvance(order, advanceAmount);
       } else {
-        const order = await createRazorpayOrderMutation.mutateAsync(payload);
+        const order = await createOrderMutation.mutateAsync(payload);
         setCreatedOrder(order);
         await processRazorpayPayment(order);
       }
@@ -712,12 +641,12 @@ export const Checkout: React.FC = () => {
     }
   };
 
-    const handleSaveNewAddress = async (e: React.FormEvent) => {
+  const handleSaveNewAddress = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAddress.fullName || !newAddress.phoneNumber || !newAddress.streetAddress || !newAddress.pincode) {
       return;
     }
-    
+
     const addressPayload = {
       addressLabel: newAddress.addressLabel,
       fullName: newAddress.fullName,
@@ -854,21 +783,19 @@ export const Checkout: React.FC = () => {
         {/* 2. Payment Mode Selector (Exact App Design) */}
         <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 mb-4 shadow-sm">
           <h2 className="font-bold text-base text-neutral-900 mb-3">Payment Mode</h2>
-          
+
           <div className="space-y-3">
             {/* 1. Online Payment Card */}
             <div
               onClick={() => setPaymentMode('ONLINE')}
-              className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
-                paymentMode === 'ONLINE'
+              className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${paymentMode === 'ONLINE'
                   ? 'border-[#0a7a40] bg-emerald-50/20 shadow-xs'
                   : 'border-neutral-200 bg-white hover:border-neutral-300'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3.5">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                  paymentMode === 'ONLINE' ? 'bg-[#0a7a40] text-white' : 'bg-neutral-100 text-neutral-700'
-                }`}>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${paymentMode === 'ONLINE' ? 'bg-[#0a7a40] text-white' : 'bg-neutral-100 text-neutral-700'
+                  }`}>
                   <CreditCard className="w-5 h-5" />
                 </div>
                 <div>
@@ -876,9 +803,8 @@ export const Checkout: React.FC = () => {
                   <p className="text-xs text-neutral-500 mt-0.5">Pay full amount securely via UPI, Cards, NetBanking</p>
                 </div>
               </div>
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                paymentMode === 'ONLINE' ? 'border-[#0a7a40] bg-[#0a7a40]' : 'border-neutral-300'
-              }`}>
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMode === 'ONLINE' ? 'border-[#0a7a40] bg-[#0a7a40]' : 'border-neutral-300'
+                }`}>
                 {paymentMode === 'ONLINE' && <div className="w-2 h-2 rounded-full bg-white" />}
               </div>
             </div>
@@ -894,17 +820,15 @@ export const Checkout: React.FC = () => {
 
               <div
                 onClick={() => setPaymentMode('COD')}
-                className={`relative p-4 rounded-2xl transition-all cursor-pointer overflow-hidden ${
-                  paymentMode === 'COD'
+                className={`relative p-4 rounded-2xl transition-all cursor-pointer overflow-hidden ${paymentMode === 'COD'
                     ? 'bg-[#965726] text-white shadow-md border-2 border-[#965726]'
                     : 'border-2 border-neutral-200 bg-white text-neutral-800 hover:border-neutral-300'
-                }`}
+                  }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3.5">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                      paymentMode === 'COD' ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-700'
-                    }`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${paymentMode === 'COD' ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-700'
+                      }`}>
                       <Truck className="w-5 h-5" />
                     </div>
                     <div>
@@ -1144,8 +1068,8 @@ export const Checkout: React.FC = () => {
                 </>
               ) : (
                 <>
-                  {paymentMode === 'COD' 
-                    ? `Pay ₹${deliveryFee + gst} Online & Place Order` 
+                  {paymentMode === 'COD'
+                    ? `Pay ₹${deliveryFee + gst} Online & Place Order`
                     : `Pay ${formatINR(total)} Online & Place Order`}
                 </>
               )}
@@ -1183,11 +1107,10 @@ export const Checkout: React.FC = () => {
                           setSelectedAddress(addr);
                           setIsAddressModalOpen(false);
                         }}
-                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${
-                          selectedAddress?._id === addr._id || selectedAddress?.streetAddress === addr.streetAddress
+                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedAddress?._id === addr._id || selectedAddress?.streetAddress === addr.streetAddress
                             ? 'border-[#0a7a40] bg-emerald-50/40'
                             : 'border-neutral-200 bg-white hover:border-neutral-300'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1">
@@ -1367,7 +1290,7 @@ export const Checkout: React.FC = () => {
                     <label className="text-sm font-semibold text-neutral-700 cursor-pointer" htmlFor="isDefaultCheck">
                       Set as Default Address
                     </label>
-                    <div 
+                    <div
                       className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${newAddress.isDefault ? 'bg-[#0a7a40]' : 'bg-neutral-300'}`}
                       onClick={() => setNewAddress({ ...newAddress, isDefault: !newAddress.isDefault })}
                     >
@@ -1518,28 +1441,25 @@ export const Checkout: React.FC = () => {
                             setSelectedPaymentMethod(pm);
                             setIsPaymentMethodModalOpen(false);
                           }}
-                          className={`p-4 rounded-2xl cursor-pointer transition-all ${
-                            isSelected
+                          className={`p-4 rounded-2xl cursor-pointer transition-all ${isSelected
                               ? 'bg-[#0a7a40] text-white shadow-md'
                               : 'bg-neutral-50 text-neutral-800 border border-neutral-200 hover:border-emerald-400'
-                          }`}
+                            }`}
                         >
                           <div className="flex items-start justify-between">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
                                 <span
-                                  className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded flex items-center gap-1 ${
-                                    isSelected ? 'bg-white/20 text-white' : 'bg-emerald-100 text-[#0a7a40]'
-                                  }`}
+                                  className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded flex items-center gap-1 ${isSelected ? 'bg-white/20 text-white' : 'bg-emerald-100 text-[#0a7a40]'
+                                    }`}
                                 >
                                   {pm.type === 'BANK' ? <Building2 className="w-3 h-3" /> : <Smartphone className="w-3 h-3" />}
                                   {pm.type === 'BANK' ? 'BANK' : 'UPI'}
                                 </span>
                                 {pm.isDefault && (
                                   <span
-                                    className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
-                                      isSelected ? 'bg-emerald-200 text-emerald-950' : 'bg-neutral-200 text-neutral-700'
-                                    }`}
+                                    className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${isSelected ? 'bg-emerald-200 text-emerald-950' : 'bg-neutral-200 text-neutral-700'
+                                      }`}
                                   >
                                     DEFAULT
                                   </span>
@@ -1595,11 +1515,10 @@ export const Checkout: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setPaymentTypeTab('BANK')}
-                        className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
-                          paymentTypeTab === 'BANK'
+                        className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${paymentTypeTab === 'BANK'
                             ? 'border-[#0a7a40] bg-emerald-50 text-[#0a7a40] font-bold'
                             : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50'
-                        }`}
+                          }`}
                       >
                         <Building2 className="w-6 h-6 mb-1.5" />
                         <span className="text-xs font-bold">Bank Account</span>
@@ -1609,11 +1528,10 @@ export const Checkout: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => setPaymentTypeTab('UPI')}
-                        className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${
-                          paymentTypeTab === 'UPI'
+                        className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${paymentTypeTab === 'UPI'
                             ? 'border-[#0a7a40] bg-emerald-50 text-[#0a7a40] font-bold'
                             : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50'
-                        }`}
+                          }`}
                       >
                         <Smartphone className="w-6 h-6 mb-1.5" />
                         <span className="text-xs font-bold">UPI ID</span>

@@ -43,7 +43,7 @@ const placeCodOrder = asyncHandler(async (req, res) => {
   if (!addressData) {
     addressData = {
       fullName: req.user.name || 'Valued Customer',
-      phone: req.user.phoneNumber || req.user.phone || '',
+      phone: req.user.phoneNumber || '9876543210',
       addressLine1: 'Default Address',
       city: 'Mumbai',
       state: 'Maharashtra',
@@ -58,8 +58,7 @@ const placeCodOrder = asyncHandler(async (req, res) => {
 
   if (items && Array.isArray(items) && items.length > 0) {
     for (const it of items) {
-      const rawId = it.productId || it._id || it.product;
-      let pId = (rawId && typeof rawId === 'string' && /^[0-9a-fA-F]{24}$/.test(rawId)) ? rawId : null;
+      const pId = it.productId || it._id || it.product;
       let pName = it.name || 'Kosmico Product';
       let pPrice = Number(it.price || it.priceSnapshot) || 0;
       let pImage = it.image || '';
@@ -72,20 +71,10 @@ const placeCodOrder = asyncHandler(async (req, res) => {
             pPrice = dbProd.discountPrice || dbProd.price || pPrice;
             pImage = (dbProd.images && dbProd.images[0]?.url) || dbProd.image || pImage;
           }
-        } catch (_) {}
-      } else {
-        try {
-          const firstProd = await Product.findOne({});
-          if (firstProd) {
-            pId = firstProd._id.toString();
-            pName = pName !== 'Kosmico Product' ? pName : (firstProd.title || firstProd.name);
-            pPrice = pPrice || firstProd.discountPrice || firstProd.price;
-            pImage = pImage || (firstProd.images && firstProd.images[0]?.url) || '';
-          }
-        } catch (_) {}
+        } catch (_) { }
       }
 
-      const qty = Number(it.quantity || it.qty) || 1;
+      const qty = Number(it.quantity) || 1;
       calculatedSubtotal += pPrice * qty;
 
       formattedItems.push({
@@ -159,7 +148,7 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
   if (!addressData) {
     addressData = {
       fullName: req.user.name || 'Valued Customer',
-      phone: req.user.phoneNumber || req.user.phone || '',
+      phone: req.user.phoneNumber || '9876543210',
       addressLine1: 'Default Address',
       city: 'Mumbai',
       state: 'Maharashtra',
@@ -173,8 +162,7 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
 
   if (items && Array.isArray(items) && items.length > 0) {
     for (const it of items) {
-      const rawId = it.productId || it._id || it.product;
-      let pId = (rawId && typeof rawId === 'string' && /^[0-9a-fA-F]{24}$/.test(rawId)) ? rawId : null;
+      const pId = it.productId || it._id || it.product;
       let pName = it.name || 'Kosmico Product';
       let pPrice = Number(it.price || it.priceSnapshot) || 0;
       let pImage = it.image || '';
@@ -187,20 +175,10 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
             pPrice = dbProd.discountPrice || dbProd.price || pPrice;
             pImage = (dbProd.images && dbProd.images[0]?.url) || dbProd.image || pImage;
           }
-        } catch (_) {}
-      } else {
-        try {
-          const firstProd = await Product.findOne({});
-          if (firstProd) {
-            pId = firstProd._id.toString();
-            pName = pName !== 'Kosmico Product' ? pName : (firstProd.title || firstProd.name);
-            pPrice = pPrice || firstProd.discountPrice || firstProd.price;
-            pImage = pImage || (firstProd.images && firstProd.images[0]?.url) || '';
-          }
-        } catch (_) {}
+        } catch (_) { }
       }
 
-      const qty = Number(it.quantity || it.qty) || 1;
+      const qty = Number(it.quantity) || 1;
       calculatedSubtotal += pPrice * qty;
 
       formattedItems.push({
@@ -339,7 +317,7 @@ const getMyOrders = asyncHandler(async (req, res) => {
                 pPrice = pPrice || dbProd.discountPrice || dbProd.price || 0;
                 pImage = pImage || (dbProd.images && dbProd.images[0]?.url) || '';
               }
-            } catch (_) {}
+            } catch (_) { }
           }
 
           return {
@@ -376,7 +354,7 @@ const getMyOrders = asyncHandler(async (req, res) => {
               country: 'India',
             };
           }
-        } catch (_) {}
+        } catch (_) { }
       }
 
       if (!addressData || typeof addressData !== 'object') {
@@ -446,62 +424,41 @@ const getSavedPaymentMethods = asyncHandler(async (req, res) => {
 });
 
 const savePaymentMethod = asyncHandler(async (req, res) => {
-  const {
-    methodType,
-    type,
-    title,
-    displayName,
+  const { methodType, title, cardLast4, cardNetwork, cardExpiry, upiId, isDefault } = req.body;
+  if (isDefault) {
+    await SavedPaymentMethod.updateMany({ user: req.user._id }, { isDefault: false });
+  }
+  const method = await SavedPaymentMethod.create({
+    user: req.user._id,
+    methodType: methodType || (upiId ? 'UPI' : 'CARD'),
+    title: title || (upiId ? 'UPI Account' : 'Card ending in ' + (cardLast4 || 'XXXX')),
     cardLast4,
     cardNetwork,
     cardExpiry,
     upiId,
-    isDefault,
-    accountNumber,
-    bankName,
-  } = req.body;
-
-  if (isDefault) {
-    await SavedPaymentMethod.updateMany({ user: req.user._id }, { isDefault: false });
-  }
-
-  const effectiveType = (methodType || type || (upiId ? 'UPI' : 'BANK')).toUpperCase();
-  const effectiveTitle =
-    title ||
-    displayName ||
-    (upiId ? `UPI - ${upiId}` : bankName ? `${bankName} (${(accountNumber || '').slice(-4)})` : 'Saved Method');
-
-  const method = await SavedPaymentMethod.create({
-    user: req.user._id,
-    methodType: effectiveType,
-    title: effectiveTitle,
-    cardLast4: cardLast4 || (accountNumber ? accountNumber.slice(-4) : undefined),
-    cardNetwork: cardNetwork || bankName,
-    cardExpiry,
-    upiId,
     isDefault: !!isDefault,
   });
-  res.status(201).json(new ApiResponse(201, { paymentMethod: method, method }, 'Payment method saved successfully'));
+  res.status(201).json(new ApiResponse(201, { paymentMethod: method }, 'Payment method saved successfully'));
 });
 
 const updateSavedPaymentMethod = asyncHandler(async (req, res) => {
   const methodId = req.params.methodId || req.params.id;
-  const { title, displayName, cardExpiry, isDefault } = req.body;
-  
+  const { title, cardExpiry, isDefault } = req.body;
+
   if (isDefault) {
     await SavedPaymentMethod.updateMany({ user: req.user._id }, { isDefault: false });
   }
-  
-  const effectiveTitle = title || displayName;
+
   const method = await SavedPaymentMethod.findOneAndUpdate(
     { _id: methodId, user: req.user._id },
-    { ...(effectiveTitle && { title: effectiveTitle }), ...(cardExpiry && { cardExpiry }), ...(typeof isDefault === 'boolean' && { isDefault }) },
+    { ...(title && { title }), ...(cardExpiry && { cardExpiry }), ...(typeof isDefault === 'boolean' && { isDefault }) },
     { new: true }
   );
-  
+
   if (!method) {
     throw new ApiError(404, 'Saved payment method not found');
   }
-  res.status(200).json(new ApiResponse(200, { paymentMethod: method, method }, 'Payment method updated successfully'));
+  res.status(200).json(new ApiResponse(200, { paymentMethod: method }, 'Payment method updated successfully'));
 });
 
 const deleteSavedPaymentMethod = asyncHandler(async (req, res) => {
@@ -545,7 +502,7 @@ const createCodUpfrontOrder = asyncHandler(async (req, res) => {
   if (!addressData) {
     addressData = {
       fullName: req.user.name || 'Valued Customer',
-      phone: req.user.phoneNumber || req.user.phone || '',
+      phone: req.user.phoneNumber || '9876543210',
       addressLine1: 'Default Address',
       city: 'Mumbai',
       state: 'Maharashtra',
@@ -559,8 +516,7 @@ const createCodUpfrontOrder = asyncHandler(async (req, res) => {
 
   if (items && Array.isArray(items) && items.length > 0) {
     for (const it of items) {
-      const rawId = it.productId || it._id || it.product;
-      let pId = (rawId && typeof rawId === 'string' && /^[0-9a-fA-F]{24}$/.test(rawId)) ? rawId : null;
+      const pId = it.productId || it._id || it.product;
       let pName = it.name || 'Kosmico Product';
       let pPrice = Number(it.price || it.priceSnapshot) || 0;
       let pImage = it.image || '';
@@ -573,17 +529,7 @@ const createCodUpfrontOrder = asyncHandler(async (req, res) => {
             pPrice = dbProd.discountPrice || dbProd.price || pPrice;
             pImage = (dbProd.images && dbProd.images[0]?.url) || dbProd.image || pImage;
           }
-        } catch (_) {}
-      } else {
-        try {
-          const firstProd = await Product.findOne({});
-          if (firstProd) {
-            pId = firstProd._id.toString();
-            pName = pName !== 'Kosmico Product' ? pName : (firstProd.title || firstProd.name);
-            pPrice = pPrice || firstProd.discountPrice || firstProd.price;
-            pImage = pImage || (firstProd.images && firstProd.images[0]?.url) || '';
-          }
-        } catch (_) {}
+        } catch (_) { }
       }
 
       const qty = Number(it.qty || it.quantity) || 1;
@@ -706,10 +652,10 @@ const getOrderById = asyncHandler(async (req, res) => {
 
   const userCondition = req.user
     ? [
-        { user: req.user._id },
-        { user: String(req.user._id) },
-        ...(userEmail ? [{ userEmail: new RegExp(`^${userEmail}$`, 'i') }] : []),
-      ]
+      { user: req.user._id },
+      { user: String(req.user._id) },
+      ...(userEmail ? [{ userEmail: new RegExp(`^${userEmail}$`, 'i') }] : []),
+    ]
     : [];
 
   const query = userCondition.length > 0

@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Check, Sparkles, Flame } from 'lucide-react';
 
 export interface BundleOption {
@@ -11,52 +10,39 @@ export interface BundleOption {
   isPopular?: boolean;
 }
 
+const bundles: BundleOption[] = [
+  {
+    id: 'single',
+    name: 'Single Pack (250ml Bottle)',
+    quantity: 1,
+    price: 387,
+    unitPrice: '₹387 / pack'
+  },
+  {
+    id: 'twin',
+    name: 'Pack of 2 (500ml Total)',
+    quantity: 2,
+    price: 699,
+    badge: 'TWIN PACK',
+    unitPrice: '₹349.5 / pack',
+    isPopular: true
+  },
+  {
+    id: 'family',
+    name: 'Family 3-Pack (750ml Total)',
+    quantity: 3,
+    price: 999,
+    badge: 'FAMILY PACK',
+    unitPrice: '₹333 / pack'
+  }
+];
+
 interface VisualBundlesProps {
   selectedBundleId: string;
   onSelectBundle: (bundle: BundleOption) => void;
-  basePrice?: number;
-  variants?: Array<{ size: string; price: number }>;
 }
 
-export function VisualBundles({ selectedBundleId, onSelectBundle, basePrice = 389, variants }: VisualBundlesProps) {
-  const singlePrice = basePrice;
-  const twinPrice = variants?.find(v => (v.size || '').toLowerCase().includes('20ml') || (v.size || '').includes('2'))?.price || 750;
-  const familyPrice = variants?.find(v => (v.size || '').toLowerCase().includes('30ml') || (v.size || '').includes('3'))?.price || 999;
-
-  const bundles: BundleOption[] = [
-    {
-      id: 'single',
-      name: 'Single Pack (10ml Bottle)',
-      quantity: 1,
-      price: singlePrice,
-      unitPrice: `₹${singlePrice} / pack`
-    },
-    {
-      id: 'twin',
-      name: 'Pack of 2 (20ml Total)',
-      quantity: 2,
-      price: twinPrice,
-      badge: 'TWIN PACK',
-      unitPrice: `₹${(twinPrice / 2).toFixed(1).replace(/\.0$/, '')} / pack`,
-      isPopular: true
-    },
-    {
-      id: 'family',
-      name: 'Family 3-Pack (30ml Total)',
-      quantity: 3,
-      price: familyPrice,
-      badge: 'FAMILY PACK',
-      unitPrice: `₹${Math.round(familyPrice / 3)} / pack`
-    }
-  ];
-
-  useEffect(() => {
-    const current = bundles.find(b => b.id === selectedBundleId) || bundles[0];
-    if (current && current.price) {
-      onSelectBundle(current);
-    }
-  }, [basePrice]);
-
+export function VisualBundles({ selectedBundleId, onSelectBundle }: VisualBundlesProps) {
   return (
     <div className="space-y-3 my-5">
       <div className="flex items-center justify-between">
@@ -74,17 +60,15 @@ export function VisualBundles({ selectedBundleId, onSelectBundle, basePrice = 38
             <div
               key={bundle.id}
               onClick={() => onSelectBundle(bundle)}
-              className={`relative cursor-pointer rounded-2xl p-4 border-2 transition-all duration-200 flex flex-col justify-between ${
-                isSelected
+              className={`relative cursor-pointer rounded-2xl p-4 border-2 transition-all duration-200 flex flex-col justify-between ${isSelected
                   ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
                   : 'border-border bg-surface hover:border-primary/40'
-              }`}
+                }`}
             >
               {bundle.badge && (
                 <span
-                  className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider text-white shadow-xs flex items-center gap-1 ${
-                    bundle.isPopular ? 'bg-accent' : 'bg-primary'
-                  }`}
+                  className={`absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider text-white shadow-xs flex items-center gap-1 ${bundle.isPopular ? 'bg-accent' : 'bg-primary'
+                    }`}
                 >
                   {bundle.isPopular && <Flame className="w-3 h-3 fill-white" />}
                   {bundle.badge}
@@ -97,9 +81,8 @@ export function VisualBundles({ selectedBundleId, onSelectBundle, basePrice = 38
                     {bundle.name}
                   </span>
                   <div
-                    className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                      isSelected ? 'border-primary bg-primary text-white' : 'border-border'
-                    }`}
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center ${isSelected ? 'border-primary bg-primary text-white' : 'border-border'
+                      }`}
                   >
                     {isSelected && <Check className="w-3 h-3" />}
                   </div>

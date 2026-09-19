@@ -1,9 +1,9 @@
 import { Container } from '../components/ui/Container';
-import { 
-  useNotifications, 
-  useMarkAsRead, 
-  useDeleteNotification, 
-  useClearAllNotifications 
+import {
+  useNotifications,
+  useMarkAsRead,
+  useDeleteNotification,
+  useClearAllNotifications
 } from '../hooks/useNotifications';
 import { Bell, Package, Tag, Star, Info, CheckCheck, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -108,14 +108,13 @@ export function Notifications() {
       ) : (
         <div className="space-y-3">
           {notificationsList.map((notification: any) => (
-            <div 
-              key={notification._id} 
+            <div
+              key={notification._id}
               onClick={() => handleMarkAsRead(notification._id, notification.isRead)}
-              className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 group ${
-                notification.isRead 
-                  ? 'bg-neutral-50/70 border-neutral-200 opacity-80 hover:opacity-100' 
+              className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer flex items-start gap-4 group ${notification.isRead
+                  ? 'bg-neutral-50/70 border-neutral-200 opacity-80 hover:opacity-100'
                   : 'bg-white border-emerald-300 shadow-xs hover:border-emerald-500'
-              }`}
+                }`}
             >
               <div className="shrink-0 w-10 h-10 rounded-xl bg-neutral-100 flex items-center justify-center mt-0.5">
                 {getIcon(notification.type)}
@@ -152,24 +151,21 @@ export function Notifications() {
             </div>
           ))}
 
-          {Boolean(
-            (notificationsData?.pagination?.totalPages || notificationsData?.pagination?.pages) &&
-            (notificationsData?.pagination?.totalPages || notificationsData?.pagination?.pages) > 1
-          ) && (
+          {notificationsData?.meta?.pages > 1 && (
             <div className="flex justify-center items-center gap-2 mt-8 pt-4 border-t border-neutral-100">
               <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
                 disabled={page === 1}
                 className="px-4 py-2 bg-white border border-neutral-200 rounded-xl text-xs font-bold disabled:opacity-40 cursor-pointer"
               >
                 Previous
               </button>
               <span className="px-3 text-xs text-neutral-500 font-medium">
-                Page {page} of {notificationsData?.pagination?.totalPages || notificationsData?.pagination?.pages || 1}
+                Page {page} of {notificationsData.meta.pages}
               </span>
               <button
-                onClick={() => setPage((p) => p + 1)}
-                disabled={page >= (notificationsData?.pagination?.totalPages || notificationsData?.pagination?.pages || 1)}
+                onClick={() => setPage(p => p + 1)}
+                disabled={page >= notificationsData.meta.pages}
                 className="px-4 py-2 bg-white border border-neutral-200 rounded-xl text-xs font-bold disabled:opacity-40 cursor-pointer"
               >
                 Next

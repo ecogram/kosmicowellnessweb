@@ -48,25 +48,11 @@ export const useSavedPaymentMethods = () => {
   return useQuery({
     queryKey: ['payment-methods'],
     queryFn: async (): Promise<SavedPaymentMethod[]> => {
-      try {
-        const { data } = await api.get('/payment/saved-methods');
-        const list = data?.data?.methods ?? data?.data?.paymentMethods ?? data?.data ?? (Array.isArray(data) ? data : []);
-        return (Array.isArray(list) ? list : []).map((m: any) => ({
-          _id: m._id || m.id || `pm-${Date.now()}`,
-          id: m._id || m.id || `pm-${Date.now()}`,
-          type: ((m.type || m.methodType || (m.upiId ? 'UPI' : 'BANK')) as string).toUpperCase() as 'UPI' | 'BANK',
-          displayName: m.displayName || m.title || (m.upiId ? 'UPI' : 'Bank Account'),
-          upiId: m.upiId,
-          bankName: m.bankName || m.cardNetwork,
-          accountNumber: m.accountNumber || (m.cardLast4 ? `•••• ${m.cardLast4}` : ''),
-          ifscCode: m.ifscCode,
-          isDefault: !!m.isDefault,
-        }));
-      } catch (_) {
-        return [];
-      }
+      const { data } = await api.get('/payment/saved-methods');
+      const list = data?.data?.methods ?? data?.data ?? (Array.isArray(data) ? data : []);
+      return list as SavedPaymentMethod[];
     },
-    staleTime: 10 * 1000,
+    staleTime: 5 * 60 * 1000,
     refetchInterval: 5000,
     retry: 1,
   });
@@ -77,11 +63,7 @@ export const useSavePaymentMethod = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: SavePaymentMethodPayload) => {
-      const { data } = await api.post('/payment/save-method', {
-        ...payload,
-        methodType: payload.type,
-        title: payload.displayName,
-      });
+      const { data } = await api.post('/payment/save-method', payload);
       return data?.data ?? data;
     },
     onSuccess: () => {

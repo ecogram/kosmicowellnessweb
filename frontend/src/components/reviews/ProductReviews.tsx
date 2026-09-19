@@ -11,7 +11,7 @@ export function ProductReviews({ productId }: { productId: string }) {
 
   const { data: stats } = useReviewStats(productId);
   const { data: reviewsData, isLoading } = useReviews(productId, page, 5, sort);
-  
+
   const createReviewMutation = useCreateReview(productId);
   const toggleHelpfulMutation = useToggleHelpful(productId);
 
@@ -42,7 +42,7 @@ export function ProductReviews({ productId }: { productId: string }) {
   return (
     <div className="py-12 border-t border-border mt-12">
       <h2 className="text-2xl font-serif font-bold mb-8">Customer Reviews</h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
         <div className="md:col-span-1">
           <div className="bg-surface p-6 rounded-2xl border border-border text-center">
@@ -83,9 +83,9 @@ export function ProductReviews({ productId }: { productId: string }) {
         ) : (
           <p className="text-text-muted">Please log in to write a review.</p>
         )}
-        
-        <select 
-          value={sort} 
+
+        <select
+          value={sort}
           onChange={(e) => setSort(e.target.value)}
           className="border border-border rounded-lg px-3 py-2 text-sm bg-background"
         >
@@ -117,7 +117,7 @@ export function ProductReviews({ productId }: { productId: string }) {
           </div>
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2">Review</label>
-            <textarea 
+            <textarea
               required
               value={comment}
               onChange={(e) => setComment(e.target.value)}
@@ -160,9 +160,9 @@ export function ProductReviews({ productId }: { productId: string }) {
                 </div>
               </div>
               <p className="text-text-main leading-relaxed mb-4">{review.comment || review.content}</p>
-              
+
               <div className="flex items-center gap-4 text-sm text-text-muted">
-                <button 
+                <button
                   onClick={() => {
                     if (!isAuthenticated) return alert('Please login to vote');
                     toggleHelpfulMutation.mutate(review._id);
@@ -178,19 +178,19 @@ export function ProductReviews({ productId }: { productId: string }) {
         )}
       </div>
 
-      {Boolean(reviewsData?.meta?.pages && reviewsData.meta.pages > 1) && (
+      {reviewsData?.meta?.pages > 1 && (
         <div className="flex justify-center gap-2 mt-8">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setPage(p => Math.max(1, p - 1))}
             disabled={page === 1}
           >
             Previous
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setPage(p => p + 1)}
-            disabled={page >= (reviewsData?.meta?.pages || 1)}
+            disabled={page >= reviewsData.meta.pages}
           >
             Next
           </Button>

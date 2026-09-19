@@ -26,17 +26,10 @@ api.interceptors.request.use(
       try {
         const stored = JSON.parse(localStorage.getItem('kosmico_auth_v1') || '{}');
         token = stored.state?.accessToken || null;
-      } catch (e) {}
+      } catch (e) { }
     }
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-    }
-    // For FormData uploads, remove default application/json Content-Type so browser can set multipart boundary
-    if (config.data instanceof FormData) {
-      delete config.headers['Content-Type'];
-      if (config.headers && typeof config.headers.delete === 'function') {
-        config.headers.delete('Content-Type');
-      }
     }
     return config;
   },

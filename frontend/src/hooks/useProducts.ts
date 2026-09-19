@@ -25,11 +25,8 @@ export const useProducts = (params: FetchProductsParams) => {
       const { data } = await api.get('/products/user/list', { params: cleanParams });
       let products = Array.isArray(data) ? data : (data?.data?.products ?? (Array.isArray(data?.data) ? data.data : []));
 
-      // Filter: Strictly keep ONLY Sweet Monk products
-      products = products.filter((p: any) => {
-        const str = (p.name || p.title || p.slug || '').toLowerCase();
-        return str.includes('sweet monk') || str.includes('monk');
-      });
+      // Temporary: ONLY show Sweet Monk products
+      products = products.filter((p: any) => p.name?.toLowerCase().includes('sweet monk'));
 
       // Normalize images
       products = products.map((p: any) => ({
@@ -41,7 +38,7 @@ export const useProducts = (params: FetchProductsParams) => {
       const pagination = data?.pagination ?? data?.data?.pagination ?? data?.meta ?? {
         total: products.length,
         page: params.page ?? 1,
-        pages: Math.ceil(products.length / (params.limit || 12)) || 1,
+        pages: 1,
       };
 
       return { products, pagination };
@@ -60,12 +57,12 @@ export const useProduct = (slug: string) => {
       if (!product || (!product.name && !product._id && !product.id)) {
         throw new Error('Product not found');
       }
-      
+
       product.image = normalizeImageUrl(product.image);
       if (Array.isArray(product.images)) {
         product.images = product.images.map(normalizeImageUrl);
       }
-      
+
       return product;
     },
     enabled: !!slug,

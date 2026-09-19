@@ -4,14 +4,9 @@ import { useSocket } from '../../hooks/useSocket';
 import { useAuthStore } from '../../store/useAuthStore';
 import { api } from '../../services/api';
 
-import { useProfile } from '../../hooks/useProfile';
-
 export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { socket, isConnected } = useSocket();
   const queryClient = useQueryClient();
-
-  // Actively poll and sync profile state globally across all pages
-  useProfile();
 
   useEffect(() => {
     if (!socket || !isConnected) return;
@@ -30,44 +25,18 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       queryClient.invalidateQueries({ queryKey: ['wishlist'] });
     });
 
-    // Profile Live Sync Handler
-    const handleProfileUpdate = async (data?: any) => {
-      const user = data?.user || data;
-      if (user && (user.name || user.email || user._id || user.id)) {
+    // Profile Live Sync
+    socket.on('profile:updated', async ({ user }: any) => {
+      if (user) {
         useAuthStore.getState().updateUser(user);
       } else {
         try {
-          let res;
-          try {
-            res = await api.get('/auth/profile');
-          } catch (e) {
-            res = await api.get('/users/profile');
-          }
+          const res = await api.get('/users/profile');
           if (res.data?.data) {
             useAuthStore.getState().updateUser(res.data.data.user || res.data.data);
           }
-        } catch (_) {}
+        } catch (_) { }
       }
-      queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
-    };
-
-    socket.on('profile:updated', handleProfileUpdate);
-    socket.on('user:profile_updated', handleProfileUpdate);
-    socket.on('user:updated', handleProfileUpdate);
-    // Force re-fetch profile from server (emitted when another client updates the profile)
-    socket.on('profile:force_refresh', async () => {
-      try {
-        let res;
-        try { res = await api.get('/auth/profile'); } catch (e) { res = await api.get('/users/profile'); }
-        if (res?.data?.data) {
-          const u = res.data.data.user || res.data.data;
-          if (u && (u.name || u.email || u._id)) {
-            useAuthStore.getState().updateUser(u);
-          }
-        }
-      } catch (_) {}
-      queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
     });
 
@@ -128,9 +97,6 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       socket.off('notification:unread-count');
       socket.off('wishlist:updated');
       socket.off('profile:updated');
-      socket.off('user:profile_updated');
-      socket.off('user:updated');
-      socket.off('profile:force_refresh');
       socket.off('address:updated');
       socket.off('order:created');
       socket.off('order:processing');

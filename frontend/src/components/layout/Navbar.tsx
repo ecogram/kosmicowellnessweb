@@ -77,7 +77,7 @@ export function Navbar() {
 
           {/* Right: Action Icons */}
           <div className="flex items-center space-x-2 sm:space-x-4 shrink-0">
-            <button 
+            <button
               className="text-text-main hover:text-primary transition-colors p-1"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
             >
@@ -122,9 +122,9 @@ export function Navbar() {
                   to="/profile"
                   className="text-text-main hover:text-primary transition-colors font-medium text-sm flex items-center gap-1.5"
                 >
-                  {(user?.profilePicture || (user as any)?.profileImage) ? (
+                  {(user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar) ? (
                     <img
-                      src={normalizeImageUrl(user?.profilePicture || (user as any)?.profileImage)}
+                      src={normalizeImageUrl(user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar)}
                       alt={user?.name || 'User'}
                       onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                       className="w-6 h-6 rounded-full object-cover border border-emerald-600"
@@ -171,8 +171,8 @@ export function Navbar() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             {searchQuery && (
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setSearchQuery('')}
                 className="absolute right-3 text-text-muted hover:text-text-main"
               >
@@ -203,8 +203,8 @@ export function Navbar() {
                 <img src="/logo.png" alt="Kosmico" className="h-7 w-auto object-contain" />
                 <span className="font-serif text-lg font-bold text-emerald-900">Menu</span>
               </div>
-              <button 
-                onClick={() => setIsMobileMenuOpen(false)} 
+              <button
+                onClick={() => setIsMobileMenuOpen(false)}
                 className="text-neutral-600 hover:text-neutral-900 p-2 rounded-full hover:bg-neutral-100 transition-colors"
                 aria-label="Close menu"
               >
@@ -348,10 +348,10 @@ export function Navbar() {
                 )}
               </div>
             </div>
-      </div>
-    </div>,
-    document.body
-  )}
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* Direct Play Store Modal Trigger */}
       <PlayStoreModal

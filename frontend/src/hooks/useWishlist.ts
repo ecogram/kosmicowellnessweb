@@ -14,51 +14,29 @@ export interface WishlistItem {
   product?: any;
 }
 
-import { normalizeImageUrl } from '../utils/imageUrl';
-
 export const useWishlist = () => {
-  const { isAuthenticated, accessToken } = useAuthStore();
-  const hasAuth = isAuthenticated || !!accessToken || !!localStorage.getItem('kosmico_auth_v1');
+  const { isAuthenticated } = useAuthStore();
 
   return useQuery({
-    queryKey: ['wishlist', hasAuth],
+    queryKey: ['wishlist', isAuthenticated],
     queryFn: async () => {
-      if (!hasAuth) {
+      if (!isAuthenticated) {
+        // Wishlist is a protected route — return empty for guests
         return { items: [] };
       }
 
-      try {
-        const { data } = await api.get('/wishlist');
-        const serverWishlist = data?.data?.wishlist ?? data?.data ?? (Array.isArray(data) ? data : []);
-        const rawItems: any[] = Array.isArray(serverWishlist?.items)
-          ? serverWishlist.items
-          : Array.isArray(serverWishlist)
+      const { data } = await api.get('/wishlist');
+      const serverWishlist = data?.data?.wishlist ?? data?.data;
+      const items: WishlistItem[] = Array.isArray(serverWishlist?.items)
+        ? serverWishlist.items
+        : Array.isArray(serverWishlist)
           ? serverWishlist
           : [];
 
-        const items: WishlistItem[] = rawItems.map((item: any) => {
-          const prod = item.product || item;
-          const pic = prod.image || (prod.images && prod.images[0]) || '';
-          return {
-            _id: prod._id || prod.id || item._id || item.id,
-            id: prod._id || prod.id || item._id || item.id,
-            name: prod.name || prod.title || 'Product',
-            slug: prod.slug || prod._id,
-            price: Number(prod.price || prod.discountPrice || 0),
-            compareAtPrice: Number(prod.compareAtPrice || prod.originalPrice || 0),
-            image: normalizeImageUrl(pic),
-            images: Array.isArray(prod.images) ? prod.images.map(normalizeImageUrl) : [],
-            product: prod,
-          };
-        });
-
-        return { items };
-      } catch (err) {
-        return { items: [] };
-      }
+      return { items };
     },
-    enabled: hasAuth,
-    staleTime: 30 * 1000,
+    enabled: isAuthenticated,
+    staleTime: 60 * 1000, // 1 minute
     retry: 1,
     initialData: { items: [] },
   });

@@ -78,41 +78,34 @@ const updateProfile = asyncHandler(async (req, res) => {
   const file = req.file || (req.files && req.files.length > 0 ? req.files[0] : null);
   let rawPic = req.body.profilePicture || req.body.profileImage || req.body.avatar;
 
-  // Only process the picture if a file was uploaded OR a picture URL/base64 was sent
-  let profilePicture = undefined;
+  let profilePicture = '';
   if (file) {
     profilePicture = await saveProfileImage(file.buffer || file, req.user._id, req);
-  } else if (rawPic && rawPic.trim().length > 0) {
+  } else if (rawPic) {
     profilePicture = await saveProfileImage(rawPic, req.user._id, req);
   }
 
   const { name, fullName, phoneNumber, phone, removePhoto } = req.body;
-  const isRemove = removePhoto === true || removePhoto === 'true';
-
   const user = await authService.updateProfile(req.user._id, {
     name,
     fullName,
     phoneNumber,
     phone,
-    // Only pass profilePicture when we have a new one or explicitly removing
-    ...(profilePicture !== undefined ? { profilePicture, profileImage: profilePicture, avatar: profilePicture } : {}),
-    removePhoto: isRemove,
+    profilePicture,
+    profileImage: profilePicture,
+    avatar: profilePicture,
+    removePhoto: removePhoto === true || removePhoto === 'true',
   });
 
-  // Emit realtime profile updated event to ALL connected rooms for this user
+  // Emit realtime profile updated event
   try {
     const { emitToUser } = require('../realtime/emitter');
-    const userId = req.user._id.toString();
-    // Emit to user ID room (catches mobile app + web)
-    emitToUser(userId, 'profile:updated', { user });
-    emitToUser(userId, 'user:profile_updated', { user });
-    emitToUser(userId, 'profile:force_refresh', { userId });
-    // Also emit to email room (some clients join by email)
+    emitToUser(req.user._id, 'profile:updated', { user });
+    emitToUser(req.user._id, 'user:profile_updated', { user });
     if (req.user.email) {
       emitToUser(req.user.email.toLowerCase(), 'profile:updated', { user });
-      emitToUser(req.user.email.toLowerCase(), 'profile:force_refresh', { userId });
     }
-  } catch (_) {}
+  } catch (_) { }
 
   res.status(200).json(new ApiResponse(200, { user, ...user }, 'Profile updated successfully'));
 });
@@ -127,7 +120,7 @@ const removeProfilePicture = asyncHandler(async (req, res) => {
     if (req.user.email) {
       emitToUser(req.user.email.toLowerCase(), 'profile:updated', { user });
     }
-  } catch (_) {}
+  } catch (_) { }
 
   res.status(200).json(new ApiResponse(200, { user, ...user }, 'Profile picture removed successfully'));
 });
@@ -167,7 +160,7 @@ const getMe = asyncHandler(async (req, res) => {
   const u = dbUser || req.user;
 
   let pic = u.profilePicture || u.profileImage || u.avatar || '';
-  
+
   // If stored image is a base64 data URI, auto-migrate to static URL file for mobile app
   if (pic && pic.startsWith('data:image/')) {
     try {
@@ -214,10 +207,6 @@ const getMe = asyncHandler(async (req, res) => {
     createdAt: u.createdAt,
     updatedAt: u.updatedAt,
   };
-  // Prevent mobile app and browser from caching the profile — always return fresh DB data
-  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.set('Pragma', 'no-cache');
-  res.set('Expires', '0');
   res.status(200).json(new ApiResponse(200, { user, ...user }, 'User data retrieved'));
 });
 

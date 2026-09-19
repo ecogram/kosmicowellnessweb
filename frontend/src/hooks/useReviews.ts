@@ -5,21 +5,11 @@ export const useReviews = (productId: string, page = 1, limit = 10, sort = 'newe
   return useQuery({
     queryKey: ['reviews', productId, page, limit, sort],
     queryFn: async () => {
-      try {
-        const { data } = await api.get(`/products/${productId}/reviews`, {
-          params: { page, limit, sort },
-        });
-        const resData = data?.data ?? data ?? {};
-        const reviews = Array.isArray(resData) ? resData : (resData.reviews ?? (Array.isArray(data) ? data : []));
-        const meta = resData.meta ?? resData.pagination ?? { page, pages: Math.ceil(reviews.length / limit) || 1, total: reviews.length };
-        return { reviews, meta };
-      } catch (_) {
-        return { reviews: [], meta: { page: 1, pages: 1, total: 0 } };
-      }
+      const { data } = await api.get(`/products/${productId}/reviews`, {
+        params: { page, limit, sort },
+      });
+      return Array.isArray(data) ? data : (data?.data?.reviews ?? data?.data ?? []);
     },
-    enabled: !!productId,
-    staleTime: 60 * 1000,
-    retry: 1,
   });
 };
 

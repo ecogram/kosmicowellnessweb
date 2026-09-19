@@ -177,16 +177,9 @@ export const Login: React.FC = () => {
       if (authToken) {
         setAuth(userObj, authToken);
         try {
-          let profileRes;
-          try {
-            profileRes = await api.get('/auth/profile', {
-              headers: { Authorization: `Bearer ${authToken}` },
-            });
-          } catch (e) {
-            profileRes = await api.get('/users/profile', {
-              headers: { Authorization: `Bearer ${authToken}` },
-            });
-          }
+          const profileRes = await api.get('/users/profile', {
+            headers: { Authorization: `Bearer ${authToken}` },
+          });
           if (profileRes.data?.data) {
             userObj = profileRes.data.data.user || profileRes.data.data;
             setAuth(userObj, authToken);
@@ -217,7 +210,7 @@ export const Login: React.FC = () => {
 
       {/* LUXURY CARD CONTAINER */}
       <div className="w-full max-w-md bg-white/95 backdrop-blur-md rounded-3xl p-7 sm:p-9 shadow-2xl border border-emerald-100/80 relative transition-all duration-300 hover:shadow-emerald-900/10">
-        
+
         {/* Brand Header */}
         <div className="flex flex-col items-center justify-center mb-6">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-50 to-emerald-100/90 border border-emerald-200/60 flex items-center justify-center shadow-inner mb-3 p-2">
