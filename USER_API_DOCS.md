@@ -444,14 +444,10 @@ Complete CRUD API endpoints for managing User Delivery Addresses. (Protected)
 
 ---
 
-## 8. Coupons & Discounts (`/api/coupons`)
+## 8. Coupons (`/api/coupons`)
 
-### 1. Get Available Coupons
-- **Endpoint:** `GET /api/coupons`
-- **Auth Required:** No
-
-### 2. Verify / Apply Coupon
-- **Endpoint:** `POST /api/coupons/verify` *(also `/api/coupons/apply`)*
+### 1. Verify / Check Coupon for Cart
+- **Endpoint:** `POST /api/coupons/verify` *(also `POST /api/coupons/apply`)*
 - **Auth Required:** Optional (`Bearer Token`)
 - **Request Body:**
   ```json
@@ -475,16 +471,11 @@ Complete CRUD API endpoints for managing User Delivery Addresses. (Protected)
     "success": true
   }
   ```
-- **Add Comment:** `POST /api/posts/{postId}/comments` (Body: `{"text": "..."}`)
-- **Edit Post:** `PUT /api/posts/{postId}` or `PATCH /api/posts/{postId}`
-- **Delete Post:** `DELETE /api/posts/{postId}`
-- **Friends / Requests:**
-  - Send Request: `POST /api/posts/friend-request/send/{userId}` (Protected)
-  - List Pending Requests: `GET /api/posts/friend-request/pending` (Protected)
-  - Accept Request: `POST /api/posts/friend-request/accept/{requestId}` (Protected)
-  - Reject Request: `POST /api/posts/friend-request/reject/{requestId}` (Protected)
-  - Get Friends List: `GET /api/posts/friends` (Protected)
-  - Get Requests List: `GET /api/posts/friend-requests` (Protected)
+
+### 2. Get Available Active Coupons
+- **Endpoint:** `GET /api/coupons`
+- **Auth Required:** No
+- **Response:** Array of active coupon objects.
 
 ---
 
