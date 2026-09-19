@@ -71,43 +71,56 @@ export const useUpdateProfile = () => {
       name,
       phoneNumber,
       profilePictureFile,
+      profilePicture,
     }: {
       name?: string;
       phoneNumber?: string;
       profilePictureFile?: File;
+      profilePicture?: string;
     }) => {
       let res;
       if (profilePictureFile) {
         const formData = new FormData();
-        if (name) {
-          formData.append('name', name);
-          formData.append('fullName', name);
-        }
-        if (phoneNumber) {
-          formData.append('phoneNumber', phoneNumber);
-          formData.append('phone', phoneNumber);
-        }
+        if (name) formData.append('name', name);
+        if (phoneNumber) formData.append('phoneNumber', phoneNumber);
         formData.append('profilePicture', profilePictureFile);
-        formData.append('profileImage', profilePictureFile);
-        formData.append('avatar', profilePictureFile);
-        formData.append('image', profilePictureFile);
 
         try {
-          res = await api.put('/auth/profile', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
+          res = await api.put('/auth/profile', formData);
         } catch (err) {
-          res = await api.put('/users/profile', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
-          });
+          try {
+            res = await api.put('/users/profile', formData);
+          } catch (e) {
+            // Fallback: send as JSON base64 if available
+            if (profilePicture) {
+              res = await api.put('/auth/profile', {
+                name,
+                phoneNumber,
+                profilePicture,
+                profileImage: profilePicture,
+                avatar: profilePicture,
+              });
+            } else {
+              throw e;
+            }
+          }
         }
       } else {
-        const payload = {
-          name,
-          fullName: name,
-          phoneNumber,
-          phone: phoneNumber,
-        };
+        const payload: any = {};
+        if (name !== undefined) {
+          payload.name = name;
+          payload.fullName = name;
+        }
+        if (phoneNumber !== undefined) {
+          payload.phoneNumber = phoneNumber;
+          payload.phone = phoneNumber;
+          payload.mobile = phoneNumber;
+        }
+        if (profilePicture !== undefined) {
+          payload.profilePicture = profilePicture;
+          payload.profileImage = profilePicture;
+          payload.avatar = profilePicture;
+        }
         try {
           res = await api.put('/auth/profile', payload);
         } catch (err) {

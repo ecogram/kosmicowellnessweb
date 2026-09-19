@@ -281,6 +281,7 @@ export const Profile: React.FC = () => {
         name: fullName.trim() || user?.name,
         phoneNumber: phone.trim() || user?.phoneNumber,
         profilePictureFile: file,
+        profilePicture: capturedLivePhoto,
       });
       if (updatedUser) {
         const serverPic = normalizeImageUrl(
@@ -319,6 +320,7 @@ export const Profile: React.FC = () => {
         name: fullName.trim() || user?.name,
         phoneNumber: phone.trim() || user?.phoneNumber,
         profilePictureFile: file,  // original file — server resizes
+        profilePicture: compressedDataUrl,
       });
       if (updatedUser) {
         const serverPic = normalizeImageUrl(
