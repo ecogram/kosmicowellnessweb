@@ -5,7 +5,7 @@ import { normalizeImageUrl } from '../utils/imageUrl';
 
 // ─── GET /api/users/profile ───────────────────────────────────────────────────
 export const useProfile = () => {
-  const { updateUser, accessToken } = useAuthStore();
+  const { updateUser, accessToken, user: currentUser } = useAuthStore();
 
   return useQuery({
     queryKey: ['auth-profile'],
@@ -13,19 +13,27 @@ export const useProfile = () => {
       const { data } = await api.get('/users/profile');
       const user = data?.data?.user ?? data?.data;
       if (user) {
-        // Normalize image URL and update Zustand store
+        // Normalize image URL
         const pic = user.profilePicture ?? user.profileImage ?? user.avatar ?? '';
         user.profilePicture = normalizeImageUrl(pic);
         user.profileImage   = user.profilePicture;
         user.avatar         = user.profilePicture;
-        updateUser(user);
+
+        // Only update store if actual data changed to avoid re-render flicker
+        if (
+          !currentUser ||
+          currentUser.name !== user.name ||
+          currentUser.email !== user.email ||
+          currentUser.profilePicture !== user.profilePicture ||
+          currentUser.phoneNumber !== user.phoneNumber
+        ) {
+          updateUser(user);
+        }
       }
       return user;
     },
     enabled: !!accessToken,
-    // Poll every 30 seconds — so changes from mobile app / other platforms update here instantly
-    refetchInterval: 5000,
-    staleTime: 10_000,
+    staleTime: 60_000,
     retry: 1,
   });
 };

@@ -32,8 +32,7 @@ export const useOrders = (params: { page?: number; limit?: number } = {}) => {
       return { orders, pagination };
     },
     enabled: hasAuth,
-    staleTime: 5000,
-    refetchInterval: 5000,
+    staleTime: 30 * 1000,
     retry: 1,
   });
 };

@@ -190,7 +190,7 @@ export function CartDrawer() {
           <div className="p-4 sm:p-5 border-t border-neutral-200 bg-white shadow-lg space-y-3 shrink-0" style={{ backgroundColor: '#ffffff' }}>
             <div className="flex justify-between items-center text-xs text-neutral-600 font-medium">
               <span>Subtotal (Taxes Included)</span>
-              <span className="font-serif font-bold text-neutral-900 text-lg">₹{totalAmount.toLocaleString('en-IN')}</span>
+              <span className="font-sans font-black text-neutral-900 text-lg">₹{totalAmount.toLocaleString('en-IN')}</span>
             </div>
 
             <div className="flex items-center gap-1.5 text-[11px] text-emerald-900 bg-emerald-50 p-2.5 rounded-xl font-semibold border border-emerald-200">

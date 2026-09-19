@@ -37,7 +37,6 @@ export const useWishlist = () => {
     },
     enabled: isAuthenticated,
     staleTime: 60 * 1000, // 1 minute
-    refetchInterval: 5000,
     retry: 1,
     initialData: { items: [] },
   });

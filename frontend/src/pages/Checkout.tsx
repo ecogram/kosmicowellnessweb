@@ -5,7 +5,6 @@ import {
   ArrowLeft, 
   Truck, 
   CreditCard, 
-  Banknote, 
   Tag, 
   ChevronRight, 
   Plus, 
@@ -17,8 +16,7 @@ import {
   Trash2,
   Smartphone,
   Building2,
-  Info,
-  ArrowRight
+  Info
 } from 'lucide-react';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
@@ -782,37 +780,87 @@ export const Checkout: React.FC = () => {
           </div>
         </div>
 
-        {/* 2. Payment Mode Selector */}
+        {/* 2. Payment Mode Selector (Exact App Design) */}
         <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 mb-4 shadow-sm">
-          <h2 className="font-bold text-base text-neutral-900 mb-4">Payment Mode</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {/* Online Button */}
-            <button
-              type="button"
+          <h2 className="font-bold text-base text-neutral-900 mb-3">Payment Mode</h2>
+          
+          <div className="space-y-3">
+            {/* 1. Online Payment Card */}
+            <div
               onClick={() => setPaymentMode('ONLINE')}
-              className={`flex flex-col items-center justify-center py-4 px-3 rounded-2xl border transition-all ${
+              className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${
                 paymentMode === 'ONLINE'
-                  ? 'bg-[#0a7a40] text-white border-[#0a7a40] shadow-md'
-                  : 'bg-white text-neutral-800 border-neutral-200 hover:bg-neutral-50'
+                  ? 'border-[#0a7a40] bg-emerald-50/20 shadow-xs'
+                  : 'border-neutral-200 bg-white hover:border-neutral-300'
               }`}
             >
-              <CreditCard className={`w-6 h-6 mb-2 ${paymentMode === 'ONLINE' ? 'text-white' : 'text-neutral-700'}`} />
-              <span className="font-bold text-sm">Online</span>
-            </button>
+              <div className="flex items-center gap-3.5">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                  paymentMode === 'ONLINE' ? 'bg-[#0a7a40] text-white' : 'bg-neutral-100 text-neutral-700'
+                }`}>
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-neutral-900">Online Payment</h3>
+                  <p className="text-xs text-neutral-500 mt-0.5">Pay full amount securely via UPI, Cards, NetBanking</p>
+                </div>
+              </div>
+              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                paymentMode === 'ONLINE' ? 'border-[#0a7a40] bg-[#0a7a40]' : 'border-neutral-300'
+              }`}>
+                {paymentMode === 'ONLINE' && <div className="w-2 h-2 rounded-full bg-white" />}
+              </div>
+            </div>
 
-            {/* Cash on Delivery Button */}
-            <button
-              type="button"
-              onClick={() => setPaymentMode('COD')}
-              className={`flex flex-col items-center justify-center py-4 px-3 rounded-2xl border transition-all ${
-                paymentMode === 'COD'
-                  ? 'bg-[#0a7a40] text-white border-[#0a7a40] shadow-md'
-                  : 'bg-white text-neutral-800 border-neutral-200 hover:bg-neutral-50'
-              }`}
-            >
-              <Banknote className={`w-6 h-6 mb-2 ${paymentMode === 'COD' ? 'text-white' : 'text-neutral-700'}`} />
-              <span className="font-bold text-sm">Cash on Delivery</span>
-            </button>
+            {/* 2. Cash on Delivery Card (Terracotta / Brown Style) */}
+            <div className="relative pt-1.5">
+              {/* Floating Top-Right Green Badge */}
+              {paymentMode === 'COD' && (
+                <div className="absolute -top-1.5 right-4 z-10 bg-[#00a86b] text-white text-[11px] font-bold px-3 py-0.5 rounded-full shadow-sm">
+                  Pay ₹{deliveryFee + gst} now. Rest on delivery
+                </div>
+              )}
+
+              <div
+                onClick={() => setPaymentMode('COD')}
+                className={`relative p-4 rounded-2xl transition-all cursor-pointer overflow-hidden ${
+                  paymentMode === 'COD'
+                    ? 'bg-[#965726] text-white shadow-md border-2 border-[#965726]'
+                    : 'border-2 border-neutral-200 bg-white text-neutral-800 hover:border-neutral-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                      paymentMode === 'COD' ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-700'
+                    }`}>
+                      <Truck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className={`font-bold text-sm ${paymentMode === 'COD' ? 'text-white' : 'text-neutral-900'}`}>
+                        Cash on Delivery
+                      </h3>
+                      <p className={`text-xs mt-0.5 ${paymentMode === 'COD' ? 'text-[#f3e8df]' : 'text-neutral-500'}`}>
+                        Delivery + GST amount non-refundable
+                      </p>
+                    </div>
+                  </div>
+
+                  {paymentMode === 'COD' ? (
+                    <div className="text-right pl-2 shrink-0">
+                      <div className="text-lg font-black tracking-tight text-white font-sans">
+                        ₹{deliveryFee + gst}
+                      </div>
+                      <div className="text-[10px] text-[#f3e8df] font-medium">
+                        pay now
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-5 h-5 rounded-full border-2 border-neutral-300 shrink-0" />
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1026,9 +1074,8 @@ export const Checkout: React.FC = () => {
               ) : (
                 <>
                   {paymentMode === 'COD' 
-                    ? `Pay Advance ₹${deliveryFee + gst} & Place Order` 
-                    : `Pay Securely ${formatINR(total)}`}
-                  <ArrowRight className="w-5 h-5 ml-1" />
+                    ? `Pay ₹${deliveryFee + gst} Online & Place Order` 
+                    : `Pay ${formatINR(total)} Online & Place Order`}
                 </>
               )}
             </button>

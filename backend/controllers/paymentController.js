@@ -270,11 +270,22 @@ const getMyOrders = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   const userEmail = req.user.email ? req.user.email.toLowerCase().trim() : '';
+  const userConditions = [
+    { user: req.user._id },
+    { user: String(req.user._id) },
+    ...(userEmail ? [{ userEmail: new RegExp(`^${userEmail}$`, 'i') }] : []),
+  ];
+
   const query = {
-    $or: [
-      { user: req.user._id },
-      { user: String(req.user._id) },
-      ...(userEmail ? [{ userEmail: new RegExp(`^${userEmail}$`, 'i') }] : []),
+    $and: [
+      { $or: userConditions },
+      {
+        $or: [
+          { paymentMethod: { $in: ['COD', 'cod', 'COD_UPFRONT', 'cod_upfront'] } },
+          { paymentStatus: { $in: ['PAID', 'paid', 'COMPLETED', 'completed', 'REFUNDED', 'refunded'] } },
+          { orderStatus: { $in: ['PROCESSING', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED', 'CANCELLED'] } },
+        ],
+      },
     ],
   };
 
