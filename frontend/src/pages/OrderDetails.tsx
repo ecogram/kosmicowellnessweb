@@ -70,10 +70,11 @@ export const OrderDetails = () => {
             });
           },
           prefill: {
-            name: user?.name || order.shippingAddress.fullName,
-            email: user?.email,
-            contact: order.shippingAddress.phone,
+            name: user?.name || order.shippingAddress?.fullName || 'Customer',
+            email: user?.email || '',
+            contact: order.shippingAddress?.phone || order.shippingAddress?.phoneNumber || (user as any)?.phoneNumber || (user as any)?.phone || '',
           },
+          offers: [],
           theme: {
             color: '#c25e00',
           },

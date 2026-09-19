@@ -43,7 +43,7 @@ const placeCodOrder = asyncHandler(async (req, res) => {
   if (!addressData) {
     addressData = {
       fullName: req.user.name || 'Valued Customer',
-      phone: req.user.phoneNumber || '9876543210',
+      phone: req.user.phoneNumber || req.user.phone || '',
       addressLine1: 'Default Address',
       city: 'Mumbai',
       state: 'Maharashtra',
@@ -148,7 +148,7 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
   if (!addressData) {
     addressData = {
       fullName: req.user.name || 'Valued Customer',
-      phone: req.user.phoneNumber || '9876543210',
+      phone: req.user.phoneNumber || req.user.phone || '',
       addressLine1: 'Default Address',
       city: 'Mumbai',
       state: 'Maharashtra',
@@ -523,7 +523,7 @@ const createCodUpfrontOrder = asyncHandler(async (req, res) => {
   if (!addressData) {
     addressData = {
       fullName: req.user.name || 'Valued Customer',
-      phone: req.user.phoneNumber || '9876543210',
+      phone: req.user.phoneNumber || req.user.phone || '',
       addressLine1: 'Default Address',
       city: 'Mumbai',
       state: 'Maharashtra',

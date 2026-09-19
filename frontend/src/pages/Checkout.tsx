@@ -397,8 +397,9 @@ export const Checkout: React.FC = () => {
       prefill: {
         name: selectedAddress?.fullName || user?.name || 'Customer',
         email: user?.email || '',
-        contact: selectedAddress?.phoneNumber || (user as any)?.phoneNumber || (user as any)?.phone || '',
+        contact: selectedAddress?.phoneNumber || (selectedAddress as any)?.phone || (user as any)?.phoneNumber || (user as any)?.phone || '',
       },
+      offers: [],
       theme: {
         color: '#0a7a40',
       },
@@ -488,8 +489,9 @@ export const Checkout: React.FC = () => {
       prefill: {
         name: selectedAddress?.fullName || user?.name || 'Customer',
         email: user?.email || '',
-        contact: selectedAddress?.phoneNumber || (user as any)?.phoneNumber || (user as any)?.phone || '',
+        contact: selectedAddress?.phoneNumber || (selectedAddress as any)?.phone || (user as any)?.phoneNumber || (user as any)?.phone || '',
       },
+      offers: [],
       theme: { color: '#0a7a40' },
       modal: {
         ondismiss: function () {
@@ -553,9 +555,20 @@ export const Checkout: React.FC = () => {
     try {
       setIsPaymentProcessing(true);
       
+      const shippingAddrObj = selectedAddress ? {
+        fullName: selectedAddress.fullName || user?.name || 'Customer',
+        phone: selectedAddress.phoneNumber || (selectedAddress as any)?.phone || (user as any)?.phoneNumber || (user as any)?.phone || '',
+        addressLine1: selectedAddress.streetAddress || '',
+        city: selectedAddress.city || '',
+        state: selectedAddress.state || selectedAddress.city || '',
+        postalCode: selectedAddress.pincode || '',
+        country: 'India',
+      } : undefined;
+
       const payload = {
         amount: total,
         deliveryAddressId: selectedAddress._id!,
+        shippingAddress: shippingAddrObj,
         items: itemsToOrder,
         couponCode: appliedCoupon?.code || undefined,
         discountAmount: discount,
