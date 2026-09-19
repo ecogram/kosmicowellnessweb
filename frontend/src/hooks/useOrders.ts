@@ -11,28 +11,51 @@ export const useOrders = (params: { page?: number; limit?: number } = {}) => {
   return useQuery({
     queryKey: ['orders', params],
     queryFn: async () => {
-      const response = await api.get('/payments/myorders', { params });
-      const resData = response.data?.data ?? response.data ?? {};
-      const orders: any[] = resData.orders ?? (Array.isArray(resData) ? resData : []);
-      const pagination = resData.pagination ?? {
-        total: orders.length,
-        page: 1,
-        limit: params.limit ?? 10,
-        totalPages: 1,
-      };
+      try {
+        const response = await api.get('/payments/myorders', { params });
+        const resData = response.data?.data ?? response.data ?? {};
+        const orders: any[] = resData.orders ?? (Array.isArray(resData) ? resData : []);
+        const pagination = resData.pagination ?? {
+          total: orders.length,
+          page: 1,
+          limit: params.limit ?? 10,
+          totalPages: 1,
+        };
 
-      // Sort newest first
-      orders.sort((a, b) => {
-        const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        if (!isNaN(tA) && !isNaN(tB) && tA !== tB) return tB - tA;
-        return (b.orderNumber ?? b._id ?? '').localeCompare(a.orderNumber ?? a._id ?? '');
-      });
+        // Sort newest first
+        orders.sort((a, b) => {
+          const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          if (!isNaN(tA) && !isNaN(tB) && tA !== tB) return tB - tA;
+          return (b.orderNumber ?? b._id ?? '').localeCompare(a.orderNumber ?? a._id ?? '');
+        });
 
-      return { orders, pagination };
+        return { orders, pagination };
+      } catch (err: any) {
+        try {
+          const altResponse = await api.get('/payment/myorders', { params });
+          const resData = altResponse.data?.data ?? altResponse.data ?? {};
+          const orders: any[] = resData.orders ?? (Array.isArray(resData) ? resData : []);
+          const pagination = resData.pagination ?? {
+            total: orders.length,
+            page: 1,
+            limit: params.limit ?? 10,
+            totalPages: 1,
+          };
+          return { orders, pagination };
+        } catch (altErr: any) {
+          if (err?.response?.status === 401 || err?.response?.status === 404) {
+            return {
+              orders: [],
+              pagination: { total: 0, page: 1, limit: params.limit ?? 10, totalPages: 1 },
+            };
+          }
+          throw err;
+        }
+      }
     },
     enabled: hasAuth,
-    staleTime: 30 * 1000,
+    staleTime: 15 * 1000,
     retry: 1,
   });
 };

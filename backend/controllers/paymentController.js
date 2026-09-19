@@ -424,41 +424,62 @@ const getSavedPaymentMethods = asyncHandler(async (req, res) => {
 });
 
 const savePaymentMethod = asyncHandler(async (req, res) => {
-  const { methodType, title, cardLast4, cardNetwork, cardExpiry, upiId, isDefault } = req.body;
-  if (isDefault) {
-    await SavedPaymentMethod.updateMany({ user: req.user._id }, { isDefault: false });
-  }
-  const method = await SavedPaymentMethod.create({
-    user: req.user._id,
-    methodType: methodType || (upiId ? 'UPI' : 'CARD'),
-    title: title || (upiId ? 'UPI Account' : 'Card ending in ' + (cardLast4 || 'XXXX')),
+  const {
+    methodType,
+    type,
+    title,
+    displayName,
     cardLast4,
     cardNetwork,
     cardExpiry,
     upiId,
+    isDefault,
+    accountNumber,
+    bankName,
+  } = req.body;
+
+  if (isDefault) {
+    await SavedPaymentMethod.updateMany({ user: req.user._id }, { isDefault: false });
+  }
+
+  const effectiveType = (methodType || type || (upiId ? 'UPI' : 'BANK')).toUpperCase();
+  const effectiveTitle =
+    title ||
+    displayName ||
+    (upiId ? `UPI - ${upiId}` : bankName ? `${bankName} (${(accountNumber || '').slice(-4)})` : 'Saved Method');
+
+  const method = await SavedPaymentMethod.create({
+    user: req.user._id,
+    methodType: effectiveType,
+    title: effectiveTitle,
+    cardLast4: cardLast4 || (accountNumber ? accountNumber.slice(-4) : undefined),
+    cardNetwork: cardNetwork || bankName,
+    cardExpiry,
+    upiId,
     isDefault: !!isDefault,
   });
-  res.status(201).json(new ApiResponse(201, { paymentMethod: method }, 'Payment method saved successfully'));
+  res.status(201).json(new ApiResponse(201, { paymentMethod: method, method }, 'Payment method saved successfully'));
 });
 
 const updateSavedPaymentMethod = asyncHandler(async (req, res) => {
   const methodId = req.params.methodId || req.params.id;
-  const { title, cardExpiry, isDefault } = req.body;
+  const { title, displayName, cardExpiry, isDefault } = req.body;
   
   if (isDefault) {
     await SavedPaymentMethod.updateMany({ user: req.user._id }, { isDefault: false });
   }
   
+  const effectiveTitle = title || displayName;
   const method = await SavedPaymentMethod.findOneAndUpdate(
     { _id: methodId, user: req.user._id },
-    { ...(title && { title }), ...(cardExpiry && { cardExpiry }), ...(typeof isDefault === 'boolean' && { isDefault }) },
+    { ...(effectiveTitle && { title: effectiveTitle }), ...(cardExpiry && { cardExpiry }), ...(typeof isDefault === 'boolean' && { isDefault }) },
     { new: true }
   );
   
   if (!method) {
     throw new ApiError(404, 'Saved payment method not found');
   }
-  res.status(200).json(new ApiResponse(200, { paymentMethod: method }, 'Payment method updated successfully'));
+  res.status(200).json(new ApiResponse(200, { paymentMethod: method, method }, 'Payment method updated successfully'));
 });
 
 const deleteSavedPaymentMethod = asyncHandler(async (req, res) => {

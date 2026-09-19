@@ -9,8 +9,8 @@ This document provides a comprehensive reference for all client/user-side API en
 - **Base URL:** `https://api.kosmicowellness.com/api`
 - **Global Headers:**
   - `Content-Type`: `application/json`
-  - `Accept`: `application/json`
-  - `x-platform`: `ios` / `android` / `web`
+  -  `Accept`: `application/json`
+  - `x-platform`: `ios`/ `android` / `web`
   - `x-app-version`: `1.0.3`
   - `User-Agent`: `KosmicoApp/1.0`
   - `Authorization`: `Bearer <JWT_TOKEN>` *(Required for protected routes)*
@@ -259,6 +259,31 @@ This document provides a comprehensive reference for all client/user-side API en
 - **Endpoint:** `GET /api/payments/myorders` *(also `GET /api/payment/myorders` and `GET /api/orders`)*
 - **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
 - **Query Parameters:** `page`, `limit`
+
+### 7. Get Saved Payment Methods (Protected)
+- **Endpoint:** `GET /api/payment/saved-methods`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+
+### 8. Save Payment Method (Protected)
+- **Endpoint:** `POST /api/payment/save-method`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body:**
+  ```json
+  {
+    "type": "UPI",
+    "displayName": "AMIT KUMAR",
+    "upiId": "8004116370@ybl",
+    "isDefault": true
+  }
+  ```
+
+### 9. Update Saved Payment Method (Protected)
+- **Endpoint:** `PUT /api/payment/save-method/:methodId`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+
+### 10. Delete Saved Payment Method (Protected)
+- **Endpoint:** `DELETE /api/payment/save-method/:methodId`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
 
 ---
 

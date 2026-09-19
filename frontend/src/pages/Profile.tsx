@@ -40,7 +40,7 @@ export interface SavedPaymentMethod {
 }
 
 export const Profile: React.FC = () => {
-  const { user, logout } = useAuthStore();
+  const { user, logout, updateUser } = useAuthStore();
   const { data: wishlist } = useWishlist();
   const { data: ordersData } = useOrders({ page: 1, limit: 100 });
   const { data: couponsData } = useCoupons();
@@ -191,22 +191,20 @@ export const Profile: React.FC = () => {
           canvas.width = width;
           canvas.height = height;
           const ctx = canvas.getContext('2d');
-          if (!ctx) {
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          } else {
             resolve(event.target?.result as string);
-            return;
           }
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/jpeg', quality));
         };
-        img.onerror = () => resolve(event.target?.result as string);
         img.src = event.target?.result as string;
       };
-      reader.onerror = () => resolve('');
       reader.readAsDataURL(file);
     });
   };
 
-  // Start Live Camera feed
+  // Camera Handlers
   const startLiveCamera = async (facing: 'user' | 'environment' = 'user') => {
     setCameraError(null);
     setCapturedLivePhoto(null);
@@ -215,126 +213,74 @@ export const Profile: React.FC = () => {
     setIsCameraModalOpen(true);
 
     if (cameraStream) {
-      cameraStream.getTracks().forEach(t => t.stop());
+      cameraStream.getTracks().forEach((track) => track.stop());
       setCameraStream(null);
     }
 
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Camera not supported by your browser or connection is not secure (HTTPS / Localhost required).');
-      }
-
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: facing,
-          width: { ideal: 720 },
-          height: { ideal: 720 },
-        },
+        video: { facingMode: facing, width: { ideal: 720 }, height: { ideal: 720 } },
         audio: false,
       });
-
       setCameraStream(stream);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play().catch(e => console.warn('Video play notice:', e));
-      }
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch((e) => console.warn('Video play notice:', e));
+        }
+      }, 200);
     } catch (err: any) {
       console.error('Camera access error:', err);
-      let msg = 'Could not access camera device.';
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        msg = 'Camera permission was denied. Please allow camera access in your browser address bar/settings to take a live photo.';
-      } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-        msg = 'No camera found on this device.';
-      } else if (err.message) {
-        msg = err.message;
-      }
-      setCameraError(msg);
+      setCameraError('Unable to access camera. Please check permissions or upload from files.');
     }
   };
 
-  // Toggle Front / Back Camera
-  const toggleCameraFacing = () => {
-    const nextFacing = cameraFacing === 'user' ? 'environment' : 'user';
-    startLiveCamera(nextFacing);
-  };
-
-  // Stop Camera & Close Modal
   const stopLiveCamera = () => {
     if (cameraStream) {
-      cameraStream.getTracks().forEach(t => t.stop());
+      cameraStream.getTracks().forEach((track) => track.stop());
       setCameraStream(null);
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
     }
     setIsCameraModalOpen(false);
     setCapturedLivePhoto(null);
     setCameraError(null);
   };
 
-  // Bind video srcObject when modal is active
-  useEffect(() => {
-    if (isCameraModalOpen && videoRef.current && cameraStream && !capturedLivePhoto) {
-      videoRef.current.srcObject = cameraStream;
-      videoRef.current.play().catch(e => console.warn('Video play notice:', e));
-    }
-  }, [isCameraModalOpen, cameraStream, capturedLivePhoto]);
-
-  // Clean up camera stream on unmount
-  useEffect(() => {
-    return () => {
-      if (cameraStream) {
-        cameraStream.getTracks().forEach(t => t.stop());
-      }
-    };
-  }, [cameraStream]);
-
-  // Snap Snapshot from Live Video
-  const handleSnapPhoto = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const canvas = document.createElement('canvas');
-    const width = video.videoWidth || 640;
-    const height = video.videoHeight || 640;
-    const size = Math.min(width, height);
-    
-    canvas.width = 500;
-    canvas.height = 500;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Center crop to make square avatar
-    const sx = (width - size) / 2;
-    const sy = (height - size) / 2;
-
-    if (cameraFacing === 'user') {
-      ctx.translate(canvas.width, 0);
-      ctx.scale(-1, 1);
-    }
-
-    ctx.drawImage(video, sx, sy, size, size, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-    setCapturedLivePhoto(dataUrl);
+  const toggleCameraFacing = () => {
+    const nextFacing = cameraFacing === 'user' ? 'environment' : 'user';
+    startLiveCamera(nextFacing);
   };
 
-  // Apply Captured Live Photo — convert canvas dataURL → File → multipart/form-data
-  // API docs: PUT /api/auth/profile uses multipart/form-data with profilePicture as binary File
+  const handleSnapPhoto = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 640;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      if (cameraFacing === 'user') {
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+      }
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      setCapturedLivePhoto(dataUrl);
+    }
+  };
+
   const handleApplyCapturedPhoto = async () => {
     if (!capturedLivePhoto) return;
-    const previewDataUrl = capturedLivePhoto;
-    setProfilePicture(previewDataUrl);  // show preview immediately
+    setProfilePicture(capturedLivePhoto);
     setImageLoadError(false);
     stopLiveCamera();
 
     try {
       setIsUploadingPhoto(true);
-      // Convert base64 dataURL → File (required for multipart/form-data)
-      const photoFile = dataUrlToFile(previewDataUrl, 'profile-photo.jpg');
+      const file = dataUrlToFile(capturedLivePhoto, `profile-${Date.now()}.jpg`);
       const updatedUser = await updateProfileMutation.mutateAsync({
         name: fullName.trim() || user?.name,
         phoneNumber: phone.trim() || user?.phoneNumber,
-        profilePictureFile: photoFile,
+        profilePictureFile: file,
       });
       if (updatedUser) {
         const serverPic = normalizeImageUrl(
@@ -408,9 +354,18 @@ export const Profile: React.FC = () => {
     const cleanName = fullName.trim();
     const cleanPhone = phone.trim();
 
+    // 1. Immediately update Zustand store synchronously so UI updates with ZERO delay
+    if (cleanName || cleanPhone) {
+      updateUser({
+        name: cleanName || user?.name || '',
+        fullName: cleanName || (user as any)?.fullName || '',
+        phoneNumber: cleanPhone || user?.phoneNumber || '',
+        phone: cleanPhone || (user as any)?.phone || '',
+      });
+    }
+
     try {
-      // API docs: PUT /api/auth/profile → multipart/form-data
-      // Fields: name (String), phoneNumber (String), profilePicture (File binary)
+      // 2. Persist to API
       const updatedUser = await updateProfileMutation.mutateAsync({
         name: cleanName,
         phoneNumber: cleanPhone,
@@ -569,12 +524,12 @@ export const Profile: React.FC = () => {
 
             <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-bold font-serif truncate">{user?.name || fullName || 'User'}</h1>
+                <h1 className="text-lg sm:text-xl font-bold font-serif truncate">{fullName || user?.name || 'User'}</h1>
               </div>
-              <p className={`text-xs truncate ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>{user?.email || email}</p>
-              {(user?.phoneNumber || phone) && (
+              <p className={`text-xs truncate ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>{email || user?.email}</p>
+              {(phone || user?.phoneNumber) && (
                 <p className={`text-[11px] font-medium mt-0.5 truncate ${isDarkMode ? 'text-emerald-400' : 'text-emerald-700'}`}>
-                  📞 {user?.phoneNumber || phone}
+                  📞 {phone || user?.phoneNumber}
                 </p>
               )}
             </div>
