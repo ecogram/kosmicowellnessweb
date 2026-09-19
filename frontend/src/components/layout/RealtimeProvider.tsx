@@ -4,9 +4,14 @@ import { useSocket } from '../../hooks/useSocket';
 import { useAuthStore } from '../../store/useAuthStore';
 import { api } from '../../services/api';
 
+import { useProfile } from '../../hooks/useProfile';
+
 export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { socket, isConnected } = useSocket();
   const queryClient = useQueryClient();
+
+  // Actively poll and sync profile state globally across all pages
+  useProfile();
 
   useEffect(() => {
     if (!socket || !isConnected) return;
@@ -25,20 +30,31 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       queryClient.invalidateQueries({ queryKey: ['wishlist'] });
     });
 
-    // Profile Live Sync
-    socket.on('profile:updated', async ({ user }: any) => {
-      if (user) {
+    // Profile Live Sync Handler
+    const handleProfileUpdate = async (data?: any) => {
+      const user = data?.user || data;
+      if (user && (user.name || user.email || user._id || user.id)) {
         useAuthStore.getState().updateUser(user);
       } else {
         try {
-          const res = await api.get('/users/profile');
+          let res;
+          try {
+            res = await api.get('/users/profile');
+          } catch (e) {
+            res = await api.get('/auth/profile');
+          }
           if (res.data?.data) {
             useAuthStore.getState().updateUser(res.data.data.user || res.data.data);
           }
         } catch (_) {}
       }
+      queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-    });
+    };
+
+    socket.on('profile:updated', handleProfileUpdate);
+    socket.on('user:profile_updated', handleProfileUpdate);
+    socket.on('user:updated', handleProfileUpdate);
 
     // Address Live Sync
     socket.on('address:updated', () => {
@@ -97,6 +113,8 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       socket.off('notification:unread-count');
       socket.off('wishlist:updated');
       socket.off('profile:updated');
+      socket.off('user:profile_updated');
+      socket.off('user:updated');
       socket.off('address:updated');
       socket.off('order:created');
       socket.off('order:processing');

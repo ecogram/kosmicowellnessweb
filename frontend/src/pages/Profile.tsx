@@ -46,9 +46,8 @@ export const Profile: React.FC = () => {
   const { data: couponsData } = useCoupons();
   const navigate = useNavigate();
 
-  // Real-time profile sync — polls /auth/profile every 30s
-  // So changes from mobile app / other platforms appear within 30s on website
-  useProfile();
+  // Real-time profile sync — polls /users/profile every 4s and syncs socket updates
+  const { data: liveProfile } = useProfile();
 
   // Payment methods from API
   const { data: paymentMethodsData, refetch: refetchPaymentMethods } = useSavedPaymentMethods();
@@ -70,10 +69,10 @@ export const Profile: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Edit Profile Form State
-  const [fullName, setFullName] = useState(user?.name || (user as any)?.fullName || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [phone, setPhone] = useState(user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || '');
-  const [profilePicture, setProfilePicture] = useState(normalizeImageUrl(user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar || ''));
+  const [fullName, setFullName] = useState(liveProfile?.name || user?.name || (user as any)?.fullName || '');
+  const [email, setEmail] = useState(liveProfile?.email || user?.email || '');
+  const [phone, setPhone] = useState(liveProfile?.phoneNumber || liveProfile?.phone || user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || '');
+  const [profilePicture, setProfilePicture] = useState(normalizeImageUrl(liveProfile?.profilePicture || user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar || ''));
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
@@ -121,19 +120,20 @@ export const Profile: React.FC = () => {
   const [upiIdInput, setUpiIdInput] = useState('');
   const [upiSetDefault, setUpiSetDefault] = useState(true);
 
-  // Synchronize form state when Zustand store user changes (driven by useProfile polling)
+  // Synchronize form state when Zustand store user or liveProfile changes (driven by real-time polling)
   useEffect(() => {
-    const currentName = user?.name || (user as any)?.fullName;
+    const currentName = liveProfile?.name || liveProfile?.fullName || user?.name || (user as any)?.fullName;
     if (currentName) setFullName(currentName);
-    if (user?.email) setEmail(user.email);
-    const currentPic = user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar;
+    const currentEmail = liveProfile?.email || user?.email;
+    if (currentEmail) setEmail(currentEmail);
+    const currentPic = liveProfile?.profilePicture || (liveProfile as any)?.profileImage || user?.profilePicture || (user as any)?.profileImage;
     if (currentPic !== undefined) {
       setProfilePicture(normalizeImageUrl(currentPic));
       setImageLoadError(false);
     }
-    const userPhone = user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || '';
+    const userPhone = liveProfile?.phoneNumber || (liveProfile as any)?.phone || user?.phoneNumber || (user as any)?.phone || '';
     if (userPhone) setPhone(userPhone);
-  }, [user]);
+  }, [user, liveProfile]);
 
   // Fetch live addresses from backend (API-aligned field mapping)
   const fetchLiveAddresses = async () => {

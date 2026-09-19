@@ -40,7 +40,11 @@ router.post('/login-verify', authController.loginVerify);
 router.post('/resend-otp', authController.resendOtp);
 router.get('/profile', protect, authController.getMe);
 router.put('/profile', protect, handleProfileUpload, authController.updateProfile);
+router.patch('/profile', protect, handleProfileUpload, authController.updateProfile);
+router.post('/profile', protect, handleProfileUpload, authController.updateProfile);
 router.delete('/remove-profile-picture', protect, authController.removeProfilePicture);
+router.post('/remove-profile-picture', protect, authController.removeProfilePicture);
+router.delete('/profile-picture', protect, authController.removeProfilePicture);
 
 module.exports = router;
 

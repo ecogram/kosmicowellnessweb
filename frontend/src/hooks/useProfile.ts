@@ -5,35 +5,57 @@ import { normalizeImageUrl } from '../utils/imageUrl';
 
 // ─── GET /api/users/profile ───────────────────────────────────────────────────
 export const useProfile = () => {
-  const { updateUser, accessToken, user: currentUser } = useAuthStore();
+  const { updateUser, accessToken, isAuthenticated } = useAuthStore();
+  const hasAuth = isAuthenticated || !!accessToken || !!localStorage.getItem('kosmico_auth_v1');
 
   return useQuery({
     queryKey: ['auth-profile'],
     queryFn: async () => {
-      const { data } = await api.get('/users/profile');
-      const user = data?.data?.user ?? data?.data;
-      if (user) {
-        // Normalize image URL
-        const pic = user.profilePicture ?? user.profileImage ?? user.avatar ?? '';
-        user.profilePicture = normalizeImageUrl(pic);
-        user.profileImage   = user.profilePicture;
-        user.avatar         = user.profilePicture;
-
-        // Only update store if actual data changed to avoid re-render flicker
-        if (
-          !currentUser ||
-          currentUser.name !== user.name ||
-          currentUser.email !== user.email ||
-          currentUser.profilePicture !== user.profilePicture ||
-          currentUser.phoneNumber !== user.phoneNumber
-        ) {
-          updateUser(user);
+      try {
+        let res;
+        try {
+          res = await api.get('/users/profile');
+        } catch (e) {
+          res = await api.get('/auth/profile');
         }
+        const user = res.data?.data?.user ?? res.data?.data ?? res.data;
+        if (user && (user.name || user.email || user._id || user.id)) {
+          // Normalize image URL
+          const pic = user.profilePicture ?? user.profileImage ?? user.avatar ?? '';
+          user.profilePicture = normalizeImageUrl(pic);
+          user.profileImage   = user.profilePicture;
+          user.avatar         = user.profilePicture;
+
+          const cleanName = user.name || user.fullName || '';
+          const cleanPhone = user.phoneNumber || user.phone || '';
+
+          const synchronizedUser = {
+            ...user,
+            id: user._id || user.id,
+            _id: user._id || user.id,
+            name: cleanName,
+            fullName: cleanName,
+            phoneNumber: cleanPhone,
+            phone: cleanPhone,
+            profilePicture: user.profilePicture,
+            profileImage: user.profilePicture,
+            avatar: user.profilePicture,
+          };
+
+          updateUser(synchronizedUser);
+          return synchronizedUser;
+        }
+        return null;
+      } catch (err) {
+        return null;
       }
-      return user;
     },
-    enabled: !!accessToken,
-    staleTime: 60_000,
+    enabled: hasAuth,
+    staleTime: 1000,
+    refetchInterval: 3000, // Polls every 3 seconds to sync mobile app updates in real-time
+    refetchIntervalInBackground: true, // Syncs even when switching between phone and computer
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
     retry: 1,
   });
 };
