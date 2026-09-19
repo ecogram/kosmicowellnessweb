@@ -262,7 +262,35 @@ This document provides a comprehensive reference for all client/user-side API en
 
 ---
 
-## 4. Address Management Module (`/api/address`)
+## 4. Wishlist (`/api/wishlist`)
+
+### 1. Get User's Wishlist (Protected)
+- **Endpoint:** `GET /api/wishlist/`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+
+### 2. Add Product to Wishlist (Protected)
+- **Endpoint:** `POST /api/wishlist/add`
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body:**
+  ```json
+  {
+    "productId": "60d5ec49c..."
+  }
+  ```
+
+### 3. Remove Product from Wishlist (Protected)
+- **Endpoint:** `DELETE /api/wishlist/remove` *(also supports `POST /api/wishlist/remove` and `DELETE /api/wishlist/:productId`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body:**
+  ```json
+  {
+    "productId": "60d5ec49c..."
+  }
+  ```
+
+---
+
+## 5. Address Management Module (`/api/address`)
 
 ### 1. Save Address
 - **Endpoint:** `POST /api/address`
@@ -296,34 +324,6 @@ This document provides a comprehensive reference for all client/user-side API en
 ### 5. Delete Address
 - **Endpoint:** `DELETE /api/address/{addressId}`
 - **Auth Required:** Yes
-
----
-
-## 5. Wishlist Module (`/api/wishlist`)
-
-### 1. Get Wishlist
-- **Endpoint:** `GET /api/wishlist`
-- **Auth Required:** Yes
-
-### 2. Add to Wishlist
-- **Endpoint:** `POST /api/wishlist/add`
-- **Auth Required:** Yes
-- **Request Body:**
-  ```json
-  {
-    "productId": "string"
-  }
-  ```
-
-### 3. Remove from Wishlist
-- **Endpoint:** `POST /api/wishlist/remove`
-- **Auth Required:** Yes
-- **Request Body:**
-  ```json
-  {
-    "productId": "string"
-  }
-  ```
 
 ---
 
