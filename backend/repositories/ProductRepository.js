@@ -24,15 +24,7 @@ class ProductRepository extends BaseRepository {
     } = query;
 
     const filter = { isActive: { $ne: false } };
-    const andClauses = [
-      {
-        $or: [
-          { name: { $regex: /sweet monk|monk fruit|monk/i } },
-          { title: { $regex: /sweet monk|monk fruit|monk/i } },
-          { slug: { $regex: /sweet-monk|monk/i } },
-        ],
-      },
-    ];
+    const andClauses = [];
 
     const searchTerm = search || q;
     if (searchTerm && typeof searchTerm === 'string' && searchTerm.trim().length > 0) {
