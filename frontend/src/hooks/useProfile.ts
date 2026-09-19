@@ -58,8 +58,7 @@ export const useProfile = () => {
   });
 };
 
-// ─── PUT /api/auth/profile ──────────────────────────────────────────────────
-// Supports both multipart/form-data (photo upload) and application/json fallback
+// ─── PUT /api/auth/profile & /api/auth/profile-picture ────────────────────────
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
   const { updateUser } = useAuthStore();
@@ -79,28 +78,40 @@ export const useUpdateProfile = () => {
       let res;
       if (profilePictureFile) {
         let uploadSucceeded = false;
-        try {
-          const formData = new FormData();
-          if (name) {
-            formData.append('name', name);
-            formData.append('fullName', name);
-          }
-          if (phoneNumber) {
-            formData.append('phoneNumber', phoneNumber);
-            formData.append('phone', phoneNumber);
-          }
-          formData.append('profilePicture', profilePictureFile);
 
-          res = await api.put('/auth/profile', formData);
+        // 1. Try PUT /api/auth/profile-picture (dedicated photo endpoint on live server)
+        try {
+          const picFormData = new FormData();
+          picFormData.append('profilePicture', profilePictureFile);
+
+          res = await api.put('/auth/profile-picture', picFormData);
           const u = res?.data?.data?.user ?? res?.data?.data ?? res?.data;
           if (u && (u.profilePicture || u.profileImage)) {
             uploadSucceeded = true;
           }
         } catch (err) {
-          console.warn('Multipart upload notice:', err);
+          console.warn('PUT /auth/profile-picture notice:', err);
         }
 
-        // If multipart didn't succeed or didn't return saved picture URL, save via JSON
+        // 2. Try PUT /api/auth/profile with full multipart FormData
+        if (!uploadSucceeded) {
+          try {
+            const formData = new FormData();
+            if (name) formData.append('name', name);
+            if (phoneNumber) formData.append('phoneNumber', phoneNumber);
+            formData.append('profilePicture', profilePictureFile);
+
+            res = await api.put('/auth/profile', formData);
+            const u = res?.data?.data?.user ?? res?.data?.data ?? res?.data;
+            if (u && (u.profilePicture || u.profileImage)) {
+              uploadSucceeded = true;
+            }
+          } catch (err) {
+            console.warn('PUT /auth/profile FormData notice:', err);
+          }
+        }
+
+        // 3. Fallback: Save picture via JSON (direct base64 data string)
         if (!uploadSucceeded && profilePicture) {
           try {
             res = await api.put('/auth/profile', {
@@ -159,12 +170,14 @@ export const useRemoveProfilePicture = () => {
   return useMutation({
     mutationFn: async () => {
       let res;
+      // 1. DELETE /api/auth/remove-profile-picture
       try {
         res = await api.delete('/auth/remove-profile-picture');
       } catch (e) {
         console.warn('DELETE remove picture notice:', e);
       }
 
+      // 2. PUT /api/auth/profile with empty picture & removePhoto flag
       try {
         const updateRes = await api.put('/auth/profile', {
           removePhoto: true,
