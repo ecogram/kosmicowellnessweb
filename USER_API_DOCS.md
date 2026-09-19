@@ -17,37 +17,37 @@ This document provides a comprehensive reference for all client/user-side API en
 
 ---
 
-## 1. Authentication Module (`/api/auth`)
+## 1. Authentication & Users Module (`/api/auth` & `/api/users`)
 
-### 1. Register User
+### 1. Register User (Send Signup OTP)
 - **Endpoint:** `POST /api/auth/register`
 - **Auth Required:** No
 - **Request Body:**
   ```json
   {
-    "name": "User Name",
-    "email": "user@example.com"
+    "name": "John Doe",
+    "email": "john@example.com"
   }
   ```
 
-### 2. Login User
-- **Endpoint:** `POST /api/auth/login`
-- **Auth Required:** No
-- **Request Body:**
-  ```json
-  {
-    "email": "user@example.com"
-  }
-  ```
-
-### 3. Verify Signup OTP
+### 2. Verify Signup OTP
 - **Endpoint:** `POST /api/auth/signup-verify`
 - **Auth Required:** No
 - **Request Body:**
   ```json
   {
-    "email": "user@example.com",
+    "email": "john@example.com",
     "otp": "123456"
+  }
+  ```
+
+### 3. Login User (Send Login OTP)
+- **Endpoint:** `POST /api/auth/login`
+- **Auth Required:** No
+- **Request Body:**
+  ```json
+  {
+    "email": "john@example.com"
   }
   ```
 
@@ -57,7 +57,7 @@ This document provides a comprehensive reference for all client/user-side API en
 - **Request Body:**
   ```json
   {
-    "email": "user@example.com",
+    "email": "john@example.com",
     "otp": "123456"
   }
   ```
@@ -68,22 +68,50 @@ This document provides a comprehensive reference for all client/user-side API en
 - **Request Body:**
   ```json
   {
-    "email": "user@example.com"
+    "email": "john@example.com",
+    "purpose": "register"
+  }
+  ```
+  *(Note: `purpose` can be `"register"` or `"login"`)*
+
+### 6. Get User Profile (Protected)
+- **Endpoint:** `GET /api/users/profile` *(also available at `GET /api/auth/profile`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Response Example:**
+  ```json
+  {
+    "statusCode": 200,
+    "data": {
+      "user": {
+        "id": "67a1...",
+        "name": "John Doe",
+        "email": "john@example.com",
+        "phoneNumber": "9876543210",
+        "profilePicture": "https://api.kosmicowellness.com/uploads/profiles/pic.jpg",
+        "role": "user",
+        "isActive": true
+      }
+    },
+    "message": "User data retrieved",
+    "success": true
   }
   ```
 
-### 6. Update Profile (with Image)
-- **Endpoint:** `PUT /api/auth/profile`
-- **Auth Required:** Yes (`Bearer Token`)
-- **Content-Type:** `multipart/form-data`
-- **Form Fields:**
-  - `name`: String
-  - `phoneNumber`: String
-  - `profilePicture`: File (Binary image)
+### 7. Update User Profile (Protected)
+- **Endpoint:** `PUT /api/users/profile` *(also available at `PUT /api/auth/profile`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body (JSON / FormData):**
+  ```json
+  {
+    "name": "John Doe Updated",
+    "phoneNumber": "9876543210"
+  }
+  ```
+  *(Can also accept `profilePicture` as file upload via multipart/form-data)*
 
-### 7. Remove Profile Picture
-- **Endpoint:** `DELETE /api/auth/remove-profile-picture`
-- **Auth Required:** Yes (`Bearer Token`)
+### 8. Remove Profile Picture
+- **Endpoint:** `DELETE /api/auth/remove-profile-picture` *(also available at `DELETE /api/users/remove-profile-picture`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
 
 ---
 
