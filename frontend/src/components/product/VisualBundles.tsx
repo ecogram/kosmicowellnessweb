@@ -20,22 +20,20 @@ interface VisualBundlesProps {
 
 export function VisualBundles({ selectedBundleId, onSelectBundle, basePrice = 389, variants }: VisualBundlesProps) {
   const singlePrice = basePrice;
-  const twinPrice = variants?.find(v => (v.size || '').toLowerCase().includes('500ml') || (v.size || '').includes('2'))?.price 
-    || (basePrice === 387 ? 699 : Math.round(basePrice * 1.8));
-  const familyPrice = variants?.find(v => (v.size || '').toLowerCase().includes('750ml') || (v.size || '').includes('3'))?.price 
-    || (basePrice === 387 ? 999 : Math.round(basePrice * 2.57));
+  const twinPrice = variants?.find(v => (v.size || '').toLowerCase().includes('20ml') || (v.size || '').includes('2'))?.price || 750;
+  const familyPrice = variants?.find(v => (v.size || '').toLowerCase().includes('30ml') || (v.size || '').includes('3'))?.price || 999;
 
   const bundles: BundleOption[] = [
     {
       id: 'single',
-      name: 'Single Pack (250ml Bottle)',
+      name: 'Single Pack (10ml Bottle)',
       quantity: 1,
       price: singlePrice,
       unitPrice: `₹${singlePrice} / pack`
     },
     {
       id: 'twin',
-      name: 'Pack of 2 (500ml Total)',
+      name: 'Pack of 2 (20ml Total)',
       quantity: 2,
       price: twinPrice,
       badge: 'TWIN PACK',
@@ -44,7 +42,7 @@ export function VisualBundles({ selectedBundleId, onSelectBundle, basePrice = 38
     },
     {
       id: 'family',
-      name: 'Family 3-Pack (750ml Total)',
+      name: 'Family 3-Pack (30ml Total)',
       quantity: 3,
       price: familyPrice,
       badge: 'FAMILY PACK',

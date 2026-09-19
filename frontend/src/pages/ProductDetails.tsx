@@ -58,7 +58,7 @@ export function ProductDetails() {
   const displayPrice = selectedBundle ? selectedBundle.price : product.price;
 
   const handleAddToCart = () => {
-    const variantStr = selectedBundle ? selectedBundle.name : 'Single (250ml)';
+    const variantStr = selectedBundle ? selectedBundle.name : 'Single (10ml)';
     addToCartMutation.mutate({
       productId: product._id || product.id,
       quantity: selectedBundle ? selectedBundle.quantity * quantity : quantity,

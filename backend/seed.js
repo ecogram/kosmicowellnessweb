@@ -53,11 +53,11 @@ const seedData = async () => {
 
     const products = [
       {
-        name: 'Kosmico Classic Monk Fruit Sweetener (250ml)',
-        slug: 'kosmico-classic-monk-fruit-sweetener-250g',
+        name: 'Kosmico Classic Monk Fruit Sweetener (10ml)',
+        slug: 'kosmico-classic-monk-fruit-sweetener-10ml',
         description: 'Our flagship 1:1 direct white sugar replacement. Bakes, stirs, and sweetens just like real sugar without any blood sugar spikes. 100% natural, keto, diabetic, and vegan certified.',
         shortDescription: '1:1 direct sugar substitute. Zero calories, zero net carbs.',
-        price: 387,
+        price: 389,
         category: classicCat._id,
         stock: 500,
         images: ['/assets/products/product-box.jpg', '/assets/products/product-front-back.jpg'],
@@ -65,8 +65,9 @@ const seedData = async () => {
         rating: 4.9,
         reviewsCount: 289,
         variants: [
-          { size: '250ml Bottle', price: 387, stock: 300 },
-          { size: '500ml Value Pack', price: 699, stock: 200 },
+          { size: '10ml Bottle', price: 389, stock: 300 },
+          { size: '20ml Twin Pack', price: 750, stock: 200 },
+          { size: '30ml Family Pack', price: 999, stock: 100 },
         ],
       },
     ];
