@@ -178,7 +178,7 @@ export function ProductReviews({ productId }: { productId: string }) {
         )}
       </div>
 
-      {reviewsData?.meta?.pages > 1 && (
+      {Boolean(reviewsData?.meta?.pages && reviewsData.meta.pages > 1) && (
         <div className="flex justify-center gap-2 mt-8">
           <Button 
             variant="outline" 
@@ -190,7 +190,7 @@ export function ProductReviews({ productId }: { productId: string }) {
           <Button 
             variant="outline" 
             onClick={() => setPage(p => p + 1)}
-            disabled={page >= reviewsData.meta.pages}
+            disabled={page >= (reviewsData?.meta?.pages || 1)}
           >
             Next
           </Button>

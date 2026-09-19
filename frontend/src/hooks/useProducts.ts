@@ -24,9 +24,6 @@ export const useProducts = (params: FetchProductsParams) => {
 
       const { data } = await api.get('/products/user/list', { params: cleanParams });
       let products = Array.isArray(data) ? data : (data?.data?.products ?? (Array.isArray(data?.data) ? data.data : []));
-      
-      // Temporary: ONLY show Sweet Monk products
-      products = products.filter((p: any) => p.name?.toLowerCase().includes('sweet monk'));
 
       // Normalize images
       products = products.map((p: any) => ({
@@ -38,7 +35,7 @@ export const useProducts = (params: FetchProductsParams) => {
       const pagination = data?.pagination ?? data?.data?.pagination ?? data?.meta ?? {
         total: products.length,
         page: params.page ?? 1,
-        pages: 1,
+        pages: Math.ceil(products.length / (params.limit || 12)) || 1,
       };
 
       return { products, pagination };

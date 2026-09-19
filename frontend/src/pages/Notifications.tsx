@@ -152,21 +152,24 @@ export function Notifications() {
             </div>
           ))}
 
-          {notificationsData?.meta?.pages > 1 && (
+          {Boolean(
+            (notificationsData?.pagination?.totalPages || notificationsData?.pagination?.pages) &&
+            (notificationsData?.pagination?.totalPages || notificationsData?.pagination?.pages) > 1
+          ) && (
             <div className="flex justify-center items-center gap-2 mt-8 pt-4 border-t border-neutral-100">
               <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
                 className="px-4 py-2 bg-white border border-neutral-200 rounded-xl text-xs font-bold disabled:opacity-40 cursor-pointer"
               >
                 Previous
               </button>
               <span className="px-3 text-xs text-neutral-500 font-medium">
-                Page {page} of {notificationsData.meta.pages}
+                Page {page} of {notificationsData?.pagination?.totalPages || notificationsData?.pagination?.pages || 1}
               </span>
               <button
-                onClick={() => setPage(p => p + 1)}
-                disabled={page >= notificationsData.meta.pages}
+                onClick={() => setPage((p) => p + 1)}
+                disabled={page >= (notificationsData?.pagination?.totalPages || notificationsData?.pagination?.pages || 1)}
                 className="px-4 py-2 bg-white border border-neutral-200 rounded-xl text-xs font-bold disabled:opacity-40 cursor-pointer"
               >
                 Next
