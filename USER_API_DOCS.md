@@ -290,40 +290,47 @@ This document provides a comprehensive reference for all client/user-side API en
 
 ---
 
-## 5. Address Management Module (`/api/address`)
+## 5. Addresses (`/api/addresses` & `/api/address`)
 
-### 1. Save Address
-- **Endpoint:** `POST /api/address`
-- **Auth Required:** Yes
+Complete CRUD API endpoints for managing User Delivery Addresses. (Protected)
+
+### 1. Create User Delivery Address (Protected)
+- **Endpoint:** `POST /api/addresses` *(also `POST /api/address`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
 - **Request Body:**
   ```json
   {
     "addressLabel": "Home",
     "fullName": "John Doe",
-    "streetAddress": "123 Main St",
-    "city": "Delhi",
-    "pincode": "110001",
+    "streetAddress": "Flat 402, Green Valley Apartments",
+    "city": "Mumbai",
+    "state": "Maharashtra",
+    "pincode": "400001",
     "phoneNumber": "9876543210",
     "isDefault": true
   }
   ```
 
-### 2. Get Saved Addresses
-- **Endpoint:** `GET /api/address`
-- **Auth Required:** Yes
+### 2. Get All User Delivery Addresses (Protected)
+- **Endpoint:** `GET /api/addresses` *(also `GET /api/address`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
 
-### 3. Update Address
-- **Endpoint:** `PUT /api/address/{addressId}`
-- **Auth Required:** Yes
-- **Request Body:** Same as Save Address fields.
+### 3. Get Single Address by ID (Protected)
+- **Endpoint:** `GET /api/addresses/:addressId` *(also `GET /api/address/:addressId`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
 
-### 4. Set Default Address
-- **Endpoint:** `PUT /api/address/set-default/{addressId}`
-- **Auth Required:** Yes
+### 4. Update User Address (Protected)
+- **Endpoint:** `PUT /api/addresses/:addressId` *(also `PUT /api/address/:addressId`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+- **Request Body:** Partial or full address fields (`addressLabel`, `fullName`, `streetAddress`, `city`, `state`, `pincode`, `phoneNumber`, `isDefault`)
 
-### 5. Delete Address
-- **Endpoint:** `DELETE /api/address/{addressId}`
-- **Auth Required:** Yes
+### 5. Set Default Delivery Address (Protected)
+- **Endpoint:** `PUT /api/addresses/set-default/:addressId` *(also `PUT /api/address/set-default/:addressId`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
+
+### 6. Delete Delivery Address (Protected)
+- **Endpoint:** `DELETE /api/addresses/:addressId` *(also `DELETE /api/address/:addressId`)*
+- **Auth Required:** Yes (`Authorization: Bearer <JWT_TOKEN>`)
 
 ---
 
