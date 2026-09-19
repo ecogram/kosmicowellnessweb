@@ -237,12 +237,13 @@ class AuthService {
       updateFields.profilePicture = '';
       updateFields.profileImage = '';
       updateFields.avatar = '';
-    } else if (updatedPic && typeof updatedPic === 'string' && updatedPic.trim().length > 0) {
+    } else if (updatedPic !== undefined && typeof updatedPic === 'string' && updatedPic.trim().length > 0) {
       const cleanPic = updatedPic.trim();
       updateFields.profilePicture = cleanPic;
       updateFields.profileImage = cleanPic;
       updateFields.avatar = cleanPic;
     }
+    // If updatedPic is undefined, we don't touch profilePicture — preserves existing value
 
     const savedUser = await User.findByIdAndUpdate(
       userId,

@@ -42,6 +42,11 @@ router.get('/profile', protect, authController.getMe);
 router.put('/profile', protect, handleProfileUpload, authController.updateProfile);
 router.patch('/profile', protect, handleProfileUpload, authController.updateProfile);
 router.post('/profile', protect, handleProfileUpload, authController.updateProfile);
+// Dedicated profile picture upload endpoint (called by web frontend)
+router.put('/profile-picture', protect, handleProfileUpload, authController.updateProfile);
+router.post('/profile-picture', protect, handleProfileUpload, authController.updateProfile);
+router.patch('/profile-picture', protect, handleProfileUpload, authController.updateProfile);
+// Remove profile picture endpoints
 router.delete('/remove-profile-picture', protect, authController.removeProfilePicture);
 router.post('/remove-profile-picture', protect, authController.removeProfilePicture);
 router.delete('/profile-picture', protect, authController.removeProfilePicture);

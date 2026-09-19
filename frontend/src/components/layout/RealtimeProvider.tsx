@@ -55,6 +55,21 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     socket.on('profile:updated', handleProfileUpdate);
     socket.on('user:profile_updated', handleProfileUpdate);
     socket.on('user:updated', handleProfileUpdate);
+    // Force re-fetch profile from server (emitted when another client updates the profile)
+    socket.on('profile:force_refresh', async () => {
+      try {
+        let res;
+        try { res = await api.get('/auth/profile'); } catch (e) { res = await api.get('/users/profile'); }
+        if (res?.data?.data) {
+          const u = res.data.data.user || res.data.data;
+          if (u && (u.name || u.email || u._id)) {
+            useAuthStore.getState().updateUser(u);
+          }
+        }
+      } catch (_) {}
+      queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    });
 
     // Address Live Sync
     socket.on('address:updated', () => {
@@ -115,6 +130,7 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       socket.off('profile:updated');
       socket.off('user:profile_updated');
       socket.off('user:updated');
+      socket.off('profile:force_refresh');
       socket.off('address:updated');
       socket.off('order:created');
       socket.off('order:processing');
