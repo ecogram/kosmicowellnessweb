@@ -3,7 +3,7 @@ import { api } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 import { normalizeImageUrl } from '../utils/imageUrl';
 
-// ─── GET /api/users/profile ───────────────────────────────────────────────────
+// ─── GET /api/auth/profile ───────────────────────────────────────────────────
 export const useProfile = () => {
   const { updateUser, accessToken, isAuthenticated } = useAuthStore();
   const hasAuth = isAuthenticated || !!accessToken || !!localStorage.getItem('kosmico_auth_v1');
@@ -14,9 +14,9 @@ export const useProfile = () => {
       try {
         let res;
         try {
-          res = await api.get('/users/profile');
-        } catch (e) {
           res = await api.get('/auth/profile');
+        } catch (e) {
+          res = await api.get('/users/profile');
         }
         const user = res.data?.data?.user ?? res.data?.data ?? res.data;
         if (user && (user.name || user.email || user._id || user.id)) {
@@ -60,7 +60,7 @@ export const useProfile = () => {
   });
 };
 
-// ─── PUT /api/users/profile ──────────────────────────────────────────────────
+// ─── PUT /api/auth/profile ──────────────────────────────────────────────────
 // Supports both application/json (text fields) and multipart/form-data (photo upload)
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
@@ -79,19 +79,40 @@ export const useUpdateProfile = () => {
       let res;
       if (profilePictureFile) {
         const formData = new FormData();
-        if (name)        formData.append('name', name);
-        if (phoneNumber) formData.append('phoneNumber', phoneNumber);
+        if (name) {
+          formData.append('name', name);
+          formData.append('fullName', name);
+        }
+        if (phoneNumber) {
+          formData.append('phoneNumber', phoneNumber);
+          formData.append('phone', phoneNumber);
+        }
         formData.append('profilePicture', profilePictureFile);
+        formData.append('profileImage', profilePictureFile);
+        formData.append('avatar', profilePictureFile);
+        formData.append('image', profilePictureFile);
 
-        // Do not pass manual Content-Type header so Axios sets the boundary automatically
-        res = await api.put('/users/profile', formData);
+        try {
+          res = await api.put('/auth/profile', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+        } catch (err) {
+          res = await api.put('/users/profile', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+        }
       } else {
-        res = await api.put('/users/profile', {
+        const payload = {
           name,
           fullName: name,
           phoneNumber,
           phone: phoneNumber,
-        });
+        };
+        try {
+          res = await api.put('/auth/profile', payload);
+        } catch (err) {
+          res = await api.put('/users/profile', payload);
+        }
       }
       return res.data?.data?.user ?? res.data?.data ?? res.data;
     },

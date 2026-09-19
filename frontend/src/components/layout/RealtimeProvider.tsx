@@ -39,9 +39,9 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         try {
           let res;
           try {
-            res = await api.get('/users/profile');
-          } catch (e) {
             res = await api.get('/auth/profile');
+          } catch (e) {
+            res = await api.get('/users/profile');
           }
           if (res.data?.data) {
             useAuthStore.getState().updateUser(res.data.data.user || res.data.data);

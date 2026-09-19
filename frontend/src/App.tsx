@@ -62,7 +62,12 @@ const AuthInit = ({ children }: { children: React.ReactNode }) => {
         return;
       }
       try {
-        const response = await api.get('/users/profile');
+        let response;
+        try {
+          response = await api.get('/auth/profile');
+        } catch (e) {
+          response = await api.get('/users/profile');
+        }
         if (response.data?.data) {
           const user = response.data.data.user || response.data.data;
           setAuth(user, accessToken);

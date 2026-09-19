@@ -177,9 +177,16 @@ export const Login: React.FC = () => {
       if (authToken) {
         setAuth(userObj, authToken);
         try {
-          const profileRes = await api.get('/users/profile', {
-            headers: { Authorization: `Bearer ${authToken}` },
-          });
+          let profileRes;
+          try {
+            profileRes = await api.get('/auth/profile', {
+              headers: { Authorization: `Bearer ${authToken}` },
+            });
+          } catch (e) {
+            profileRes = await api.get('/users/profile', {
+              headers: { Authorization: `Bearer ${authToken}` },
+            });
+          }
           if (profileRes.data?.data) {
             userObj = profileRes.data.data.user || profileRes.data.data;
             setAuth(userObj, authToken);
