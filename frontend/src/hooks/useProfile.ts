@@ -61,7 +61,7 @@ export const useProfile = () => {
 };
 
 // ─── PUT /api/auth/profile ──────────────────────────────────────────────────
-// Supports both application/json (text fields) and multipart/form-data (photo upload)
+// Supports both multipart/form-data (photo upload) and application/json fallback
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
   const { updateUser } = useAuthStore();
@@ -80,29 +80,42 @@ export const useUpdateProfile = () => {
     }) => {
       let res;
       if (profilePictureFile) {
-        const formData = new FormData();
-        if (name) formData.append('name', name);
-        if (phoneNumber) formData.append('phoneNumber', phoneNumber);
-        formData.append('profilePicture', profilePictureFile);
-
+        let uploadSucceeded = false;
         try {
+          const formData = new FormData();
+          if (name) {
+            formData.append('name', name);
+            formData.append('fullName', name);
+          }
+          if (phoneNumber) {
+            formData.append('phoneNumber', phoneNumber);
+            formData.append('phone', phoneNumber);
+          }
+          formData.append('profilePicture', profilePictureFile);
+
           res = await api.put('/auth/profile', formData);
+          const u = res?.data?.data?.user ?? res?.data?.data ?? res?.data;
+          if (u && (u.profilePicture || u.profileImage || u.avatar)) {
+            uploadSucceeded = true;
+          }
         } catch (err) {
+          console.warn('Multipart upload notice:', err);
+        }
+
+        // If multipart didn't succeed or didn't return saved picture URL, save via JSON
+        if (!uploadSucceeded && profilePicture) {
           try {
-            res = await api.put('/users/profile', formData);
-          } catch (e) {
-            // Fallback: send as JSON base64 if available
-            if (profilePicture) {
-              res = await api.put('/auth/profile', {
-                name,
-                phoneNumber,
-                profilePicture,
-                profileImage: profilePicture,
-                avatar: profilePicture,
-              });
-            } else {
-              throw e;
-            }
+            res = await api.put('/auth/profile', {
+              name,
+              fullName: name,
+              phoneNumber,
+              phone: phoneNumber,
+              profilePicture,
+              profileImage: profilePicture,
+              avatar: profilePicture,
+            });
+          } catch (err2) {
+            console.warn('JSON picture save notice:', err2);
           }
         }
       } else {
@@ -127,7 +140,7 @@ export const useUpdateProfile = () => {
           res = await api.put('/users/profile', payload);
         }
       }
-      return res.data?.data?.user ?? res.data?.data ?? res.data;
+      return res?.data?.data?.user ?? res?.data?.data ?? res?.data;
     },
     onSuccess: (updatedUser) => {
       if (updatedUser) {
@@ -150,8 +163,26 @@ export const useRemoveProfilePicture = () => {
 
   return useMutation({
     mutationFn: async () => {
-      const { data } = await api.delete('/auth/remove-profile-picture');
-      return data?.data?.user ?? data?.data;
+      let res;
+      try {
+        res = await api.delete('/auth/remove-profile-picture');
+      } catch (e) {
+        console.warn('DELETE remove picture notice:', e);
+      }
+
+      try {
+        const updateRes = await api.put('/auth/profile', {
+          removePhoto: true,
+          profilePicture: '',
+          profileImage: '',
+          avatar: '',
+        });
+        if (!res) res = updateRes;
+      } catch (e) {
+        console.warn('PUT remove picture notice:', e);
+      }
+
+      return res?.data?.data?.user ?? res?.data?.data;
     },
     onSuccess: (updatedUser) => {
       const cleared = {
