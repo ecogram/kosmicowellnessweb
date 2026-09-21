@@ -155,9 +155,8 @@ class OrderService {
 
     if (order) {
       notificationService.createOrderNotification(userId, order._id, order.orderNumber, order.orderStatus).catch(console.error);
-      const { emitToUser, emitToAdmins } = require('../realtime/emitter');
+      const { emitToUser } = require('../realtime/emitter');
       emitToUser(userId, 'order:created', { orderId: order._id, orderNumber: order.orderNumber });
-      emitToAdmins('admin:new-order', { orderId: order._id, orderNumber: order.orderNumber, total: order.total });
     }
 
     return order;
@@ -250,9 +249,8 @@ class OrderService {
       await cart.save();
 
       notificationService.createOrderNotification(userId, createdOrder._id, createdOrder.orderNumber, createdOrder.orderStatus).catch(console.error);
-      const { emitToUser, emitToAdmins } = require('../realtime/emitter');
+      const { emitToUser } = require('../realtime/emitter');
       emitToUser(userId, 'order:created', { orderId: createdOrder._id, orderNumber: createdOrder.orderNumber });
-      emitToAdmins('admin:new-order', { orderId: createdOrder._id, orderNumber: createdOrder.orderNumber, total: createdOrder.total });
 
       return createdOrder;
     } catch (error) {
@@ -300,24 +298,9 @@ class OrderService {
     
     notificationService.createOrderNotification(userId, order._id, order.orderNumber, 'CANCELLED').catch(console.error);
     
-    const { emitToOrder, emitToAdmins } = require('../realtime/emitter');
+    const { emitToOrder } = require('../realtime/emitter');
     emitToOrder(order._id, 'order:cancelled', { orderId: order._id, status: 'CANCELLED' });
-    emitToAdmins('admin:order-updated', { orderId: order._id, status: 'CANCELLED' });
 
-    return order;
-  }
-
-  async updateOrderStatus(id, status) {
-    const order = await orderRepository.update(id, { orderStatus: status });
-    if (!order) throw new ApiError(404, 'Order not found');
-    
-    notificationService.createOrderNotification(order.user, order._id, order.orderNumber, status).catch(console.error);
-    
-    const { emitToOrder, emitToAdmins } = require('../realtime/emitter');
-    const eventName = `order:${status.toLowerCase()}`;
-    emitToOrder(order._id, eventName, { orderId: order._id, status });
-    emitToAdmins('admin:order-updated', { orderId: order._id, status });
-    
     return order;
   }
 }

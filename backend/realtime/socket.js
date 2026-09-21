@@ -75,12 +75,6 @@ const initializeSocket = (httpServer) => {
     if (socket.user.email) {
       socket.join(`user:${socket.user.email.toLowerCase()}`);
     }
-    
-    // Join admin room if applicable
-    if (socket.user.role === 'admin') {
-      socket.join('admins');
-      console.log(`Socket ${socket.id} joined 'admins' room`);
-    }
 
     // Join specific order room
     socket.on('join:order', async (orderId) => {
@@ -93,7 +87,7 @@ const initializeSocket = (httpServer) => {
           return;
         }
 
-        if (socket.user.role !== 'admin' && order.user.toString() !== socket.user._id.toString()) {
+        if (order.user.toString() !== socket.user._id.toString()) {
           socket.emit('error', { message: 'Unauthorized to join this order room' });
           return;
         }

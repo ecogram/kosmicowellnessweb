@@ -4,9 +4,7 @@ const jwt = require('jsonwebtoken');
 
 // Create a dummy token for a fake user
 const fakeUserId = '64abcd1234ef567890abcdef';
-const token = jwt.sign({ id: fakeUserId, role: 'customer' }, process.env.JWT_ACCESS_SECRET || 'secret', { expiresIn: '1h' });
-
-const adminToken = jwt.sign({ id: fakeUserId, role: 'admin' }, process.env.JWT_ACCESS_SECRET || 'secret', { expiresIn: '1h' });
+const token = jwt.sign({ id: fakeUserId, role: 'user' }, process.env.JWT_ACCESS_SECRET || 'secret', { expiresIn: '1h' });
 
 const runTests = async () => {
   console.log('--- 1. Testing Unauthenticated Socket Rejection ---');

@@ -55,15 +55,29 @@ export function ProductDetails() {
     return itemId?.toString() === currentId?.toString();
   });
 
-  const displayPrice = selectedBundle ? selectedBundle.price : product.price;
+  const singlePrice = product.price;
+  const displayPrice = selectedBundle
+    ? (selectedBundle.id === 'single' ? singlePrice : selectedBundle.price)
+    : singlePrice;
+  const bundleQuantity = selectedBundle ? selectedBundle.quantity : 1;
+  const compareAtPrice = (product.compareAtPrice || 499) * bundleQuantity;
 
   const handleAddToCart = () => {
-    const variantStr = selectedBundle ? selectedBundle.name : 'Single (250ml)';
+    const activeBundle = selectedBundle || {
+      id: 'single',
+      name: 'Single Pack (250ml Bottle)',
+      quantity: 1,
+      price: singlePrice,
+      unitPrice: `₹${singlePrice} / pack`
+    };
+    const variantStr = activeBundle.name;
+    const finalPrice = activeBundle.id === 'single' ? singlePrice : activeBundle.price;
+
     addToCartMutation.mutate({
       productId: product._id || product.id,
-      quantity: selectedBundle ? selectedBundle.quantity * quantity : quantity,
+      quantity: activeBundle.quantity * quantity,
       variant: variantStr,
-      price: displayPrice,
+      price: finalPrice,
       name: product.name,
       image: images[0],
     });
@@ -163,13 +177,13 @@ export function ProductDetails() {
 
             <div className="flex items-baseline gap-3 mb-6 p-4 bg-surface rounded-2xl border border-border flex-wrap">
               <span className="text-3xl font-black text-primary font-sans">{formatINR(displayPrice)}</span>
-              {((product.compareAtPrice && product.compareAtPrice > displayPrice) || displayPrice < 499) && (
+              {compareAtPrice > displayPrice && (
                 <>
                   <span className="text-base text-neutral-400 line-through font-sans">
-                    {formatINR(product.compareAtPrice || 499)}
+                    {formatINR(compareAtPrice)}
                   </span>
                   <span className="text-xs font-extrabold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-md">
-                    {Math.round((((product.compareAtPrice || 499) - displayPrice) / (product.compareAtPrice || 499)) * 100)}% OFF
+                    {Math.round(((compareAtPrice - displayPrice) / compareAtPrice) * 100)}% OFF
                   </span>
                 </>
               )}
@@ -184,6 +198,7 @@ export function ProductDetails() {
 
             {/* Visual Pack Bundles Component */}
             <VisualBundles
+              basePrice={product.price}
               selectedBundleId={selectedBundleId}
               onSelectBundle={(bundle) => {
                 setSelectedBundleId(bundle.id);

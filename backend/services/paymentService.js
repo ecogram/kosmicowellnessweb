@@ -105,9 +105,8 @@ class PaymentService {
         await payment.save();
         
         notificationService.createPaymentNotification(userId, payment.order._id, payment.order.orderNumber, false).catch(console.error);
-        const { emitToUser, emitToAdmins } = require('../realtime/emitter');
+        const { emitToUser } = require('../realtime/emitter');
         emitToUser(userId, 'payment:failed', { orderId: payment.order._id });
-        emitToAdmins('admin:payment-updated', { orderId: payment.order._id, status: 'FAILED' });
         
         throw new ApiError(400, 'Invalid payment signature');
       }
@@ -133,11 +132,9 @@ class PaymentService {
     if (updatedOrder) {
       const order = updatedOrder;
       notificationService.createPaymentNotification(userId, order._id, order.orderNumber, true).catch(console.error);
-      const { emitToUser, emitToAdmins, emitToOrder } = require('../realtime/emitter');
+      const { emitToUser, emitToOrder } = require('../realtime/emitter');
       emitToUser(userId, 'payment:success', { orderId: order._id });
-      emitToAdmins('admin:payment-updated', { orderId: order._id, status: 'PAID' });
       emitToOrder(order._id, 'order:processing', { orderId: order._id, status: 'PROCESSING' });
-      emitToAdmins('admin:order-updated', { orderId: order._id, status: 'PROCESSING' });
 
       const emailService = require('../utils/email');
       const userDoc = await mongoose.model('User').findById(userId);
@@ -189,12 +186,10 @@ class PaymentService {
         }
         await order.save();
         notificationService.createPaymentNotification(payment.user, order._id, order.orderNumber, true).catch(console.error);
-        const { emitToUser, emitToAdmins, emitToOrder } = require('../realtime/emitter');
+        const { emitToUser, emitToOrder } = require('../realtime/emitter');
         emitToUser(payment.user, 'payment:success', { orderId: order._id });
-        emitToAdmins('admin:payment-updated', { orderId: order._id, status: 'PAID' });
         if (order.orderStatus === 'PROCESSING') {
           emitToOrder(order._id, 'order:processing', { orderId: order._id, status: 'PROCESSING' });
-          emitToAdmins('admin:order-updated', { orderId: order._id, status: 'PROCESSING' });
         }
         
         const emailService = require('../utils/email');
@@ -217,9 +212,8 @@ class PaymentService {
       
       if (payment.order) {
         notificationService.createPaymentNotification(payment.user, payment.order._id, payment.order.orderNumber, false).catch(console.error);
-        const { emitToUser, emitToAdmins } = require('../realtime/emitter');
+        const { emitToUser } = require('../realtime/emitter');
         emitToUser(payment.user, 'payment:failed', { orderId: payment.order._id });
-        emitToAdmins('admin:payment-updated', { orderId: payment.order._id, status: 'FAILED' });
       }
     }
   }

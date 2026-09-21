@@ -10,39 +10,43 @@ export interface BundleOption {
   isPopular?: boolean;
 }
 
-const bundles: BundleOption[] = [
-  {
-    id: 'single',
-    name: 'Single Pack (250ml Bottle)',
-    quantity: 1,
-    price: 387,
-    unitPrice: '₹387 / pack'
-  },
-  {
-    id: 'twin',
-    name: 'Pack of 2 (500ml Total)',
-    quantity: 2,
-    price: 699,
-    badge: 'TWIN PACK',
-    unitPrice: '₹349.5 / pack',
-    isPopular: true
-  },
-  {
-    id: 'family',
-    name: 'Family 3-Pack (750ml Total)',
-    quantity: 3,
-    price: 999,
-    badge: 'FAMILY PACK',
-    unitPrice: '₹333 / pack'
-  }
-];
-
 interface VisualBundlesProps {
+  basePrice?: number;
   selectedBundleId: string;
   onSelectBundle: (bundle: BundleOption) => void;
 }
 
-export function VisualBundles({ selectedBundleId, onSelectBundle }: VisualBundlesProps) {
+export function VisualBundles({ basePrice = 387, selectedBundleId, onSelectBundle }: VisualBundlesProps) {
+  const singlePrice = basePrice;
+  const twinPrice = 750;
+  const familyPrice = 999;
+
+  const bundles: BundleOption[] = [
+    {
+      id: 'single',
+      name: 'Single Pack (250ml Bottle)',
+      quantity: 1,
+      price: singlePrice,
+      unitPrice: `₹${singlePrice} / pack`
+    },
+    {
+      id: 'twin',
+      name: 'Pack of 2 (500ml Total)',
+      quantity: 2,
+      price: twinPrice,
+      badge: 'TWIN PACK',
+      unitPrice: `₹${(twinPrice / 2).toFixed(0)} / pack`,
+      isPopular: true
+    },
+    {
+      id: 'family',
+      name: 'Family 3-Pack (750ml Total)',
+      quantity: 3,
+      price: familyPrice,
+      badge: 'FAMILY PACK',
+      unitPrice: `₹${Math.round(familyPrice / 3)} / pack`
+    }
+  ];
   return (
     <div className="space-y-3 my-5">
       <div className="flex items-center justify-between">

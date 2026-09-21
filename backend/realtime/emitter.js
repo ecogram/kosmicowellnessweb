@@ -7,13 +7,6 @@ const emitToUser = (userId, event, payload) => {
   } catch (_) {}
 };
 
-const emitToAdmins = (event, payload) => {
-  try {
-    const io = getIo();
-    io.to('admins').emit(event, payload);
-  } catch (_) {}
-};
-
 const emitToOrder = (orderId, event, payload) => {
   try {
     const io = getIo();
@@ -41,6 +34,5 @@ const emitter = {
 module.exports = {
   emitter,
   emitToUser,
-  emitToAdmins,
   emitToOrder,
 };

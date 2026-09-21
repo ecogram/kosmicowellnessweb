@@ -58,13 +58,4 @@ const optionalProtect = asyncHandler(async (req, res, next) => {
   next();
 });
 
-const authorizeRoles = (...roles) => {
-  return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return next(new ApiError(403, `User role ${req.user?.role} is not authorized to access this route`));
-    }
-    next();
-  };
-};
-
-module.exports = { protect, optionalProtect, authorizeRoles };
+module.exports = { protect, optionalProtect };

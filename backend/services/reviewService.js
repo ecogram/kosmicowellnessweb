@@ -44,8 +44,7 @@ class ReviewService {
         isApproved: true,
       });
       
-      const { emitToAdmins, emitToUser } = require('../realtime/emitter');
-      emitToAdmins('admin:new-review', { reviewId: review._id, product: productId });
+      const { emitToUser } = require('../realtime/emitter');
       emitToUser(userId, 'review:new', { reviewId: review._id, product: productId });
       
       return review;
