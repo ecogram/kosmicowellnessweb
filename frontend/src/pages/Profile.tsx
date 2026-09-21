@@ -7,6 +7,7 @@ import { useOrders } from '../hooks/useOrders';
 import { useCoupons } from '../hooks/useCoupons';
 import { useProfile, useUpdateProfile, useRemoveProfilePicture, dataUrlToFile } from '../hooks/useProfile';
 import { useSavedPaymentMethods, useSavePaymentMethod, useDeletePaymentMethod } from '../hooks/usePayments';
+import { useSocket } from '../hooks/useSocket';
 import { normalizeImageUrl } from '../utils/imageUrl';
 import {
   Package, Heart, Ticket, MapPin, CreditCard, RotateCcw,
@@ -46,9 +47,9 @@ export const Profile: React.FC = () => {
   const { data: couponsData } = useCoupons();
   const navigate = useNavigate();
 
-  // Real-time profile sync — polls /auth/profile every 30s
-  // So changes from mobile app / other platforms appear within 30s on website
+  // Real-time profile & payment method sync (polling + socket events)
   useProfile();
+  const { socket } = useSocket();
 
   // Payment methods from API
   const { data: paymentMethodsData, refetch: refetchPaymentMethods } = useSavedPaymentMethods();
@@ -56,6 +57,22 @@ export const Profile: React.FC = () => {
   const deletePaymentMethodMutation = useDeletePaymentMethod();
   const updateProfileMutation = useUpdateProfile();
   const removeProfilePictureMutation = useRemoveProfilePicture();
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleRealtimeSync = () => {
+      refetchPaymentMethods();
+    };
+    socket.on('profile:updated', handleRealtimeSync);
+    socket.on('user:profile_updated', handleRealtimeSync);
+    socket.on('payment_methods:updated', handleRealtimeSync);
+
+    return () => {
+      socket.off('profile:updated', handleRealtimeSync);
+      socket.off('user:profile_updated', handleRealtimeSync);
+      socket.off('payment_methods:updated', handleRealtimeSync);
+    };
+  }, [socket, refetchPaymentMethods]);
 
   const ordersCount = ordersData?.orders ? ordersData.orders.length : (ordersData?.pagination?.total ?? 0);
   const wishlistCount = wishlist?.items?.length || 0;

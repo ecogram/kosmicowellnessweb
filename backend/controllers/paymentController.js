@@ -715,6 +715,17 @@ const savePaymentMethod = asyncHandler(async (req, res) => {
   user.savedPaymentMethods.unshift(newMethod);
   await user.save();
 
+  try {
+    const { emitToUser } = require('../realtime/emitter');
+    emitToUser(req.user._id, 'profile:updated', { user });
+    emitToUser(req.user._id, 'user:profile_updated', { user });
+    emitToUser(req.user._id, 'payment_methods:updated', { methods: user.savedPaymentMethods });
+    if (req.user.email) {
+      emitToUser(req.user.email.toLowerCase(), 'profile:updated', { user });
+      emitToUser(req.user.email.toLowerCase(), 'payment_methods:updated', { methods: user.savedPaymentMethods });
+    }
+  } catch (_) { }
+
   res.status(201).json(new ApiResponse(201, { method: user.savedPaymentMethods[0], methods: user.savedPaymentMethods }, 'Payment method saved successfully'));
 });
 
@@ -741,6 +752,17 @@ const updateSavedPaymentMethod = asyncHandler(async (req, res) => {
   Object.assign(method, req.body);
   await user.save();
 
+  try {
+    const { emitToUser } = require('../realtime/emitter');
+    emitToUser(req.user._id, 'profile:updated', { user });
+    emitToUser(req.user._id, 'user:profile_updated', { user });
+    emitToUser(req.user._id, 'payment_methods:updated', { methods: user.savedPaymentMethods });
+    if (req.user.email) {
+      emitToUser(req.user.email.toLowerCase(), 'profile:updated', { user });
+      emitToUser(req.user.email.toLowerCase(), 'payment_methods:updated', { methods: user.savedPaymentMethods });
+    }
+  } catch (_) { }
+
   res.status(200).json(new ApiResponse(200, { method, methods: user.savedPaymentMethods }, 'Payment method updated successfully'));
 });
 
@@ -755,6 +777,17 @@ const deleteSavedPaymentMethod = asyncHandler(async (req, res) => {
 
   user.savedPaymentMethods = user.savedPaymentMethods.filter((m) => m._id.toString() !== methodId && m.id !== methodId);
   await user.save();
+
+  try {
+    const { emitToUser } = require('../realtime/emitter');
+    emitToUser(req.user._id, 'profile:updated', { user });
+    emitToUser(req.user._id, 'user:profile_updated', { user });
+    emitToUser(req.user._id, 'payment_methods:updated', { methods: user.savedPaymentMethods });
+    if (req.user.email) {
+      emitToUser(req.user.email.toLowerCase(), 'profile:updated', { user });
+      emitToUser(req.user.email.toLowerCase(), 'payment_methods:updated', { methods: user.savedPaymentMethods });
+    }
+  } catch (_) { }
 
   res.status(200).json(new ApiResponse(200, { methods: user.savedPaymentMethods }, 'Payment method deleted successfully'));
 });

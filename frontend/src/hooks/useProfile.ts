@@ -34,7 +34,8 @@ export const useProfile = () => {
       return user;
     },
     enabled: !!accessToken,
-    staleTime: 60_000,
+    staleTime: 1000,
+    refetchInterval: 3000,
     retry: 1,
   });
 };
