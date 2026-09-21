@@ -21,7 +21,7 @@ export function CartDrawer() {
     if (item.product && typeof item.product === 'object' && typeof item.product.price === 'number' && !isNaN(item.product.price) && item.product.price > 0) {
       return item.product.price;
     }
-    return 387; // Fallback default product price
+    return 0; // Fallback price
   };
 
   const totalAmount = items.reduce((acc: number, item: any) => acc + (getItemPrice(item) * (item.quantity || 1)), 0);
@@ -109,7 +109,7 @@ export function CartDrawer() {
                 }}
                 className="px-6 py-2.5 bg-emerald-800 text-white font-bold text-xs rounded-xl hover:bg-emerald-900 transition-all shadow-md active:scale-95"
               >
-                Shop Sweet Monk (₹387)
+                Shop Now
               </button>
             </div>
           ) : (

@@ -216,7 +216,7 @@ export const Checkout: React.FC = () => {
   // Calculations
   const itemsToCalculate = cart?.items || createdOrder?.items || [];
   const subtotal = itemsToCalculate.reduce(
-    (sum: number, item: any) => sum + (item.priceSnapshot || item.price || 387) * item.quantity,
+    (sum: number, item: any) => sum + (item.priceSnapshot || item.price || 0) * item.quantity,
     0
   );
 
@@ -305,7 +305,7 @@ export const Checkout: React.FC = () => {
           </p>
           <Link to="/shop">
             <Button className="w-full py-3 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-sm rounded-xl shadow-md">
-              Browse Sweet Monk Products (₹387)
+              Browse Products
             </Button>
           </Link>
         </div>
@@ -342,7 +342,7 @@ export const Checkout: React.FC = () => {
       100,
       order.amount && order.amount >= 100
         ? order.amount
-        : Math.round((order.total || total || 387) * 100)
+        : Math.round((order.total || total || 0) * 100)
     );
 
     const rzpOrderId =
@@ -512,7 +512,7 @@ export const Checkout: React.FC = () => {
         product: String(pId || '').trim(),
         quantity: Number(it.quantity) || 1,
         qty: Number(it.quantity) || 1,
-        price: Number(it.price || it.priceSnapshot || it.product?.discountPrice || it.product?.price || 387),
+        price: Number(it.price || it.priceSnapshot || it.product?.discountPrice || it.product?.price || 0),
         name: it.product?.title || it.product?.name || it.name || 'Kosmico Product',
         image: (it.product?.images && it.product?.images[0]?.url) || it.product?.image || it.image || '',
       };
@@ -990,7 +990,7 @@ export const Checkout: React.FC = () => {
             {(cart?.items || createdOrder?.items || []).map((item: any, idx: number) => {
               const prod = typeof item.product === 'object' && item.product !== null ? item.product : {};
               const productName = prod.name || prod.title || 'Sweet Monk (250ml)';
-              const itemPrice = item.priceSnapshot || item.price || prod.price || 387;
+              const itemPrice = item.priceSnapshot || item.price || prod.price || 0;
 
               return (
                 <div key={idx} className="flex justify-between items-center text-sm">

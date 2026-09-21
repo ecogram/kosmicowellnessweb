@@ -138,7 +138,7 @@ export const OrderDetails = () => {
                       <div className="text-sm text-text-muted">Qty: {item.quantity || item.qty || 1}</div>
                     </div>
                     <div className="font-medium">
-                      {formatINR((item.priceSnapshot || item.price || 387) * (item.quantity || item.qty || 1))}
+                      {formatINR((item.priceSnapshot || item.price || 0) * (item.quantity || item.qty || 1))}
                     </div>
                   </li>
                 ))}
@@ -175,7 +175,7 @@ export const OrderDetails = () => {
               <h2 className="font-bold text-lg mb-4">Summary</h2>
               {(() => {
                 const isCOD = (order.paymentMethod || '').toUpperCase() === 'COD';
-                const orderSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 387) * (it.quantity || 1), 0) || 387);
+                const orderSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 0) * (it.quantity || 1), 0) || 0);
                 const shippingFee = Number(order.shipping ?? order.deliveryFee ?? (isCOD ? 77 : 0));
                 const taxFee = Number(order.tax ?? order.gstCharge ?? (isCOD ? 13 : 0));
                 const discountAmt = Number(order.discount ?? order.discountAmount ?? 0);

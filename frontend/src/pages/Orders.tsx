@@ -93,7 +93,7 @@ export const Orders: React.FC = () => {
                 const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
                 const orderStatus = String(order.orderStatus || order.status || 'CONFIRMED').toUpperCase();
                 const isCOD = (order.paymentMethod || '').toUpperCase() === 'COD';
-                const orderSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 387) * (it.quantity || it.qty || 1), 0) || 387);
+                const orderSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 0) * (it.quantity || it.qty || 1), 0) || 0);
                 const shippingFee = Number(order.shipping ?? order.deliveryFee ?? (isCOD ? 77 : 0));
                 const taxFee = Number(order.tax ?? order.gstCharge ?? (isCOD ? 13 : 0));
                 const discountAmt = Number(order.discount ?? order.discountAmount ?? 0);

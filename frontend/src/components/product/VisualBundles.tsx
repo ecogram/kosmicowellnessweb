@@ -16,7 +16,7 @@ interface VisualBundlesProps {
   onSelectBundle: (bundle: BundleOption) => void;
 }
 
-export function VisualBundles({ basePrice = 387, selectedBundleId, onSelectBundle }: VisualBundlesProps) {
+export function VisualBundles({ basePrice = 0, selectedBundleId, onSelectBundle }: VisualBundlesProps) {
   const singlePrice = basePrice;
   const twinPrice = 750;
   const familyPrice = 999;
