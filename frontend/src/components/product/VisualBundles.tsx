@@ -24,14 +24,14 @@ export function VisualBundles({ basePrice = 387, selectedBundleId, onSelectBundl
   const bundles: BundleOption[] = [
     {
       id: 'single',
-      name: 'Single Pack (250ml Bottle)',
+      name: 'Single Pack (10ml Bottle)',
       quantity: 1,
       price: singlePrice,
       unitPrice: `₹${singlePrice} / pack`
     },
     {
       id: 'twin',
-      name: 'Pack of 2 (500ml Total)',
+      name: 'Pack of 2 (20ml Total)',
       quantity: 2,
       price: twinPrice,
       badge: 'TWIN PACK',
@@ -40,7 +40,7 @@ export function VisualBundles({ basePrice = 387, selectedBundleId, onSelectBundl
     },
     {
       id: 'family',
-      name: 'Family 3-Pack (750ml Total)',
+      name: 'Family 3-Pack (30ml Total)',
       quantity: 3,
       price: familyPrice,
       badge: 'FAMILY PACK',
