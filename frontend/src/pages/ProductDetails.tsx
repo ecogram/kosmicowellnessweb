@@ -65,7 +65,7 @@ export function ProductDetails() {
   const handleAddToCart = () => {
     const activeBundle = selectedBundle || {
       id: 'single',
-      name: 'Single Pack (250ml Bottle)',
+      name: 'Single Pack (10ml Bottle)',
       quantity: 1,
       price: singlePrice,
       unitPrice: `₹${singlePrice} / pack`
@@ -187,9 +187,6 @@ export function ProductDetails() {
                   </span>
                 </>
               )}
-              <span className="text-xs font-semibold text-green-700 bg-green-500/10 px-2.5 py-1 rounded-md ml-auto">
-                Taxes included | Free Shipping ₹499+
-              </span>
             </div>
 
             <p className="text-text-main text-sm md:text-base mb-6 leading-relaxed">
