@@ -204,6 +204,8 @@ const getMe = asyncHandler(async (req, res) => {
     avatarUrl: pic,
     image: pic,
     isActive: u.isActive,
+    savedPaymentMethods: u.savedPaymentMethods || [],
+    paymentMethods: u.savedPaymentMethods || [],
     createdAt: u.createdAt,
     updatedAt: u.updatedAt,
   };

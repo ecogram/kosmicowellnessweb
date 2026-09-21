@@ -25,7 +25,8 @@ export const useProfile = () => {
           currentUser.name !== user.name ||
           currentUser.email !== user.email ||
           currentUser.profilePicture !== user.profilePicture ||
-          currentUser.phoneNumber !== user.phoneNumber
+          currentUser.phoneNumber !== user.phoneNumber ||
+          JSON.stringify((currentUser as any)?.savedPaymentMethods) !== JSON.stringify((user as any)?.savedPaymentMethods)
         ) {
           updateUser(user);
         }

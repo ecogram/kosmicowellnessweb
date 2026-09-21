@@ -264,6 +264,8 @@ class AuthService {
       avatarUrl: pic,
       image: pic,
       isActive: user.isActive,
+      savedPaymentMethods: user.savedPaymentMethods || [],
+      paymentMethods: user.savedPaymentMethods || [],
     };
   }
 
