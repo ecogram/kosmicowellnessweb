@@ -1034,11 +1034,8 @@ export const Checkout: React.FC = () => {
           </div>
 
           {deliveryEstimate.expectedDate && (
-            <div className="mt-3 p-2.5 bg-emerald-50/70 border border-emerald-200/60 rounded-xl flex items-center justify-between text-xs text-[#0a7a40]">
-              <span className="font-semibold flex items-center gap-1.5">
-                <span>🚚</span>
-                <span>{deliveryEstimate.courierName || 'Shiprocket Live'}</span>
-              </span>
+            <div className="mt-3 p-2.5 bg-emerald-50/70 border border-emerald-200/60 rounded-xl flex items-center gap-2 text-xs text-[#0a7a40]">
+              <span>🚚</span>
               <span className="font-semibold text-emerald-900">
                 Delivery by {deliveryEstimate.expectedDate}
               </span>
