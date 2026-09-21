@@ -162,12 +162,12 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
 
   if (items && Array.isArray(items) && items.length > 0) {
     for (const it of items) {
-      const pId = it.productId || it._id || it.product;
+      const pId = typeof it.product === 'object' ? (it.product?._id || it.product?.id) : (it.productId || it._id || it.product);
       let pName = it.name || 'Kosmico Product';
       let pPrice = Number(it.price || it.priceSnapshot) || 0;
       let pImage = it.image || '';
 
-      if (pId) {
+      if (pId && require('mongoose').Types.ObjectId.isValid(pId)) {
         try {
           const dbProd = await Product.findById(pId);
           if (dbProd) {

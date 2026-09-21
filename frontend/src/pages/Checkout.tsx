@@ -22,7 +22,7 @@ import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
 import { useCart } from '../hooks/useCart';
 import { useCreateOrder } from '../hooks/useOrders';
-import { useVerifyPayment, useCreateCodUpfront, useVerifyCodUpfront } from '../hooks/usePayments';
+import { useVerifyPayment, useCreateCodUpfront, useVerifyCodUpfront, useCreateRazorpayOrder } from '../hooks/usePayments';
 import { useAuthStore } from '../store/useAuthStore';
 import { formatINR } from '../utils/currency';
 
@@ -58,6 +58,7 @@ export const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { data: cart, isLoading: isCartLoading } = useCart();
   const createOrderMutation = useCreateOrder();
+  const createRazorpayOrderMutation = useCreateRazorpayOrder();
   const verifyPaymentMutation = useVerifyPayment();
   const createCodUpfrontMutation = useCreateCodUpfront();
   const verifyCodUpfrontMutation = useVerifyCodUpfront();
@@ -502,14 +503,23 @@ export const Checkout: React.FC = () => {
     }
 
 
-    const itemsToOrder = (cart?.items || []).map((it: any) => ({
-      productId: it.productId || it.product?._id || it.product?.id,
-      quantity: it.quantity || 1,
-      price: it.price || it.priceSnapshot || 0,
-    })).filter((it) => !!it.productId);
+    const itemsToOrder = (cart?.items || []).map((it: any) => {
+      const pId = typeof it.product === 'object'
+        ? (it.product?._id || it.product?.id)
+        : (it.product || it.productId || it._id || it.id);
+      return {
+        productId: String(pId || '').trim(),
+        product: String(pId || '').trim(),
+        quantity: Number(it.quantity) || 1,
+        qty: Number(it.quantity) || 1,
+        price: Number(it.price || it.priceSnapshot || it.product?.discountPrice || it.product?.price || 387),
+        name: it.product?.title || it.product?.name || it.name || 'Kosmico Product',
+        image: (it.product?.images && it.product?.images[0]?.url) || it.product?.image || it.image || '',
+      };
+    }).filter((it) => it.productId && it.productId.length > 0 && it.productId !== 'undefined');
 
     if (itemsToOrder.length === 0) {
-      toast.error('Your cart is empty. Please add items before placing an order.');
+      toast.error('Your cart is empty or valid product items were not found.');
       return;
     }
 
@@ -533,24 +543,20 @@ export const Checkout: React.FC = () => {
           ...payload,
           deliveryAddress: selectedAddress._id,
           upfrontAmount: advanceAmount,
-          items: itemsToOrder.map((it: any) => ({
-            product: it.productId,
-            qty: it.quantity,
-            price: it.price
-          }))
+          items: itemsToOrder,
         };
 
         const order = await createCodUpfrontMutation.mutateAsync(codPayload);
         setCreatedOrder(order);
         await processRazorpayCodAdvance(order, advanceAmount);
       } else {
-        const order = await createOrderMutation.mutateAsync(payload);
+        const order = await createRazorpayOrderMutation.mutateAsync(payload);
         setCreatedOrder(order);
         await processRazorpayPayment(order);
       }
     } catch (err: any) {
       setIsPaymentProcessing(false);
-      toast.error(err.response?.data?.message || 'Failed to place order. Please try again.');
+      toast.error(err.response?.data?.message || 'Failed to initialize payment. Please try again.');
     }
   };
 
@@ -1055,10 +1061,10 @@ export const Checkout: React.FC = () => {
           <div className="max-w-xl mx-auto">
             <button
               onClick={handlePlaceOrder}
-              disabled={isPaymentProcessing || createOrderMutation.isPending || createCodUpfrontMutation.isPending}
+              disabled={isPaymentProcessing || createOrderMutation.isPending || createRazorpayOrderMutation.isPending || createCodUpfrontMutation.isPending}
               className="w-full py-4 bg-[#0a7a40] hover:bg-[#086333] active:scale-[0.99] text-white font-bold text-base rounded-full shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2 transition-all disabled:opacity-60"
             >
-              {isPaymentProcessing || createOrderMutation.isPending || createCodUpfrontMutation.isPending ? (
+              {isPaymentProcessing || createOrderMutation.isPending || createRazorpayOrderMutation.isPending || createCodUpfrontMutation.isPending ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span>Processing...</span>
