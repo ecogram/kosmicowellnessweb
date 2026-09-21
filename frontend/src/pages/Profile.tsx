@@ -122,16 +122,18 @@ export const Profile: React.FC = () => {
   const [addrFormIsDefault, setAddrFormIsDefault] = useState(false);
 
   // Payment Methods State — loaded from API (combines dedicated API query & user profile object)
-  const methodsFromQuery = Array.isArray(paymentMethodsData)
-    ? paymentMethodsData
-    : (Array.isArray((paymentMethodsData as any)?.methods)
-      ? (paymentMethodsData as any).methods
-      : (Array.isArray((paymentMethodsData as any)?.savedPaymentMethods)
-        ? (paymentMethodsData as any).savedPaymentMethods
-        : []));
+  const methodsFromQuery = paymentMethodsData !== undefined
+    ? (Array.isArray(paymentMethodsData)
+      ? paymentMethodsData
+      : (Array.isArray((paymentMethodsData as any)?.methods)
+        ? (paymentMethodsData as any).methods
+        : (Array.isArray((paymentMethodsData as any)?.savedPaymentMethods)
+          ? (paymentMethodsData as any).savedPaymentMethods
+          : [])))
+    : null;
   const methodsFromUser = (user as any)?.savedPaymentMethods || (user as any)?.paymentMethods || [];
   const paymentMethods: SavedPaymentMethod[] = (
-    methodsFromQuery && methodsFromQuery.length > 0
+    methodsFromQuery !== null
       ? methodsFromQuery
       : (Array.isArray(methodsFromUser) ? methodsFromUser : [])
   ) as SavedPaymentMethod[];

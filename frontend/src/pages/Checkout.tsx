@@ -22,7 +22,7 @@ import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
 import { useCart } from '../hooks/useCart';
 import { useCreateOrder } from '../hooks/useOrders';
-import { useVerifyPayment, useCreateCodUpfront, useVerifyCodUpfront, useCreateRazorpayOrder } from '../hooks/usePayments';
+import { useVerifyPayment, useCreateCodUpfront, useVerifyCodUpfront, useCreateRazorpayOrder, useSavedPaymentMethods, useSavePaymentMethod } from '../hooks/usePayments';
 import { useAuthStore } from '../store/useAuthStore';
 import { formatINR } from '../utils/currency';
 
@@ -45,6 +45,7 @@ interface SavedAddress {
 
 export interface SavedPaymentMethod {
   id: string;
+  _id?: string;
   type: 'UPI' | 'BANK';
   displayName: string;
   upiId?: string;
@@ -62,6 +63,8 @@ export const Checkout: React.FC = () => {
   const verifyPaymentMutation = useVerifyPayment();
   const createCodUpfrontMutation = useCreateCodUpfront();
   const verifyCodUpfrontMutation = useVerifyCodUpfront();
+  const { data: savedMethodsData } = useSavedPaymentMethods();
+  const savePaymentMethodMutation = useSavePaymentMethod();
   const { user } = useAuthStore();
 
   // Selected payment mode: 'ONLINE' or 'COD'
@@ -71,11 +74,19 @@ export const Checkout: React.FC = () => {
   const [createdOrder, setCreatedOrder] = useState<any>(null);
 
   // Online Payment Method state (UPI & Bank Account - dynamic strictly for this authenticated user)
-  const [paymentMethods, setPaymentMethods] = useState<SavedPaymentMethod[]>(() => {
-    const userMethods = (user as any)?.savedPaymentMethods;
-    if (Array.isArray(userMethods) && userMethods.length > 0) {
-      return userMethods.map((m: any) => ({
-        id: m._id || m.id,
+  const [paymentMethods, setPaymentMethods] = useState<SavedPaymentMethod[]>([]);
+
+  useEffect(() => {
+    const rawList = Array.isArray(savedMethodsData)
+      ? savedMethodsData
+      : (Array.isArray((savedMethodsData as any)?.methods)
+        ? (savedMethodsData as any).methods
+        : (user as any)?.savedPaymentMethods || (user as any)?.paymentMethods || []);
+
+    if (Array.isArray(rawList)) {
+      const formatted: SavedPaymentMethod[] = rawList.map((m: any) => ({
+        id: m._id || m.id || `pm-${Date.now()}`,
+        _id: m._id || m.id,
         type: m.type || 'UPI',
         displayName: m.displayName || user?.name || 'User',
         upiId: m.upiId,
@@ -84,13 +95,17 @@ export const Checkout: React.FC = () => {
         ifscCode: m.ifscCode,
         isDefault: !!m.isDefault,
       }));
+      setPaymentMethods(formatted);
     }
-    return [];
-  });
+  }, [savedMethodsData, user]);
 
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<SavedPaymentMethod | undefined>(() => {
-    return paymentMethods.find((m) => m.isDefault) || paymentMethods[0];
-  });
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<SavedPaymentMethod | undefined>();
+
+  useEffect(() => {
+    if (paymentMethods.length > 0 && !selectedPaymentMethod) {
+      setSelectedPaymentMethod(paymentMethods.find((m) => m.isDefault) || paymentMethods[0]);
+    }
+  }, [paymentMethods, selectedPaymentMethod]);
 
   const [isPaymentMethodModalOpen, setIsPaymentMethodModalOpen] = useState(false);
   const [isAddingNewPaymentMethod, setIsAddingNewPaymentMethod] = useState(false);
@@ -107,51 +122,63 @@ export const Checkout: React.FC = () => {
   const [upiIdInput, setUpiIdInput] = useState('');
   const [upiSetDefault, setUpiSetDefault] = useState(true);
 
-  // Save Payment Method Helper
-  const handleSavePaymentMethod = (e: React.FormEvent) => {
+  // Save Payment Method Helper (Persists to backend via API)
+  const handleSavePaymentMethod = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (paymentTypeTab === 'UPI') {
-      if (!upiIdInput.trim()) return;
-      const newMethod: SavedPaymentMethod = {
-        id: `pm-${Date.now()}`,
-        type: 'UPI',
-        displayName: (upiDisplayName || user?.name || 'User').toUpperCase(),
-        upiId: upiIdInput.trim(),
-        isDefault: upiSetDefault,
-      };
-      const updatedList = upiSetDefault
-        ? [newMethod, ...paymentMethods.map((m) => ({ ...m, isDefault: false }))]
-        : [...paymentMethods, newMethod];
-      setPaymentMethods(updatedList);
-      setSelectedPaymentMethod(newMethod);
-      localStorage.setItem('kosmico_saved_payment_methods', JSON.stringify(updatedList));
-      setIsAddingNewPaymentMethod(false);
-      setUpiIdInput('');
-    } else {
-      if (!bankAccountNumber.trim() || !bankIfscCode.trim()) return;
-      const newMethod: SavedPaymentMethod = {
-        id: `pm-${Date.now()}`,
-        type: 'BANK',
-        displayName: (bankAccountHolder || user?.name || 'User').toUpperCase(),
-        bankName: bankName.trim() || 'Bank Account',
-        accountNumber: bankAccountNumber.trim(),
-        ifscCode: bankIfscCode.trim().toUpperCase(),
-        isDefault: bankSetDefault,
-      };
-
-      let updatedList = paymentMethods;
-      if (bankSetDefault) {
-        updatedList = updatedList.map((m) => ({ ...m, isDefault: false }));
+    try {
+      if (paymentTypeTab === 'UPI') {
+        if (!upiIdInput.trim()) return;
+        const res = await savePaymentMethodMutation.mutateAsync({
+          type: 'UPI',
+          displayName: (upiDisplayName || user?.name || 'User').toUpperCase(),
+          upiId: upiIdInput.trim(),
+          isDefault: upiSetDefault,
+        });
+        setUpiIdInput('');
+        if (res?.method) {
+          const m = res.method;
+          setSelectedPaymentMethod({
+            id: m._id || m.id,
+            _id: m._id || m.id,
+            type: m.type || 'UPI',
+            displayName: m.displayName || user?.name || 'User',
+            upiId: m.upiId,
+            isDefault: !!m.isDefault,
+          });
+        }
+      } else {
+        if (!bankAccountNumber.trim() || !bankIfscCode.trim()) return;
+        const res = await savePaymentMethodMutation.mutateAsync({
+          type: 'BANK',
+          displayName: (bankAccountHolder || user?.name || 'User').toUpperCase(),
+          bankName: bankName.trim() || 'Bank Account',
+          accountNumber: bankAccountNumber.trim(),
+          ifscCode: bankIfscCode.trim().toUpperCase(),
+          isDefault: bankSetDefault,
+        });
+        setBankAccountNumber('');
+        setBankIfscCode('');
+        setBankName('');
+        if (res?.method) {
+          const m = res.method;
+          setSelectedPaymentMethod({
+            id: m._id || m.id,
+            _id: m._id || m.id,
+            type: m.type || 'BANK',
+            displayName: m.displayName || user?.name || 'User',
+            bankName: m.bankName,
+            accountNumber: m.accountNumber,
+            ifscCode: m.ifscCode,
+            isDefault: !!m.isDefault,
+          });
+        }
       }
-      updatedList = [newMethod, ...updatedList];
-      setPaymentMethods(updatedList);
-      setSelectedPaymentMethod(newMethod);
-      localStorage.setItem('kosmico_saved_payment_methods', JSON.stringify(updatedList));
       setIsAddingNewPaymentMethod(false);
       setIsPaymentMethodModalOpen(false);
-      setBankAccountNumber('');
-      setBankIfscCode('');
-      setBankName('');
+      toast.success('Payment method saved successfully');
+    } catch (err: any) {
+      console.warn('Error saving payment method in checkout:', err);
+      toast.error(err?.response?.data?.message || 'Failed to save payment method');
     }
   };
 

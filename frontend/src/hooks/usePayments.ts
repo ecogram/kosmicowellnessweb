@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
+import { useAuthStore } from '../store/useAuthStore';
 
 // ─── API Docs: Payment Methods ────────────────────────────────────────────────
 // GET  /api/payment/saved-methods
@@ -8,7 +9,7 @@ import { api } from '../services/api';
 // DELETE /api/payment/save-method/{methodId}
 
 export interface SavedPaymentMethod {
-  _id: string;
+  _id?: string;
   id?: string;
   type: 'UPI' | 'BANK';
   displayName: string;
@@ -49,13 +50,26 @@ export const useSavedPaymentMethods = () => {
     queryKey: ['payment-methods'],
     queryFn: async (): Promise<SavedPaymentMethod[]> => {
       const { data } = await api.get('/payment/saved-methods');
-      const list = data?.data?.methods ?? data?.data ?? (Array.isArray(data) ? data : []);
+      const list = data?.data?.methods ?? data?.data?.paymentMethods ?? (Array.isArray(data?.data) ? data?.data : (Array.isArray(data) ? data : []));
       return list as SavedPaymentMethod[];
     },
     staleTime: 1000,
     refetchInterval: 3000,
     retry: 1,
   });
+};
+
+const updateStoreUserPaymentMethods = (methods: any) => {
+  if (Array.isArray(methods)) {
+    const currentUser = useAuthStore.getState().user;
+    if (currentUser) {
+      useAuthStore.getState().updateUser({
+        ...currentUser,
+        savedPaymentMethods: methods,
+        paymentMethods: methods,
+      } as any);
+    }
+  }
 };
 
 // POST /api/payment/save-method
@@ -66,8 +80,13 @@ export const useSavePaymentMethod = () => {
       const { data } = await api.post('/payment/save-method', payload);
       return data?.data ?? data;
     },
-    onSuccess: () => {
+    onSuccess: (resData: any) => {
       queryClient.invalidateQueries({ queryKey: ['payment-methods'] });
+      queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      if (resData?.methods) {
+        updateStoreUserPaymentMethods(resData.methods);
+      }
     },
   });
 };
@@ -86,8 +105,13 @@ export const useUpdatePaymentMethod = () => {
       const { data } = await api.put(`/payment/save-method/${methodId}`, payload);
       return data?.data ?? data;
     },
-    onSuccess: () => {
+    onSuccess: (resData: any) => {
       queryClient.invalidateQueries({ queryKey: ['payment-methods'] });
+      queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      if (resData?.methods) {
+        updateStoreUserPaymentMethods(resData.methods);
+      }
     },
   });
 };
@@ -97,10 +121,16 @@ export const useDeletePaymentMethod = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (methodId: string) => {
-      await api.delete(`/payment/save-method/${methodId}`);
+      const { data } = await api.delete(`/payment/save-method/${methodId}`);
+      return data?.data ?? data;
     },
-    onSuccess: () => {
+    onSuccess: (resData: any) => {
       queryClient.invalidateQueries({ queryKey: ['payment-methods'] });
+      queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      if (resData?.methods) {
+        updateStoreUserPaymentMethods(resData.methods);
+      }
     },
   });
 };
