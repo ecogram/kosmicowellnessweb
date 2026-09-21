@@ -52,8 +52,8 @@ export const useSavedPaymentMethods = () => {
       const list = data?.data?.methods ?? data?.data ?? (Array.isArray(data) ? data : []);
       return list as SavedPaymentMethod[];
     },
-    staleTime: 5 * 60 * 1000,
-    refetchInterval: 5000,
+    staleTime: 1000,
+    refetchInterval: 3000,
     retry: 1,
   });
 };

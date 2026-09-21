@@ -105,10 +105,20 @@ export const Profile: React.FC = () => {
   const [addrFormIsDefault, setAddrFormIsDefault] = useState(false);
 
   // Payment Methods State — loaded from API
-  const paymentMethods: SavedPaymentMethod[] = (paymentMethodsData ?? []) as SavedPaymentMethod[];
+  const paymentMethods: SavedPaymentMethod[] = Array.isArray(paymentMethodsData)
+    ? paymentMethodsData
+    : (Array.isArray((paymentMethodsData as any)?.methods)
+      ? (paymentMethodsData as any).methods
+      : []);
   const [isAddingPaymentMethod, setIsAddingPaymentMethod] = useState(false);
   const [paymentTypeTab, setPaymentTypeTab] = useState<'BANK' | 'UPI'>('UPI');
   const [paymentSuccessMsg, setPaymentSuccessMsg] = useState('');
+
+  useEffect(() => {
+    if (isPaymentMethodsOpen) {
+      refetchPaymentMethods();
+    }
+  }, [isPaymentMethodsOpen]);
 
   // Payment form fields
   const [bankAccountHolder, setBankAccountHolder] = useState(fullName);

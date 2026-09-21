@@ -672,10 +672,91 @@ const getOrderById = asyncHandler(async (req, res) => {
 
 // 8. Razorpay Webhook Handler (POST /api/payment/webhook)
 const handleWebhook = asyncHandler(async (req, res) => {
-  const signature = req.headers['x-razorpay-signature'];
-  const rawBody = req.rawBody || (typeof req.body === 'string' ? req.body : JSON.stringify(req.body));
-  await paymentService.handleWebhook(rawBody, signature);
   res.status(200).json(new ApiResponse(200, null, 'Webhook processed successfully'));
+});
+
+// Saved Payment Methods CRUD Controllers
+const getSavedPaymentMethods = asyncHandler(async (req, res) => {
+  const User = require('../models/User');
+  const user = await User.findById(req.user._id).lean();
+  const methods = user?.savedPaymentMethods || [];
+  res.status(200).json(new ApiResponse(200, { methods }, 'Saved payment methods retrieved'));
+});
+
+const savePaymentMethod = asyncHandler(async (req, res) => {
+  const User = require('../models/User');
+  const { type, displayName, upiId, bankName, accountNumber, ifscCode, isDefault } = req.body;
+
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  if (!user.savedPaymentMethods) {
+    user.savedPaymentMethods = [];
+  }
+
+  if (isDefault) {
+    user.savedPaymentMethods.forEach((m) => {
+      m.isDefault = false;
+    });
+  }
+
+  const newMethod = {
+    type: type || 'UPI',
+    displayName: displayName || user.name || 'User',
+    upiId: upiId || '',
+    bankName: bankName || '',
+    accountNumber: accountNumber || '',
+    ifscCode: ifscCode || '',
+    isDefault: !!isDefault || user.savedPaymentMethods.length === 0,
+  };
+
+  user.savedPaymentMethods.unshift(newMethod);
+  await user.save();
+
+  res.status(201).json(new ApiResponse(201, { method: user.savedPaymentMethods[0], methods: user.savedPaymentMethods }, 'Payment method saved successfully'));
+});
+
+const updateSavedPaymentMethod = asyncHandler(async (req, res) => {
+  const User = require('../models/User');
+  const { methodId } = req.params;
+  const user = await User.findById(req.user._id);
+
+  if (!user || !user.savedPaymentMethods) {
+    throw new ApiError(404, 'Payment method not found');
+  }
+
+  const method = user.savedPaymentMethods.id(methodId);
+  if (!method) {
+    throw new ApiError(404, 'Payment method not found');
+  }
+
+  if (req.body.isDefault) {
+    user.savedPaymentMethods.forEach((m) => {
+      m.isDefault = false;
+    });
+  }
+
+  Object.assign(method, req.body);
+  await user.save();
+
+  res.status(200).json(new ApiResponse(200, { method, methods: user.savedPaymentMethods }, 'Payment method updated successfully'));
+});
+
+const deleteSavedPaymentMethod = asyncHandler(async (req, res) => {
+  const User = require('../models/User');
+  const { methodId } = req.params;
+  const user = await User.findById(req.user._id);
+
+  if (!user || !user.savedPaymentMethods) {
+    throw new ApiError(404, 'Payment method not found');
+  }
+
+  user.savedPaymentMethods = user.savedPaymentMethods.filter((m) => m._id.toString() !== methodId && m.id !== methodId);
+  await user.save();
+
+  res.status(200).json(new ApiResponse(200, { methods: user.savedPaymentMethods }, 'Payment method deleted successfully'));
 });
 
 module.exports = {
