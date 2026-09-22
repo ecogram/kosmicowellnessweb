@@ -19,7 +19,7 @@ interface VisualBundlesProps {
 export function VisualBundles({ basePrice = 0, selectedBundleId, onSelectBundle }: VisualBundlesProps) {
   const singlePrice = basePrice;
   const twinPrice = 750;
-  const familyPrice = 999;
+  // const familyPrice = 999; // (Uncomment when re-enabling Family Combo Pack)
 
   const bundles: BundleOption[] = [
     {
@@ -38,15 +38,18 @@ export function VisualBundles({ basePrice = 0, selectedBundleId, onSelectBundle 
       unitPrice: `₹${(twinPrice / 2).toFixed(0)} / pack`,
       isPopular: true
     },
+    /* TEMPORARILY COMMENTED OUT: Family Combo Pack (Uncomment to re-enable)
     {
       id: 'family',
       name: 'Family 3-Pack (30ml Total)',
       quantity: 3,
-      price: familyPrice,
+      price: 999,
       badge: 'FAMILY PACK',
-      unitPrice: `₹${Math.round(familyPrice / 3)} / pack`
+      unitPrice: `₹${Math.round(999 / 3)} / pack`
     }
+    */
   ];
+
   return (
     <div className="space-y-3 my-5">
       <div className="flex items-center justify-between">
@@ -56,7 +59,7 @@ export function VisualBundles({ basePrice = 0, selectedBundleId, onSelectBundle 
         </label>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {bundles.map((bundle) => {
           const isSelected = selectedBundleId === bundle.id;
 
