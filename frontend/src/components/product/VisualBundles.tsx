@@ -18,7 +18,7 @@ interface VisualBundlesProps {
 
 export function VisualBundles({ basePrice = 0, selectedBundleId, onSelectBundle }: VisualBundlesProps) {
   const singlePrice = basePrice;
-  const twinPrice = 750;
+  // const twinPrice = 750; // (Uncomment when re-enabling Twin Pack)
   // const familyPrice = 999; // (Uncomment when re-enabling Family Combo Pack)
 
   const bundles: BundleOption[] = [
@@ -29,16 +29,17 @@ export function VisualBundles({ basePrice = 0, selectedBundleId, onSelectBundle 
       price: singlePrice,
       unitPrice: `₹${singlePrice} / pack`
     },
+    /* TEMPORARILY COMMENTED OUT: Twin & Family Combo Packs (Uncomment to re-enable)
     {
       id: 'twin',
       name: 'Pack of 2 (20ml Total)',
       quantity: 2,
-      price: twinPrice,
+      price: 750,
       badge: 'TWIN PACK',
-      unitPrice: `₹${(twinPrice / 2).toFixed(0)} / pack`,
+      unitPrice: '₹375 / pack',
       isPopular: true
     },
-    /* TEMPORARILY COMMENTED OUT: Family Combo Pack (Uncomment to re-enable)
+    
     {
       id: 'family',
       name: 'Family 3-Pack (30ml Total)',
@@ -68,8 +69,8 @@ export function VisualBundles({ basePrice = 0, selectedBundleId, onSelectBundle 
               key={bundle.id}
               onClick={() => onSelectBundle(bundle)}
               className={`relative cursor-pointer rounded-2xl p-4 border-2 transition-all duration-200 flex flex-col justify-between ${isSelected
-                  ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
-                  : 'border-border bg-surface hover:border-primary/40'
+                ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
+                : 'border-border bg-surface hover:border-primary/40'
                 }`}
             >
               {bundle.badge && (
