@@ -20,7 +20,7 @@ export const useProfile = () => {
           data = res.data;
         } catch (_) {}
       }
-      const user = data?.data?.user ?? data?.user ?? data?.data;
+      const user = data?.data?.user ?? data?.user ?? data?.data ?? (data?._id || data?.name ? data : null);
       if (user) {
         // Normalize image URL across all potential property names
         const rawPic =
@@ -88,70 +88,37 @@ export const useUpdateProfile = () => {
         const formData = new FormData();
         if (name) {
           formData.append('name', name);
-          formData.append('fullName', name);
         }
         if (phoneNumber) {
           formData.append('phoneNumber', phoneNumber);
-          formData.append('phone', phoneNumber);
         }
-        // Append all field aliases accepted by mobile app or web backends
+        // STRICTLY use 'profilePicture' field as required by backend Multer upload.single('profilePicture')
         formData.append('profilePicture', profilePictureFile);
-        formData.append('profileImage', profilePictureFile);
-        formData.append('avatar', profilePictureFile);
-        formData.append('image', profilePictureFile);
-        formData.append('photo', profilePictureFile);
-        formData.append('file', profilePictureFile);
 
-        // 1. Try dedicated PUT /auth/profile-picture
         try {
-          const res = await api.put('/auth/profile-picture', formData);
+          const res = await api.put('/auth/profile', formData);
           resData = res.data;
         } catch (err) {
-          // 2. Fallback to PUT /auth/profile
-          try {
-            const res = await api.put('/auth/profile', formData);
-            resData = res.data;
-          } catch (err2) {
-            // 3. Fallback to JSON base64 if available
-            if (profilePicture) {
-              const res = await api.put('/auth/profile', {
-                name,
-                phoneNumber,
-                profilePicture,
-                profileImage: profilePicture,
-                avatar: profilePicture,
-              });
-              resData = res.data;
-            } else {
-              throw err2;
-            }
-          }
+          const res = await api.put('/auth/profile-picture', formData);
+          resData = res.data;
         }
       } else {
         const payload: any = {};
         if (name !== undefined) {
           payload.name = name;
-          payload.fullName = name;
         }
         if (phoneNumber !== undefined) {
           payload.phoneNumber = phoneNumber;
-          payload.phone = phoneNumber;
         }
         if (profilePicture !== undefined) {
           payload.profilePicture = profilePicture;
-          payload.profileImage = profilePicture;
-          payload.avatar = profilePicture;
         }
-        try {
-          const res = await api.put('/auth/profile', payload);
-          resData = res.data;
-        } catch (err) {
-          const res = await api.put('/users/profile', payload);
-          resData = res.data;
-        }
+        const res = await api.put('/auth/profile', payload);
+        resData = res.data;
       }
 
-      return resData?.data?.user ?? resData?.user ?? resData?.data;
+      const user = resData?.data?.user ?? resData?.user ?? resData?.data ?? (resData?._id || resData?.name ? resData : null);
+      return user;
     },
     onSuccess: (updatedUser) => {
       if (updatedUser) {

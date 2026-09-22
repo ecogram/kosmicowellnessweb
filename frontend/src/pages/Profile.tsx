@@ -461,11 +461,16 @@ export const Profile: React.FC = () => {
         setIsPhotoPickerOpen(false);
       }
 
+      // Convert compressed image to clean JPEG file for multipart upload
+      const uploadFile = compressedDataUrl
+        ? dataUrlToFile(compressedDataUrl, 'profilePicture.jpg')
+        : file;
+
       // API docs: PUT /api/auth/profile → multipart/form-data
       const updatedUser = await updateProfileMutation.mutateAsync({
         name: fullName.trim() || user?.name,
         phoneNumber: phone.trim() || user?.phoneNumber,
-        profilePictureFile: file,  // original file — server resizes
+        profilePictureFile: uploadFile,
         profilePicture: compressedDataUrl,
       });
       if (updatedUser) {
