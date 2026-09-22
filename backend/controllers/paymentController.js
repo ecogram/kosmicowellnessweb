@@ -108,7 +108,7 @@ const placeCodOrder = asyncHandler(async (req, res) => {
     shippingAddress: addressData,
     billingAddress: addressData,
     orderStatus: 'PROCESSING',
-    paymentStatus: 'PENDING',
+    paymentStatus: 'COD_PENDING',
     paymentMethod: 'COD',
     trackingNumber: 'TRK-' + Math.floor(10000000 + Math.random() * 90000000),
   });
@@ -281,18 +281,10 @@ const getMyOrders = asyncHandler(async (req, res) => {
       { $or: userConditions },
       {
         $or: [
-          // 1. COD Orders (placed / confirmed)
+          { paymentStatus: { $in: ['PAID', 'paid', 'PARTIAL_PAID', 'partial_paid', 'COMPLETED', 'completed', 'COD_PENDING', 'REFUNDED', 'refunded'] } },
           {
-            paymentMethod: { $in: ['COD', 'cod', 'COD_UPFRONT', 'cod_upfront'] },
-            orderStatus: { $in: ['PROCESSING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED', 'CANCELLED'] }
-          },
-          // 2. Online Orders: MUST be verified PAID/COMPLETED or in confirmed processing/shipped state
-          {
-            paymentMethod: { $nin: ['COD', 'cod', 'COD_UPFRONT', 'cod_upfront'] },
-            $or: [
-              { paymentStatus: { $in: ['PAID', 'paid', 'COMPLETED', 'completed', 'REFUNDED', 'refunded'] } },
-              { orderStatus: { $in: ['PROCESSING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED'] } }
-            ]
+            orderStatus: { $in: ['PROCESSING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED'] },
+            paymentStatus: { $nin: ['PENDING', 'pending', 'FAILED', 'failed'] }
           }
         ]
       },
@@ -631,9 +623,11 @@ const getOrderById = asyncHandler(async (req, res) => {
       baseQuery,
       {
         $or: [
-          { paymentMethod: { $in: ['COD', 'cod', 'COD_UPFRONT', 'cod_upfront'] } },
-          { paymentStatus: { $in: ['PAID', 'paid', 'COMPLETED', 'completed', 'REFUNDED', 'refunded'] } },
-          { orderStatus: { $in: ['PROCESSING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED'] } }
+          { paymentStatus: { $in: ['PAID', 'paid', 'PARTIAL_PAID', 'partial_paid', 'COMPLETED', 'completed', 'COD_PENDING', 'REFUNDED', 'refunded'] } },
+          {
+            orderStatus: { $in: ['PROCESSING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED'] },
+            paymentStatus: { $nin: ['PENDING', 'pending', 'FAILED', 'failed'] }
+          }
         ]
       },
       {
