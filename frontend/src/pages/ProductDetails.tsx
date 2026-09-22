@@ -7,6 +7,7 @@ import { Star, ShieldCheck, ArrowLeft, Heart, Zap, ShieldAlert, Sparkles, CheckC
 import { useProduct } from '../hooks/useProducts';
 import { useAddToCart } from '../hooks/useCart';
 import { useToggleWishlist, useWishlist } from '../hooks/useWishlist';
+import { useAuthStore } from '../store/useAuthStore';
 import { ProductReviews } from '../components/reviews/ProductReviews';
 import { VisualBundles, type BundleOption } from '../components/product/VisualBundles';
 import { PincodeEstimator } from '../components/product/PincodeEstimator';
@@ -14,6 +15,7 @@ import { PincodeEstimator } from '../components/product/PincodeEstimator';
 export function ProductDetails() {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
   const { data: product, isLoading, isError } = useProduct(slug as string);
   const addToCartMutation = useAddToCart();
   const toggleWishlistMutation = useToggleWishlist();
@@ -88,16 +90,31 @@ export function ProductDetails() {
     navigate('/checkout');
   };
 
-  const handleToggleWishlist = () => {
-    toggleWishlistMutation.mutate({
-      _id: product._id || product.id,
-      id: product._id || product.id,
-      name: product.name,
-      slug: product.slug,
-      price: product.price,
-      compareAtPrice: product.compareAtPrice || 499,
-      image: product.image || (product.images?.length ? product.images[0] : '/assets/products/product-box.jpg'),
-    });
+  const handleToggleWishlist = async () => {
+    if (!product) return;
+
+    if (!isAuthenticated) {
+      navigate('/login?redirect=/wishlist');
+      return;
+    }
+
+    try {
+      const res = await toggleWishlistMutation.mutateAsync({
+        _id: product._id || product.id,
+        id: product._id || product.id,
+        name: product.name,
+        slug: product.slug,
+        price: product.price,
+        compareAtPrice: product.compareAtPrice || 499,
+        image: product.image || (product.images?.length ? product.images[0] : '/assets/products/product-box.jpg'),
+      });
+
+      if (res?.action === 'added') {
+        navigate('/wishlist');
+      }
+    } catch (err) {
+      console.warn('Toggle wishlist notice:', err);
+    }
   };
 
   return (

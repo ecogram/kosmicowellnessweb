@@ -283,6 +283,21 @@ export function Navbar() {
                       )}
                     </Link>
                     <Link
+                      to="/wishlist"
+                      className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm flex items-center justify-between"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Heart className="w-4 h-4 text-rose-500 fill-rose-500/20" />
+                        <span>❤️ My Wishlist</span>
+                      </div>
+                      {wishlist?.items?.length > 0 && (
+                        <span className="bg-rose-100 text-rose-700 text-xs px-2 py-0.5 rounded-full font-bold">
+                          {wishlist.items.length}
+                        </span>
+                      )}
+                    </Link>
+                    <Link
                       to="/orders"
                       className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm block"
                       onClick={() => setIsMobileMenuOpen(false)}

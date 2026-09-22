@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { formatINR } from '../utils/currency';
 import { Link } from 'react-router-dom';
 import { useWishlist, useToggleWishlist } from '../hooks/useWishlist';
@@ -8,9 +9,15 @@ import { useAuthStore } from '../store/useAuthStore';
 
 export function Wishlist() {
   const { isAuthenticated } = useAuthStore();
-  const { data: wishlist, isLoading } = useWishlist();
+  const { data: wishlist, isLoading, refetch } = useWishlist();
   const toggleMutation = useToggleWishlist();
   const addToCartMutation = useAddToCart();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      refetch();
+    }
+  }, [isAuthenticated, refetch]);
 
   if (!isAuthenticated) {
     return (

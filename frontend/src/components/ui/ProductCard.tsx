@@ -4,6 +4,7 @@ import { Button } from './Button';
 import { Star, Heart, ShoppingBag, Zap } from 'lucide-react';
 import { useAddToCart } from '../../hooks/useCart';
 import { useToggleWishlist, useWishlist } from '../../hooks/useWishlist';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export interface Product {
   id: string;
@@ -27,6 +28,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const addToCartMutation = useAddToCart();
   const toggleWishlistMutation = useToggleWishlist();
   const { data: wishlist } = useWishlist();
+  const { isAuthenticated } = useAuthStore();
 
   const productId = product.id || (product as any)._id;
   const isWishlisted = wishlist?.items?.some((item: any) => {
@@ -46,18 +48,32 @@ export function ProductCard({ product }: ProductCardProps) {
     });
   };
 
-  const handleToggleWishlist = (e: React.MouseEvent) => {
+  const handleToggleWishlist = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleWishlistMutation.mutate({
-      _id: productId,
-      id: productId,
-      name: product.name,
-      slug: product.slug,
-      price: product.price,
-      compareAtPrice: product.compareAtPrice,
-      image: product.image,
-    });
+
+    if (!isAuthenticated) {
+      navigate('/login?redirect=/wishlist');
+      return;
+    }
+
+    try {
+      const res = await toggleWishlistMutation.mutateAsync({
+        _id: productId,
+        id: productId,
+        name: product.name,
+        slug: product.slug,
+        price: product.price,
+        compareAtPrice: product.compareAtPrice,
+        image: product.image,
+      });
+
+      if (res?.action === 'added') {
+        navigate('/wishlist');
+      }
+    } catch (err) {
+      console.warn('Toggle wishlist notice:', err);
+    }
   };
 
   const handleBuyNow = async (e: React.MouseEvent) => {
