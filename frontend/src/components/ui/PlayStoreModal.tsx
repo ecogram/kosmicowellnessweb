@@ -95,7 +95,7 @@ export const PlayStoreModal: React.FC<PlayStoreModalProps> = ({
 
             <button
               onClick={onClose}
-              className="w-full py-2.5 px-4 text-xs font-bold text-neutral-500 hover:text-neutral-900 transition-colors"
+              className="w-full py-2.5 px-4 text-xs sm:text-sm font-bold text-orange-600 hover:text-orange-700 hover:bg-orange-50/70 rounded-xl transition-all cursor-pointer flex items-center justify-center"
             >
               Continue on Website
             </button>
