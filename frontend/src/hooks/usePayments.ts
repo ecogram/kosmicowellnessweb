@@ -154,7 +154,7 @@ export const useCreateRazorpayOrder = () => {
   });
 };
 
-// POST /api/payment/verify
+// POST /api/payment/razorpay/verify
 export const useVerifyPayment = () => {
   const queryClient = useQueryClient();
   return useMutation({
@@ -163,7 +163,7 @@ export const useVerifyPayment = () => {
       razorpay_order_id: string;
       razorpay_signature: string;
     }) => {
-      const { data } = await api.post('/payment/verify', verificationData);
+      const { data } = await api.post('/payment/razorpay/verify', verificationData);
       return data?.data ?? data;
     },
     onSuccess: () => {

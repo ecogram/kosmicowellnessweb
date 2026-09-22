@@ -396,35 +396,37 @@ export const Checkout: React.FC = () => {
       modal: {
         ondismiss: function () {
           setIsPaymentProcessing(false);
-          toast.error('Payment window closed. You can retry payment anytime.');
+          toast.error('Payment cancelled. Your order was not placed.');
         },
       },
       handler: async function (response: any) {
         setIsPaymentProcessing(true);
-        try {
-          await verifyPaymentMutation.mutateAsync({
-            razorpay_order_id: response.razorpay_order_id || rzpOrderId || `order_${Date.now()}`,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature || 'verified_sig',
-          });
-        } catch (verifyErr) {
-          console.warn('Verification endpoint notice:', verifyErr);
+        if (!response?.razorpay_payment_id || !response?.razorpay_signature) {
+          setIsPaymentProcessing(false);
+          toast.error('Payment verification failed: Incomplete payment response. Order was not placed.');
+          return;
         }
 
-        // Update local order status to PAID
         try {
-          const localOrders = JSON.parse(localStorage.getItem('kosmico_user_orders') || '[]');
-          const updated = localOrders.map((o: any) =>
-            o.orderNumber === order.orderNumber || o._id === order._id
-              ? { ...o, paymentStatus: 'PAID', orderStatus: 'PROCESSING' }
-              : o
-          );
-          localStorage.setItem('kosmico_user_orders', JSON.stringify(updated));
-        } catch (e) { }
+          await verifyPaymentMutation.mutateAsync({
+            razorpay_order_id: response.razorpay_order_id || rzpOrderId || '',
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          });
 
-        localStorage.removeItem('kosmico_cart_v1');
-        setIsPaymentProcessing(false);
-        navigate(`/order-success/${order.orderNumber || 'KW-SUCCESS'}`);
+          // ONLY after successful backend verification:
+          localStorage.removeItem('kosmico_cart_v1');
+          setIsPaymentProcessing(false);
+          toast.success('Payment successful! Order placed.');
+          navigate(`/order-success/${order.orderNumber || 'KW-SUCCESS'}`);
+        } catch (verifyErr: any) {
+          setIsPaymentProcessing(false);
+          console.error('Payment verification error:', verifyErr);
+          toast.error(
+            verifyErr?.response?.data?.message ||
+              'Payment verification failed. Your order has not been placed. Please contact support.'
+          );
+        }
       },
     };
 
@@ -436,15 +438,13 @@ export const Checkout: React.FC = () => {
       const rzpInstance = new (window as any).Razorpay(options);
       rzpInstance.on('payment.failed', function (resp: any) {
         setIsPaymentProcessing(false);
-        toast.error(resp.error?.description || 'Payment failed. Please try again.');
+        toast.error(resp.error?.description || 'Payment failed. Your order was not placed.');
       });
       rzpInstance.open();
     } catch (rzpErr: any) {
       console.error('Razorpay open error:', rzpErr);
       setIsPaymentProcessing(false);
-      toast.error(
-        'Unable to initialize Razorpay checkout. Please ensure valid credentials are configured or select Cash on Delivery.'
-      );
+      toast.error('Unable to initialize Razorpay checkout. Please try again.');
     }
   };
 
@@ -485,24 +485,37 @@ export const Checkout: React.FC = () => {
       modal: {
         ondismiss: function () {
           setIsPaymentProcessing(false);
-          toast.error('Payment window closed. Your order was not placed.');
+          toast.error('Advance payment cancelled. Your COD order was not placed.');
         },
       },
       handler: async function (response: any) {
         setIsPaymentProcessing(true);
-        try {
-          await verifyCodUpfrontMutation.mutateAsync({
-            razorpay_order_id: response.razorpay_order_id || rzpOrderId || `order_${Date.now()}`,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature || 'verified_sig',
-          });
-        } catch (verifyErr) {
-          console.warn('COD Advance Verification notice:', verifyErr);
+        if (!response?.razorpay_payment_id || !response?.razorpay_signature) {
+          setIsPaymentProcessing(false);
+          toast.error('Advance payment verification failed: Incomplete details. Order was not placed.');
+          return;
         }
 
-        localStorage.removeItem('kosmico_cart_v1');
-        setIsPaymentProcessing(false);
-        navigate(`/order-success/${order.orderNumber || 'KW-SUCCESS'}`);
+        try {
+          await verifyCodUpfrontMutation.mutateAsync({
+            razorpay_order_id: response.razorpay_order_id || rzpOrderId || '',
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+          });
+
+          // ONLY after successful backend verification:
+          localStorage.removeItem('kosmico_cart_v1');
+          setIsPaymentProcessing(false);
+          toast.success('Advance payment successful! COD Order placed.');
+          navigate(`/order-success/${order.orderNumber || 'KW-SUCCESS'}`);
+        } catch (verifyErr: any) {
+          setIsPaymentProcessing(false);
+          console.error('COD Advance Verification error:', verifyErr);
+          toast.error(
+            verifyErr?.response?.data?.message ||
+              'Advance payment verification failed. Your COD order was not placed.'
+          );
+        }
       },
     };
 
@@ -512,7 +525,7 @@ export const Checkout: React.FC = () => {
       const rzpInstance = new (window as any).Razorpay(options);
       rzpInstance.on('payment.failed', function (resp: any) {
         setIsPaymentProcessing(false);
-        toast.error(resp.error?.description || 'Payment failed. Please try again.');
+        toast.error(resp.error?.description || 'Advance payment failed. Your COD order was not placed.');
       });
       rzpInstance.open();
     } catch (rzpErr: any) {

@@ -14,7 +14,30 @@ export const useOrders = (params: { page?: number; limit?: number } = {}) => {
       try {
         const response = await api.get('/payments/myorders', { params });
         const resData = response.data?.data ?? response.data ?? {};
-        const orders: any[] = resData.orders ?? (Array.isArray(resData) ? resData : []);
+        const rawOrders: any[] = resData.orders ?? (Array.isArray(resData) ? resData : []);
+
+        // Strictly show only valid, confirmed/completed orders — no pending, failed, or mock data
+        const orders = rawOrders.filter((o: any) => {
+          const payStatus = String(o.paymentStatus || '').toUpperCase();
+          const ordStatus = String(o.orderStatus || o.status || '').toUpperCase();
+
+          // Exclude any pending or failed orders where payment was not successful
+          if (['PENDING', 'FAILED', 'CANCELLED'].includes(payStatus) || ordStatus === 'PENDING') {
+            return false;
+          }
+
+          // Exclude mock, demo, or test orders
+          const orderNum = String(o.orderNumber || o._id || '');
+          if (/^TEST|^MOCK|^DEMO|^DEV_|^DUMMY_/i.test(orderNum)) {
+            return false;
+          }
+          if (o.isTest || o.testOrder || o.isMock) {
+            return false;
+          }
+
+          return true;
+        });
+
         const pagination = resData.pagination ?? {
           total: orders.length,
           page: 1,
