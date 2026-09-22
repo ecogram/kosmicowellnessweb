@@ -13,7 +13,7 @@ import {
   Package, Heart, Ticket, MapPin, CreditCard, RotateCcw,
   Globe, Moon, HelpCircle, Info, LogOut, Edit3, X, Phone, MessageSquare, Mail, Building,
   Plus, Trash2, Home, Briefcase, CheckCircle2, Smartphone, Camera, RefreshCw, Check, AlertCircle,
-  Eye, Image as ImageIcon, User as UserIcon
+  Eye, Image as ImageIcon, User as UserIcon, Loader2
 } from 'lucide-react';
 
 // API docs address fields: addressLabel, fullName, streetAddress, city, pincode, phoneNumber, isDefault
@@ -52,7 +52,7 @@ export const Profile: React.FC = () => {
   const { socket } = useSocket();
 
   // Payment methods from API
-  const { data: paymentMethodsData, refetch: refetchPaymentMethods } = useSavedPaymentMethods();
+  const { data: paymentMethodsData, refetch: refetchPaymentMethods, isLoading: isPaymentMethodsLoading } = useSavedPaymentMethods();
   const savePaymentMethodMutation = useSavePaymentMethod();
   const deletePaymentMethodMutation = useDeletePaymentMethod();
   const updateProfileMutation = useUpdateProfile();
@@ -1289,7 +1289,12 @@ export const Profile: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {paymentMethods.length === 0 ? (
+                  {isPaymentMethodsLoading && paymentMethods.length === 0 ? (
+                    <div className="py-6 flex flex-col items-center justify-center gap-2 text-neutral-400">
+                      <Loader2 className="w-5 h-5 animate-spin text-emerald-700" />
+                      <span className="text-xs">Loading saved payment methods...</span>
+                    </div>
+                  ) : paymentMethods.length === 0 ? (
                     <p className="text-center text-xs text-neutral-400 py-4">No saved payment methods yet.</p>
                   ) : paymentMethods.map((pm) => (
                     <div

@@ -3,15 +3,24 @@ import { api } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 import { normalizeImageUrl } from '../utils/imageUrl';
 
-// ─── GET /api/users/profile ───────────────────────────────────────────────────
+// ─── GET /api/auth/profile (fallback /api/users/profile) ──────────────────────
 export const useProfile = () => {
   const { updateUser, accessToken, user: currentUser } = useAuthStore();
 
   return useQuery({
     queryKey: ['auth-profile'],
     queryFn: async () => {
-      const { data } = await api.get('/users/profile');
-      const user = data?.data?.user ?? data?.data;
+      let data: any;
+      try {
+        const res = await api.get('/auth/profile');
+        data = res.data;
+      } catch (err) {
+        try {
+          const res = await api.get('/users/profile');
+          data = res.data;
+        } catch (_) {}
+      }
+      const user = data?.data?.user ?? data?.user ?? data?.data;
       if (user) {
         // Normalize image URL
         const pic = user.profilePicture ?? user.profileImage ?? user.avatar ?? '';
@@ -40,7 +49,7 @@ export const useProfile = () => {
   });
 };
 
-// ─── PUT /api/users/profile (multipart/form-data) ─────────────────────────────
+// ─── PUT /api/auth/profile / /api/users/profile (multipart/form-data) ──────────
 // API docs: Content-Type: multipart/form-data
 // Form fields: name (String), phoneNumber (String), profilePicture (File binary)
 export const useUpdateProfile = () => {
@@ -62,10 +71,19 @@ export const useUpdateProfile = () => {
       if (phoneNumber) formData.append('phoneNumber', phoneNumber);
       if (profilePictureFile) formData.append('profilePicture', profilePictureFile);
 
-      const { data } = await api.put('/users/profile', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      return data?.data?.user ?? data?.data;
+      let resData: any;
+      try {
+        const res = await api.put('/auth/profile', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        resData = res.data;
+      } catch (err) {
+        const res = await api.put('/users/profile', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        resData = res.data;
+      }
+      return resData?.data?.user ?? resData?.user ?? resData?.data;
     },
     onSuccess: (updatedUser) => {
       if (updatedUser) {

@@ -44,6 +44,35 @@ export interface SavePaymentMethodPayload {
   isDefault?: boolean;
 }
 
+// Robust helper to extract payment methods array regardless of response envelope
+export const extractPaymentMethods = (payload: any): any[] => {
+  if (!payload) return [];
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload.savedPaymentMethods)) return payload.savedPaymentMethods;
+  if (Array.isArray(payload.methods)) return payload.methods;
+  if (Array.isArray(payload.paymentMethods)) return payload.paymentMethods;
+  if (Array.isArray(payload.savedMethods)) return payload.savedMethods;
+
+  if (payload.data) {
+    if (Array.isArray(payload.data)) return payload.data;
+    if (Array.isArray(payload.data.savedPaymentMethods)) return payload.data.savedPaymentMethods;
+    if (Array.isArray(payload.data.methods)) return payload.data.methods;
+    if (Array.isArray(payload.data.paymentMethods)) return payload.data.paymentMethods;
+    if (Array.isArray(payload.data.savedMethods)) return payload.data.savedMethods;
+    if (payload.data.user) {
+      if (Array.isArray(payload.data.user.savedPaymentMethods)) return payload.data.user.savedPaymentMethods;
+      if (Array.isArray(payload.data.user.paymentMethods)) return payload.data.user.paymentMethods;
+    }
+  }
+
+  if (payload.user) {
+    if (Array.isArray(payload.user.savedPaymentMethods)) return payload.user.savedPaymentMethods;
+    if (Array.isArray(payload.user.paymentMethods)) return payload.user.paymentMethods;
+  }
+
+  return [];
+};
+
 // GET /api/payment/saved-methods
 export const useSavedPaymentMethods = () => {
   return useQuery({
@@ -51,44 +80,35 @@ export const useSavedPaymentMethods = () => {
     queryFn: async (): Promise<SavedPaymentMethod[]> => {
       const allMethods: any[] = [];
 
-      // 1. Fetch from /payment/saved-methods
+      // 1. Primary: Fetch from /payment/saved-methods
       try {
         const { data } = await api.get('/payment/saved-methods');
-        const list =
-          data?.data?.methods ??
-          data?.data?.paymentMethods ??
-          data?.data?.savedPaymentMethods ??
-          (Array.isArray(data?.data) ? data?.data : Array.isArray(data) ? data : []);
-        if (Array.isArray(list)) allMethods.push(...list);
+        const list = extractPaymentMethods(data);
+        if (list.length > 0) allMethods.push(...list);
       } catch (err) {
         console.warn('/payment/saved-methods fetch notice:', err);
       }
 
-      // 2. Fallback to /payments/saved-methods
+      // 2. Secondary fallback: /payments/saved-methods
       if (allMethods.length === 0) {
         try {
           const { data } = await api.get('/payments/saved-methods');
-          const list =
-            data?.data?.methods ??
-            data?.data?.paymentMethods ??
-            data?.data?.savedPaymentMethods ??
-            (Array.isArray(data?.data) ? data?.data : Array.isArray(data) ? data : []);
-          if (Array.isArray(list)) allMethods.push(...list);
+          const list = extractPaymentMethods(data);
+          if (list.length > 0) allMethods.push(...list);
         } catch (_) {}
       }
 
-      // 3. Also fetch directly from /users/profile to pick up methods saved by app
+      // 3. Fallback to /auth/profile (live backend profile endpoint)
       try {
-        const { data } = await api.get('/users/profile');
-        const u = data?.data?.user ?? data?.data;
-        const uMethods = u?.savedPaymentMethods ?? u?.paymentMethods ?? u?.savedMethods ?? [];
-        if (Array.isArray(uMethods)) allMethods.push(...uMethods);
+        const { data } = await api.get('/auth/profile');
+        const list = extractPaymentMethods(data);
+        if (list.length > 0) allMethods.push(...list);
 
-        // Check if direct UPI or bank fields exist on profile
+        const u = data?.data?.user ?? data?.user ?? data?.data;
         if (u?.upiId) {
           allMethods.push({
             type: 'UPI',
-            displayName: u?.name || 'UPI Account',
+            displayName: u?.name || u?.fullName || 'UPI Account',
             upiId: u.upiId,
             isDefault: true,
           });
@@ -96,7 +116,7 @@ export const useSavedPaymentMethods = () => {
         if (u?.bankDetails && typeof u.bankDetails === 'object') {
           allMethods.push({
             type: 'BANK',
-            displayName: u.bankDetails.accountHolder || u?.name || 'Bank Account',
+            displayName: u.bankDetails.accountHolder || u?.name || u?.fullName || 'Bank Account',
             bankName: u.bankDetails.bankName || 'Bank',
             accountNumber: u.bankDetails.accountNumber,
             ifscCode: u.bankDetails.ifscCode,
@@ -104,6 +124,28 @@ export const useSavedPaymentMethods = () => {
           });
         }
       } catch (_) {}
+
+      // 4. Fallback to /users/profile
+      try {
+        const { data } = await api.get('/users/profile');
+        const list = extractPaymentMethods(data);
+        if (list.length > 0) allMethods.push(...list);
+      } catch (_) {}
+
+      // 5. Also check currently stored user methods in auth store
+      const storeUser = useAuthStore.getState().user as any;
+      if (storeUser) {
+        const storeMethods = extractPaymentMethods(storeUser);
+        if (storeMethods.length > 0) allMethods.push(...storeMethods);
+        if (storeUser.upiId) {
+          allMethods.push({
+            type: 'UPI',
+            displayName: storeUser?.name || storeUser?.fullName || 'UPI Account',
+            upiId: storeUser.upiId,
+            isDefault: true,
+          });
+        }
+      }
 
       // Normalize and deduplicate
       const seen = new Set<string>();
@@ -146,6 +188,10 @@ export const useSavedPaymentMethods = () => {
         }
       }
 
+      if (result.length > 0) {
+        updateStoreUserPaymentMethods(result);
+      }
+
       return result;
     },
     staleTime: 1000,
@@ -179,8 +225,9 @@ export const useSavePaymentMethod = () => {
       queryClient.invalidateQueries({ queryKey: ['payment-methods'] });
       queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-      if (resData?.methods) {
-        updateStoreUserPaymentMethods(resData.methods);
+      const methods = extractPaymentMethods(resData);
+      if (methods.length > 0) {
+        updateStoreUserPaymentMethods(methods);
       }
     },
   });
@@ -204,8 +251,9 @@ export const useUpdatePaymentMethod = () => {
       queryClient.invalidateQueries({ queryKey: ['payment-methods'] });
       queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-      if (resData?.methods) {
-        updateStoreUserPaymentMethods(resData.methods);
+      const methods = extractPaymentMethods(resData);
+      if (methods.length > 0) {
+        updateStoreUserPaymentMethods(methods);
       }
     },
   });
@@ -223,8 +271,9 @@ export const useDeletePaymentMethod = () => {
       queryClient.invalidateQueries({ queryKey: ['payment-methods'] });
       queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-      if (resData?.methods) {
-        updateStoreUserPaymentMethods(resData.methods);
+      const methods = extractPaymentMethods(resData);
+      if (methods.length > 0) {
+        updateStoreUserPaymentMethods(methods);
       }
     },
   });
