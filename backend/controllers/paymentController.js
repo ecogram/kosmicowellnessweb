@@ -415,60 +415,6 @@ const getMyOrders = asyncHandler(async (req, res) => {
   );
 });
 
-// 5. Saved Payment Methods (GET, POST, PUT, DELETE /api/payment/saved-methods, /save-method)
-const SavedPaymentMethod = require('../models/SavedPaymentMethod');
-
-const getSavedPaymentMethods = asyncHandler(async (req, res) => {
-  const methods = await SavedPaymentMethod.find({ user: req.user._id }).sort({ isDefault: -1, createdAt: -1 });
-  res.status(200).json(new ApiResponse(200, { paymentMethods: methods, methods }, 'Saved payment methods retrieved'));
-});
-
-const savePaymentMethod = asyncHandler(async (req, res) => {
-  const { methodType, title, cardLast4, cardNetwork, cardExpiry, upiId, isDefault } = req.body;
-  if (isDefault) {
-    await SavedPaymentMethod.updateMany({ user: req.user._id }, { isDefault: false });
-  }
-  const method = await SavedPaymentMethod.create({
-    user: req.user._id,
-    methodType: methodType || (upiId ? 'UPI' : 'CARD'),
-    title: title || (upiId ? 'UPI Account' : 'Card ending in ' + (cardLast4 || 'XXXX')),
-    cardLast4,
-    cardNetwork,
-    cardExpiry,
-    upiId,
-    isDefault: !!isDefault,
-  });
-  res.status(201).json(new ApiResponse(201, { paymentMethod: method }, 'Payment method saved successfully'));
-});
-
-const updateSavedPaymentMethod = asyncHandler(async (req, res) => {
-  const methodId = req.params.methodId || req.params.id;
-  const { title, cardExpiry, isDefault } = req.body;
-
-  if (isDefault) {
-    await SavedPaymentMethod.updateMany({ user: req.user._id }, { isDefault: false });
-  }
-
-  const method = await SavedPaymentMethod.findOneAndUpdate(
-    { _id: methodId, user: req.user._id },
-    { ...(title && { title }), ...(cardExpiry && { cardExpiry }), ...(typeof isDefault === 'boolean' && { isDefault }) },
-    { new: true }
-  );
-
-  if (!method) {
-    throw new ApiError(404, 'Saved payment method not found');
-  }
-  res.status(200).json(new ApiResponse(200, { paymentMethod: method }, 'Payment method updated successfully'));
-});
-
-const deleteSavedPaymentMethod = asyncHandler(async (req, res) => {
-  const methodId = req.params.methodId || req.params.id;
-  const deleted = await SavedPaymentMethod.findOneAndDelete({ _id: methodId, user: req.user._id });
-  if (!deleted) {
-    throw new ApiError(404, 'Saved payment method not found');
-  }
-  res.status(200).json(new ApiResponse(200, null, 'Payment method deleted successfully'));
-});
 
 // 6. COD Upfront Payment (POST /api/payment/cod-upfront/create & /verify)
 const createCodUpfrontOrder = asyncHandler(async (req, res) => {
@@ -675,22 +621,77 @@ const handleWebhook = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, null, 'Webhook processed successfully'));
 });
 
-// Saved Payment Methods CRUD Controllers
-const getSavedPaymentMethods = asyncHandler(async (req, res) => {
+// Helper to fetch and merge payment methods from both User.savedPaymentMethods and SavedPaymentMethod model
+const fetchCombinedPaymentMethods = async (userId) => {
   const User = require('../models/User');
-  const user = await User.findById(req.user._id).lean();
-  const methods = user?.savedPaymentMethods || [];
-  res.status(200).json(new ApiResponse(200, { methods }, 'Saved payment methods retrieved'));
+  const SavedPaymentMethod = require('../models/SavedPaymentMethod');
+
+  const user = await User.findById(userId).lean();
+  const userMethods = user?.savedPaymentMethods || [];
+
+  let collectionMethods = [];
+  try {
+    collectionMethods = await SavedPaymentMethod.find({ user: userId }).lean();
+  } catch (_) {}
+
+  const map = new Map();
+
+  // Process SavedPaymentMethod collection
+  collectionMethods.forEach((m) => {
+    const idStr = m._id.toString();
+    const key = (m.upiId || m.accountNumber || idStr).trim().toLowerCase();
+    map.set(key, {
+      _id: idStr,
+      id: idStr,
+      type: m.methodType || (m.upiId ? 'UPI' : 'BANK'),
+      displayName: m.title || m.displayName || (m.upiId ? 'UPI' : 'Bank Account'),
+      upiId: m.upiId || '',
+      bankName: m.bankName || '',
+      accountNumber: m.accountNumber || '',
+      ifscCode: m.ifscCode || '',
+      isDefault: !!m.isDefault,
+    });
+  });
+
+  // Process User.savedPaymentMethods array
+  userMethods.forEach((m) => {
+    const idStr = (m._id || m.id || '').toString();
+    const key = (m.upiId || m.accountNumber || idStr).trim().toLowerCase();
+    if (!map.has(key)) {
+      map.set(key, {
+        _id: idStr,
+        id: idStr,
+        type: m.type || (m.upiId ? 'UPI' : 'BANK'),
+        displayName: m.displayName || m.title || (m.upiId ? 'UPI' : 'Bank Account'),
+        upiId: m.upiId || '',
+        bankName: m.bankName || '',
+        accountNumber: m.accountNumber || '',
+        ifscCode: m.ifscCode || '',
+        isDefault: !!m.isDefault,
+      });
+    }
+  });
+
+  return Array.from(map.values());
+};
+
+const getSavedPaymentMethods = asyncHandler(async (req, res) => {
+  const methods = await fetchCombinedPaymentMethods(req.user._id);
+  res.status(200).json(new ApiResponse(200, { methods, paymentMethods: methods, savedPaymentMethods: methods }, 'Saved payment methods retrieved'));
 });
 
 const savePaymentMethod = asyncHandler(async (req, res) => {
   const User = require('../models/User');
-  const { type, displayName, upiId, bankName, accountNumber, ifscCode, isDefault } = req.body;
+  const SavedPaymentMethod = require('../models/SavedPaymentMethod');
+  const { type, methodType, displayName, title, upiId, bankName, accountNumber, ifscCode, isDefault } = req.body;
 
   const user = await User.findById(req.user._id);
   if (!user) {
     throw new ApiError(404, 'User not found');
   }
+
+  const finalType = type || methodType || (upiId ? 'UPI' : 'BANK');
+  const finalTitle = displayName || title || (upiId ? 'UPI Account' : 'Bank Account');
 
   if (!user.savedPaymentMethods) {
     user.savedPaymentMethods = [];
@@ -700,11 +701,14 @@ const savePaymentMethod = asyncHandler(async (req, res) => {
     user.savedPaymentMethods.forEach((m) => {
       m.isDefault = false;
     });
+    try {
+      await SavedPaymentMethod.updateMany({ user: req.user._id }, { isDefault: false });
+    } catch (_) {}
   }
 
   const newMethod = {
-    type: type || 'UPI',
-    displayName: displayName || user.name || 'User',
+    type: finalType,
+    displayName: finalTitle,
     upiId: upiId || '',
     bankName: bankName || '',
     accountNumber: accountNumber || '',
@@ -716,80 +720,101 @@ const savePaymentMethod = asyncHandler(async (req, res) => {
   await user.save();
 
   try {
+    await SavedPaymentMethod.create({
+      user: req.user._id,
+      methodType: finalType,
+      title: finalTitle,
+      upiId: upiId || '',
+      bankName: bankName || '',
+      accountNumber: accountNumber || '',
+      ifscCode: ifscCode || '',
+      isDefault: newMethod.isDefault,
+    });
+  } catch (_) {}
+
+  const combined = await fetchCombinedPaymentMethods(req.user._id);
+
+  try {
     const { emitToUser } = require('../realtime/emitter');
     emitToUser(req.user._id, 'profile:updated', { user });
     emitToUser(req.user._id, 'user:profile_updated', { user });
-    emitToUser(req.user._id, 'payment_methods:updated', { methods: user.savedPaymentMethods });
+    emitToUser(req.user._id, 'payment_methods:updated', { methods: combined });
     if (req.user.email) {
       emitToUser(req.user.email.toLowerCase(), 'profile:updated', { user });
-      emitToUser(req.user.email.toLowerCase(), 'payment_methods:updated', { methods: user.savedPaymentMethods });
+      emitToUser(req.user.email.toLowerCase(), 'payment_methods:updated', { methods: combined });
     }
   } catch (_) { }
 
-  res.status(201).json(new ApiResponse(201, { method: user.savedPaymentMethods[0], methods: user.savedPaymentMethods }, 'Payment method saved successfully'));
+  res.status(201).json(new ApiResponse(201, { method: combined[0], methods: combined, paymentMethods: combined }, 'Payment method saved successfully'));
 });
 
 const updateSavedPaymentMethod = asyncHandler(async (req, res) => {
   const User = require('../models/User');
-  const { methodId } = req.params;
+  const SavedPaymentMethod = require('../models/SavedPaymentMethod');
+  const methodId = req.params.methodId || req.params.id;
   const user = await User.findById(req.user._id);
 
-  if (!user || !user.savedPaymentMethods) {
-    throw new ApiError(404, 'Payment method not found');
+  if (user && user.savedPaymentMethods) {
+    const method = user.savedPaymentMethods.id(methodId);
+    if (method) {
+      if (req.body.isDefault) {
+        user.savedPaymentMethods.forEach((m) => {
+          m.isDefault = false;
+        });
+      }
+      Object.assign(method, req.body);
+      await user.save();
+    }
   }
 
-  const method = user.savedPaymentMethods.id(methodId);
-  if (!method) {
-    throw new ApiError(404, 'Payment method not found');
-  }
+  try {
+    if (req.body.isDefault) {
+      await SavedPaymentMethod.updateMany({ user: req.user._id }, { isDefault: false });
+    }
+    await SavedPaymentMethod.findOneAndUpdate(
+      { _id: methodId, user: req.user._id },
+      req.body,
+      { new: true }
+    );
+  } catch (_) {}
 
-  if (req.body.isDefault) {
-    user.savedPaymentMethods.forEach((m) => {
-      m.isDefault = false;
-    });
-  }
-
-  Object.assign(method, req.body);
-  await user.save();
+  const combined = await fetchCombinedPaymentMethods(req.user._id);
 
   try {
     const { emitToUser } = require('../realtime/emitter');
     emitToUser(req.user._id, 'profile:updated', { user });
     emitToUser(req.user._id, 'user:profile_updated', { user });
-    emitToUser(req.user._id, 'payment_methods:updated', { methods: user.savedPaymentMethods });
-    if (req.user.email) {
-      emitToUser(req.user.email.toLowerCase(), 'profile:updated', { user });
-      emitToUser(req.user.email.toLowerCase(), 'payment_methods:updated', { methods: user.savedPaymentMethods });
-    }
+    emitToUser(req.user._id, 'payment_methods:updated', { methods: combined });
   } catch (_) { }
 
-  res.status(200).json(new ApiResponse(200, { method, methods: user.savedPaymentMethods }, 'Payment method updated successfully'));
+  res.status(200).json(new ApiResponse(200, { methods: combined, paymentMethods: combined }, 'Payment method updated successfully'));
 });
 
 const deleteSavedPaymentMethod = asyncHandler(async (req, res) => {
   const User = require('../models/User');
-  const { methodId } = req.params;
+  const SavedPaymentMethod = require('../models/SavedPaymentMethod');
+  const methodId = req.params.methodId || req.params.id;
   const user = await User.findById(req.user._id);
 
-  if (!user || !user.savedPaymentMethods) {
-    throw new ApiError(404, 'Payment method not found');
+  if (user && user.savedPaymentMethods) {
+    user.savedPaymentMethods = user.savedPaymentMethods.filter((m) => m._id.toString() !== methodId && m.id !== methodId);
+    await user.save();
   }
 
-  user.savedPaymentMethods = user.savedPaymentMethods.filter((m) => m._id.toString() !== methodId && m.id !== methodId);
-  await user.save();
+  try {
+    await SavedPaymentMethod.findOneAndDelete({ _id: methodId, user: req.user._id });
+  } catch (_) {}
+
+  const combined = await fetchCombinedPaymentMethods(req.user._id);
 
   try {
     const { emitToUser } = require('../realtime/emitter');
     emitToUser(req.user._id, 'profile:updated', { user });
     emitToUser(req.user._id, 'user:profile_updated', { user });
-    emitToUser(req.user._id, 'payment_methods:updated', { methods: user.savedPaymentMethods });
-    if (req.user.email) {
-      emitToUser(req.user.email.toLowerCase(), 'profile:updated', { user });
-      emitToUser(req.user.email.toLowerCase(), 'payment_methods:updated', { methods: user.savedPaymentMethods });
-    }
+    emitToUser(req.user._id, 'payment_methods:updated', { methods: combined });
   } catch (_) { }
 
-  res.status(200).json(new ApiResponse(200, { methods: user.savedPaymentMethods }, 'Payment method deleted successfully'));
+  res.status(200).json(new ApiResponse(200, { methods: combined, paymentMethods: combined }, 'Payment method deleted successfully'));
 });
 
 module.exports = {
