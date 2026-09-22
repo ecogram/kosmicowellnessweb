@@ -21,8 +21,7 @@ import {
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
 import { useCart } from '../hooks/useCart';
-import { useCreateOrder } from '../hooks/useOrders';
-import { useVerifyPayment, useCreateCodUpfront, useVerifyCodUpfront, useCreateRazorpayOrder, useSavedPaymentMethods, useSavePaymentMethod } from '../hooks/usePayments';
+import { useVerifyPayment, useCreateRazorpayOrder, useSavedPaymentMethods, useSavePaymentMethod } from '../hooks/usePayments';
 import { useAuthStore } from '../store/useAuthStore';
 import { formatINR } from '../utils/currency';
 
@@ -58,11 +57,8 @@ export interface SavedPaymentMethod {
 export const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { data: cart, isLoading: isCartLoading } = useCart();
-  const createOrderMutation = useCreateOrder();
   const createRazorpayOrderMutation = useCreateRazorpayOrder();
   const verifyPaymentMutation = useVerifyPayment();
-  const createCodUpfrontMutation = useCreateCodUpfront();
-  const verifyCodUpfrontMutation = useVerifyCodUpfront();
   const { data: savedMethodsData } = useSavedPaymentMethods();
   const savePaymentMethodMutation = useSavePaymentMethod();
   const { user } = useAuthStore();
@@ -448,7 +444,7 @@ export const Checkout: React.FC = () => {
     }
   };
 
-  const processRazorpayCodAdvance = async (order: any, advanceAmount: number) => {
+  const processRazorpayCodAdvance = async (advanceAmount: number, orderPayload: any) => {
     setIsPaymentProcessing(true);
     const loaded = await loadRazorpay();
     if (!loaded) {
@@ -458,24 +454,17 @@ export const Checkout: React.FC = () => {
     }
 
     const razorpayKey =
-      order.keyId ||
-      order.key ||
       import.meta.env.VITE_RAZORPAY_KEY_ID ||
       'rzp_live_TcH3s5Qdh4ngAp';
 
     const calculatedPaise = Math.max(100, Math.round(advanceAmount * 100));
 
-    const rzpOrderId =
-      order.orderId && order.orderId.startsWith('order_') && !order.orderId.startsWith('order_dev_')
-        ? order.orderId
-        : undefined;
-
     const options: any = {
       key: razorpayKey,
       amount: calculatedPaise,
-      currency: order.currency || 'INR',
+      currency: 'INR',
       name: 'Kosmico Wellness',
-      description: `Advance for Order ${order.orderNumber || ''}`,
+      description: 'Advance Delivery & GST for COD Order',
       prefill: {
         name: selectedAddress?.fullName || user?.name || 'Customer',
         email: user?.email || '',
@@ -490,36 +479,36 @@ export const Checkout: React.FC = () => {
       },
       handler: async function (response: any) {
         setIsPaymentProcessing(true);
-        if (!response?.razorpay_payment_id || !response?.razorpay_signature) {
+        if (!response?.razorpay_payment_id) {
           setIsPaymentProcessing(false);
-          toast.error('Advance payment verification failed: Incomplete details. Order was not placed.');
+          toast.error('Advance payment failed: Missing payment details. Order was not placed.');
           return;
         }
 
         try {
-          await verifyCodUpfrontMutation.mutateAsync({
-            razorpay_order_id: response.razorpay_order_id || rzpOrderId || '',
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
+          // Advance payment confirmed on Razorpay!
+          // ONLY NOW create the order in the database
+          const res = await api.post('/payment/cod', {
+            ...orderPayload,
+            paymentReference: response.razorpay_payment_id,
           });
 
-          // ONLY after successful backend verification:
+          const placedOrder = res.data?.data?.order || res.data?.data || res.data?.order;
+
           localStorage.removeItem('kosmico_cart_v1');
           setIsPaymentProcessing(false);
           toast.success('Advance payment successful! COD Order placed.');
-          navigate(`/order-success/${order.orderNumber || 'KW-SUCCESS'}`);
-        } catch (verifyErr: any) {
+          navigate(`/order-success/${placedOrder?.orderNumber || placedOrder?._id || 'KW-SUCCESS'}`);
+        } catch (placeErr: any) {
           setIsPaymentProcessing(false);
-          console.error('COD Advance Verification error:', verifyErr);
+          console.error('COD Order creation error:', placeErr);
           toast.error(
-            verifyErr?.response?.data?.message ||
-              'Advance payment verification failed. Your COD order was not placed.'
+            placeErr?.response?.data?.message ||
+              'Payment received but failed to record order. Please contact support with Payment ID: ' + response.razorpay_payment_id
           );
         }
       },
     };
-
-    if (rzpOrderId) options.order_id = rzpOrderId;
 
     try {
       const rzpInstance = new (window as any).Razorpay(options);
@@ -577,18 +566,9 @@ export const Checkout: React.FC = () => {
       };
 
       if (paymentMode === 'COD') {
-        const advanceAmount = deliveryFee + gst;
-
-        const codPayload = {
-          ...payload,
-          deliveryAddress: selectedAddress._id,
-          upfrontAmount: advanceAmount,
-          items: itemsToOrder,
-        };
-
-        const order = await createCodUpfrontMutation.mutateAsync(codPayload);
-        setCreatedOrder(order);
-        await processRazorpayCodAdvance(order, advanceAmount);
+        const advanceAmount = Math.max(1, deliveryFee + gst);
+        // Do NOT create order in DB upfront. Only create order after advance payment succeeds!
+        await processRazorpayCodAdvance(advanceAmount, payload);
       } else {
         const order = await createRazorpayOrderMutation.mutateAsync(payload);
         setCreatedOrder(order);
@@ -1101,10 +1081,10 @@ export const Checkout: React.FC = () => {
           <div className="max-w-xl mx-auto">
             <button
               onClick={handlePlaceOrder}
-              disabled={isPaymentProcessing || createOrderMutation.isPending || createRazorpayOrderMutation.isPending || createCodUpfrontMutation.isPending}
+              disabled={isPaymentProcessing || createRazorpayOrderMutation.isPending}
               className="w-full py-4 bg-[#0a7a40] hover:bg-[#086333] active:scale-[0.99] text-white font-bold text-base rounded-full shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-2 transition-all disabled:opacity-60"
             >
-              {isPaymentProcessing || createOrderMutation.isPending || createRazorpayOrderMutation.isPending || createCodUpfrontMutation.isPending ? (
+              {isPaymentProcessing || createRazorpayOrderMutation.isPending ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span>Processing...</span>
