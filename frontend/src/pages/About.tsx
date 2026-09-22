@@ -12,7 +12,7 @@ export const About: React.FC = () => {
           <div className="relative z-10 space-y-4">
             <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 text-amber-300 text-xs font-bold uppercase tracking-wider border border-white/20">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Ancient Wisdom, Modern Living</span>
+              <span>Our Story • Ancient Wisdom, Modern Living</span>
             </div>
 
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif font-black tracking-tight">

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Container } from '../../components/ui/Container';
 import { Button } from '../../components/ui/Button';
 
@@ -30,12 +31,14 @@ export function BrandStory() {
               sweetness into your home. It's the perfect companion for family breakfasts, afternoon
               teas, and celebration sweets.
             </p>
-            <Button
-              variant="outline"
-              className="border-accent text-accent hover:bg-accent hover:text-primary-dark"
-            >
-              Our Story
-            </Button>
+            <Link to="/about" className="inline-block">
+              <Button
+                variant="outline"
+                className="border-accent text-accent hover:bg-accent hover:text-primary-dark cursor-pointer transition-all active:scale-95"
+              >
+                Our Story
+              </Button>
+            </Link>
           </div>
         </div>
       </Container>
