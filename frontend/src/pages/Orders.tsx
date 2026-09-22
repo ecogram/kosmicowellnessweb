@@ -7,7 +7,7 @@ import { useOrders } from '../hooks/useOrders';
 import { Package, Calendar, ChevronRight } from 'lucide-react';
 
 export const Orders: React.FC = () => {
-  const { data, isLoading, isError } = useOrders({ page: 1, limit: 20 });
+  const { data, isLoading } = useOrders({ page: 1, limit: 20 });
 
   const rawOrders = data?.orders || [];
   const orders = React.useMemo(() => {
@@ -30,17 +30,6 @@ export const Orders: React.FC = () => {
     );
   }
 
-  if (isError) {
-    return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
-        <p className="text-sm font-medium text-red-600 mb-4">Failed to load orders.</p>
-        <Button onClick={() => window.location.reload()} variant="outline" size="sm">
-          Retry
-        </Button>
-      </div>
-    );
-  }
-
   return (
     <div className="bg-[#f8faf8] min-h-[85vh] py-10">
       <Container>
@@ -54,28 +43,30 @@ export const Orders: React.FC = () => {
             </p>
           </div>
           <Link to="/shop">
-            <Button variant="outline" size="sm" className="hidden sm:inline-flex">
-              Continue Shopping
+            <Button variant="outline" size="sm" className="hidden sm:inline-flex border-emerald-600 text-emerald-700 hover:bg-emerald-50">
+              Order Now
             </Button>
           </Link>
         </div>
 
         {orders.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-emerald-100 p-12 text-center shadow-sm max-w-lg mx-auto">
-            <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-emerald-600">
-              <Package className="w-8 h-8" />
+          <div className="bg-white rounded-3xl border border-emerald-100 p-8 sm:p-12 text-center shadow-sm max-w-lg mx-auto my-6">
+            <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-5 text-emerald-600 shadow-inner">
+              <Package className="w-10 h-10" />
             </div>
-            <h2 className="text-xl font-serif font-bold text-[#064e3b] mb-2">
+            <h2 className="text-2xl font-serif font-bold text-[#064e3b] mb-2">
               No orders placed yet
             </h2>
-            <p className="text-xs text-neutral-500 mb-6 max-w-sm mx-auto">
-              Explore our 100% natural Zero-Calorie Sweet Monk sweeteners and wellness products.
+            <p className="text-xs sm:text-sm text-neutral-500 mb-8 max-w-sm mx-auto leading-relaxed">
+              Explore our 100% natural Zero-Calorie Sweet Monk sweeteners and premium wellness products.
             </p>
-            <Link to="/shop">
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl">
-                Start Shopping
-              </Button>
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+              <Link to="/shop" className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-8 py-3 rounded-xl shadow-md transition-all hover:scale-105">
+                  Order Now
+                </Button>
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-sm overflow-hidden">

@@ -11,25 +11,33 @@ export const useOrders = (params: { page?: number; limit?: number } = {}) => {
   return useQuery({
     queryKey: ['orders', params],
     queryFn: async () => {
-      const response = await api.get('/payments/myorders', { params });
-      const resData = response.data?.data ?? response.data ?? {};
-      const orders: any[] = resData.orders ?? (Array.isArray(resData) ? resData : []);
-      const pagination = resData.pagination ?? {
-        total: orders.length,
-        page: 1,
-        limit: params.limit ?? 10,
-        totalPages: 1,
-      };
+      try {
+        const response = await api.get('/payments/myorders', { params });
+        const resData = response.data?.data ?? response.data ?? {};
+        const orders: any[] = resData.orders ?? (Array.isArray(resData) ? resData : []);
+        const pagination = resData.pagination ?? {
+          total: orders.length,
+          page: 1,
+          limit: params.limit ?? 10,
+          totalPages: 1,
+        };
 
-      // Sort newest first
-      orders.sort((a, b) => {
-        const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        if (!isNaN(tA) && !isNaN(tB) && tA !== tB) return tB - tA;
-        return (b.orderNumber ?? b._id ?? '').localeCompare(a.orderNumber ?? a._id ?? '');
-      });
+        // Sort newest first
+        orders.sort((a, b) => {
+          const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          if (!isNaN(tA) && !isNaN(tB) && tA !== tB) return tB - tA;
+          return (b.orderNumber ?? b._id ?? '').localeCompare(a.orderNumber ?? a._id ?? '');
+        });
 
-      return { orders, pagination };
+        return { orders, pagination };
+      } catch (err: any) {
+        console.warn('Failed to fetch orders, defaulting to empty array:', err?.message || err);
+        return {
+          orders: [],
+          pagination: { total: 0, page: 1, limit: params.limit ?? 10, totalPages: 1 },
+        };
+      }
     },
     enabled: hasAuth,
     staleTime: 30 * 1000,
