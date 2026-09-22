@@ -76,34 +76,48 @@ const { saveProfileImage } = require('../utils/profileStorage');
 
 const updateProfile = asyncHandler(async (req, res) => {
   const file = req.file || (req.files && req.files.length > 0 ? req.files[0] : null);
-  let rawPic = req.body.profilePicture || req.body.profileImage || req.body.avatar;
+  let rawPic =
+    req.body.profilePicture ||
+    req.body.profileImage ||
+    req.body.avatar ||
+    req.body.image ||
+    req.body.photo ||
+    req.body.avatarUrl ||
+    req.body.imageUrl ||
+    req.body.picture ||
+    req.body.profile_picture ||
+    req.body.profile_photo;
 
-  let profilePicture = '';
+  let profilePicture = undefined;
   if (file) {
     profilePicture = await saveProfileImage(file.buffer || file, req.user._id, req);
-  } else if (rawPic) {
+  } else if (rawPic && typeof rawPic === 'string' && rawPic.trim().length > 0) {
     profilePicture = await saveProfileImage(rawPic, req.user._id, req);
   }
 
   const { name, fullName, phoneNumber, phone, removePhoto } = req.body;
+  const isRemove = removePhoto === true || removePhoto === 'true';
+
   const user = await authService.updateProfile(req.user._id, {
     name,
     fullName,
     phoneNumber,
     phone,
-    profilePicture,
-    profileImage: profilePicture,
-    avatar: profilePicture,
-    removePhoto: removePhoto === true || removePhoto === 'true',
+    ...(profilePicture !== undefined ? { profilePicture, profileImage: profilePicture, avatar: profilePicture } : {}),
+    removePhoto: isRemove,
   });
 
-  // Emit realtime profile updated event
+  // Emit realtime profile updated event across all user rooms
   try {
     const { emitToUser } = require('../realtime/emitter');
-    emitToUser(req.user._id, 'profile:updated', { user });
-    emitToUser(req.user._id, 'user:profile_updated', { user });
+    const userId = req.user._id.toString();
+    emitToUser(userId, 'profile:updated', { user });
+    emitToUser(userId, 'user:profile_updated', { user });
+    emitToUser(userId, 'user:updated', { user });
+    emitToUser(userId, 'profile:force_refresh', { userId });
     if (req.user.email) {
       emitToUser(req.user.email.toLowerCase(), 'profile:updated', { user });
+      emitToUser(req.user.email.toLowerCase(), 'profile:force_refresh', { userId });
     }
   } catch (_) { }
 
@@ -209,6 +223,9 @@ const getMe = asyncHandler(async (req, res) => {
     createdAt: u.createdAt,
     updatedAt: u.updatedAt,
   };
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
   res.status(200).json(new ApiResponse(200, { user, ...user }, 'User data retrieved'));
 });
 

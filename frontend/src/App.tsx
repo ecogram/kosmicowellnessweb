@@ -51,30 +51,59 @@ const queryClient = new QueryClient({
   },
 });
 
-// AuthInit preserves persistent login state
+// AuthInit preserves persistent login state and keeps profile in live sync with mobile app
 const AuthInit = ({ children }: { children: React.ReactNode }) => {
-  const { accessToken, setAuth, setLoading } = useAuthStore();
+  const { accessToken, setAuth, updateUser, setLoading } = useAuthStore();
 
   useEffect(() => {
-    const initAuth = async () => {
-      if (!accessToken) {
-        setLoading(false);
-        return;
-      }
+    if (!accessToken) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchFreshProfile = async () => {
       try {
-        const response = await api.get('/users/profile');
-        if (response.data?.data) {
-          const user = response.data.data.user || response.data.data;
-          setAuth(user, accessToken);
+        let res;
+        try {
+          res = await api.get('/auth/profile');
+        } catch (err) {
+          res = await api.get('/users/profile');
         }
-      } catch (error) {
+        if (res?.data?.data) {
+          const user = res.data.data.user || res.data.data;
+          if (user && (user.name || user.email || user._id || user.id)) {
+            updateUser(user);
+          }
+        }
+      } catch (_) {
         // Keep persisted state intact even if profile check fails temporarily
       } finally {
         setLoading(false);
       }
     };
-    initAuth();
-  }, [accessToken, setAuth, setLoading]);
+
+    // Initial fetch on mount
+    fetchFreshProfile();
+
+    // Re-sync immediately when user switches back from mobile app to website tab
+    const handleFocusOrVisible = () => {
+      if (document.visibilityState === 'visible') {
+        fetchFreshProfile();
+      }
+    };
+
+    window.addEventListener('focus', handleFocusOrVisible);
+    document.addEventListener('visibilitychange', handleFocusOrVisible);
+
+    // Continuous background sync (every 12 seconds) while logged in
+    const syncInterval = setInterval(fetchFreshProfile, 12000);
+
+    return () => {
+      window.removeEventListener('focus', handleFocusOrVisible);
+      document.removeEventListener('visibilitychange', handleFocusOrVisible);
+      clearInterval(syncInterval);
+    };
+  }, [accessToken, setAuth, updateUser, setLoading]);
 
   return <>{children}</>;
 };

@@ -25,20 +25,35 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       queryClient.invalidateQueries({ queryKey: ['wishlist'] });
     });
 
-    // Profile Live Sync
-    socket.on('profile:updated', async ({ user }: any) => {
-      if (user) {
-        useAuthStore.getState().updateUser(user);
+    // Profile Live Sync (handles updates from mobile app, web, or backend emitter)
+    const handleProfileSync = async (payload?: any) => {
+      const incomingUser = payload?.user || (payload?.name ? payload : null);
+      if (incomingUser) {
+        useAuthStore.getState().updateUser(incomingUser);
       } else {
         try {
-          const res = await api.get('/users/profile');
-          if (res.data?.data) {
-            useAuthStore.getState().updateUser(res.data.data.user || res.data.data);
+          let res;
+          try {
+            res = await api.get('/auth/profile');
+          } catch (_) {
+            res = await api.get('/users/profile');
+          }
+          if (res?.data?.data) {
+            const freshUser = res.data.data.user || res.data.data;
+            if (freshUser) {
+              useAuthStore.getState().updateUser(freshUser);
+            }
           }
         } catch (_) { }
       }
+      queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
-    });
+    };
+
+    socket.on('profile:updated', handleProfileSync);
+    socket.on('user:profile_updated', handleProfileSync);
+    socket.on('user:updated', handleProfileSync);
+    socket.on('profile:force_refresh', handleProfileSync);
 
     // Address Live Sync
     socket.on('address:updated', () => {
@@ -96,7 +111,10 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       socket.off('notification:new');
       socket.off('notification:unread-count');
       socket.off('wishlist:updated');
-      socket.off('profile:updated');
+      socket.off('profile:updated', handleProfileSync);
+      socket.off('user:profile_updated', handleProfileSync);
+      socket.off('user:updated', handleProfileSync);
+      socket.off('profile:force_refresh', handleProfileSync);
       socket.off('address:updated');
       socket.off('order:created');
       socket.off('order:processing');

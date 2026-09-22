@@ -16,6 +16,10 @@ export interface User {
   avatar?: string;
   avatarUrl?: string;
   image?: string;
+  photo?: string;
+  picture?: string;
+  profile_picture?: string;
+  profile_image?: string;
 }
 
 interface AuthState {
@@ -35,7 +39,17 @@ import { normalizeImageUrl } from '../utils/imageUrl';
 const sanitizeUser = (user: User | null): User | null => {
   if (!user) return null;
   const sanitized = { ...user };
-  const rawPic = sanitized.profilePicture || sanitized.profileImage || sanitized.avatar || sanitized.avatarUrl || sanitized.image || '';
+  const rawPic =
+    sanitized.profilePicture ||
+    sanitized.profileImage ||
+    sanitized.avatar ||
+    sanitized.avatarUrl ||
+    sanitized.image ||
+    (sanitized as any).photo ||
+    (sanitized as any).picture ||
+    (sanitized as any).profile_picture ||
+    (sanitized as any).profile_image ||
+    '';
   const normalized = normalizeImageUrl(rawPic);
 
   sanitized.profilePicture = normalized;
@@ -43,6 +57,10 @@ const sanitizeUser = (user: User | null): User | null => {
   sanitized.avatar = normalized;
   sanitized.avatarUrl = normalized;
   sanitized.image = normalized;
+  sanitized.photo = normalized;
+  sanitized.picture = normalized;
+  sanitized.profile_picture = normalized;
+  sanitized.profile_image = normalized;
   return sanitized;
 };
 

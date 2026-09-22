@@ -22,19 +22,34 @@ export const useProfile = () => {
       }
       const user = data?.data?.user ?? data?.user ?? data?.data;
       if (user) {
-        // Normalize image URL
-        const pic = user.profilePicture ?? user.profileImage ?? user.avatar ?? '';
-        user.profilePicture = normalizeImageUrl(pic);
-        user.profileImage = user.profilePicture;
-        user.avatar = user.profilePicture;
+        // Normalize image URL across all potential property names
+        const rawPic =
+          user.profilePicture ??
+          user.profileImage ??
+          user.avatar ??
+          user.avatarUrl ??
+          user.image ??
+          user.photo ??
+          user.picture ??
+          user.profile_picture ??
+          '';
+        const normalized = normalizeImageUrl(rawPic);
+        user.profilePicture = normalized;
+        user.profileImage = normalized;
+        user.avatar = normalized;
+        user.avatarUrl = normalized;
+        user.image = normalized;
+        user.photo = normalized;
+        user.picture = normalized;
+        user.profile_picture = normalized;
 
         // Only update store if actual data changed to avoid re-render flicker
         if (
           !currentUser ||
           currentUser.name !== user.name ||
           currentUser.email !== user.email ||
-          currentUser.profilePicture !== user.profilePicture ||
-          currentUser.phoneNumber !== user.phoneNumber ||
+          currentUser.profilePicture !== normalized ||
+          currentUser.phoneNumber !== (user.phoneNumber || user.phone) ||
           JSON.stringify((currentUser as any)?.savedPaymentMethods) !== JSON.stringify((user as any)?.savedPaymentMethods)
         ) {
           updateUser(user);
@@ -44,14 +59,13 @@ export const useProfile = () => {
     },
     enabled: !!accessToken,
     staleTime: 1000,
-    refetchInterval: 3000,
+    refetchInterval: 6000,
+    refetchOnWindowFocus: true,
     retry: 1,
   });
 };
 
-// ─── PUT /api/auth/profile / /api/users/profile (multipart/form-data) ──────────
-// API docs: Content-Type: multipart/form-data
-// Form fields: name (String), phoneNumber (String), profilePicture (File binary)
+// ─── PUT /api/auth/profile & /api/auth/profile-picture ────────────────────────
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
   const { updateUser } = useAuthStore();
@@ -61,40 +75,105 @@ export const useUpdateProfile = () => {
       name,
       phoneNumber,
       profilePictureFile,
+      profilePicture,
     }: {
       name?: string;
       phoneNumber?: string;
       profilePictureFile?: File;
+      profilePicture?: string;
     }) => {
-      const formData = new FormData();
-      if (name) formData.append('name', name);
-      if (phoneNumber) formData.append('phoneNumber', phoneNumber);
-      if (profilePictureFile) formData.append('profilePicture', profilePictureFile);
-
       let resData: any;
-      try {
-        const res = await api.put('/auth/profile', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        resData = res.data;
-      } catch (err) {
-        const res = await api.put('/users/profile', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-        resData = res.data;
+
+      if (profilePictureFile) {
+        const formData = new FormData();
+        if (name) {
+          formData.append('name', name);
+          formData.append('fullName', name);
+        }
+        if (phoneNumber) {
+          formData.append('phoneNumber', phoneNumber);
+          formData.append('phone', phoneNumber);
+        }
+        // Append all field aliases accepted by mobile app or web backends
+        formData.append('profilePicture', profilePictureFile);
+        formData.append('profileImage', profilePictureFile);
+        formData.append('avatar', profilePictureFile);
+        formData.append('image', profilePictureFile);
+        formData.append('photo', profilePictureFile);
+        formData.append('file', profilePictureFile);
+
+        // 1. Try dedicated PUT /auth/profile-picture
+        try {
+          const res = await api.put('/auth/profile-picture', formData);
+          resData = res.data;
+        } catch (err) {
+          // 2. Fallback to PUT /auth/profile
+          try {
+            const res = await api.put('/auth/profile', formData);
+            resData = res.data;
+          } catch (err2) {
+            // 3. Fallback to JSON base64 if available
+            if (profilePicture) {
+              const res = await api.put('/auth/profile', {
+                name,
+                phoneNumber,
+                profilePicture,
+                profileImage: profilePicture,
+                avatar: profilePicture,
+              });
+              resData = res.data;
+            } else {
+              throw err2;
+            }
+          }
+        }
+      } else {
+        const payload: any = {};
+        if (name !== undefined) {
+          payload.name = name;
+          payload.fullName = name;
+        }
+        if (phoneNumber !== undefined) {
+          payload.phoneNumber = phoneNumber;
+          payload.phone = phoneNumber;
+        }
+        if (profilePicture !== undefined) {
+          payload.profilePicture = profilePicture;
+          payload.profileImage = profilePicture;
+          payload.avatar = profilePicture;
+        }
+        try {
+          const res = await api.put('/auth/profile', payload);
+          resData = res.data;
+        } catch (err) {
+          const res = await api.put('/users/profile', payload);
+          resData = res.data;
+        }
       }
+
       return resData?.data?.user ?? resData?.user ?? resData?.data;
     },
     onSuccess: (updatedUser) => {
       if (updatedUser) {
-        const pic = updatedUser.profilePicture ?? updatedUser.profileImage ?? updatedUser.avatar ?? '';
-        updatedUser.profilePicture = normalizeImageUrl(pic);
-        updatedUser.profileImage = updatedUser.profilePicture;
-        updatedUser.avatar = updatedUser.profilePicture;
+        const rawPic =
+          updatedUser.profilePicture ??
+          updatedUser.profileImage ??
+          updatedUser.avatar ??
+          updatedUser.avatarUrl ??
+          updatedUser.image ??
+          updatedUser.photo ??
+          '';
+        const normalized = normalizeImageUrl(rawPic);
+        updatedUser.profilePicture = normalized;
+        updatedUser.profileImage = normalized;
+        updatedUser.avatar = normalized;
+        updatedUser.avatarUrl = normalized;
+        updatedUser.image = normalized;
+        updatedUser.photo = normalized;
         updateUser(updatedUser);
       }
-      // Refetch to get latest from server
       queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
     },
   });
 };

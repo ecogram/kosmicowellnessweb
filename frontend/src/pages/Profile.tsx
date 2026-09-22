@@ -90,7 +90,8 @@ export const Profile: React.FC = () => {
   const [fullName, setFullName] = useState(user?.name || (user as any)?.fullName || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || '');
-  const [profilePicture, setProfilePicture] = useState(normalizeImageUrl(user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar || ''));
+  const initialPic = user?.profilePicture || user?.profileImage || user?.avatar || user?.avatarUrl || user?.image || (user as any)?.photo || '';
+  const [profilePicture, setProfilePicture] = useState(normalizeImageUrl(initialPic));
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
@@ -212,11 +213,16 @@ export const Profile: React.FC = () => {
     const currentName = user?.name || (user as any)?.fullName;
     if (currentName) setFullName(currentName);
     if (user?.email) setEmail(user.email);
-    const currentPic = user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar;
-    if (currentPic !== undefined) {
-      setProfilePicture(normalizeImageUrl(currentPic));
-      setImageLoadError(false);
-    }
+    const currentPic =
+      user?.profilePicture ||
+      user?.profileImage ||
+      user?.avatar ||
+      user?.avatarUrl ||
+      user?.image ||
+      (user as any)?.photo ||
+      '';
+    setProfilePicture(normalizeImageUrl(currentPic));
+    setImageLoadError(false);
     const userPhone = user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || '';
     if (userPhone) setPhone(userPhone);
   }, [user]);
@@ -421,6 +427,7 @@ export const Profile: React.FC = () => {
         name: fullName.trim() || user?.name,
         phoneNumber: phone.trim() || user?.phoneNumber,
         profilePictureFile: photoFile,
+        profilePicture: previewDataUrl,
       });
       if (updatedUser) {
         const serverPic = normalizeImageUrl(
@@ -459,6 +466,7 @@ export const Profile: React.FC = () => {
         name: fullName.trim() || user?.name,
         phoneNumber: phone.trim() || user?.phoneNumber,
         profilePictureFile: file,  // original file — server resizes
+        profilePicture: compressedDataUrl,
       });
       if (updatedUser) {
         const serverPic = normalizeImageUrl(
@@ -670,8 +678,8 @@ export const Profile: React.FC = () => {
             onClick={() => {
               setFullName(user?.name || (user as any)?.fullName || fullName || '');
               setEmail(user?.email || email || '');
-              setPhone(user?.phoneNumber || (user as any)?.phone || phone || '');
-              setProfilePicture(profilePicture || user?.profilePicture || (user as any)?.profileImage || (user as any)?.avatar || '');
+              const editPic = profilePicture || user?.profilePicture || user?.profileImage || user?.avatar || user?.avatarUrl || user?.image || (user as any)?.photo || '';
+              setProfilePicture(normalizeImageUrl(editPic));
               setIsEditProfileOpen(true);
             }}
             className="p-2.5 rounded-2xl bg-emerald-800/10 hover:bg-emerald-800/20 text-emerald-800 transition-colors cursor-pointer"
