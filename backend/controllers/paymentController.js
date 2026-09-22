@@ -281,12 +281,30 @@ const getMyOrders = asyncHandler(async (req, res) => {
       { $or: userConditions },
       {
         $or: [
-          { paymentMethod: { $in: ['COD', 'cod', 'COD_UPFRONT', 'cod_upfront'] } },
-          { paymentStatus: { $in: ['PAID', 'paid', 'COMPLETED', 'completed', 'REFUNDED', 'refunded'] } },
-          { orderStatus: { $in: ['PROCESSING', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED', 'CANCELLED'] } },
-        ],
+          // 1. COD Orders (placed / confirmed)
+          {
+            paymentMethod: { $in: ['COD', 'cod', 'COD_UPFRONT', 'cod_upfront'] },
+            orderStatus: { $in: ['PROCESSING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED', 'CANCELLED'] }
+          },
+          // 2. Online Orders: MUST be verified PAID/COMPLETED or in confirmed processing/shipped state
+          {
+            paymentMethod: { $nin: ['COD', 'cod', 'COD_UPFRONT', 'cod_upfront'] },
+            $or: [
+              { paymentStatus: { $in: ['PAID', 'paid', 'COMPLETED', 'completed', 'REFUNDED', 'refunded'] } },
+              { orderStatus: { $in: ['PROCESSING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED'] } }
+            ]
+          }
+        ]
       },
-    ],
+      // Exclude test data & dummy orders
+      {
+        orderNumber: { $not: /^TEST|^MOCK|^DEMO|^DEV_|^DUMMY_/i },
+        userEmail: { $not: /@example\.com$|@test\.com$|^test@|^dummy@/i },
+        isTest: { $ne: true },
+        testOrder: { $ne: true },
+        isMock: { $ne: true }
+      }
+    ]
   };
 
   const [rawOrders, total] = await Promise.all([
@@ -604,9 +622,28 @@ const getOrderById = asyncHandler(async (req, res) => {
     ]
     : [];
 
-  const query = userCondition.length > 0
+  const baseQuery = userCondition.length > 0
     ? { $and: [{ $or: idCondition }, { $or: userCondition }] }
     : { $or: idCondition };
+
+  const query = {
+    $and: [
+      baseQuery,
+      {
+        $or: [
+          { paymentMethod: { $in: ['COD', 'cod', 'COD_UPFRONT', 'cod_upfront'] } },
+          { paymentStatus: { $in: ['PAID', 'paid', 'COMPLETED', 'completed', 'REFUNDED', 'refunded'] } },
+          { orderStatus: { $in: ['PROCESSING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED'] } }
+        ]
+      },
+      {
+        orderNumber: { $not: /^TEST|^MOCK|^DEMO|^DEV_|^DUMMY_/i },
+        isTest: { $ne: true },
+        testOrder: { $ne: true },
+        isMock: { $ne: true }
+      }
+    ]
+  };
 
   const order = await Order.findOne(query).lean();
   if (!order) {
