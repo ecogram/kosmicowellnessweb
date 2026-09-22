@@ -49,9 +49,104 @@ export const useSavedPaymentMethods = () => {
   return useQuery({
     queryKey: ['payment-methods'],
     queryFn: async (): Promise<SavedPaymentMethod[]> => {
-      const { data } = await api.get('/payment/saved-methods');
-      const list = data?.data?.methods ?? data?.data?.paymentMethods ?? (Array.isArray(data?.data) ? data?.data : (Array.isArray(data) ? data : []));
-      return list as SavedPaymentMethod[];
+      const allMethods: any[] = [];
+
+      // 1. Fetch from /payment/saved-methods
+      try {
+        const { data } = await api.get('/payment/saved-methods');
+        const list =
+          data?.data?.methods ??
+          data?.data?.paymentMethods ??
+          data?.data?.savedPaymentMethods ??
+          (Array.isArray(data?.data) ? data?.data : Array.isArray(data) ? data : []);
+        if (Array.isArray(list)) allMethods.push(...list);
+      } catch (err) {
+        console.warn('/payment/saved-methods fetch notice:', err);
+      }
+
+      // 2. Fallback to /payments/saved-methods
+      if (allMethods.length === 0) {
+        try {
+          const { data } = await api.get('/payments/saved-methods');
+          const list =
+            data?.data?.methods ??
+            data?.data?.paymentMethods ??
+            data?.data?.savedPaymentMethods ??
+            (Array.isArray(data?.data) ? data?.data : Array.isArray(data) ? data : []);
+          if (Array.isArray(list)) allMethods.push(...list);
+        } catch (_) {}
+      }
+
+      // 3. Also fetch directly from /users/profile to pick up methods saved by app
+      try {
+        const { data } = await api.get('/users/profile');
+        const u = data?.data?.user ?? data?.data;
+        const uMethods = u?.savedPaymentMethods ?? u?.paymentMethods ?? u?.savedMethods ?? [];
+        if (Array.isArray(uMethods)) allMethods.push(...uMethods);
+
+        // Check if direct UPI or bank fields exist on profile
+        if (u?.upiId) {
+          allMethods.push({
+            type: 'UPI',
+            displayName: u?.name || 'UPI Account',
+            upiId: u.upiId,
+            isDefault: true,
+          });
+        }
+        if (u?.bankDetails && typeof u.bankDetails === 'object') {
+          allMethods.push({
+            type: 'BANK',
+            displayName: u.bankDetails.accountHolder || u?.name || 'Bank Account',
+            bankName: u.bankDetails.bankName || 'Bank',
+            accountNumber: u.bankDetails.accountNumber,
+            ifscCode: u.bankDetails.ifscCode,
+            isDefault: true,
+          });
+        }
+      } catch (_) {}
+
+      // Normalize and deduplicate
+      const seen = new Set<string>();
+      const result: SavedPaymentMethod[] = [];
+
+      for (const m of allMethods) {
+        if (!m) continue;
+        const typeUpper = String(
+          m.type ||
+            m.methodType ||
+            (m.upiId || m.vpa ? 'UPI' : m.accountNumber || m.bankName ? 'BANK' : 'UPI')
+        ).toUpperCase();
+        const upiId = m.upiId || m.vpa || m.upi || '';
+        const bankName = m.bankName || m.bank || '';
+        const accountNumber =
+          m.accountNumber || m.accountNo || m.accNo || (m.cardLast4 ? `•••• ${m.cardLast4}` : '');
+        const ifscCode = m.ifscCode || m.ifsc || '';
+        const displayName =
+          m.displayName ||
+          m.title ||
+          m.name ||
+          m.accountHolder ||
+          (upiId ? 'UPI Account' : bankName || 'Payment Method');
+        const id = String(m._id || m.id || upiId || accountNumber || Math.random());
+
+        const key = (upiId || accountNumber || id).trim().toLowerCase();
+        if (key && !seen.has(key)) {
+          seen.add(key);
+          result.push({
+            _id: id,
+            id,
+            type: typeUpper.includes('BANK') ? 'BANK' : 'UPI',
+            displayName,
+            upiId,
+            bankName,
+            accountNumber,
+            ifscCode,
+            isDefault: !!m.isDefault,
+          });
+        }
+      }
+
+      return result;
     },
     staleTime: 1000,
     refetchInterval: 3000,

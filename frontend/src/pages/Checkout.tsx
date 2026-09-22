@@ -73,26 +73,56 @@ export const Checkout: React.FC = () => {
   const [paymentMethods, setPaymentMethods] = useState<SavedPaymentMethod[]>([]);
 
   useEffect(() => {
-    const rawList = Array.isArray(savedMethodsData)
-      ? savedMethodsData
-      : (Array.isArray((savedMethodsData as any)?.methods)
-        ? (savedMethodsData as any).methods
-        : (user as any)?.savedPaymentMethods || (user as any)?.paymentMethods || []);
-
-    if (Array.isArray(rawList)) {
-      const formatted: SavedPaymentMethod[] = rawList.map((m: any) => ({
-        id: m._id || m.id || `pm-${Date.now()}`,
-        _id: m._id || m.id,
-        type: m.type || 'UPI',
-        displayName: m.displayName || user?.name || 'User',
-        upiId: m.upiId,
-        bankName: m.bankName,
-        accountNumber: m.accountNumber,
-        ifscCode: m.ifscCode,
-        isDefault: !!m.isDefault,
-      }));
-      setPaymentMethods(formatted);
+    const rawList: any[] = [];
+    if (Array.isArray(savedMethodsData)) {
+      rawList.push(...savedMethodsData);
+    } else if (savedMethodsData && typeof savedMethodsData === 'object') {
+      const arr = (savedMethodsData as any).methods || (savedMethodsData as any).paymentMethods || (savedMethodsData as any).savedPaymentMethods;
+      if (Array.isArray(arr)) rawList.push(...arr);
     }
+
+    const userMethods = (user as any)?.savedPaymentMethods || (user as any)?.paymentMethods || (user as any)?.savedMethods || [];
+    if (Array.isArray(userMethods)) {
+      rawList.push(...userMethods);
+    }
+    if ((user as any)?.upiId) {
+      rawList.push({
+        type: 'UPI',
+        displayName: user?.name || 'UPI Account',
+        upiId: (user as any).upiId,
+        isDefault: true,
+      });
+    }
+
+    const seen = new Set<string>();
+    const formatted: SavedPaymentMethod[] = [];
+    for (const m of rawList) {
+      if (!m) continue;
+      const typeUpper = String(m.type || m.methodType || (m.upiId ? 'UPI' : (m.accountNumber ? 'BANK' : 'UPI'))).toUpperCase();
+      const upiId = m.upiId || m.vpa || m.upi || '';
+      const bankName = m.bankName || m.bank || '';
+      const accountNumber = m.accountNumber || m.accountNo || m.accNo || (m.cardLast4 ? `•••• ${m.cardLast4}` : '');
+      const ifscCode = m.ifscCode || m.ifsc || '';
+      const displayName = m.displayName || m.title || m.name || (upiId ? 'UPI Account' : (bankName || 'Payment Method'));
+      const id = String(m._id || m.id || upiId || accountNumber || `pm-${Date.now()}`);
+
+      const key = (upiId || accountNumber || id).trim().toLowerCase();
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        formatted.push({
+          id,
+          _id: id,
+          type: typeUpper.includes('BANK') ? 'BANK' : 'UPI',
+          displayName,
+          upiId,
+          bankName,
+          accountNumber,
+          ifscCode,
+          isDefault: !!m.isDefault,
+        });
+      }
+    }
+    setPaymentMethods(formatted);
   }, [savedMethodsData, user]);
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<SavedPaymentMethod | undefined>();

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { useAuthStore } from '../store/useAuthStore';
@@ -121,22 +121,71 @@ export const Profile: React.FC = () => {
   const [addrFormLabel, setAddrFormLabel] = useState<'Home' | 'Work' | 'Other'>('Home');
   const [addrFormIsDefault, setAddrFormIsDefault] = useState(false);
 
-  // Payment Methods State — loaded from API (combines dedicated API query & user profile object)
-  const methodsFromQuery = paymentMethodsData !== undefined
-    ? (Array.isArray(paymentMethodsData)
-      ? paymentMethodsData
-      : (Array.isArray((paymentMethodsData as any)?.methods)
-        ? (paymentMethodsData as any).methods
-        : (Array.isArray((paymentMethodsData as any)?.savedPaymentMethods)
-          ? (paymentMethodsData as any).savedPaymentMethods
-          : [])))
-    : null;
-  const methodsFromUser = (user as any)?.savedPaymentMethods || (user as any)?.paymentMethods || [];
-  const paymentMethods: SavedPaymentMethod[] = (
-    methodsFromQuery !== null
-      ? methodsFromQuery
-      : (Array.isArray(methodsFromUser) ? methodsFromUser : [])
-  ) as SavedPaymentMethod[];
+  // Payment Methods State — loaded from API & merged with user profile methods saved by mobile app
+  const paymentMethods: SavedPaymentMethod[] = useMemo(() => {
+    const rawList: any[] = [];
+    if (Array.isArray(paymentMethodsData)) {
+      rawList.push(...paymentMethodsData);
+    } else if (paymentMethodsData && typeof paymentMethodsData === 'object') {
+      const pmObj: any = paymentMethodsData;
+      const arr = pmObj.methods || pmObj.paymentMethods || pmObj.savedPaymentMethods;
+      if (Array.isArray(arr)) rawList.push(...arr);
+    }
+
+    const userMethods = (user as any)?.savedPaymentMethods || (user as any)?.paymentMethods || (user as any)?.savedMethods || [];
+    if (Array.isArray(userMethods)) {
+      rawList.push(...userMethods);
+    }
+    if ((user as any)?.upiId) {
+      rawList.push({
+        type: 'UPI',
+        displayName: user?.name || 'UPI Account',
+        upiId: (user as any).upiId,
+        isDefault: true,
+      });
+    }
+    if ((user as any)?.bankDetails && typeof (user as any).bankDetails === 'object') {
+      const b = (user as any).bankDetails;
+      rawList.push({
+        type: 'BANK',
+        displayName: b.accountHolder || user?.name || 'Bank Account',
+        bankName: b.bankName || 'Bank',
+        accountNumber: b.accountNumber,
+        ifscCode: b.ifscCode,
+        isDefault: true,
+      });
+    }
+
+    const seen = new Set<string>();
+    const result: SavedPaymentMethod[] = [];
+    for (const m of rawList) {
+      if (!m) continue;
+      const typeUpper = String(m.type || m.methodType || (m.upiId ? 'UPI' : (m.accountNumber ? 'BANK' : 'UPI'))).toUpperCase();
+      const upiId = m.upiId || m.vpa || m.upi || '';
+      const bankName = m.bankName || m.bank || '';
+      const accountNumber = m.accountNumber || m.accountNo || m.accNo || (m.cardLast4 ? `•••• ${m.cardLast4}` : '');
+      const ifscCode = m.ifscCode || m.ifsc || '';
+      const displayName = m.displayName || m.title || m.name || m.accountHolder || (upiId ? 'UPI Account' : (bankName || 'Payment Method'));
+      const id = String(m._id || m.id || upiId || accountNumber || Math.random());
+
+      const key = (upiId || accountNumber || id).trim().toLowerCase();
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        result.push({
+          _id: id,
+          id,
+          type: typeUpper.includes('BANK') ? 'BANK' : 'UPI',
+          displayName,
+          upiId,
+          bankName,
+          accountNumber,
+          ifscCode,
+          isDefault: !!m.isDefault,
+        });
+      }
+    }
+    return result;
+  }, [paymentMethodsData, user]);
   const [isAddingPaymentMethod, setIsAddingPaymentMethod] = useState(false);
   const [paymentTypeTab, setPaymentTypeTab] = useState<'BANK' | 'UPI'>('UPI');
   const [paymentSuccessMsg, setPaymentSuccessMsg] = useState('');
