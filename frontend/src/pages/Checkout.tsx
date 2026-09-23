@@ -67,6 +67,7 @@ export const Checkout: React.FC = () => {
   const verifyPaymentMutation = useVerifyPayment();
   const { data: savedMethodsData } = useSavedPaymentMethods();
   const savePaymentMethodMutation = useSavePaymentMethod();
+  const { data: dbCoupons } = useCoupons();
   const { user } = useAuthStore();
 
   // Selected payment mode: 'ONLINE' or 'COD'
@@ -600,8 +601,6 @@ export const Checkout: React.FC = () => {
       toast.error(err.response?.data?.message || 'Failed to initialize payment. Please try again.');
     }
   };
-
-  const { data: dbCoupons } = useCoupons();
 
   const handleApplyCoupon = async (code: string) => {
     toast.dismiss();
