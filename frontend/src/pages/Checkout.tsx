@@ -335,11 +335,11 @@ export const Checkout: React.FC = () => {
           </div>
           <h2 className="font-serif text-2xl font-bold text-neutral-900 mb-2">Your Cart is Empty</h2>
           <p className="text-neutral-600 text-xs leading-relaxed mb-6">
-            You don't have any items in your cart. Add 100% natural Sweet Monk Sweetener (10ml Bottle) to continue!
+            You don't have any items in your cart. Add products to continue!
           </p>
-          <Link to="/products/kosmico-classic-monk-fruit-sweetener-10g">
+          <Link to="/shop">
             <Button className="w-full py-3 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-sm rounded-xl shadow-md">
-              Order Sweet Monk (10ml Bottle)
+              Shop Now
             </Button>
           </Link>
         </div>

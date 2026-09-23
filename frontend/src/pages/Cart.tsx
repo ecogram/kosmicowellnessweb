@@ -20,7 +20,7 @@ export const Cart = () => {
       <div className="py-32 text-center">
         <h2 className="text-3xl font-serif text-primary mb-4">Your cart is empty</h2>
         <Link to="/shop">
-          <Button>Continue Shopping</Button>
+          <Button>Shop Now</Button>
         </Link>
       </div>
     );
@@ -49,9 +49,9 @@ export const Cart = () => {
                   const productId = prod._id || (typeof item.product === 'string' ? item.product : '');
                   const imageSrc = Array.isArray(prod.images) && prod.images.length > 0 
                     ? prod.images[0] 
-                    : '/assets/products/product-box.jpg';
-                  const productName = prod.name || 'Sweet Monk (250ml)';
-                  const productSlug = prod.slug || 'sweet-monk-sweetener-250ml';
+                    : (prod.image || item.image || '/assets/products/product-box.jpg');
+                  const productName = prod.name || item.name || 'Sweet Monk (Monk Fruit Sweetener 10ml)';
+                  const productSlug = prod.slug || 'kosmico-classic-monk-fruit-sweetener-10g';
 
                   return (
                     <li key={`${productId}-${item.variant || 'default'}`} className="p-6 flex flex-col sm:grid sm:grid-cols-12 gap-6 items-center">

@@ -99,7 +99,7 @@ export function CartDrawer() {
               <div>
                 <h3 className="font-serif text-lg font-bold text-neutral-900">Your cart is empty</h3>
                 <p className="text-xs text-neutral-600 mt-1 max-w-xs leading-relaxed">
-                  Start your zero-calorie journey with 100% natural Sweet Monk Sweetener!
+                  Start your wellness journey today. Add products to get started!
                 </p>
               </div>
               <button
