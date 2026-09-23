@@ -122,7 +122,7 @@ export const Profile: React.FC = () => {
   const [addrFormLabel, setAddrFormLabel] = useState<'Home' | 'Work' | 'Other'>('Home');
   const [addrFormIsDefault, setAddrFormIsDefault] = useState(false);
 
-  // Payment Methods State — loaded from API & merged with user profile methods saved by mobile app
+  // Payment Methods State — loaded from API & merged with user profile methods (UPI only)
   const paymentMethods: SavedPaymentMethod[] = useMemo(() => {
     const rawList: any[] = [];
     if (Array.isArray(paymentMethodsData)) {
@@ -145,42 +145,28 @@ export const Profile: React.FC = () => {
         isDefault: true,
       });
     }
-    if ((user as any)?.bankDetails && typeof (user as any).bankDetails === 'object') {
-      const b = (user as any).bankDetails;
-      rawList.push({
-        type: 'BANK',
-        displayName: b.accountHolder || user?.name || 'Bank Account',
-        bankName: b.bankName || 'Bank',
-        accountNumber: b.accountNumber,
-        ifscCode: b.ifscCode,
-        isDefault: true,
-      });
-    }
 
     const seen = new Set<string>();
     const result: SavedPaymentMethod[] = [];
     for (const m of rawList) {
       if (!m) continue;
-      const typeUpper = String(m.type || m.methodType || (m.upiId ? 'UPI' : (m.accountNumber ? 'BANK' : 'UPI'))).toUpperCase();
+      const typeUpper = String(m.type || m.methodType || (m.upiId ? 'UPI' : '')).toUpperCase();
       const upiId = m.upiId || m.vpa || m.upi || '';
-      const bankName = m.bankName || m.bank || '';
-      const accountNumber = m.accountNumber || m.accountNo || m.accNo || (m.cardLast4 ? `•••• ${m.cardLast4}` : '');
-      const ifscCode = m.ifscCode || m.ifsc || '';
-      const displayName = m.displayName || m.title || m.name || m.accountHolder || (upiId ? 'UPI Account' : (bankName || 'Payment Method'));
-      const id = String(m._id || m.id || upiId || accountNumber || Math.random());
+      if (typeUpper.includes('BANK') && !upiId) continue;
+      if (!upiId) continue;
 
-      const key = (upiId || accountNumber || id).trim().toLowerCase();
+      const displayName = m.displayName || m.title || m.name || m.accountHolder || 'UPI Account';
+      const id = String(m._id || m.id || upiId || Math.random());
+
+      const key = (upiId || id).trim().toLowerCase();
       if (key && !seen.has(key)) {
         seen.add(key);
         result.push({
           _id: id,
           id,
-          type: typeUpper.includes('BANK') ? 'BANK' : 'UPI',
+          type: 'UPI',
           displayName,
           upiId,
-          bankName,
-          accountNumber,
-          ifscCode,
           isDefault: !!m.isDefault,
         });
       }
@@ -188,7 +174,6 @@ export const Profile: React.FC = () => {
     return result;
   }, [paymentMethodsData, user]);
   const [isAddingPaymentMethod, setIsAddingPaymentMethod] = useState(false);
-  const [paymentTypeTab, setPaymentTypeTab] = useState<'BANK' | 'UPI'>('UPI');
   const [paymentSuccessMsg, setPaymentSuccessMsg] = useState('');
 
   useEffect(() => {
@@ -197,13 +182,7 @@ export const Profile: React.FC = () => {
     }
   }, [isPaymentMethodsOpen]);
 
-  // Payment form fields
-  const [bankAccountHolder, setBankAccountHolder] = useState(fullName);
-  const [bankName, setBankName] = useState('');
-  const [bankAccountNumber, setBankAccountNumber] = useState('');
-  const [bankIfscCode, setBankIfscCode] = useState('');
-  const [bankSetDefault, setBankSetDefault] = useState(true);
-
+  // UPI Payment form fields
   const [upiDisplayName, setUpiDisplayName] = useState(fullName);
   const [upiIdInput, setUpiIdInput] = useState('');
   const [upiSetDefault, setUpiSetDefault] = useState(true);
@@ -1330,8 +1309,8 @@ export const Profile: React.FC = () => {
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="bg-white/20 text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded flex items-center gap-1">
-                            {pm.type === 'BANK' ? <Building className="w-3 h-3" /> : <Smartphone className="w-3 h-3" />}
-                            {pm.type === 'BANK' ? 'BANK' : 'UPI'}
+                            <Smartphone className="w-3 h-3" />
+                            UPI
                           </span>
                           {pm.isDefault && (
                             <span className="text-[10px] bg-emerald-200 text-emerald-950 font-bold px-1.5 py-0.2 rounded">
@@ -1341,7 +1320,7 @@ export const Profile: React.FC = () => {
                         </div>
 
                         <p className="font-bold text-sm tracking-wide mt-1">
-                          {pm.type === 'BANK' ? `${pm.bankName || 'Bank'} - ${pm.accountNumber}` : pm.upiId}
+                          {pm.upiId}
                         </p>
 
                         <div className="flex items-center gap-1.5 text-xs text-emerald-100">
@@ -1373,40 +1352,21 @@ export const Profile: React.FC = () => {
                 </div>
               </div>
             ) : (
-              /* ADD PAYMENT METHOD FORM — POST /api/payment/save-method */
+              /* ADD PAYMENT METHOD FORM — POST /api/payment/save-method (UPI ONLY) */
               <form
                 onSubmit={async (e) => {
                   e.preventDefault();
+                  if (!upiIdInput.trim()) return;
                   try {
-                    if (paymentTypeTab === 'UPI') {
-                      if (!upiIdInput.trim()) return;
-                      // API docs: POST /api/payment/save-method
-                      // Body: { type, displayName, upiId, isDefault }
-                      await savePaymentMethodMutation.mutateAsync({
-                        type: 'UPI',
-                        displayName: (upiDisplayName || fullName || user?.name || 'User').toUpperCase(),
-                        upiId: upiIdInput.trim(),
-                        isDefault: upiSetDefault,
-                      });
-                      setUpiIdInput('');
-                    } else {
-                      if (!bankAccountNumber.trim() || !bankIfscCode.trim()) return;
-                      // API docs: POST /api/payment/save-method
-                      // Body: { type, displayName, bankName, accountNumber, ifscCode, isDefault }
-                      await savePaymentMethodMutation.mutateAsync({
-                        type: 'BANK',
-                        displayName: (bankAccountHolder || fullName || user?.name || 'User').toUpperCase(),
-                        bankName: bankName.trim() || 'Bank Account',
-                        accountNumber: bankAccountNumber.trim(),
-                        ifscCode: bankIfscCode.trim().toUpperCase(),
-                        isDefault: bankSetDefault,
-                      });
-                      setBankAccountNumber('');
-                      setBankIfscCode('');
-                      setBankName('');
-                    }
+                    await savePaymentMethodMutation.mutateAsync({
+                      type: 'UPI',
+                      displayName: (upiDisplayName || fullName || user?.name || 'User').toUpperCase(),
+                      upiId: upiIdInput.trim(),
+                      isDefault: upiSetDefault,
+                    });
+                    setUpiIdInput('');
                     setIsAddingPaymentMethod(false);
-                    setPaymentSuccessMsg('New payment method added successfully');
+                    setPaymentSuccessMsg('New UPI method added successfully');
                     setTimeout(() => setPaymentSuccessMsg(''), 2500);
                     refetchPaymentMethods();
                   } catch (err) {
@@ -1415,132 +1375,43 @@ export const Profile: React.FC = () => {
                 }}
                 className="space-y-4"
               >
-                <div>
-                  <label className="text-xs font-bold text-neutral-700 block mb-2">Select Payment Type</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentTypeTab('BANK')}
-                      className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${paymentTypeTab === 'BANK'
-                          ? 'border-[#0a7a40] bg-emerald-50 text-[#0a7a40] font-bold'
-                          : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50'
-                        }`}
-                    >
-                      <Building className="w-6 h-6 mb-1.5" />
-                      <span className="text-xs font-bold">Bank Account</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setPaymentTypeTab('UPI')}
-                      className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border-2 transition-all cursor-pointer ${paymentTypeTab === 'UPI'
-                          ? 'border-[#0a7a40] bg-emerald-50 text-[#0a7a40] font-bold'
-                          : 'border-neutral-200 bg-white text-neutral-600 hover:bg-neutral-50'
-                        }`}
-                    >
-                      <Smartphone className="w-6 h-6 mb-1.5" />
-                      <span className="text-xs font-bold">UPI ID</span>
-                    </button>
+                <div className="space-y-3 pt-1">
+                  <div>
+                    <label className="text-xs font-bold text-neutral-700 block mb-1">Display Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={upiDisplayName}
+                      onChange={(e) => setUpiDisplayName(e.target.value)}
+                      placeholder="e.g. AMIT KUMAR"
+                      className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:outline-none focus:border-emerald-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-bold text-neutral-700 block mb-1">UPI ID</label>
+                    <input
+                      type="text"
+                      required
+                      value={upiIdInput}
+                      onChange={(e) => setUpiIdInput(e.target.value)}
+                      placeholder="e.g. 7068368474@ybl or yourname@okaxis"
+                      className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:outline-none focus:border-emerald-700"
+                    />
+                  </div>
+                  <div className="flex items-start gap-1.5 p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-[11px] text-emerald-800">
+                    <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                    <span>Ensure your UPI ID is correct to avoid payment failures.</span>
+                  </div>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-xs font-medium text-neutral-700">Set as Default Method</span>
+                    <input
+                      type="checkbox"
+                      checked={upiSetDefault}
+                      onChange={(e) => setUpiSetDefault(e.target.checked)}
+                      className="w-4 h-4 rounded text-[#0a7a40] focus:ring-[#0a7a40] cursor-pointer"
+                    />
                   </div>
                 </div>
-
-                {paymentTypeTab === 'BANK' && (
-                  <div className="space-y-3 pt-1">
-                    <div>
-                      <label className="text-xs font-bold text-neutral-700 block mb-1">Account Holder Name</label>
-                      <input
-                        type="text"
-                        required
-                        value={bankAccountHolder}
-                        onChange={(e) => setBankAccountHolder(e.target.value)}
-                        placeholder="e.g. Amit Kumar"
-                        className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:outline-none focus:border-emerald-700"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-neutral-700 block mb-1">Bank Name</label>
-                      <input
-                        type="text"
-                        required
-                        value={bankName}
-                        onChange={(e) => setBankName(e.target.value)}
-                        placeholder="e.g. State Bank of India / HDFC Bank"
-                        className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:outline-none focus:border-emerald-700"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-neutral-700 block mb-1">Account Number</label>
-                      <input
-                        type="text"
-                        required
-                        value={bankAccountNumber}
-                        onChange={(e) => setBankAccountNumber(e.target.value)}
-                        placeholder="e.g. 123456789012"
-                        className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:outline-none focus:border-emerald-700"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-neutral-700 block mb-1">IFSC Code</label>
-                      <input
-                        type="text"
-                        required
-                        value={bankIfscCode}
-                        onChange={(e) => setBankIfscCode(e.target.value.toUpperCase())}
-                        placeholder="e.g. SBIN0001234"
-                        className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-xs text-neutral-900 uppercase focus:outline-none focus:border-emerald-700"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-xs font-medium text-neutral-700">Set as Default Method</span>
-                      <input
-                        type="checkbox"
-                        checked={bankSetDefault}
-                        onChange={(e) => setBankSetDefault(e.target.checked)}
-                        className="w-4 h-4 rounded text-[#0a7a40] focus:ring-[#0a7a40] cursor-pointer"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {paymentTypeTab === 'UPI' && (
-                  <div className="space-y-3 pt-1">
-                    <div>
-                      <label className="text-xs font-bold text-neutral-700 block mb-1">Display Name</label>
-                      <input
-                        type="text"
-                        required
-                        value={upiDisplayName}
-                        onChange={(e) => setUpiDisplayName(e.target.value)}
-                        placeholder="e.g. AMIT KUMAR"
-                        className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:outline-none focus:border-emerald-700"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-bold text-neutral-700 block mb-1">UPI ID</label>
-                      <input
-                        type="text"
-                        required
-                        value={upiIdInput}
-                        onChange={(e) => setUpiIdInput(e.target.value)}
-                        placeholder="e.g. 7068368474@ybl or yourname@okaxis"
-                        className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:outline-none focus:border-emerald-700"
-                      />
-                    </div>
-                    <div className="flex items-start gap-1.5 p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-[11px] text-emerald-800">
-                      <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                      <span>Ensure your UPI ID is correct to avoid payment failures.</span>
-                    </div>
-                    <div className="flex items-center justify-between pt-1">
-                      <span className="text-xs font-medium text-neutral-700">Set as Default Method</span>
-                      <input
-                        type="checkbox"
-                        checked={upiSetDefault}
-                        onChange={(e) => setUpiSetDefault(e.target.checked)}
-                        className="w-4 h-4 rounded text-[#0a7a40] focus:ring-[#0a7a40] cursor-pointer"
-                      />
-                    </div>
-                  </div>
-                )}
 
                 <div className="flex gap-2 pt-2">
                   <button
@@ -1552,9 +1423,17 @@ export const Profile: React.FC = () => {
                   </button>
                   <button
                     type="submit"
-                    className="flex-2 py-3 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-xs rounded-xl shadow-md cursor-pointer"
+                    disabled={savePaymentMethodMutation.isPending}
+                    className="flex-2 py-3 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-xs rounded-xl shadow-md cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5"
                   >
-                    Save Details
+                    {savePaymentMethodMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Saving...</span>
+                      </>
+                    ) : (
+                      'Save Details'
+                    )}
                   </button>
                 </div>
               </form>

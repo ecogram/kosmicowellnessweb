@@ -147,7 +147,7 @@ export const useSavedPaymentMethods = () => {
         }
       }
 
-      // Normalize and deduplicate
+      // Normalize and deduplicate (UPI only)
       const seen = new Set<string>();
       const result: SavedPaymentMethod[] = [];
 
@@ -156,33 +156,29 @@ export const useSavedPaymentMethods = () => {
         const typeUpper = String(
           m.type ||
             m.methodType ||
-            (m.upiId || m.vpa ? 'UPI' : m.accountNumber || m.bankName ? 'BANK' : 'UPI')
+            (m.upiId || m.vpa ? 'UPI' : '')
         ).toUpperCase();
         const upiId = m.upiId || m.vpa || m.upi || '';
-        const bankName = m.bankName || m.bank || '';
-        const accountNumber =
-          m.accountNumber || m.accountNo || m.accNo || (m.cardLast4 ? `•••• ${m.cardLast4}` : '');
-        const ifscCode = m.ifscCode || m.ifsc || '';
+        if (typeUpper.includes('BANK') && !upiId) continue;
+        if (!upiId) continue;
+
         const displayName =
           m.displayName ||
           m.title ||
           m.name ||
           m.accountHolder ||
-          (upiId ? 'UPI Account' : bankName || 'Payment Method');
-        const id = String(m._id || m.id || upiId || accountNumber || Math.random());
+          'UPI Account';
+        const id = String(m._id || m.id || upiId || Math.random());
 
-        const key = (upiId || accountNumber || id).trim().toLowerCase();
+        const key = (upiId || id).trim().toLowerCase();
         if (key && !seen.has(key)) {
           seen.add(key);
           result.push({
             _id: id,
             id,
-            type: typeUpper.includes('BANK') ? 'BANK' : 'UPI',
+            type: 'UPI',
             displayName,
             upiId,
-            bankName,
-            accountNumber,
-            ifscCode,
             isDefault: !!m.isDefault,
           });
         }
