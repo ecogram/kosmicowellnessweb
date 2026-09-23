@@ -5,7 +5,7 @@ import { normalizeImageUrl } from '../utils/imageUrl';
 
 // ─── GET /api/auth/profile (fallback /api/users/profile) ──────────────────────
 export const useProfile = () => {
-  const { updateUser, accessToken, user: currentUser } = useAuthStore();
+  const { updateUser, accessToken } = useAuthStore();
 
   return useQuery({
     queryKey: ['auth-profile'],
@@ -43,24 +43,40 @@ export const useProfile = () => {
         user.picture = normalized;
         user.profile_picture = normalized;
 
-        // Only update store if actual data changed to avoid re-render flicker
-        if (
-          !currentUser ||
-          currentUser.name !== user.name ||
-          currentUser.email !== user.email ||
-          currentUser.profilePicture !== normalized ||
-          currentUser.phoneNumber !== (user.phoneNumber || user.phone) ||
-          JSON.stringify((currentUser as any)?.savedPaymentMethods) !== JSON.stringify((user as any)?.savedPaymentMethods)
-        ) {
+        const current = useAuthStore.getState().user;
+        const incomingPhone = user.phoneNumber || user.phone || (user as any)?.mobile || '';
+        const currentPhone = current?.phoneNumber || current?.phone || (current as any)?.mobile || '';
+        const incomingName = user.name || (user as any)?.fullName || '';
+        const currentName = current?.name || (current as any)?.fullName || '';
+        const incomingEmail = (user.email || '').toLowerCase();
+        const currentEmail = (current?.email || '').toLowerCase();
+        const currentPic = current?.profilePicture || '';
+
+        const currentPayments = (current as any)?.savedPaymentMethods || [];
+        const incomingPayments = (user as any)?.savedPaymentMethods || [];
+
+        const hasChanged =
+          !current ||
+          currentName !== incomingName ||
+          currentEmail !== incomingEmail ||
+          currentPic !== normalized ||
+          currentPhone !== incomingPhone ||
+          JSON.stringify(currentPayments) !== JSON.stringify(incomingPayments);
+
+        if (hasChanged) {
+          user.phoneNumber = incomingPhone;
+          user.phone = incomingPhone;
+          user.name = incomingName;
+          user.fullName = incomingName;
           updateUser(user);
         }
       }
       return user;
     },
     enabled: !!accessToken,
-    staleTime: 1000,
-    refetchInterval: 6000,
-    refetchOnWindowFocus: true,
+    staleTime: 5000,
+    refetchInterval: 15000,
+    refetchOnWindowFocus: false,
     retry: 1,
   });
 };
@@ -136,7 +152,12 @@ export const useUpdateProfile = () => {
         updatedUser.avatar = normalized;
         updatedUser.avatarUrl = normalized;
         updatedUser.image = normalized;
-        updatedUser.photo = normalized;
+        const finalPhone = updatedUser.phoneNumber || updatedUser.phone || (updatedUser as any)?.mobile || '';
+        updatedUser.phoneNumber = finalPhone;
+        updatedUser.phone = finalPhone;
+        const finalName = updatedUser.name || (updatedUser as any)?.fullName || '';
+        updatedUser.name = finalName;
+        updatedUser.fullName = finalName;
         updateUser(updatedUser);
       }
       queryClient.invalidateQueries({ queryKey: ['auth-profile'] });

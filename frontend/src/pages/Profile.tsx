@@ -210,6 +210,9 @@ export const Profile: React.FC = () => {
 
   // Synchronize form state when Zustand store user changes (driven by useProfile polling)
   useEffect(() => {
+    // If the edit profile modal is currently open, DO NOT overwrite the user's active typing
+    if (isEditProfileOpen) return;
+
     const currentName = user?.name || (user as any)?.fullName;
     if (currentName) setFullName(currentName);
     if (user?.email) setEmail(user.email);
@@ -225,7 +228,7 @@ export const Profile: React.FC = () => {
     setImageLoadError(false);
     const userPhone = user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || '';
     if (userPhone) setPhone(userPhone);
-  }, [user]);
+  }, [user, isEditProfileOpen]);
 
   // Fetch live addresses from backend (API-aligned field mapping)
   const fetchLiveAddresses = async () => {
@@ -515,16 +518,22 @@ export const Profile: React.FC = () => {
         phoneNumber: cleanPhone,
       });
       if (updatedUser?.name) setFullName(updatedUser.name);
-      if (updatedUser?.phoneNumber) setPhone(updatedUser.phoneNumber);
+      if (updatedUser?.phoneNumber || updatedUser?.phone) {
+        setPhone(updatedUser.phoneNumber || updatedUser.phone);
+      }
+      setIsProfileSaved(true);
+      setTimeout(() => {
+        setIsProfileSaved(false);
+        setIsEditProfileOpen(false);
+      }, 700);
     } catch (err) {
       console.warn('Backend update profile notice:', err);
+      setIsProfileSaved(true);
+      setTimeout(() => {
+        setIsProfileSaved(false);
+        setIsEditProfileOpen(false);
+      }, 700);
     }
-
-    setIsProfileSaved(true);
-    setTimeout(() => {
-      setIsProfileSaved(false);
-      setIsEditProfileOpen(false);
-    }, 600);
   };
 
   const handleLogout = () => {
@@ -683,6 +692,7 @@ export const Profile: React.FC = () => {
             onClick={() => {
               setFullName(user?.name || (user as any)?.fullName || fullName || '');
               setEmail(user?.email || email || '');
+              setPhone(user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || phone || '');
               const editPic = profilePicture || user?.profilePicture || user?.profileImage || user?.avatar || user?.avatarUrl || user?.image || (user as any)?.photo || '';
               setProfilePicture(normalizeImageUrl(editPic));
               setIsEditProfileOpen(true);
@@ -956,12 +966,7 @@ export const Profile: React.FC = () => {
                     required
                     placeholder="Full Name"
                     value={fullName}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (/^[a-zA-Z\s]*$/.test(val)) {
-                        setFullName(val);
-                      }
-                    }}
+                    onChange={(e) => setFullName(e.target.value)}
                     className="w-full pl-10 pr-4 py-3 bg-neutral-50/70 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-900 focus:outline-none focus:border-emerald-700 focus:bg-white transition-all"
                   />
                 </div>
@@ -1007,9 +1012,17 @@ export const Profile: React.FC = () => {
               {/* Save Changes Solid Green Button */}
               <button
                 type="submit"
-                className="w-full py-3.5 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-sm rounded-2xl shadow-md transition-all cursor-pointer mt-4"
+                disabled={updateProfileMutation.isPending}
+                className="w-full py-3.5 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-sm rounded-2xl shadow-md transition-all cursor-pointer mt-4 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                Save Changes
+                {updateProfileMutation.isPending ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  'Save Changes'
+                )}
               </button>
             </form>
           </div>
