@@ -260,16 +260,29 @@ export const useDeletePaymentMethod = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (methodId: string) => {
-      const { data } = await api.delete(`/payment/save-method/${methodId}`);
+      const { data } = await api.delete(`/payment/save-method/${encodeURIComponent(methodId)}`);
       return data?.data ?? data;
     },
-    onSuccess: (resData: any) => {
+    onSuccess: (resData: any, methodId: string) => {
       queryClient.invalidateQueries({ queryKey: ['payment-methods'] });
       queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       const methods = extractPaymentMethods(resData);
-      if (methods.length > 0) {
-        updateStoreUserPaymentMethods(methods);
+      updateStoreUserPaymentMethods(methods);
+
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser) {
+        const remaining = Array.isArray(methods) ? methods : [];
+        const cleanMethodId = (methodId || '').toLowerCase();
+        const hasMatching = remaining.some((m: any) => (m.upiId || '').toLowerCase() === cleanMethodId);
+        if (!hasMatching && (((currentUser as any).upiId || '').toLowerCase() === cleanMethodId || cleanMethodId === 'user_upi' || remaining.length === 0)) {
+          useAuthStore.getState().updateUser({
+            ...currentUser,
+            upiId: '',
+            savedPaymentMethods: remaining,
+            paymentMethods: remaining,
+          } as any);
+        }
       }
     },
   });

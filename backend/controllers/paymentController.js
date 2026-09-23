@@ -782,30 +782,48 @@ const savePaymentMethod = asyncHandler(async (req, res) => {
 const updateSavedPaymentMethod = asyncHandler(async (req, res) => {
   const User = require('../models/User');
   const SavedPaymentMethod = require('../models/SavedPaymentMethod');
+  const mongoose = require('mongoose');
   const methodId = req.params.methodId || req.params.id;
+  const cleanId = decodeURIComponent(methodId).trim().toLowerCase();
   const user = await User.findById(req.user._id);
 
   if (user && user.savedPaymentMethods) {
-    const method = user.savedPaymentMethods.id(methodId);
-    if (method) {
-      if (req.body.isDefault) {
-        user.savedPaymentMethods.forEach((m) => {
-          m.isDefault = false;
-        });
+    if (req.body.isDefault) {
+      user.savedPaymentMethods.forEach((m) => {
+        m.isDefault = false;
+      });
+      if (req.body.upiId) {
+        user.upiId = req.body.upiId;
       }
-      Object.assign(method, req.body);
-      await user.save();
     }
+    const method = user.savedPaymentMethods.find((m) => {
+      const mId = (m._id ? m._id.toString() : (m.id || '')).trim().toLowerCase();
+      const mUpi = (m.upiId || '').trim().toLowerCase();
+      return mId === cleanId || mUpi === cleanId || mId === methodId || mUpi === methodId;
+    });
+    if (method) {
+      Object.assign(method, req.body);
+    }
+    await user.save();
   }
 
   try {
     if (req.body.isDefault) {
       await SavedPaymentMethod.updateMany({ user: req.user._id }, { isDefault: false });
     }
-    await SavedPaymentMethod.findOneAndUpdate(
-      { _id: methodId, user: req.user._id },
-      req.body,
-      { new: true }
+    if (mongoose.Types.ObjectId.isValid(methodId)) {
+      await SavedPaymentMethod.findOneAndUpdate(
+        { _id: methodId, user: req.user._id },
+        req.body,
+        { new: true }
+      );
+    }
+    await SavedPaymentMethod.updateMany(
+      {
+        user: req.user._id,
+        $or: [{ upiId: methodId }, { upiId: cleanId }],
+      },
+      req.body
     );
   } catch (_) {}
 
@@ -816,6 +834,10 @@ const updateSavedPaymentMethod = asyncHandler(async (req, res) => {
     emitToUser(req.user._id, 'profile:updated', { user });
     emitToUser(req.user._id, 'user:profile_updated', { user });
     emitToUser(req.user._id, 'payment_methods:updated', { methods: combined });
+    if (req.user.email) {
+      emitToUser(req.user.email.toLowerCase(), 'profile:updated', { user });
+      emitToUser(req.user.email.toLowerCase(), 'payment_methods:updated', { methods: combined });
+    }
   } catch (_) { }
 
   res.status(200).json(new ApiResponse(200, { methods: combined, paymentMethods: combined }, 'Payment method updated successfully'));
@@ -824,16 +846,38 @@ const updateSavedPaymentMethod = asyncHandler(async (req, res) => {
 const deleteSavedPaymentMethod = asyncHandler(async (req, res) => {
   const User = require('../models/User');
   const SavedPaymentMethod = require('../models/SavedPaymentMethod');
+  const mongoose = require('mongoose');
   const methodId = req.params.methodId || req.params.id;
+  const cleanId = decodeURIComponent(methodId).trim().toLowerCase();
   const user = await User.findById(req.user._id);
 
-  if (user && user.savedPaymentMethods) {
-    user.savedPaymentMethods = user.savedPaymentMethods.filter((m) => m._id.toString() !== methodId && m.id !== methodId);
+  if (user) {
+    if (user.savedPaymentMethods && Array.isArray(user.savedPaymentMethods)) {
+      user.savedPaymentMethods = user.savedPaymentMethods.filter((m) => {
+        const mId = (m._id ? m._id.toString() : (m.id || '')).trim().toLowerCase();
+        const mUpi = (m.upiId || '').trim().toLowerCase();
+        return mId !== cleanId && mUpi !== cleanId && mId !== methodId && mUpi !== methodId;
+      });
+    }
+    if (
+      (user.upiId || '').trim().toLowerCase() === cleanId ||
+      cleanId === 'user_upi' ||
+      !user.savedPaymentMethods ||
+      user.savedPaymentMethods.length === 0
+    ) {
+      user.upiId = '';
+    }
     await user.save();
   }
 
   try {
-    await SavedPaymentMethod.findOneAndDelete({ _id: methodId, user: req.user._id });
+    if (mongoose.Types.ObjectId.isValid(methodId)) {
+      await SavedPaymentMethod.findOneAndDelete({ _id: methodId, user: req.user._id });
+    }
+    await SavedPaymentMethod.deleteMany({
+      user: req.user._id,
+      $or: [{ upiId: methodId }, { upiId: cleanId }, { title: methodId }],
+    });
   } catch (_) {}
 
   const combined = await fetchCombinedPaymentMethods(req.user._id);
@@ -843,6 +887,10 @@ const deleteSavedPaymentMethod = asyncHandler(async (req, res) => {
     emitToUser(req.user._id, 'profile:updated', { user });
     emitToUser(req.user._id, 'user:profile_updated', { user });
     emitToUser(req.user._id, 'payment_methods:updated', { methods: combined });
+    if (req.user.email) {
+      emitToUser(req.user.email.toLowerCase(), 'profile:updated', { user });
+      emitToUser(req.user.email.toLowerCase(), 'payment_methods:updated', { methods: combined });
+    }
   } catch (_) { }
 
   res.status(200).json(new ApiResponse(200, { methods: combined, paymentMethods: combined }, 'Payment method deleted successfully'));
