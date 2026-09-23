@@ -20,6 +20,7 @@ import {
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
 import { useCart } from '../hooks/useCart';
+import { useProducts } from '../hooks/useProducts';
 import { useVerifyPayment, useCreateRazorpayOrder, useSavedPaymentMethods, useSavePaymentMethod } from '../hooks/usePayments';
 import { useAuthStore } from '../store/useAuthStore';
 import { formatINR } from '../utils/currency';
@@ -56,6 +57,12 @@ export interface SavedPaymentMethod {
 export const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { data: cart, isLoading: isCartLoading } = useCart();
+  const { data: productsData } = useProducts({ page: 1, limit: 10 });
+  const liveProduct = productsData?.products?.find((p: any) => {
+    const str = (p.name || p.title || p.slug || '').toLowerCase();
+    return str.includes('monk') || str.includes('sweetener');
+  }) || productsData?.products?.[0];
+
   const createRazorpayOrderMutation = useCreateRazorpayOrder();
   const verifyPaymentMutation = useVerifyPayment();
   const { data: savedMethodsData } = useSavedPaymentMethods();
@@ -233,7 +240,16 @@ export const Checkout: React.FC = () => {
   // Calculations
   const itemsToCalculate = cart?.items || createdOrder?.items || [];
   const subtotal = itemsToCalculate.reduce(
-    (sum: number, item: any) => sum + (item.priceSnapshot || item.price || 0) * item.quantity,
+    (sum: number, item: any) => {
+      const pId = typeof item.product === 'object'
+        ? (item.product?._id || item.product?.id)
+        : (item.product || item.productId || item._id || item.id);
+      const matchedApiProd = productsData?.products?.find((p: any) => 
+        p._id === pId || p.id === pId || p.slug === pId
+      ) || liveProduct;
+      const unitPrice = Number(item.priceSnapshot || item.price || matchedApiProd?.price || 499);
+      return sum + unitPrice * (Number(item.quantity) || 1);
+    },
     0
   );
 
@@ -318,11 +334,11 @@ export const Checkout: React.FC = () => {
           </div>
           <h2 className="font-serif text-2xl font-bold text-neutral-900 mb-2">Your Cart is Empty</h2>
           <p className="text-neutral-600 text-xs leading-relaxed mb-6">
-            You don't have any items in your cart. Add 100% natural Sweet Monk Sweetener to continue!
+            You don't have any items in your cart. Add 100% natural Sweet Monk Sweetener (10ml Bottle) to continue!
           </p>
-          <Link to="/shop">
+          <Link to="/products/kosmico-classic-monk-fruit-sweetener-10g">
             <Button className="w-full py-3 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-sm rounded-xl shadow-md">
-              Browse Products
+              Order Sweet Monk (10ml Bottle)
             </Button>
           </Link>
         </div>
@@ -530,14 +546,25 @@ export const Checkout: React.FC = () => {
       const pId = typeof it.product === 'object'
         ? (it.product?._id || it.product?.id)
         : (it.product || it.productId || it._id || it.id);
+
+      const matchedApiProd = productsData?.products?.find((p: any) => 
+        p._id === pId || p.id === pId || p.slug === pId
+      ) || liveProduct;
+
+      const finalProductId = String(matchedApiProd?._id || pId || '').trim();
+      const finalPrice = Number(it.price || it.priceSnapshot || matchedApiProd?.price || 499);
+      const finalName = matchedApiProd?.name || it.product?.name || it.name || 'Sweet Monk (Monk Fruit Sweetener 10ml)';
+      const finalImage = (matchedApiProd?.images && matchedApiProd.images[0]) || matchedApiProd?.image || it.image || it.product?.image || '';
+
       return {
-        productId: String(pId || '').trim(),
-        product: String(pId || '').trim(),
+        productId: finalProductId,
+        product: finalProductId,
         quantity: Number(it.quantity) || 1,
         qty: Number(it.quantity) || 1,
-        price: Number(it.price || it.priceSnapshot || it.product?.discountPrice || it.product?.price || 0),
-        name: it.product?.title || it.product?.name || it.name || 'Kosmico Product',
-        image: (it.product?.images && it.product?.images[0]?.url) || it.product?.image || it.image || '',
+        price: finalPrice,
+        variant: it.variant || 'Single Pack (10ml Bottle)',
+        name: finalName,
+        image: finalImage,
       };
     }).filter((it) => it.productId && it.productId.length > 0 && it.productId !== 'undefined');
 
@@ -1001,17 +1028,45 @@ export const Checkout: React.FC = () => {
           <div className="space-y-3 mb-4">
             {(cart?.items || createdOrder?.items || []).map((item: any, idx: number) => {
               const prod = typeof item.product === 'object' && item.product !== null ? item.product : {};
-              const productName = prod.name || prod.title || 'Sweet Monk (250ml)';
-              const itemPrice = item.priceSnapshot || item.price || prod.price || 0;
+              const matchedApiProd = productsData?.products?.find((p: any) => 
+                p._id === item.productId || p.id === item.productId || p.slug === item.productId
+              ) || liveProduct;
+
+              const productName = matchedApiProd?.name || prod.name || item.name || 'Sweet Monk (Monk Fruit Sweetener 10ml)';
+              const productImage = (matchedApiProd?.images && matchedApiProd.images[0]) || matchedApiProd?.image || item.image || prod.image || '/assets/products/product-box.jpg';
+              const variantName = item.variant || 'Single Pack (10ml Bottle)';
+              const itemPrice = item.priceSnapshot || item.price || matchedApiProd?.price || prod.price || 499;
 
               return (
-                <div key={idx} className="flex justify-between items-center text-sm">
-                  <span className="font-medium text-neutral-800">
-                    {item.quantity}x {productName}
-                  </span>
-                  <span className="font-bold text-neutral-900">
-                    {formatINR(itemPrice * item.quantity)}
-                  </span>
+                <div key={idx} className="flex items-center gap-3.5 p-3 rounded-xl bg-neutral-50 border border-neutral-200/70">
+                  <div className="w-14 h-14 rounded-lg bg-white border border-neutral-200/80 p-1 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    <img
+                      src={productImage}
+                      alt={productName}
+                      className="w-full h-full object-contain mix-blend-multiply"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-sm text-neutral-900 leading-snug line-clamp-1">
+                      {productName}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="inline-flex items-center text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/60">
+                        {variantName}
+                      </span>
+                      <span className="text-xs text-neutral-500 font-medium">
+                        Qty: {item.quantity}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <span className="font-bold text-sm text-neutral-900">
+                      {formatINR(itemPrice * item.quantity)}
+                    </span>
+                    <p className="text-[11px] text-neutral-400">
+                      {formatINR(itemPrice)} each
+                    </p>
+                  </div>
                 </div>
               );
             })}
@@ -1062,10 +1117,37 @@ export const Checkout: React.FC = () => {
 
           <div className="border-t border-neutral-100 pt-4 mt-3 flex justify-between items-center">
             <span className="font-bold text-base text-neutral-900">Total Amount</span>
-            <span className="font-bold text-2xl text-neutral-900 tracking-tight">
+            <span className={`font-bold text-2xl tracking-tight ${paymentMode === 'COD' ? 'text-[#0a7a40]' : 'text-neutral-900'}`}>
               {formatINR(total)}
             </span>
           </div>
+
+          {/* COD Advance & Pay on Delivery Breakdown */}
+          {paymentMode === 'COD' && (
+            <div className="mt-4 p-4 bg-[#ede7df] border border-[#ded5c8] rounded-2xl space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-semibold text-[#8b5e34]">
+                  Pay Online Now (Delivery + GST)
+                </span>
+                <span className="text-sm font-bold text-neutral-900">
+                  {formatINR(deliveryFee + gst)}
+                </span>
+              </div>
+
+              <div className="text-xs font-semibold text-[#0a7a40]">
+                • Non-Refundable advance payment
+              </div>
+
+              <div className="flex justify-between items-center pt-2 border-t border-[#ded5c8]/60">
+                <span className="text-sm font-bold text-neutral-900">
+                  Pay on Delivery (Product Price)
+                </span>
+                <span className="text-sm font-bold text-neutral-900">
+                  {formatINR(Math.max(0, subtotal - discount))}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 6. Sticky Bottom Button */}

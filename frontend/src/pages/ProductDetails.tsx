@@ -85,8 +85,25 @@ export function ProductDetails() {
     });
   };
 
-  const handleBuyNow = () => {
-    handleAddToCart();
+  const handleBuyNow = async () => {
+    const activeBundle = selectedBundle || {
+      id: 'single',
+      name: 'Single Pack (10ml Bottle)',
+      quantity: 1,
+      price: singlePrice,
+      unitPrice: `₹${singlePrice} / pack`
+    };
+    const variantStr = activeBundle.name;
+    const finalPrice = activeBundle.id === 'single' ? singlePrice : activeBundle.price;
+
+    await addToCartMutation.mutateAsync({
+      productId: product._id || product.id,
+      quantity: activeBundle.quantity * quantity,
+      variant: variantStr,
+      price: finalPrice,
+      name: product.name,
+      image: images[0],
+    });
     navigate('/checkout');
   };
 

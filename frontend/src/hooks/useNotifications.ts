@@ -13,7 +13,7 @@ export const useNotifications = (page = 1, limit = 20) => {
       return data?.data;
     },
     enabled: isAuthenticated,
-    refetchInterval: 5000,
+    staleTime: 60 * 1000,
     retry: 1,
   });
 };
@@ -31,7 +31,7 @@ export const useUnreadCount = () => {
       return unread;
     },
     enabled: isAuthenticated,
-    refetchInterval: 5000,
+    staleTime: 60 * 1000,
     retry: 1,
   });
 };

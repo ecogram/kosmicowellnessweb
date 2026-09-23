@@ -115,9 +115,7 @@ export function CartDrawer() {
           ) : (
             items.map((item: any) => {
               const prod = item.product || {};
-              const imageSrc = Array.isArray(prod.images) && prod.images.length > 0 
-                ? prod.images[0] 
-                : '/assets/products/product-box.jpg';
+              const imageSrc = (Array.isArray(prod.images) && prod.images.length > 0 ? prod.images[0] : null) || prod.image || item.image || '/assets/products/product-box.jpg';
 
               return (
                 <div 
@@ -137,7 +135,7 @@ export function CartDrawer() {
                     <div>
                       <div className="flex justify-between items-start gap-2">
                         <h4 className="font-serif font-bold text-xs sm:text-sm text-neutral-900 line-clamp-2 leading-snug">
-                          {prod.name || 'Sweet Monk (250ml)'}
+                          {prod.name || item.name || 'Sweet Monk (Monk Fruit Sweetener 10ml)'}
                         </h4>
                         <button
                           onClick={() => removeCartItem.mutate({ productId: prod._id || item.product, variant: item.variant })}
