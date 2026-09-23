@@ -35,6 +35,7 @@ const Contact = lazy(() => import('./pages/Contact').then(m => ({ default: m.Con
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
 const RefundPolicy = lazy(() => import('./pages/RefundPolicy').then(m => ({ default: m.RefundPolicy })));
 const TermsOfService = lazy(() => import('./pages/TermsOfService').then(m => ({ default: m.TermsOfService })));
+const ReturnsRefunds = lazy(() => import('./pages/ReturnsRefunds').then(m => ({ default: m.ReturnsRefunds })));
 
 // Global Loading Fallback
 const PageLoadingFallback = () => (
@@ -157,6 +158,9 @@ function App() {
                       <Route path="/order-success/:orderNumber" element={<OrderSuccess />} />
                       <Route path="/orders" element={<Orders />} />
                       <Route path="/orders/:orderNumber" element={<OrderDetails />} />
+                      <Route path="/returns-refunds" element={<ReturnsRefunds />} />
+                      <Route path="/returns" element={<ReturnsRefunds />} />
+                      <Route path="/my-refunds" element={<ReturnsRefunds />} />
                       <Route path="/notifications" element={<Notifications />} />
                     </Route>
 

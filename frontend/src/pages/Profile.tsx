@@ -839,7 +839,7 @@ export const Profile: React.FC = () => {
             </Link>
 
             <Link
-              to="/orders"
+              to="/returns-refunds"
               className={`flex items-center justify-between p-3.5 rounded-2xl transition-colors ${isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'}`}
             >
               <div className="flex items-center gap-3">

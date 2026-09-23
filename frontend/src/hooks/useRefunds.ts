@@ -16,16 +16,35 @@ export const useInitiateRefund = () => {
   });
 };
 
+export interface RefundItem {
+  refundId: string;
+  orderNumber: string;
+  amount: number;
+  status: string;
+  reason?: string;
+  date: string;
+}
+
+export interface ReturnItem {
+  returnId: string;
+  orderNumber: string;
+  status: string;
+  reason?: string;
+  date: string;
+  items?: any[];
+}
+
 // GET /api/refund/my-refunds
 export const useMyRefunds = () => {
   return useQuery({
     queryKey: ['refunds'],
     queryFn: async () => {
       const { data } = await api.get('/refund/my-refunds');
-      return data?.data?.refunds ?? (Array.isArray(data?.data) ? data.data : []);
+      const list = data?.data?.refunds ?? (Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []));
+      return (Array.isArray(list) ? list : []) as RefundItem[];
     },
     staleTime: 60 * 1000,
-    refetchInterval: 5000,
+    refetchInterval: 10000,
     retry: 1,
   });
 };
@@ -51,10 +70,11 @@ export const useMyReturns = () => {
     queryKey: ['returns'],
     queryFn: async () => {
       const { data } = await api.get('/return/my-returns');
-      return data?.data?.returns ?? (Array.isArray(data?.data) ? data.data : []);
+      const list = data?.data?.returns ?? (Array.isArray(data?.data) ? data.data : (Array.isArray(data) ? data : []));
+      return (Array.isArray(list) ? list : []) as ReturnItem[];
     },
     staleTime: 60 * 1000,
-    refetchInterval: 5000,
+    refetchInterval: 10000,
     retry: 1,
   });
 };
