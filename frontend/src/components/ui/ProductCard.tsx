@@ -18,6 +18,7 @@ export interface Product {
   rating: number;
   reviewsCount: number;
   badge?: string;
+  stock?: number;
 }
 
 interface ProductCardProps {
@@ -37,15 +38,23 @@ export function ProductCard({ product }: ProductCardProps) {
     return itemId?.toString() === productId?.toString();
   });
 
+  const stock = typeof product.stock === 'number' ? product.stock : ((product as any).stock ?? 50);
+  const isOutOfStock = stock <= 0;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isOutOfStock) {
+      toast.error('This product is currently out of stock');
+      return;
+    }
     addToCartMutation.mutate({ 
       productId: productId, 
       quantity: 1,
       name: product.name,
       price: product.price,
-      image: product.image
+      image: product.image,
+      stock: stock,
     });
   };
 
@@ -82,12 +91,17 @@ export function ProductCard({ product }: ProductCardProps) {
   const handleBuyNow = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isOutOfStock) {
+      toast.error('This product is currently out of stock');
+      return;
+    }
     await addToCartMutation.mutateAsync({ 
       productId: productId, 
       quantity: 1,
       name: product.name,
       price: product.price,
-      image: product.image
+      image: product.image,
+      stock: stock,
     });
     navigate('/checkout');
   };
@@ -122,8 +136,16 @@ export function ProductCard({ product }: ProductCardProps) {
         <img
           src={product.image}
           alt={product.name}
-          className="w-full h-full object-contain mix-blend-multiply transition-transform duration-500 ease-out group-hover:scale-105 group-hover:drop-shadow-xl"
+          className={`w-full h-full object-contain mix-blend-multiply transition-transform duration-500 ease-out group-hover:scale-105 group-hover:drop-shadow-xl ${
+            isOutOfStock ? 'opacity-60 grayscale' : ''
+          }`}
         />
+
+        {isOutOfStock && (
+          <div className="absolute top-3 left-3 z-20 px-2.5 py-1 bg-rose-600 text-white text-[10px] font-extrabold uppercase rounded-full shadow-md tracking-wider">
+            Out of Stock
+          </div>
+        )}
 
         {/* Floating Quick View hint */}
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 bg-emerald-900/80 backdrop-blur-md text-white text-[11px] font-semibold px-3.5 py-1 rounded-full shadow-lg pointer-events-none whitespace-nowrap">
@@ -174,22 +196,30 @@ export function ProductCard({ product }: ProductCardProps) {
             </div>
             <Button 
               size="sm" 
-              className="rounded-xl px-4 py-2 text-xs font-bold bg-emerald-800 hover:bg-emerald-900 text-white shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-1.5 active:scale-95" 
+              className={`rounded-xl px-4 py-2 text-xs font-bold transition-all duration-300 flex items-center gap-1.5 active:scale-95 ${
+                isOutOfStock
+                  ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed border border-neutral-300 shadow-none'
+                  : 'bg-emerald-800 hover:bg-emerald-900 text-white shadow-md hover:shadow-lg'
+              }`} 
               onClick={handleAddToCart}
-              disabled={addToCartMutation.isPending}
+              disabled={addToCartMutation.isPending || isOutOfStock}
             >
               <ShoppingBag className="w-3.5 h-3.5" />
-              {addToCartMutation.isPending ? '...' : 'Add to Cart'}
+              {isOutOfStock ? 'Out of Stock' : addToCartMutation.isPending ? '...' : 'Add to Cart'}
             </Button>
           </div>
 
           <button
             onClick={handleBuyNow}
-            disabled={addToCartMutation.isPending}
-            className="w-full py-2.5 px-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs rounded-xl transition-all duration-300 shadow-sm hover:shadow-md active:scale-98 flex items-center justify-center gap-1.5"
+            disabled={addToCartMutation.isPending || isOutOfStock}
+            className={`w-full py-2.5 px-3 font-bold text-xs rounded-xl transition-all duration-300 shadow-sm active:scale-98 flex items-center justify-center gap-1.5 ${
+              isOutOfStock
+                ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed border border-neutral-200 shadow-none'
+                : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white hover:shadow-md'
+            }`}
           >
-            <Zap className="w-3.5 h-3.5 fill-white" />
-            Buy Now (1-Click)
+            <Zap className={`w-3.5 h-3.5 ${isOutOfStock ? 'fill-neutral-400' : 'fill-white'}`} />
+            {isOutOfStock ? 'Out of Stock' : 'Buy Now (1-Click)'}
           </button>
         </div>
       </div>

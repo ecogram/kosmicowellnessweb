@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, ShieldCheck, Truck, Lock } from 'lucide-react';
 import { useCartDrawerStore } from '../../store/useCartDrawerStore';
 import { useCart, useUpdateCartItem, useRemoveCartItem } from '../../hooks/useCart';
+import toast from 'react-hot-toast';
 
 export function CartDrawer() {
   const { isOpen, closeDrawer } = useCartDrawerStore();
@@ -41,11 +42,15 @@ export function CartDrawer() {
 
   const totalAmount = items.reduce((acc: number, item: any) => acc + (getItemPrice(item) * (item.quantity || 1)), 0);
 
-  const handleQuantityChange = (productId: string, currentQty: number, change: number, variant?: string) => {
+  const handleQuantityChange = (productId: string, currentQty: number, change: number, variant?: string, stock?: number) => {
     const newQty = currentQty + change;
     if (newQty <= 0) {
       removeCartItem.mutate({ productId, variant });
     } else {
+      if (change > 0 && typeof stock === 'number' && newQty > stock) {
+        toast.error(stock === 0 ? 'Product is out of stock' : `Only ${stock} items available in stock`);
+        return;
+      }
       updateCartItem.mutate({ productId, quantity: newQty, variant });
     }
   };
@@ -183,13 +188,20 @@ export function CartDrawer() {
                         <span className="px-2 text-xs font-bold text-neutral-900 min-w-[20px] text-center">
                           {item.quantity}
                         </span>
-                        <button
-                          onClick={() => handleQuantityChange(prod._id || item.product, item.quantity, 1, item.variant)}
-                          className="p-1.5 text-neutral-700 hover:text-emerald-800 transition-colors active:scale-90 disabled:opacity-40"
-                          disabled={updateCartItem.isPending}
-                        >
-                          <Plus className="w-3 h-3" />
-                        </button>
+                        {(() => {
+                          const itemStock = typeof item.stock === 'number' ? item.stock : (typeof prod.stock === 'number' ? prod.stock : 50);
+                          const isMaxStock = item.quantity >= itemStock;
+                          return (
+                            <button
+                              onClick={() => handleQuantityChange(prod._id || item.product, item.quantity, 1, item.variant, itemStock)}
+                              className="p-1.5 text-neutral-700 hover:text-emerald-800 transition-colors active:scale-90 disabled:opacity-40"
+                              disabled={updateCartItem.isPending || isMaxStock}
+                              title={isMaxStock ? `Max available stock reached (${itemStock})` : 'Increase quantity'}
+                            >
+                              <Plus className="w-3 h-3" />
+                            </button>
+                          );
+                        })()}
                       </div>
                       <span className="font-bold text-sm text-emerald-900">
                         ₹{(getItemPrice(item) * item.quantity).toLocaleString('en-IN')}

@@ -4,6 +4,7 @@ import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
 import { Trash2, ArrowRight } from 'lucide-react';
 import { formatINR } from '../utils/currency';
+import toast from 'react-hot-toast';
 
 export const Cart = () => {
   const { data: cart, isLoading } = useCart();
@@ -82,13 +83,26 @@ export const Cart = () => {
                             -
                           </button>
                           <span className="flex-1 text-center font-medium">{item.quantity}</span>
-                          <button
-                            onClick={() => updateMutation.mutate({ productId, quantity: item.quantity + 1, variant: item.variant })}
-                            disabled={updateMutation.isPending}
-                            className="w-10 h-10 flex items-center justify-center hover:bg-neutral-100 transition-colors"
-                          >
-                            +
-                          </button>
+                          {(() => {
+                            const itemStock = typeof item.stock === 'number' ? item.stock : (typeof prod.stock === 'number' ? prod.stock : 50);
+                            const isMaxStock = item.quantity >= itemStock;
+                            return (
+                              <button
+                                onClick={() => {
+                                  if (item.quantity + 1 > itemStock) {
+                                    toast.error(itemStock === 0 ? 'Product is out of stock' : `Only ${itemStock} items available in stock`);
+                                    return;
+                                  }
+                                  updateMutation.mutate({ productId, quantity: item.quantity + 1, variant: item.variant });
+                                }}
+                                disabled={updateMutation.isPending || isMaxStock}
+                                className="w-10 h-10 flex items-center justify-center hover:bg-neutral-100 transition-colors disabled:opacity-40"
+                                title={isMaxStock ? `Max available stock reached (${itemStock})` : 'Increase quantity'}
+                              >
+                                +
+                              </button>
+                            );
+                          })()}
                         </div>
                       </div>
 

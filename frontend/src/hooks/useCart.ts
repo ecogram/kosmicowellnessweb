@@ -1,8 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCartDrawerStore } from '../store/useCartDrawerStore';
-
-// Cart is localStorage-based (no /api/cart endpoint in API docs)
-// All product data (name, price, image) MUST be passed in from the caller — no hardcoded defaults
+import { api } from '../services/api';
+import toast from 'react-hot-toast';
 
 export interface CartItem {
   _id: string;
@@ -16,11 +15,13 @@ export interface CartItem {
     image?: string;
     images?: string[];
     slug?: string;
+    stock?: number;
   };
   quantity: number;
   price: number;
   priceSnapshot?: number;
   variant?: string;
+  stock?: number;
 }
 
 export interface CartData {
@@ -78,27 +79,66 @@ export const useAddToCart = () => {
       image,
       images,
       slug,
+      stock,
     }: {
       productId: string;
       quantity: number;
       variant?: string;
-      name: string;       // Required — caller must provide real product name
-      price: number;      // Required — caller must provide real product price
+      name: string;
+      price: number;
       image?: string;
       images?: string[];
       slug?: string;
+      stock?: number;
     }) => {
+      // 1. Fetch real stock from database / cache if not provided
+      let availableStock = stock;
+      if (availableStock === undefined) {
+        try {
+          const cachedProducts: any = queryClient.getQueryData(['products']);
+          const prodList = cachedProducts?.products || (Array.isArray(cachedProducts) ? cachedProducts : []);
+          const match = prodList.find((p: any) => (p._id || p.id) === productId || (slug && p.slug === slug));
+          if (match && typeof match.stock === 'number') {
+            availableStock = match.stock;
+          } else {
+            const res = await api.get(`/products/${productId}`);
+            const pData = res.data?.data?.product ?? res.data?.data ?? res.data;
+            if (pData && typeof pData.stock === 'number') {
+              availableStock = pData.stock;
+            }
+          }
+        } catch (_) {}
+      }
+
       const currentCart = getLocalCart();
       const existingIdx = currentCart.items.findIndex(
         (it) => it.productId === productId && (it.variant ?? '') === (variant ?? '')
       );
+
+      const existingQty = existingIdx > -1 ? currentCart.items[existingIdx].quantity : 0;
+      const requestedTotalQty = existingQty + quantity;
+
+      // Real Database Stock Validation
+      if (typeof availableStock === 'number') {
+        if (availableStock <= 0) {
+          throw new Error('This product is currently out of stock.');
+        }
+        if (requestedTotalQty > availableStock) {
+          if (existingQty > 0) {
+            throw new Error(`Only ${availableStock} items in stock. You already have ${existingQty} in your cart.`);
+          } else {
+            throw new Error(`Only ${availableStock} items available in stock.`);
+          }
+        }
+      }
 
       let updatedItems = [...currentCart.items];
 
       if (existingIdx > -1) {
         updatedItems[existingIdx] = {
           ...updatedItems[existingIdx],
-          quantity: updatedItems[existingIdx].quantity + quantity,
+          quantity: requestedTotalQty,
+          stock: availableStock ?? updatedItems[existingIdx].stock,
         };
       } else {
         const newItem: CartItem = {
@@ -113,11 +153,13 @@ export const useAddToCart = () => {
             image: image ?? images?.[0],
             images: images ?? (image ? [image] : []),
             slug,
+            stock: availableStock,
           },
           quantity,
           price,
           priceSnapshot: price,
           variant,
+          stock: availableStock,
         };
         updatedItems = [newItem, ...updatedItems];
       }
@@ -128,7 +170,11 @@ export const useAddToCart = () => {
     },
     onSuccess: (updatedCart) => {
       queryClient.setQueryData(['cart'], updatedCart);
+      toast.success('Added to cart');
       openDrawer();
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to add to cart');
     },
   });
 };
@@ -147,6 +193,22 @@ export const useUpdateCartItem = () => {
       variant?: string;
     }) => {
       const currentCart = getLocalCart();
+      const existing = currentCart.items.find(
+        (it) => it.productId === productId && (it.variant ?? '') === (variant ?? '')
+      );
+
+      if (existing) {
+        const availableStock = existing.stock ?? existing.product?.stock;
+        if (typeof availableStock === 'number') {
+          if (availableStock <= 0) {
+            throw new Error('This product is currently out of stock.');
+          }
+          if (quantity > availableStock) {
+            throw new Error(`Only ${availableStock} items available in stock.`);
+          }
+        }
+      }
+
       const updatedItems = currentCart.items
         .map((it) => {
           if (it.productId === productId && (it.variant ?? '') === (variant ?? '')) {
@@ -162,6 +224,9 @@ export const useUpdateCartItem = () => {
     },
     onSuccess: (updatedCart) => {
       queryClient.setQueryData(['cart'], updatedCart);
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Could not update quantity');
     },
   });
 };

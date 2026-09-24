@@ -6,6 +6,7 @@ import { Container } from '../components/ui/Container';
 import { Trash2, ShoppingCart, HeartCrack, Heart, ArrowRight, User } from 'lucide-react';
 import { useAddToCart } from '../hooks/useCart';
 import { useAuthStore } from '../store/useAuthStore';
+import toast from 'react-hot-toast';
 
 export function Wishlist() {
   const { isAuthenticated } = useAuthStore();
@@ -111,6 +112,8 @@ export function Wishlist() {
           const prodImage = product.image || (product.images?.length ? product.images[0] : '/assets/products/product-box.jpg');
           const prodSlug = product.slug || prodId;
           const prodPrice = product.price;
+          const prodStock = typeof product.stock === 'number' ? product.stock : 50;
+          const isOutOfStock = prodStock <= 0;
 
           return (
             <div 
@@ -135,27 +138,50 @@ export function Wishlist() {
                 <div className="text-emerald-800 font-extrabold text-lg mt-1">
                   {formatINR(prodPrice)}
                 </div>
-                <div className="text-xs text-emerald-700 font-medium mt-1 flex items-center justify-center sm:justify-start gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                  In Stock • Ready to Dispatch
-                </div>
+                {isOutOfStock ? (
+                  <div className="text-xs text-rose-600 font-bold mt-1 flex items-center justify-center sm:justify-start gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                    Out of Stock
+                  </div>
+                ) : prodStock <= 5 ? (
+                  <div className="text-xs text-amber-700 font-bold mt-1 flex items-center justify-center sm:justify-start gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    Only {prodStock} left in stock - Order Soon
+                  </div>
+                ) : (
+                  <div className="text-xs text-emerald-700 font-medium mt-1 flex items-center justify-center sm:justify-start gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    In Stock • Ready to Dispatch
+                  </div>
+                )}
               </div>
               
               <div className="flex items-center gap-2.5 w-full sm:w-auto justify-center sm:justify-end shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-neutral-100">
                 <button
                   type="button"
-                  onClick={() => addToCartMutation.mutate({ 
-                    productId: prodId, 
-                    quantity: 1,
-                    name: product.name,
-                    price: prodPrice,
-                    image: prodImage
-                  })}
-                  disabled={addToCartMutation.isPending}
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-2 bg-emerald-800 text-white px-5 py-2.5 rounded-xl hover:bg-emerald-900 transition-all font-bold text-xs shadow-xs disabled:opacity-50 cursor-pointer active:scale-95"
+                  onClick={() => {
+                    if (isOutOfStock) {
+                      toast.error('Product is out of stock');
+                      return;
+                    }
+                    addToCartMutation.mutate({ 
+                      productId: prodId, 
+                      quantity: 1,
+                      name: product.name,
+                      price: prodPrice,
+                      image: prodImage,
+                      stock: prodStock,
+                    });
+                  }}
+                  disabled={addToCartMutation.isPending || isOutOfStock}
+                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl transition-all font-bold text-xs shadow-xs disabled:opacity-50 active:scale-95 ${
+                    isOutOfStock 
+                      ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed' 
+                      : 'bg-emerald-800 text-white hover:bg-emerald-900 cursor-pointer'
+                  }`}
                 >
                   <ShoppingCart className="w-3.5 h-3.5" />
-                  <span>{addToCartMutation.isPending ? 'Adding...' : 'Add to Cart'}</span>
+                  <span>{isOutOfStock ? 'Out of Stock' : addToCartMutation.isPending ? 'Adding...' : 'Add to Cart'}</span>
                 </button>
                 
                 <button

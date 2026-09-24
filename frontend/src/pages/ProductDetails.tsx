@@ -64,8 +64,14 @@ export function ProductDetails() {
     : singlePrice;
   const bundleQuantity = selectedBundle ? selectedBundle.quantity : 1;
   const compareAtPrice = (product.compareAtPrice || 499) * bundleQuantity;
+  const stock = typeof product.stock === 'number' ? product.stock : 50;
+  const isOutOfStock = stock <= 0;
 
   const handleAddToCart = () => {
+    if (isOutOfStock) {
+      toast.error('This product is currently out of stock');
+      return;
+    }
     const activeBundle = selectedBundle || {
       id: 'single',
       name: 'Single Pack (10ml Bottle)',
@@ -73,20 +79,30 @@ export function ProductDetails() {
       price: singlePrice,
       unitPrice: `₹${singlePrice} / pack`
     };
+    const totalQtyToAdd = activeBundle.quantity * quantity;
+    if (totalQtyToAdd > stock) {
+      toast.error(`Only ${stock} items available in stock`);
+      return;
+    }
     const variantStr = activeBundle.name;
     const finalPrice = activeBundle.id === 'single' ? singlePrice : activeBundle.price;
 
     addToCartMutation.mutate({
       productId: product._id || product.id,
-      quantity: activeBundle.quantity * quantity,
+      quantity: totalQtyToAdd,
       variant: variantStr,
       price: finalPrice,
       name: product.name,
       image: images[0],
+      stock: stock,
     });
   };
 
   const handleBuyNow = async () => {
+    if (isOutOfStock) {
+      toast.error('This product is currently out of stock');
+      return;
+    }
     const activeBundle = selectedBundle || {
       id: 'single',
       name: 'Single Pack (10ml Bottle)',
@@ -94,16 +110,22 @@ export function ProductDetails() {
       price: singlePrice,
       unitPrice: `₹${singlePrice} / pack`
     };
+    const totalQtyToAdd = activeBundle.quantity * quantity;
+    if (totalQtyToAdd > stock) {
+      toast.error(`Only ${stock} items available in stock`);
+      return;
+    }
     const variantStr = activeBundle.name;
     const finalPrice = activeBundle.id === 'single' ? singlePrice : activeBundle.price;
 
     await addToCartMutation.mutateAsync({
       productId: product._id || product.id,
-      quantity: activeBundle.quantity * quantity,
+      quantity: totalQtyToAdd,
       variant: variantStr,
       price: finalPrice,
       name: product.name,
       image: images[0],
+      stock: stock,
     });
     navigate('/checkout');
   };
@@ -226,6 +248,26 @@ export function ProductDetails() {
               )}
             </div>
 
+            {/* Real Database Stock Status */}
+            <div className="flex items-center gap-2 mb-4">
+              {isOutOfStock ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse"></span>
+                  Out of Stock
+                </span>
+              ) : stock <= 5 ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  Only {stock} items left in stock — Order soon
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  In Stock ({stock} available) • Ready to Dispatch
+                </span>
+              )}
+            </div>
+
             <p className="text-text-main text-sm md:text-base mb-6 leading-relaxed">
               {product.description}
             </p>
@@ -249,14 +291,23 @@ export function ProductDetails() {
                 <div className="flex items-center border border-border rounded-xl overflow-hidden bg-background">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="w-9 h-9 flex items-center justify-center text-text-main hover:bg-neutral-100 transition-colors font-bold text-base"
+                    disabled={isOutOfStock}
+                    className="w-9 h-9 flex items-center justify-center text-text-main hover:bg-neutral-100 transition-colors font-bold text-base disabled:opacity-40"
                   >
                     -
                   </button>
                   <span className="w-10 text-center font-bold text-sm">{quantity}</span>
                   <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="w-9 h-9 flex items-center justify-center text-text-main hover:bg-neutral-100 transition-colors font-bold text-base"
+                    onClick={() => {
+                      if (quantity + 1 > stock) {
+                        toast.error(stock === 0 ? 'Product is out of stock' : `Only ${stock} items available in stock`);
+                        return;
+                      }
+                      setQuantity(quantity + 1);
+                    }}
+                    disabled={quantity >= stock || isOutOfStock}
+                    className="w-9 h-9 flex items-center justify-center text-text-main hover:bg-neutral-100 transition-colors font-bold text-base disabled:opacity-40"
+                    title={quantity >= stock ? `Max available stock reached (${stock})` : 'Increase quantity'}
                   >
                     +
                   </button>
@@ -268,10 +319,14 @@ export function ProductDetails() {
                 <div className="flex gap-3">
                   <button
                     onClick={handleAddToCart}
-                    disabled={addToCartMutation.isPending}
-                    className="flex-1 py-3.5 px-5 border-2 border-primary text-primary font-bold text-sm rounded-xl hover:bg-primary/5 transition-all shadow-sm"
+                    disabled={addToCartMutation.isPending || isOutOfStock}
+                    className={`flex-1 py-3.5 px-5 font-bold text-sm rounded-xl transition-all shadow-sm ${
+                      isOutOfStock
+                        ? 'bg-neutral-100 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'
+                        : 'border-2 border-primary text-primary hover:bg-primary/5 cursor-pointer'
+                    }`}
                   >
-                    {addToCartMutation.isPending ? 'Adding to Cart...' : 'Add to Cart'}
+                    {isOutOfStock ? 'Out of Stock' : addToCartMutation.isPending ? 'Adding to Cart...' : 'Add to Cart'}
                   </button>
 
                   <button
@@ -292,11 +347,15 @@ export function ProductDetails() {
                 {/* Direct 1-Click Buy Now CTA */}
                 <button
                   onClick={handleBuyNow}
-                  disabled={addToCartMutation.isPending}
-                  className="w-full py-4 px-6 bg-accent text-white font-extrabold text-base rounded-xl hover:bg-accent/90 transition-all shadow-lg shadow-accent/20 flex items-center justify-center gap-2"
+                  disabled={addToCartMutation.isPending || isOutOfStock}
+                  className={`w-full py-4 px-6 font-extrabold text-base rounded-xl transition-all flex items-center justify-center gap-2 ${
+                    isOutOfStock
+                      ? 'bg-neutral-200 text-neutral-500 shadow-none cursor-not-allowed'
+                      : 'bg-accent text-white hover:bg-accent/90 shadow-lg shadow-accent/20 cursor-pointer'
+                  }`}
                 >
-                  <Zap className="w-5 h-5 fill-white" />
-                  <span>BUY NOW (1-Click Express Checkout)</span>
+                  <Zap className={`w-5 h-5 ${isOutOfStock ? 'fill-neutral-400' : 'fill-white'}`} />
+                  <span>{isOutOfStock ? 'Out of Stock' : 'BUY NOW (1-Click Express Checkout)'}</span>
                 </button>
               </div>
             </div>

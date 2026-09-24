@@ -27,16 +27,18 @@ class CartService {
     if (!product) throw new ApiError(404, 'Product not found');
     
     let price = product.price;
-    let stock = product.stock;
+    let stock = typeof product.stock === 'number' ? product.stock : 0;
     if (variantSize && product.variants && product.variants.length > 0) {
       const variant = product.variants.find(v => v.size === variantSize);
       if (variant) {
         price = variant.price;
-        stock = variant.stock;
+        stock = typeof variant.stock === 'number' ? variant.stock : stock;
       }
     }
     
-    if (stock < quantity) throw new ApiError(400, 'Not enough stock');
+    if (stock <= 0) {
+      throw new ApiError(400, 'Product is currently out of stock');
+    }
 
     let cart = await cartRepository.findOne({ user: userId });
     if (!cart) {
@@ -52,9 +54,16 @@ class CartService {
     });
 
     if (itemIndex > -1) {
-      cart.items[itemIndex].quantity += quantity;
+      const newTotalQty = cart.items[itemIndex].quantity + quantity;
+      if (newTotalQty > stock) {
+        throw new ApiError(400, `Only ${stock} items available in stock. You already have ${cart.items[itemIndex].quantity} in your cart.`);
+      }
+      cart.items[itemIndex].quantity = newTotalQty;
       cart.items[itemIndex].priceSnapshot = price; // Update price
     } else {
+      if (quantity > stock) {
+        throw new ApiError(400, `Only ${stock} items available in stock.`);
+      }
       cart.items.push({
         product: productId,
         quantity,
@@ -70,6 +79,21 @@ class CartService {
   async updateItemQuantity(userId, productId, quantity, variantSize) {
     let cart = await cartRepository.findOne({ user: userId });
     if (!cart) throw new ApiError(404, 'Cart not found');
+
+    const product = await Product.findById(productId);
+    if (!product) throw new ApiError(404, 'Product not found');
+
+    let stock = typeof product.stock === 'number' ? product.stock : 0;
+    if (variantSize && product.variants && product.variants.length > 0) {
+      const variant = product.variants.find(v => v.size === variantSize);
+      if (variant) {
+        stock = typeof variant.stock === 'number' ? variant.stock : stock;
+      }
+    }
+
+    if (quantity > stock) {
+      throw new ApiError(400, stock <= 0 ? 'Product is currently out of stock' : `Only ${stock} items available in stock.`);
+    }
 
     cart.items = cart.items.filter(item => item.product !== null && item.product !== undefined);
 
