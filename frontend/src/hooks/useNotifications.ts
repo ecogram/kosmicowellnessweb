@@ -74,12 +74,28 @@ export const useDeleteNotification = () => {
   });
 };
 
-// DELETE /api/notifications — clear all
+// DELETE /api/notifications/clear (with fallback) — clear all
 export const useClearAllNotifications = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      await api.delete('/notifications');
+      try {
+        await api.delete('/notifications/clear');
+      } catch (err: any) {
+        if (err?.response?.status === 404) {
+          try {
+            await api.delete('/notifications/clear-all');
+          } catch (err2: any) {
+            if (err2?.response?.status === 404) {
+              await api.delete('/notifications');
+            } else {
+              throw err2;
+            }
+          }
+        } else {
+          throw err;
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });

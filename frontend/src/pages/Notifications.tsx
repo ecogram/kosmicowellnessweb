@@ -7,6 +7,7 @@ import {
 } from '../hooks/useNotifications';
 import { Bell, Package, Tag, Star, Info, CheckCheck, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 const getIcon = (type: string) => {
   switch (type) {
@@ -30,21 +31,35 @@ export function Notifications() {
     }
   };
 
-  // Mark each unread notification individually (no bulk endpoint in API)
-  const handleMarkAllRead = () => {
-    notificationsList
-      .filter((n: any) => !n.isRead)
-      .forEach((n: any) => markAsRead.mutate(n._id));
+  // Mark each unread notification
+  const handleMarkAllRead = async () => {
+    try {
+      const unreadItems = notificationsList.filter((n: any) => !n.isRead && !n.read);
+      await Promise.all(unreadItems.map((n: any) => markAsRead.mutateAsync(n._id || n.id)));
+      toast.success('All marked as read');
+    } catch {
+      toast.error('Failed to mark all as read');
+    }
   };
 
-  const handleDelete = (e: React.MouseEvent, id: string) => {
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    deleteNotification.mutate(id);
+    try {
+      await deleteNotification.mutateAsync(id);
+      toast.success('Notification removed');
+    } catch {
+      toast.error('Failed to delete notification');
+    }
   };
 
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (window.confirm('Are you sure you want to clear all notifications?')) {
-      clearAllNotifications.mutate();
+      try {
+        await clearAllNotifications.mutateAsync();
+        toast.success('All notifications cleared');
+      } catch (err: any) {
+        toast.error(err?.response?.data?.message || 'Failed to clear notifications');
+      }
     }
   };
 
