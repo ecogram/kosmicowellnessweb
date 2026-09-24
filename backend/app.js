@@ -55,6 +55,11 @@ if (!require('fs').existsSync(profilesDir)) {
 // Serve uploaded static files publicly for Mobile App & Web
 app.use('/uploads', express.static(uploadsDir));
 
+// Google Search Console Site Verification
+app.get('/google3186bca57d82adf5.html', (req, res) => {
+  res.type('text/html').send('google-site-verification: google3186bca57d82adf5.html');
+});
+
 app.use('/api', limiter);
 app.use(
   helmet({
