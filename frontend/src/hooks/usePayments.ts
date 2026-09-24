@@ -11,12 +11,9 @@ import { useAuthStore } from '../store/useAuthStore';
 export interface SavedPaymentMethod {
   _id?: string;
   id?: string;
-  type: 'UPI' | 'BANK';
+  type: 'UPI';
   displayName: string;
-  upiId?: string;
-  bankName?: string;
-  accountNumber?: string;
-  ifscCode?: string;
+  upiId: string;
   isDefault: boolean;
 }
 
@@ -35,12 +32,9 @@ export const useCreatePayment = () => {
 };
 
 export interface SavePaymentMethodPayload {
-  type: 'UPI' | 'BANK';
+  type?: 'UPI';
   displayName: string;
-  upiId?: string;
-  bankName?: string;
-  accountNumber?: string;
-  ifscCode?: string;
+  upiId: string;
   isDefault?: boolean;
 }
 
@@ -113,16 +107,6 @@ export const useSavedPaymentMethods = () => {
             isDefault: true,
           });
         }
-        if (u?.bankDetails && typeof u.bankDetails === 'object') {
-          allMethods.push({
-            type: 'BANK',
-            displayName: u.bankDetails.accountHolder || u?.name || u?.fullName || 'Bank Account',
-            bankName: u.bankDetails.bankName || 'Bank',
-            accountNumber: u.bankDetails.accountNumber,
-            ifscCode: u.bankDetails.ifscCode,
-            isDefault: true,
-          });
-        }
       } catch (_) {}
 
       // 4. Fallback to /users/profile
@@ -158,8 +142,8 @@ export const useSavedPaymentMethods = () => {
             m.methodType ||
             (m.upiId || m.vpa ? 'UPI' : '')
         ).toUpperCase();
+        if (typeUpper.includes('BANK')) continue;
         const upiId = m.upiId || m.vpa || m.upi || '';
-        if (typeUpper.includes('BANK') && !upiId) continue;
         if (!upiId) continue;
 
         const displayName =

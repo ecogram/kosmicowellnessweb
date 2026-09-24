@@ -31,12 +31,9 @@ interface SavedAddress {
 export interface SavedPaymentMethod {
   _id?: string;
   id?: string;
-  type: 'UPI' | 'BANK';
+  type: 'UPI';
   displayName: string;
-  upiId?: string;
-  bankName?: string;
-  accountNumber?: string;
-  ifscCode?: string;
+  upiId: string;
   isDefault: boolean;
 }
 
@@ -154,7 +151,7 @@ export const Profile: React.FC = () => {
       if (!m) continue;
       const typeUpper = String(m.type || m.methodType || (m.upiId ? 'UPI' : '')).toUpperCase();
       const upiId = (m.upiId || m.vpa || m.upi || '').trim();
-      if (typeUpper.includes('BANK') && !upiId) continue;
+      if (typeUpper.includes('BANK')) continue;
       if (!upiId) continue;
 
       const displayName = m.displayName || m.title || m.name || m.accountHolder || user?.name || 'UPI Account';
@@ -879,7 +876,7 @@ export const Profile: React.FC = () => {
                 <div>
                   <div className="text-sm font-bold">Payment Methods</div>
                   <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
-                    {paymentMethods.length} saved method{paymentMethods.length === 1 ? '' : 's'} (UPI / Bank)
+                    {paymentMethods.length} saved method{paymentMethods.length === 1 ? '' : 's'} (UPI)
                   </div>
                 </div>
               </div>

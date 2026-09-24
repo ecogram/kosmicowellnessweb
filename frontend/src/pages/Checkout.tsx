@@ -45,12 +45,9 @@ interface SavedAddress {
 export interface SavedPaymentMethod {
   id: string;
   _id?: string;
-  type: 'UPI' | 'BANK';
+  type: 'UPI';
   displayName: string;
-  upiId?: string;
-  bankName?: string;
-  accountNumber?: string;
-  ifscCode?: string;
+  upiId: string;
   isDefault: boolean;
 }
 
@@ -76,7 +73,7 @@ export const Checkout: React.FC = () => {
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<any>(null);
 
-  // Online Payment Method state (UPI & Bank Account - dynamic strictly for this authenticated user)
+  // Online Payment Method state (UPI strictly for this authenticated user)
   const [paymentMethods, setPaymentMethods] = useState<SavedPaymentMethod[]>([]);
 
   useEffect(() => {
@@ -105,31 +102,26 @@ export const Checkout: React.FC = () => {
     const formatted: SavedPaymentMethod[] = [];
     for (const m of rawList) {
       if (!m) continue;
-      const typeUpper = String(m.type || m.methodType || (m.upiId ? 'UPI' : (m.accountNumber ? 'BANK' : 'UPI'))).toUpperCase();
-      const upiId = m.upiId || m.vpa || m.upi || '';
-      const bankName = m.bankName || m.bank || '';
-      const accountNumber = m.accountNumber || m.accountNo || m.accNo || (m.cardLast4 ? `•••• ${m.cardLast4}` : '');
-      const ifscCode = m.ifscCode || m.ifsc || '';
-      const displayName = m.displayName || m.title || m.name || (upiId ? 'UPI Account' : (bankName || 'Payment Method'));
-      const id = String(m._id || m.id || upiId || accountNumber || `pm-${Date.now()}`);
+      const upiId = (m.upiId || m.vpa || m.upi || '').trim();
+      if (!upiId) continue; // Strictly UPI only
 
-      const key = (upiId || accountNumber || id).trim().toLowerCase();
+      const displayName = m.displayName || m.title || m.name || 'UPI Account';
+      const id = String(m._id || m.id || upiId || `pm-${Date.now()}`);
+
+      const key = upiId.toLowerCase();
       if (key && !seen.has(key)) {
         seen.add(key);
         formatted.push({
           id,
           _id: id,
-          type: typeUpper.includes('BANK') ? 'BANK' : 'UPI',
+          type: 'UPI',
           displayName,
           upiId,
-          bankName,
-          accountNumber,
-          ifscCode,
           isDefault: !!m.isDefault,
         });
       }
     }
-    setPaymentMethods(formatted.filter((m) => m.type === 'UPI'));
+    setPaymentMethods(formatted);
   }, [savedMethodsData, user]);
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<SavedPaymentMethod | undefined>();
@@ -846,7 +838,7 @@ export const Checkout: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-sm text-neutral-900">Online Payment</h3>
-                  <p className="text-xs text-neutral-500 mt-0.5">Pay full amount securely via UPI, Cards, NetBanking</p>
+                  <p className="text-xs text-neutral-500 mt-0.5">Pay full amount securely via UPI (Google Pay, PhonePe, Paytm)</p>
                 </div>
               </div>
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMode === 'ONLINE' ? 'border-[#0a7a40] bg-[#0a7a40]' : 'border-neutral-300'
@@ -973,10 +965,10 @@ export const Checkout: React.FC = () => {
                     </span>
                   </div>
                   <p className="font-bold text-sm tracking-wide mt-0.5">
-                    UPI, Cards, NetBanking &amp; Wallets
+                    Instant UPI Payment
                   </p>
                   <p className="text-xs text-emerald-100">
-                    Pay securely using Google Pay, PhonePe, Paytm, Cards or NetBanking
+                    Pay securely using Google Pay, PhonePe, Paytm or BHIM UPI
                   </p>
                 </div>
                 <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-[#0a7a40] shadow-sm shrink-0">

@@ -64,14 +64,11 @@ const userSchema = new mongoose.Schema(
       {
         type: {
           type: String,
-          enum: ['UPI', 'BANK'],
+          enum: ['UPI'],
           default: 'UPI',
         },
         displayName: { type: String, default: '' },
         upiId: { type: String, default: '' },
-        bankName: { type: String, default: '' },
-        accountNumber: { type: String, default: '' },
-        ifscCode: { type: String, default: '' },
         isDefault: { type: Boolean, default: false },
         createdAt: { type: Date, default: Date.now },
       },

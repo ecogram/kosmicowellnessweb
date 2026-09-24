@@ -667,37 +667,35 @@ const fetchCombinedPaymentMethods = async (userId) => {
 
   const map = new Map();
 
-  // Process SavedPaymentMethod collection
+  // Process SavedPaymentMethod collection (strictly UPI only)
   collectionMethods.forEach((m) => {
+    const upiId = (m.upiId || '').trim();
+    if (!upiId) return; // Skip non-UPI methods
     const idStr = m._id.toString();
-    const key = (m.upiId || m.accountNumber || idStr).trim().toLowerCase();
+    const key = upiId.toLowerCase();
     map.set(key, {
       _id: idStr,
       id: idStr,
-      type: m.methodType || (m.upiId ? 'UPI' : 'BANK'),
-      displayName: m.title || m.displayName || (m.upiId ? 'UPI' : 'Bank Account'),
-      upiId: m.upiId || '',
-      bankName: m.bankName || '',
-      accountNumber: m.accountNumber || '',
-      ifscCode: m.ifscCode || '',
+      type: 'UPI',
+      displayName: m.title || m.displayName || 'UPI Account',
+      upiId: upiId,
       isDefault: !!m.isDefault,
     });
   });
 
-  // Process User.savedPaymentMethods array
+  // Process User.savedPaymentMethods array (strictly UPI only)
   userMethods.forEach((m) => {
+    const upiId = (m.upiId || '').trim();
+    if (!upiId) return; // Skip non-UPI methods
     const idStr = (m._id || m.id || '').toString();
-    const key = (m.upiId || m.accountNumber || idStr).trim().toLowerCase();
+    const key = upiId.toLowerCase();
     if (!map.has(key)) {
       map.set(key, {
         _id: idStr,
         id: idStr,
-        type: m.type || (m.upiId ? 'UPI' : 'BANK'),
-        displayName: m.displayName || m.title || (m.upiId ? 'UPI' : 'Bank Account'),
-        upiId: m.upiId || '',
-        bankName: m.bankName || '',
-        accountNumber: m.accountNumber || '',
-        ifscCode: m.ifscCode || '',
+        type: 'UPI',
+        displayName: m.displayName || m.title || 'UPI Account',
+        upiId: upiId,
         isDefault: !!m.isDefault,
       });
     }
@@ -714,15 +712,19 @@ const getSavedPaymentMethods = asyncHandler(async (req, res) => {
 const savePaymentMethod = asyncHandler(async (req, res) => {
   const User = require('../models/User');
   const SavedPaymentMethod = require('../models/SavedPaymentMethod');
-  const { type, methodType, displayName, title, upiId, bankName, accountNumber, ifscCode, isDefault } = req.body;
+  const { displayName, title, upiId, isDefault } = req.body;
 
+  if (!upiId || !upiId.trim()) {
+    throw new ApiError(400, 'UPI ID is required');
+  }
+
+  const cleanUpi = upiId.trim();
   const user = await User.findById(req.user._id);
   if (!user) {
     throw new ApiError(404, 'User not found');
   }
 
-  const finalType = type || methodType || (upiId ? 'UPI' : 'BANK');
-  const finalTitle = displayName || title || (upiId ? 'UPI Account' : 'Bank Account');
+  const finalTitle = displayName || title || user.name || 'UPI Account';
 
   if (!user.savedPaymentMethods) {
     user.savedPaymentMethods = [];
@@ -738,12 +740,9 @@ const savePaymentMethod = asyncHandler(async (req, res) => {
   }
 
   const newMethod = {
-    type: finalType,
+    type: 'UPI',
     displayName: finalTitle,
-    upiId: upiId || '',
-    bankName: bankName || '',
-    accountNumber: accountNumber || '',
-    ifscCode: ifscCode || '',
+    upiId: cleanUpi,
     isDefault: !!isDefault || user.savedPaymentMethods.length === 0,
   };
 
@@ -753,12 +752,9 @@ const savePaymentMethod = asyncHandler(async (req, res) => {
   try {
     await SavedPaymentMethod.create({
       user: req.user._id,
-      methodType: finalType,
+      methodType: 'UPI',
       title: finalTitle,
-      upiId: upiId || '',
-      bankName: bankName || '',
-      accountNumber: accountNumber || '',
-      ifscCode: ifscCode || '',
+      upiId: cleanUpi,
       isDefault: newMethod.isDefault,
     });
   } catch (_) {}
