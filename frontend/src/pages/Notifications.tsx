@@ -25,6 +25,9 @@ export function Notifications() {
   const deleteNotification = useDeleteNotification();
   const clearAllNotifications = useClearAllNotifications();
 
+  const notificationsList = notificationsData?.notifications || [];
+  const hasUnread = notificationsList.some((n: any) => !n.isRead);
+
   const handleMarkAsRead = (id: string, isRead: boolean) => {
     if (!isRead) {
       markAsRead.mutate(id);
@@ -55,16 +58,14 @@ export function Notifications() {
   const handleClearAll = async () => {
     if (window.confirm('Are you sure you want to clear all notifications?')) {
       try {
-        await clearAllNotifications.mutateAsync();
+        const ids = notificationsList.map((n: any) => n._id || n.id).filter(Boolean);
+        await clearAllNotifications.mutateAsync(ids);
         toast.success('All notifications cleared');
       } catch (err: any) {
         toast.error(err?.response?.data?.message || 'Failed to clear notifications');
       }
     }
   };
-
-  const notificationsList = notificationsData?.notifications || [];
-  const hasUnread = notificationsList.some((n: any) => !n.isRead);
 
   return (
     <Container className="py-10 md:py-16 max-w-3xl mx-auto">

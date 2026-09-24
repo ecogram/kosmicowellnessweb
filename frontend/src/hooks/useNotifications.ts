@@ -74,27 +74,21 @@ export const useDeleteNotification = () => {
   });
 };
 
-// DELETE /api/notifications/clear (with fallback) — clear all
+// DELETE clear all notifications (reliably deletes notifications via /api/notifications/:id)
 export const useClearAllNotifications = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async () => {
-      try {
-        await api.delete('/notifications/clear');
-      } catch (err: any) {
-        if (err?.response?.status === 404) {
-          try {
-            await api.delete('/notifications/clear-all');
-          } catch (err2: any) {
-            if (err2?.response?.status === 404) {
-              await api.delete('/notifications');
-            } else {
-              throw err2;
-            }
-          }
-        } else {
-          throw err;
-        }
+    mutationFn: async (ids?: string[]) => {
+      let targetIds = ids;
+      if (!targetIds || targetIds.length === 0) {
+        const res = await api.get('/notifications', { params: { page: 1, limit: 100 } });
+        const resData = res.data?.data ?? res.data ?? {};
+        const list: any[] = resData.notifications ?? (Array.isArray(resData) ? resData : []);
+        targetIds = list.map((n: any) => n._id || n.id).filter(Boolean);
+      }
+
+      if (targetIds && targetIds.length > 0) {
+        await Promise.all(targetIds.map((id) => api.delete(`/notifications/${id}`)));
       }
     },
     onSuccess: () => {
