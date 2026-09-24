@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Container } from '../../components/ui/Container';
 import { Coffee, UtensilsCrossed, Flame, Sparkles, CheckCircle2, Eye, X, ShoppingBag, Heart } from 'lucide-react';
 
@@ -211,13 +212,13 @@ export function MithaiSection() {
                 <span className="text-xs text-neutral-500 font-semibold block">Substitution Ratio</span>
                 <span className="font-serif font-bold text-lg text-emerald-800">{current.ratio}</span>
               </div>
-              <a
-                href="/shop"
+              <Link
+                to="/shop"
                 className="px-6 py-3.5 bg-emerald-800 hover:bg-emerald-900 text-white font-extrabold text-xs rounded-xl transition-all shadow-md shadow-emerald-900/15 flex items-center gap-2 active:scale-95 cursor-pointer"
               >
                 <span>Try In Your Kitchen</span>
                 <Sparkles className="w-4 h-4 text-amber-300" />
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -281,13 +282,13 @@ export function MithaiSection() {
                 <h3 className="font-serif font-bold text-lg text-neutral-900">{previewModalImage.title}</h3>
                 <p className="text-xs text-neutral-600">Prepared naturally with Sweet Monk Sweetener Drops</p>
               </div>
-              <a
-                href="/shop"
+              <Link
+                to="/shop"
                 className="px-5 py-2.5 bg-emerald-800 text-white font-bold text-xs rounded-xl hover:bg-emerald-900 transition-colors shadow-xs flex items-center gap-1.5"
               >
                 <span>Try Sweet Monk</span>
                 <ShoppingBag className="w-3.5 h-3.5" />
-              </a>
+              </Link>
             </div>
           </div>
         </div>

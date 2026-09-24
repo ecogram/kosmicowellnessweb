@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Container } from '../../components/ui/Container';
 import { ShieldCheck, Pause, Play, ShoppingBag, X, Heart, CheckCircle2 } from 'lucide-react';
 
@@ -239,13 +240,13 @@ export function DishesAutoScrollSection() {
               {/* Bottom Actions */}
               <div className="flex items-center justify-between pt-2 border-t border-neutral-100">
                 <span className="text-xs font-bold text-emerald-800">1:1 Direct Sugar Replacement</span>
-                <a
-                  href="/shop"
+                <Link
+                  to="/shop"
                   className="px-6 py-3 bg-emerald-800 hover:bg-emerald-900 text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center gap-2 cursor-pointer"
                 >
                   <span>Try Sweet Monk in this Recipe</span>
                   <ShoppingBag className="w-4 h-4" />
-                </a>
+                </Link>
               </div>
             </div>
           </div>

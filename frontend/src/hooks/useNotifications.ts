@@ -9,8 +9,15 @@ export const useNotifications = (page = 1, limit = 20) => {
   return useQuery({
     queryKey: ['notifications', page, limit],
     queryFn: async () => {
-      const { data } = await api.get('/notifications', { params: { page, limit } });
-      return data?.data;
+      try {
+        const response = await api.get('/notifications', { params: { page, limit } });
+        const resData = response.data?.data ?? response.data ?? {};
+        const notifications = resData.notifications ?? (Array.isArray(resData) ? resData : []);
+        const meta = resData.meta ?? resData.pagination ?? { total: notifications.length, page, limit, pages: 1 };
+        return { notifications, meta };
+      } catch (err) {
+        return { notifications: [], meta: { total: 0, page: 1, limit, pages: 1 } };
+      }
     },
     enabled: isAuthenticated,
     staleTime: 60 * 1000,
@@ -25,10 +32,15 @@ export const useUnreadCount = () => {
   return useQuery({
     queryKey: ['notifications', 'unread-count'],
     queryFn: async () => {
-      const { data } = await api.get('/notifications', { params: { page: 1, limit: 100 } });
-      const list: any[] = data?.data?.notifications ?? (Array.isArray(data?.data) ? data.data : []);
-      const unread = list.filter((n) => n.isRead === false || n.read === false).length;
-      return unread;
+      try {
+        const response = await api.get('/notifications', { params: { page: 1, limit: 100 } });
+        const resData = response.data?.data ?? response.data ?? {};
+        const list: any[] = resData.notifications ?? (Array.isArray(resData) ? resData : []);
+        const unread = list.filter((n) => n.isRead === false || n.read === false).length;
+        return unread;
+      } catch (err) {
+        return 0;
+      }
     },
     enabled: isAuthenticated,
     staleTime: 60 * 1000,

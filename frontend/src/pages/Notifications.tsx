@@ -161,11 +161,11 @@ export function Notifications() {
                 Previous
               </button>
               <span className="px-3 text-xs text-neutral-500 font-medium">
-                Page {page} of {notificationsData.meta.pages}
+                Page {page} of {notificationsData?.meta?.pages ?? 1}
               </span>
               <button
                 onClick={() => setPage(p => p + 1)}
-                disabled={page >= notificationsData.meta.pages}
+                disabled={page >= (notificationsData?.meta?.pages ?? 1)}
                 className="px-4 py-2 bg-white border border-neutral-200 rounded-xl text-xs font-bold disabled:opacity-40 cursor-pointer"
               >
                 Next

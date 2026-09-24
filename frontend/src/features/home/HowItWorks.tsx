@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Container } from '../../components/ui/Container';
 
 export function HowItWorks() {
@@ -69,9 +70,9 @@ export function HowItWorks() {
                   <p className="text-xs text-neutral-600">Standard Certified Nutrition Facts Declaration</p>
                 </div>
               </div>
-              <a href="/how-it-works" className="text-xs font-bold text-emerald-800 hover:text-emerald-950 underline shrink-0">
+              <Link to="/how-it-works" className="text-xs font-bold text-emerald-800 hover:text-emerald-950 underline shrink-0">
                 View Nutrition Label &rarr;
-              </a>
+              </Link>
             </div>
           </div>
         </div>
