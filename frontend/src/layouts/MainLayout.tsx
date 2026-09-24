@@ -16,7 +16,7 @@ export function MainLayout() {
   }, [pathname]);
 
   return (
-    <div className="flex flex-col min-h-screen relative bg-gradient-to-b from-emerald-50/60 via-stone-50/40 to-emerald-50/50">
+    <div className="flex flex-col min-h-screen relative overflow-x-hidden bg-gradient-to-b from-emerald-50/60 via-stone-50/40 to-emerald-50/50">
       {/* Global Luxury Ambient Glow Background Orbs */}
       <div className="fixed top-1/6 -left-32 w-[600px] h-[600px] bg-emerald-300/15 rounded-full blur-3xl pointer-events-none z-0 animate-pulse-glow" />
       <div className="fixed top-1/2 -right-32 w-[650px] h-[650px] bg-amber-300/15 rounded-full blur-3xl pointer-events-none z-0 animate-pulse-glow" />

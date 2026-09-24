@@ -20,7 +20,10 @@
   --color-error: #d32f2f;
 }
 
+html,
 body {
+  overflow-x: hidden;
+  max-width: 100vw;
   font-family: var(--font-sans);
   color: var(--color-text-main);
   background: linear-gradient(180deg, #ecfdf5 0%, #fafafa 30%, #fffbeb 65%, #fafafa 100%);
