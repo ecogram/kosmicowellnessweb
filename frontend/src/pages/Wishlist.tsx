@@ -6,7 +6,7 @@ import { Container } from '../components/ui/Container';
 import { Trash2, ShoppingCart, HeartCrack, Heart, ArrowRight, User } from 'lucide-react';
 import { useAddToCart } from '../hooks/useCart';
 import { useAuthStore } from '../store/useAuthStore';
-import toast from 'react-hot-toast';
+import { showStockToast } from '../utils/stockToast';
 
 export function Wishlist() {
   const { isAuthenticated } = useAuthStore();
@@ -161,7 +161,7 @@ export function Wishlist() {
                   type="button"
                   onClick={() => {
                     if (isOutOfStock) {
-                      toast.error('Product is out of stock');
+                      showStockToast(prodStock);
                       return;
                     }
                     addToCartMutation.mutate({ 
@@ -173,11 +173,11 @@ export function Wishlist() {
                       stock: prodStock,
                     });
                   }}
-                  disabled={addToCartMutation.isPending || isOutOfStock}
-                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl transition-all font-bold text-xs shadow-xs disabled:opacity-50 active:scale-95 ${
+                  disabled={addToCartMutation.isPending}
+                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl transition-all font-bold text-xs shadow-xs active:scale-95 cursor-pointer ${
                     isOutOfStock 
-                      ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed' 
-                      : 'bg-emerald-800 text-white hover:bg-emerald-900 cursor-pointer'
+                      ? 'bg-neutral-200 text-neutral-600 hover:bg-neutral-300' 
+                      : 'bg-emerald-800 text-white hover:bg-emerald-900'
                   }`}
                 >
                   <ShoppingCart className="w-3.5 h-3.5" />

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCartDrawerStore } from '../store/useCartDrawerStore';
 import { api } from '../services/api';
 import toast from 'react-hot-toast';
+import { showStockToast } from '../utils/stockToast';
 
 export interface CartItem {
   _id: string;
@@ -174,7 +175,14 @@ export const useAddToCart = () => {
       openDrawer();
     },
     onError: (err: any) => {
-      toast.error(err?.message || 'Failed to add to cart');
+      const msg = err?.message || 'Failed to add to cart';
+      if (msg.includes('available in stock') || msg.includes('items in stock') || msg.includes('out of stock')) {
+        const match = msg.match(/\d+/);
+        const stockNum = match ? parseInt(match[0], 10) : 0;
+        showStockToast(stockNum);
+      } else {
+        toast.error(msg);
+      }
     },
   });
 };
@@ -226,7 +234,14 @@ export const useUpdateCartItem = () => {
       queryClient.setQueryData(['cart'], updatedCart);
     },
     onError: (err: any) => {
-      toast.error(err?.message || 'Could not update quantity');
+      const msg = err?.message || 'Could not update quantity';
+      if (msg.includes('available in stock') || msg.includes('items in stock') || msg.includes('out of stock')) {
+        const match = msg.match(/\d+/);
+        const stockNum = match ? parseInt(match[0], 10) : 0;
+        showStockToast(stockNum);
+      } else {
+        toast.error(msg);
+      }
     },
   });
 };

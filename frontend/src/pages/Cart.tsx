@@ -4,7 +4,7 @@ import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
 import { Trash2, ArrowRight } from 'lucide-react';
 import { formatINR } from '../utils/currency';
-import toast from 'react-hot-toast';
+import { showStockToast } from '../utils/stockToast';
 
 export const Cart = () => {
   const { data: cart, isLoading } = useCart();
@@ -90,14 +90,16 @@ export const Cart = () => {
                               <button
                                 onClick={() => {
                                   if (item.quantity + 1 > itemStock) {
-                                    toast.error(itemStock === 0 ? 'Product is out of stock' : `Only ${itemStock} items available in stock`);
+                                    showStockToast(itemStock, item.quantity);
                                     return;
                                   }
                                   updateMutation.mutate({ productId, quantity: item.quantity + 1, variant: item.variant });
                                 }}
-                                disabled={updateMutation.isPending || isMaxStock}
-                                className="w-10 h-10 flex items-center justify-center hover:bg-neutral-100 transition-colors disabled:opacity-40"
-                                title={isMaxStock ? `Max available stock reached (${itemStock})` : 'Increase quantity'}
+                                disabled={updateMutation.isPending}
+                                className={`w-10 h-10 flex items-center justify-center transition-colors cursor-pointer ${
+                                  isMaxStock ? 'text-amber-600 hover:text-amber-700 bg-amber-50/50' : 'hover:bg-neutral-100'
+                                }`}
+                                title={isMaxStock ? `Only ${itemStock} items available in stock` : 'Increase quantity'}
                               >
                                 +
                               </button>

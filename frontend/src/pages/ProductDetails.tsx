@@ -12,6 +12,7 @@ import { ProductReviews } from '../components/reviews/ProductReviews';
 import { VisualBundles, type BundleOption } from '../components/product/VisualBundles';
 import { PincodeEstimator } from '../components/product/PincodeEstimator';
 import toast from 'react-hot-toast';
+import { showStockToast } from '../utils/stockToast';
 
 export function ProductDetails() {
   const { slug } = useParams();
@@ -69,7 +70,7 @@ export function ProductDetails() {
 
   const handleAddToCart = () => {
     if (isOutOfStock) {
-      toast.error('This product is currently out of stock');
+      showStockToast(stock);
       return;
     }
     const activeBundle = selectedBundle || {
@@ -81,7 +82,7 @@ export function ProductDetails() {
     };
     const totalQtyToAdd = activeBundle.quantity * quantity;
     if (totalQtyToAdd > stock) {
-      toast.error(`Only ${stock} items available in stock`);
+      showStockToast(stock);
       return;
     }
     const variantStr = activeBundle.name;
@@ -100,7 +101,7 @@ export function ProductDetails() {
 
   const handleBuyNow = async () => {
     if (isOutOfStock) {
-      toast.error('This product is currently out of stock');
+      showStockToast(stock);
       return;
     }
     const activeBundle = selectedBundle || {
@@ -112,7 +113,7 @@ export function ProductDetails() {
     };
     const totalQtyToAdd = activeBundle.quantity * quantity;
     if (totalQtyToAdd > stock) {
-      toast.error(`Only ${stock} items available in stock`);
+      showStockToast(stock);
       return;
     }
     const variantStr = activeBundle.name;
@@ -300,14 +301,17 @@ export function ProductDetails() {
                   <button
                     onClick={() => {
                       if (quantity + 1 > stock) {
-                        toast.error(stock === 0 ? 'Product is out of stock' : `Only ${stock} items available in stock`);
+                        showStockToast(stock);
                         return;
                       }
                       setQuantity(quantity + 1);
                     }}
-                    disabled={quantity >= stock || isOutOfStock}
-                    className="w-9 h-9 flex items-center justify-center text-text-main hover:bg-neutral-100 transition-colors font-bold text-base disabled:opacity-40"
-                    title={quantity >= stock ? `Max available stock reached (${stock})` : 'Increase quantity'}
+                    className={`w-9 h-9 flex items-center justify-center transition-colors font-bold text-base cursor-pointer ${
+                      quantity >= stock || isOutOfStock
+                        ? 'text-amber-600 bg-amber-50/50 hover:bg-amber-100/50'
+                        : 'text-text-main hover:bg-neutral-100'
+                    }`}
+                    title={quantity >= stock ? `Only ${stock} items available in stock` : 'Increase quantity'}
                   >
                     +
                   </button>
@@ -319,7 +323,7 @@ export function ProductDetails() {
                 <div className="flex gap-3">
                   <button
                     onClick={handleAddToCart}
-                    disabled={addToCartMutation.isPending || isOutOfStock}
+                    disabled={addToCartMutation.isPending}
                     className={`flex-1 py-3.5 px-5 font-bold text-sm rounded-xl transition-all shadow-sm ${
                       isOutOfStock
                         ? 'bg-neutral-100 text-neutral-400 border border-neutral-300 cursor-not-allowed shadow-none'

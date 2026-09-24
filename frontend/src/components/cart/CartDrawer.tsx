@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, ShieldCheck, Truck, Lock } from 'lucide-react';
 import { useCartDrawerStore } from '../../store/useCartDrawerStore';
 import { useCart, useUpdateCartItem, useRemoveCartItem } from '../../hooks/useCart';
-import toast from 'react-hot-toast';
+import { showStockToast } from '../../utils/stockToast';
 
 export function CartDrawer() {
   const { isOpen, closeDrawer } = useCartDrawerStore();
@@ -48,7 +48,7 @@ export function CartDrawer() {
       removeCartItem.mutate({ productId, variant });
     } else {
       if (change > 0 && typeof stock === 'number' && newQty > stock) {
-        toast.error(stock === 0 ? 'Product is out of stock' : `Only ${stock} items available in stock`);
+        showStockToast(stock, currentQty);
         return;
       }
       updateCartItem.mutate({ productId, quantity: newQty, variant });
@@ -194,9 +194,11 @@ export function CartDrawer() {
                           return (
                             <button
                               onClick={() => handleQuantityChange(prod._id || item.product, item.quantity, 1, item.variant, itemStock)}
-                              className="p-1.5 text-neutral-700 hover:text-emerald-800 transition-colors active:scale-90 disabled:opacity-40"
-                              disabled={updateCartItem.isPending || isMaxStock}
-                              title={isMaxStock ? `Max available stock reached (${itemStock})` : 'Increase quantity'}
+                              className={`p-1.5 transition-colors active:scale-90 cursor-pointer ${
+                                isMaxStock ? 'text-amber-600 hover:text-amber-700 bg-amber-50/50' : 'text-neutral-700 hover:text-emerald-800'
+                              }`}
+                              disabled={updateCartItem.isPending}
+                              title={isMaxStock ? `Only ${itemStock} items available in stock` : 'Increase quantity'}
                             >
                               <Plus className="w-3 h-3" />
                             </button>

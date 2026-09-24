@@ -6,6 +6,7 @@ import { useAddToCart } from '../../hooks/useCart';
 import { useToggleWishlist, useWishlist } from '../../hooks/useWishlist';
 import { useAuthStore } from '../../store/useAuthStore';
 import toast from 'react-hot-toast';
+import { showStockToast } from '../../utils/stockToast';
 
 export interface Product {
   id: string;
@@ -45,7 +46,7 @@ export function ProductCard({ product }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
     if (isOutOfStock) {
-      toast.error('This product is currently out of stock');
+      showStockToast(stock);
       return;
     }
     addToCartMutation.mutate({ 
@@ -92,7 +93,7 @@ export function ProductCard({ product }: ProductCardProps) {
     e.preventDefault();
     e.stopPropagation();
     if (isOutOfStock) {
-      toast.error('This product is currently out of stock');
+      showStockToast(stock);
       return;
     }
     await addToCartMutation.mutateAsync({ 
@@ -198,11 +199,11 @@ export function ProductCard({ product }: ProductCardProps) {
               size="sm" 
               className={`rounded-xl px-4 py-2 text-xs font-bold transition-all duration-300 flex items-center gap-1.5 active:scale-95 ${
                 isOutOfStock
-                  ? 'bg-neutral-200 text-neutral-500 cursor-not-allowed border border-neutral-300 shadow-none'
+                  ? 'bg-neutral-200 text-neutral-600 border border-neutral-300 shadow-none hover:bg-neutral-300'
                   : 'bg-emerald-800 hover:bg-emerald-900 text-white shadow-md hover:shadow-lg'
               }`} 
               onClick={handleAddToCart}
-              disabled={addToCartMutation.isPending || isOutOfStock}
+              disabled={addToCartMutation.isPending}
             >
               <ShoppingBag className="w-3.5 h-3.5" />
               {isOutOfStock ? 'Out of Stock' : addToCartMutation.isPending ? '...' : 'Add to Cart'}
@@ -211,10 +212,10 @@ export function ProductCard({ product }: ProductCardProps) {
 
           <button
             onClick={handleBuyNow}
-            disabled={addToCartMutation.isPending || isOutOfStock}
-            className={`w-full py-2.5 px-3 font-bold text-xs rounded-xl transition-all duration-300 shadow-sm active:scale-98 flex items-center justify-center gap-1.5 ${
+            disabled={addToCartMutation.isPending}
+            className={`w-full py-2.5 px-3 font-bold text-xs rounded-xl transition-all duration-300 shadow-sm active:scale-98 flex items-center justify-center gap-1.5 cursor-pointer ${
               isOutOfStock
-                ? 'bg-neutral-100 text-neutral-400 cursor-not-allowed border border-neutral-200 shadow-none'
+                ? 'bg-neutral-100 text-neutral-500 border border-neutral-200 shadow-none hover:bg-neutral-200'
                 : 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white hover:shadow-md'
             }`}
           >
