@@ -9,7 +9,7 @@ export function HangingPlayStoreWidget() {
     <>
       {/* Floating App Badge Container right below Navbar (No Chain across Navbar) */}
       <div 
-        className="fixed top-20 sm:top-24 right-2 sm:right-6 md:right-12 z-40 pointer-events-auto cursor-pointer group select-none block"
+        className="hidden sm:block fixed top-20 sm:top-24 right-4 sm:right-6 md:right-12 z-40 pointer-events-auto cursor-pointer group select-none"
         onClick={() => setIsModalOpen(true)}
         title="Click to Download Kosmico Mobile App"
       >

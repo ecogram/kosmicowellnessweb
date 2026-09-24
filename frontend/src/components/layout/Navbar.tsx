@@ -48,7 +48,7 @@ export function Navbar() {
       <Container>
         <div className="flex items-center justify-between h-16 gap-2">
           {/* Left: Mobile Menu button & Brand Logo */}
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
               className="text-text-main p-1.5 focus:outline-none md:hidden shrink-0"
@@ -56,9 +56,9 @@ export function Navbar() {
             >
               <Menu className="h-6 w-6" />
             </button>
-            <Link to="/" className="flex items-center gap-2 font-serif text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-primary min-w-0">
+            <Link to="/" className="flex items-center gap-1.5 sm:gap-2 font-serif text-base sm:text-xl md:text-2xl font-bold tracking-tight text-primary min-w-0">
               <img src="/logo.png" alt="Kosmico" className="h-7 sm:h-8 w-auto object-contain rounded-md shrink-0" />
-              <span className="truncate sm:whitespace-nowrap">Kosmico Wellness</span>
+              <span className="whitespace-nowrap">Kosmico Wellness</span>
             </Link>
           </div>
 
@@ -168,24 +168,34 @@ export function Navbar() {
         </div>
       </Container>
 
-      {/* Search Bar Dropdown */}
+      {/* Search Bar in document flow (Not absolute) so it pushes the page content down naturally without cutting any text */}
       {isSearchOpen && (
-        <div className="border-t border-border bg-surface px-4 py-3 sm:px-6 lg:px-8 absolute w-full left-0 z-40 shadow-md">
+        <div className="border-t border-emerald-950/10 bg-white/98 backdrop-blur-md px-4 py-3 sm:px-6 lg:px-8 w-full relative z-40 shadow-sm transition-all duration-300 animate-fadeIn">
           <form onSubmit={handleSearchSubmit} className="relative max-w-3xl mx-auto flex items-center">
-            <Search className="absolute left-3 h-5 w-5 text-text-muted" />
+            <Search className="absolute left-3.5 h-4 w-4 text-emerald-800 pointer-events-none" />
             <input
               type="text"
               autoFocus
-              placeholder="Search for products..."
-              className="w-full pl-10 pr-10 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              placeholder="Search for products, sweeteners, ayurveda..."
+              className="w-full pl-10 pr-10 py-2.5 bg-neutral-50 border border-neutral-300 rounded-xl text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-emerald-700/20 focus:border-emerald-700 focus:bg-white transition-all shadow-inner"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            {searchQuery && (
+            {searchQuery ? (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 text-text-muted hover:text-text-main"
+                className="absolute right-3 p-1 text-neutral-400 hover:text-neutral-700 cursor-pointer"
+                title="Clear"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsSearchOpen(false)}
+                className="absolute right-3 text-neutral-400 hover:text-neutral-700 p-1 cursor-pointer"
+                title="Close search"
               >
                 <X className="h-4 w-4" />
               </button>
