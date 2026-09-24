@@ -5,6 +5,7 @@ import { Star, Heart, ShoppingBag, Zap } from 'lucide-react';
 import { useAddToCart } from '../../hooks/useCart';
 import { useToggleWishlist, useWishlist } from '../../hooks/useWishlist';
 import { useAuthStore } from '../../store/useAuthStore';
+import toast from 'react-hot-toast';
 
 export interface Product {
   id: string;
@@ -53,7 +54,7 @@ export function ProductCard({ product }: ProductCardProps) {
     e.stopPropagation();
 
     if (!isAuthenticated) {
-      navigate('/login?redirect=/wishlist');
+      toast.error('Please login to save items to your wishlist');
       return;
     }
 
@@ -69,7 +70,9 @@ export function ProductCard({ product }: ProductCardProps) {
       });
 
       if (res?.action === 'added') {
-        navigate('/wishlist');
+        toast.success('Added to wishlist');
+      } else if (res?.action === 'removed') {
+        toast.success('Removed from wishlist');
       }
     } catch (err) {
       console.warn('Toggle wishlist notice:', err);

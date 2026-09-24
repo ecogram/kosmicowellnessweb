@@ -11,6 +11,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { ProductReviews } from '../components/reviews/ProductReviews';
 import { VisualBundles, type BundleOption } from '../components/product/VisualBundles';
 import { PincodeEstimator } from '../components/product/PincodeEstimator';
+import toast from 'react-hot-toast';
 
 export function ProductDetails() {
   const { slug } = useParams();
@@ -111,7 +112,7 @@ export function ProductDetails() {
     if (!product) return;
 
     if (!isAuthenticated) {
-      navigate('/login?redirect=/wishlist');
+      toast.error('Please login to save items to your wishlist');
       return;
     }
 
@@ -127,7 +128,9 @@ export function ProductDetails() {
       });
 
       if (res?.action === 'added') {
-        navigate('/wishlist');
+        toast.success('Added to wishlist');
+      } else if (res?.action === 'removed') {
+        toast.success('Removed from wishlist');
       }
     } catch (err) {
       console.warn('Toggle wishlist notice:', err);
