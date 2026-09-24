@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Menu, Search, X, Bell, Heart } from 'lucide-react';
@@ -19,6 +19,20 @@ export function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isPlayStoreModalOpen, setIsPlayStoreModalOpen] = useState(false);
   const navigate = useNavigate();
+
+  // Lock body scroll when mobile menu drawer is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      const origOverflow = document.body.style.overflow;
+      const origTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      return () => {
+        document.body.style.overflow = origOverflow;
+        document.body.style.touchAction = origTouchAction;
+      };
+    }
+  }, [isMobileMenuOpen]);
 
   const { user, isAuthenticated } = useAuthStore();
   const { data: cart } = useCart();
@@ -209,13 +223,14 @@ export function Navbar() {
         <div className="fixed inset-0 z-[9999] md:hidden">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity duration-300"
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs transition-opacity duration-300 touch-none"
             onClick={() => setIsMobileMenuOpen(false)}
+            onTouchMove={(e) => e.preventDefault()}
           />
 
           {/* Full-Height Mobile Drawer */}
           <div
-            className="fixed inset-y-0 left-0 z-[10000] w-[85vw] max-w-sm bg-white text-neutral-900 shadow-2xl border-r border-neutral-200 flex flex-col h-full max-h-screen overflow-hidden animate-slideInRight"
+            className="fixed inset-y-0 left-0 z-[10000] w-[85vw] max-w-sm bg-white text-neutral-900 shadow-2xl border-r border-neutral-200 flex flex-col h-full max-h-screen overflow-hidden animate-slideInRight overscroll-contain"
             style={{ backgroundColor: '#ffffff' }}
           >
             {/* Drawer Header */}
@@ -233,8 +248,11 @@ export function Navbar() {
               </button>
             </div>
 
-            {/* Clean Navigation Buttons */}
-            <div className="flex flex-col p-4 space-y-3 bg-white flex-1" style={{ backgroundColor: '#ffffff' }}>
+            {/* Clean Navigation Buttons - Scrollable with overscroll-contain & touch-pan-y */}
+            <div 
+              className="flex flex-col p-4 space-y-3 bg-white flex-1 overflow-y-auto overscroll-contain touch-pan-y" 
+              style={{ backgroundColor: '#ffffff', WebkitOverflowScrolling: 'touch' }}
+            >
               {navLinks.map((link) => (
                 <Link
                   key={link.name}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X, Smartphone, Download, ShieldCheck, Zap, Star, Sparkles } from 'lucide-react';
 
 import { PLAY_STORE_URL } from '../../utils/constants';
@@ -16,15 +16,34 @@ export const PlayStoreModal: React.FC<PlayStoreModalProps> = ({
   featureTitle = 'Mobile App Exclusive Feature',
   featureDescription = 'This hardware feature requires Bluetooth LE or native device sensors available on the Kosmico Mobile App.',
 }) => {
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const origOverflow = document.body.style.overflow;
+      const origTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      return () => {
+        document.body.style.overflow = origOverflow;
+        document.body.style.touchAction = origTouchAction;
+      };
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const playStoreUrl = PLAY_STORE_URL;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in touch-none"
+      onClick={onClose}
+      onTouchMove={(e) => e.preventDefault()}
+    >
       <div 
-        className="relative w-full max-w-md bg-white rounded-[36px] shadow-2xl border border-emerald-900/20 overflow-hidden transform transition-all"
+        className="relative w-full max-w-md bg-white rounded-[36px] shadow-2xl border border-emerald-900/20 overflow-hidden transform transition-all overscroll-contain max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
       >
         {/* Luxury Header Background */}
         <div className="bg-gradient-to-r from-emerald-950 via-emerald-900 to-emerald-950 px-7 py-8 text-white relative border-b border-emerald-800/40">

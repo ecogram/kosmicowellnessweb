@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, ShieldCheck, Truck, Lock } from 'lucide-react';
@@ -10,6 +11,20 @@ export function CartDrawer() {
   const updateCartItem = useUpdateCartItem();
   const removeCartItem = useRemoveCartItem();
   const navigate = useNavigate();
+
+  // Lock body scroll when cart modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const origOverflow = document.body.style.overflow;
+      const origTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      return () => {
+        document.body.style.overflow = origOverflow;
+        document.body.style.touchAction = origTouchAction;
+      };
+    }
+  }, [isOpen]);
 
   if (!isOpen || typeof document === 'undefined') return null;
 
@@ -44,13 +59,14 @@ export function CartDrawer() {
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 overflow-hidden">
       {/* Backdrop with Backdrop Blur */}
       <div 
-        className="fixed inset-0 bg-black/75 backdrop-blur-xs transition-opacity duration-300 animate-fadeIn" 
+        className="fixed inset-0 bg-black/75 backdrop-blur-xs transition-opacity duration-300 animate-fadeIn touch-none" 
         onClick={closeDrawer} 
+        onTouchMove={(e) => e.preventDefault()}
       />
 
       {/* Centered Animated Modal Panel - Solid Opaque White */}
       <div 
-        className="relative w-full max-w-lg max-h-[90vh] bg-white rounded-3xl shadow-2xl flex flex-col border border-emerald-900/20 overflow-hidden z-10 transform transition-all duration-300 animate-fade-in-up text-neutral-900"
+        className="relative w-full max-w-lg max-h-[90vh] bg-white rounded-3xl shadow-2xl flex flex-col border border-emerald-900/20 overflow-hidden z-10 transform transition-all duration-300 animate-fade-in-up text-neutral-900 overscroll-contain"
         style={{ backgroundColor: '#ffffff' }}
       >
         {/* Header */}
@@ -85,7 +101,10 @@ export function CartDrawer() {
         </div>
 
         {/* Cart Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3 bg-neutral-50" style={{ backgroundColor: '#fafafa' }}>
+        <div 
+          className="flex-1 overflow-y-auto overscroll-contain touch-pan-y p-4 sm:p-5 space-y-3 bg-neutral-50" 
+          style={{ backgroundColor: '#fafafa', WebkitOverflowScrolling: 'touch' }}
+        >
           {isLoading ? (
             <div className="flex flex-col items-center justify-center h-48 space-y-3">
               <div className="w-8 h-8 border-3 border-emerald-800 border-t-transparent rounded-full animate-spin" />

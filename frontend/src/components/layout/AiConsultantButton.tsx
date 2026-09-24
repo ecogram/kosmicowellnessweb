@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, Sparkles, X, Send, User, GripVertical } from 'lucide-react';
+import { Bot, Sparkles, X, Send, User, GripVertical, GripHorizontal } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface Message {
@@ -24,7 +24,7 @@ export function AiConsultantButton() {
   ]);
   const [isTyping, setIsTyping] = useState(false);
 
-  // Dynamic Draggable Position State
+  // Dynamic Draggable Position State for Floating Button
   const [hasDragged, setHasDragged] = useState(false);
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [windowWidth, setWindowWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1024));
@@ -38,6 +38,17 @@ export function AiConsultantButton() {
     posY: 0,
   });
   const hasMovedRef = useRef(false);
+
+  // Dynamic Draggable Position State for Opened Chat Window Modal
+  const [modalPosition, setModalPosition] = useState<{ x: number; y: number } | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const isDraggingModalRef = useRef(false);
+  const modalDragStartRef = useRef<{ mouseX: number; mouseY: number; posX: number; posY: number }>({
+    mouseX: 0,
+    mouseY: 0,
+    posX: 0,
+    posY: 0,
+  });
 
   const quickPromptsHinglish = [
     'Hair Fall Problem',
@@ -92,12 +103,54 @@ export function AiConsultantButton() {
           y: Math.min(prev.y, window.innerHeight - 70),
         }));
       }
+      if (modalPosition) {
+        const isMobile = w < 640;
+        const modalWidth = modalRef.current?.offsetWidth || (isMobile ? Math.min(w - 16, 420) : 380);
+        const modalHeight = modalRef.current?.offsetHeight || 480;
+        setModalPosition((prev) => {
+          if (!prev) return null;
+          return {
+            x: Math.max(8, Math.min(w - modalWidth - 8, prev.x)),
+            y: Math.max(75, Math.min(window.innerHeight - modalHeight - 8, prev.y)),
+          };
+        });
+      }
     };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [hasDragged]);
+  }, [hasDragged, modalPosition]);
 
-  // Mouse & Touch Drag Handlers
+  // Lock body scroll when AI modal is open (so background page does not scroll underneath)
+  useEffect(() => {
+    if (isOpen) {
+      const origOverflow = document.body.style.overflow;
+      const origTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      return () => {
+        document.body.style.overflow = origOverflow;
+        document.body.style.touchAction = origTouchAction;
+      };
+    }
+  }, [isOpen]);
+
+  // Modal Drag Handle Start
+  const handleModalDragStart = (clientX: number, clientY: number) => {
+    if (!modalRef.current) return;
+    const rect = modalRef.current.getBoundingClientRect();
+    isDraggingModalRef.current = true;
+    modalDragStartRef.current = {
+      mouseX: clientX,
+      mouseY: clientY,
+      posX: rect.left,
+      posY: rect.top,
+    };
+    if (!modalPosition) {
+      setModalPosition({ x: rect.left, y: rect.top });
+    }
+  };
+
+  // Button Drag Handle Start
   const handleStart = (clientX: number, clientY: number) => {
     isDraggingRef.current = true;
     hasMovedRef.current = false;
@@ -121,6 +174,28 @@ export function AiConsultantButton() {
   };
 
   const handleMove = (clientX: number, clientY: number) => {
+    // 1. Dragging the chat modal window anywhere across the screen
+    if (isDraggingModalRef.current) {
+      const deltaX = clientX - modalDragStartRef.current.mouseX;
+      const deltaY = clientY - modalDragStartRef.current.mouseY;
+
+      const isMobile = window.innerWidth < 640;
+      const modalWidth = modalRef.current?.offsetWidth || (isMobile ? Math.min(window.innerWidth - 16, 420) : 380);
+      const modalHeight = modalRef.current?.offsetHeight || 480;
+
+      const minX = 8;
+      const maxX = Math.max(minX, window.innerWidth - modalWidth - 8);
+      const minY = 75; // Stay below top sticky header
+      const maxY = Math.max(minY, window.innerHeight - modalHeight - 8);
+
+      const newX = Math.max(minX, Math.min(maxX, modalDragStartRef.current.posX + deltaX));
+      const newY = Math.max(minY, Math.min(maxY, modalDragStartRef.current.posY + deltaY));
+
+      setModalPosition({ x: newX, y: newY });
+      return;
+    }
+
+    // 2. Dragging the floating action button
     if (!isDraggingRef.current) return;
     const deltaX = clientX - dragStartRef.current.mouseX;
     const deltaY = clientY - dragStartRef.current.mouseY;
@@ -142,6 +217,7 @@ export function AiConsultantButton() {
 
   const handleEnd = () => {
     isDraggingRef.current = false;
+    isDraggingModalRef.current = false;
   };
 
   // Global mousemove/mouseup listener during drag
@@ -231,8 +307,19 @@ export function AiConsultantButton() {
   const getModalStyle = (): React.CSSProperties => {
     const isMobile = windowWidth < 640;
 
-    // Mobile screen (< 640px): Always dock cleanly within mobile viewport
-    // Regardless of where user dragged the floating button, modal fits 100% on screen!
+    // If user dragged the modal, use user-positioned coordinates strictly clamped to screen
+    if (modalPosition) {
+      return {
+        position: 'fixed',
+        left: `${modalPosition.x}px`,
+        top: `${modalPosition.y}px`,
+        width: isMobile ? `min(calc(100vw - 16px), 420px)` : '380px',
+        maxHeight: isMobile ? 'min(520px, calc(100vh - 40px))' : 'min(520px, calc(100vh - 120px))',
+        zIndex: 99999,
+      };
+    }
+
+    // Mobile screen (< 640px): Default dock cleanly within mobile viewport before user moves it
     if (isMobile) {
       return {
         position: 'fixed',
@@ -292,8 +379,9 @@ export function AiConsultantButton() {
       {/* Mobile Backdrop to cleanly close modal when clicking outside */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-[99998] sm:hidden bg-black/50 backdrop-blur-[2px] transition-opacity"
+          className="fixed inset-0 z-[99998] sm:hidden bg-black/50 backdrop-blur-[2px] transition-opacity touch-none"
           onClick={() => setIsOpen(false)}
+          onTouchMove={(e) => e.preventDefault()}
           aria-hidden="true"
         />
       )}
@@ -355,29 +443,47 @@ export function AiConsultantButton() {
 
       </div>
 
-      {/* Floating AI Chat Window Modal (Always guaranteed 100% visible on mobile & desktop) */}
+      {/* Floating AI Chat Window Modal (Fully Draggable by header • Clamped on screen) */}
       {isOpen && (
         <div 
-          className="fixed z-[99999] bg-white rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden animate-fade-in flex flex-col"
+          ref={modalRef}
+          className="fixed z-[99999] bg-white rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden animate-fade-in flex flex-col overscroll-contain"
           style={getModalStyle()}
         >
           
-          {/* Top Bar */}
-          <div className="bg-gradient-to-r from-emerald-900 to-emerald-800 text-white p-3 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          {/* Draggable Top Bar Handle */}
+          <div 
+            onMouseDown={(e) => handleModalDragStart(e.clientX, e.clientY)}
+            onTouchStart={(e) => {
+              if (e.touches.length > 0) {
+                handleModalDragStart(e.touches[0].clientX, e.touches[0].clientY);
+              }
+            }}
+            className="bg-gradient-to-r from-emerald-900 to-emerald-800 text-white p-3 flex items-center justify-between cursor-grab active:cursor-grabbing select-none touch-none border-b border-emerald-700/50"
+            title="Hold and drag here to move the chat window anywhere on your screen"
+          >
+            <div className="flex items-center gap-2 pointer-events-none">
               <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-amber-300 text-sm font-bold shrink-0">
                 🤖
               </div>
               <div>
-                <h3 className="font-serif font-bold text-xs text-white">Kosmico AI Consultant</h3>
+                <div className="flex items-center gap-1.5">
+                  <h3 className="font-serif font-bold text-xs text-white">Kosmico AI Consultant</h3>
+                  <GripHorizontal className="w-3.5 h-3.5 text-emerald-300 opacity-70" />
+                </div>
                 <div className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
                   <span className="text-[9px] text-emerald-200 uppercase font-extrabold">{language === 'hinglish' ? 'Hinglish Mode' : 'English Mode'}</span>
+                  <span className="text-[8px] text-amber-300 font-semibold bg-emerald-950/60 px-1 py-0.2 rounded ml-1">✋ Drag</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div 
+              className="flex items-center gap-2 pointer-events-auto"
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+            >
               {/* Language Switcher Button */}
               <div className="flex items-center bg-emerald-950/80 p-0.5 rounded-lg border border-emerald-700/60 text-[10px] font-bold">
                 <button
@@ -417,7 +523,10 @@ export function AiConsultantButton() {
           </div>
 
           {/* Messages */}
-          <div className="p-3 space-y-2.5 overflow-y-auto flex-1 bg-surface text-xs max-h-[280px]">
+          <div 
+            className="p-3 space-y-2.5 overflow-y-auto overscroll-contain touch-pan-y flex-1 bg-surface text-xs max-h-[280px]"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             {messages.map((msg) => (
               <div
                 key={msg.id}
