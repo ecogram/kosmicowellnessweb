@@ -14,11 +14,11 @@ export const useProfile = () => {
       try {
         const res = await api.get('/auth/profile');
         data = res.data;
-      } catch (err) {
-        try {
-          const res = await api.get('/users/profile');
-          data = res.data;
-        } catch (_) {}
+      } catch (err: any) {
+        if (err?.response?.status === 401) {
+          useAuthStore.getState().logout();
+        }
+        return null;
       }
       const user = data?.data?.user ?? data?.user ?? data?.data ?? (data?._id || data?.name ? data : null);
       if (user) {
@@ -74,10 +74,10 @@ export const useProfile = () => {
       return user;
     },
     enabled: !!accessToken,
-    staleTime: 5000,
-    refetchInterval: 15000,
+    staleTime: 30000,
+    refetchInterval: false,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: false,
   });
 };
 

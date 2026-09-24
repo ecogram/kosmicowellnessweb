@@ -32,12 +32,7 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         useAuthStore.getState().updateUser(incomingUser);
       } else {
         try {
-          let res;
-          try {
-            res = await api.get('/auth/profile');
-          } catch (_) {
-            res = await api.get('/users/profile');
-          }
+          const res = await api.get('/auth/profile');
           if (res?.data?.data) {
             const freshUser = res.data.data.user || res.data.data;
             if (freshUser) {

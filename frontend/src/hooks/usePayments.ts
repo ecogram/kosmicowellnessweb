@@ -83,10 +83,10 @@ export const useSavedPaymentMethods = () => {
         console.warn('/payment/saved-methods fetch notice:', err);
       }
 
-      // 2. Secondary fallback: /payments/saved-methods
+      // 2. Secondary fallback: /payment/saved-methods
       if (allMethods.length === 0) {
         try {
-          const { data } = await api.get('/payments/saved-methods');
+          const { data } = await api.get('/payment/saved-methods');
           const list = extractPaymentMethods(data);
           if (list.length > 0) allMethods.push(...list);
         } catch (_) {}
@@ -109,12 +109,7 @@ export const useSavedPaymentMethods = () => {
         }
       } catch (_) {}
 
-      // 4. Fallback to /users/profile
-      try {
-        const { data } = await api.get('/users/profile');
-        const list = extractPaymentMethods(data);
-        if (list.length > 0) allMethods.push(...list);
-      } catch (_) {}
+      // 4. Stored user payment methods in auth store
 
       // 5. Also check currently stored user methods in auth store
       const storeUser = useAuthStore.getState().user as any;

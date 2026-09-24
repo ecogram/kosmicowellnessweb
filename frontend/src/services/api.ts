@@ -46,6 +46,13 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    // If token is invalid or expired, gracefully log out so browser stops spamming endpoints
+    if (error.response?.status === 401) {
+      const state = useAuthStore.getState();
+      if (state.accessToken || state.isAuthenticated) {
+        state.logout();
+      }
+    }
     return Promise.reject(error);
   }
 );

@@ -66,20 +66,17 @@ const AuthInit = ({ children }: { children: React.ReactNode }) => {
 
     const fetchFreshProfile = async () => {
       try {
-        let res;
-        try {
-          res = await api.get('/auth/profile');
-        } catch (err) {
-          res = await api.get('/users/profile');
-        }
+        const res = await api.get('/auth/profile');
         if (res?.data?.data) {
           const user = res.data.data.user || res.data.data;
           if (user && (user.name || user.email || user._id || user.id)) {
             updateUser(user);
           }
         }
-      } catch (_) {
-        // Keep persisted state intact even if profile check fails temporarily
+      } catch (err: any) {
+        if (err?.response?.status === 401) {
+          useAuthStore.getState().logout();
+        }
       } finally {
         setLoading(false);
       }

@@ -177,7 +177,7 @@ export const Login: React.FC = () => {
       if (authToken) {
         setAuth(userObj, authToken);
         try {
-          const profileRes = await api.get('/users/profile', {
+          const profileRes = await api.get('/auth/profile', {
             headers: { Authorization: `Bearer ${authToken}` },
           });
           if (profileRes.data?.data) {
