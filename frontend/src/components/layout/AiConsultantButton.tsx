@@ -27,6 +27,7 @@ export function AiConsultantButton() {
   // Dynamic Draggable Position State
   const [hasDragged, setHasDragged] = useState(false);
   const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [windowWidth, setWindowWidth] = useState(() => (typeof window !== 'undefined' ? window.innerWidth : 1024));
 
   const containerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
@@ -83,9 +84,11 @@ export function AiConsultantButton() {
   // Keep inside bounds on window resize if dragged
   useEffect(() => {
     const handleResize = () => {
+      const w = window.innerWidth;
+      setWindowWidth(w);
       if (hasDragged) {
         setPosition((prev) => ({
-          x: Math.min(prev.x, window.innerWidth - 70),
+          x: Math.min(prev.x, w - 70),
           y: Math.min(prev.y, window.innerHeight - 70),
         }));
       }
@@ -129,8 +132,10 @@ export function AiConsultantButton() {
       }
     }
 
-    const newX = Math.max(10, Math.min(window.innerWidth - 70, dragStartRef.current.posX + deltaX));
-    const newY = Math.max(10, Math.min(window.innerHeight - 70, dragStartRef.current.posY + deltaY));
+    const buttonSize = 56;
+    const minTop = 96; // Safely below sticky navbar & top banner
+    const newX = Math.max(10, Math.min(window.innerWidth - buttonSize - 10, dragStartRef.current.posX + deltaX));
+    const newY = Math.max(minTop, Math.min(window.innerHeight - buttonSize - 10, dragStartRef.current.posY + deltaY));
 
     setPosition({ x: newX, y: newY });
   };
@@ -222,8 +227,77 @@ export function AiConsultantButton() {
     }, 1000);
   };
 
+  // Safe modal positioning calculation
+  const getModalStyle = (): React.CSSProperties => {
+    const isMobile = windowWidth < 640;
+
+    // Mobile screen (< 640px): Always dock cleanly within mobile viewport
+    // Regardless of where user dragged the floating button, modal fits 100% on screen!
+    if (isMobile) {
+      return {
+        position: 'fixed',
+        left: '12px',
+        right: '12px',
+        bottom: '16px',
+        width: 'calc(100vw - 24px)',
+        maxWidth: '420px',
+        margin: '0 auto',
+        maxHeight: 'min(520px, calc(100vh - 40px))',
+        zIndex: 99999,
+      };
+    }
+
+    // Desktop/Tablet default when not dragged
+    if (!hasDragged) {
+      return {
+        position: 'fixed',
+        bottom: '96px',
+        right: '24px',
+        width: '380px',
+        maxHeight: 'min(520px, calc(100vh - 120px))',
+        zIndex: 99999,
+      };
+    }
+
+    // Desktop/Tablet when dragged: Clamped safely within screen boundaries
+    const modalWidth = 380;
+    const modalHeight = Math.min(520, window.innerHeight - 120);
+
+    let targetLeft: number;
+    if (position.x > window.innerWidth / 2) {
+      targetLeft = position.x - modalWidth - 12;
+    } else {
+      targetLeft = position.x + 68;
+    }
+    const safeLeft = Math.max(16, Math.min(targetLeft, window.innerWidth - modalWidth - 16));
+
+    let targetTop = position.y - modalHeight + 56;
+    if (targetTop < 96) {
+      targetTop = Math.max(96, position.y);
+    }
+    const safeTop = Math.max(96, Math.min(targetTop, window.innerHeight - modalHeight - 16));
+
+    return {
+      position: 'fixed',
+      left: `${safeLeft}px`,
+      top: `${safeTop}px`,
+      width: `${modalWidth}px`,
+      maxHeight: `${modalHeight}px`,
+      zIndex: 99999,
+    };
+  };
+
   return (
     <>
+      {/* Mobile Backdrop to cleanly close modal when clicking outside */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-[99998] sm:hidden bg-black/50 backdrop-blur-[2px] transition-opacity"
+          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Dynamic Draggable Floating Action Button Container */}
       <div 
         ref={containerRef}
@@ -281,21 +355,11 @@ export function AiConsultantButton() {
 
       </div>
 
-      {/* Floating AI Chat Window Modal (Positioned dynamically near button) */}
+      {/* Floating AI Chat Window Modal (Always guaranteed 100% visible on mobile & desktop) */}
       {isOpen && (
         <div 
-          className="fixed z-50 w-[92vw] sm:w-[380px] bg-white rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden animate-fade-in flex flex-col max-h-[480px]"
-          style={
-            hasDragged
-              ? {
-                  left: `${Math.min(Math.max(10, position.x - 300), window.innerWidth - 390)}px`,
-                  top: `${Math.max(10, Math.min(position.y - 480, window.innerHeight - 490))}px`,
-                }
-              : {
-                  bottom: '160px',
-                  right: '24px',
-                }
-          }
+          className="fixed z-[99999] bg-white rounded-3xl shadow-2xl border border-neutral-200 overflow-hidden animate-fade-in flex flex-col"
+          style={getModalStyle()}
         >
           
           {/* Top Bar */}
