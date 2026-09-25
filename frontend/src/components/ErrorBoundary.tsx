@@ -35,10 +35,12 @@ export class ErrorBoundary extends Component<Props, State> {
     if (isChunkError) {
       const lastReload = sessionStorage.getItem('chunk_reload_timestamp');
       const now = Date.now();
-      // Guard against infinite loop: reload once within 10 seconds
+      // Guard against infinite loop: reload once within 10 seconds with cache-buster
       if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
         sessionStorage.setItem('chunk_reload_timestamp', now.toString());
-        window.location.reload();
+        const url = new URL(window.location.href);
+        url.searchParams.set('_cb', now.toString());
+        window.location.replace(url.toString());
         return;
       }
     }
@@ -50,18 +52,17 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <Container className="py-20 text-center">
-          <div className="bg-error/10 text-error p-8 rounded-lg max-w-2xl mx-auto border border-error/20">
-            <h2 className="text-2xl font-bold mb-4">Something went wrong.</h2>
-            <p className="mb-4">The application encountered an unexpected error.</p>
-            <div className="text-left bg-surface p-4 rounded overflow-auto max-h-96 text-sm">
-              <p className="font-mono font-bold text-error mb-2">{this.state.error && this.state.error.toString()}</p>
-              <pre className="font-mono text-xs text-text-muted">
-                {this.state.errorInfo?.componentStack}
-              </pre>
-            </div>
+          <div className="bg-rose-50 text-rose-900 p-8 rounded-2xl max-w-2xl mx-auto border border-rose-200 shadow-sm">
+            <h2 className="text-2xl font-bold mb-2">Something went wrong</h2>
+            <p className="mb-4 text-sm text-neutral-600">A new version of the website was updated. Please reload to get the latest version.</p>
             <button
-              className="mt-6 px-4 py-2 bg-primary text-white rounded hover:bg-primary-light transition-colors"
-              onClick={() => window.location.reload()}
+              className="mt-2 px-6 py-2.5 bg-emerald-800 text-white font-semibold rounded-xl hover:bg-emerald-900 transition-colors shadow-md active:scale-95"
+              onClick={() => {
+                sessionStorage.clear();
+                const url = new URL(window.location.href);
+                url.searchParams.set('_refresh', Date.now().toString());
+                window.location.replace(url.toString());
+              }}
             >
               Reload Application
             </button>

@@ -9,33 +9,63 @@ import { RealtimeProvider } from './components/layout/RealtimeProvider';
 import { useAuthStore } from './store/useAuthStore';
 import { api } from './services/api';
 
+// Helper to automatically recover from Vite dynamic import chunk mismatch when a new version is deployed
+function lazyWithRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>
+): React.LazyExoticComponent<T> {
+  return lazy(async () => {
+    try {
+      return await factory();
+    } catch (err: any) {
+      const isChunkError =
+        err?.message?.includes('Failed to fetch dynamically imported module') ||
+        err?.message?.includes('Importing a module script failed') ||
+        err?.name === 'ChunkLoadError';
+
+      if (isChunkError) {
+        const reloadKey = 'chunk_reload_' + window.location.pathname;
+        const lastReload = sessionStorage.getItem(reloadKey);
+        const now = Date.now();
+        if (!lastReload || now - parseInt(lastReload, 10) > 12000) {
+          sessionStorage.setItem(reloadKey, now.toString());
+          const url = new URL(window.location.href);
+          url.searchParams.set('_v', now.toString());
+          window.location.replace(url.toString());
+          return new Promise<{ default: T }>(() => {});
+        }
+      }
+      throw err;
+    }
+  });
+}
+
 // Lazy-loaded pages for faster initial load & optimized code-splitting
-const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
-const Shop = lazy(() => import('./pages/Shop').then(m => ({ default: m.Shop })));
-const ProductDetails = lazy(() => import('./pages/ProductDetails').then(m => ({ default: m.ProductDetails })));
-const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
-const Register = lazy(() => import('./pages/Register').then(m => ({ default: m.Register })));
-const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
-const Cart = lazy(() => import('./pages/Cart').then(m => ({ default: m.Cart })));
-const Checkout = lazy(() => import('./pages/Checkout').then(m => ({ default: m.Checkout })));
-const OrderSuccess = lazy(() => import('./pages/OrderSuccess').then(m => ({ default: m.OrderSuccess })));
-const Orders = lazy(() => import('./pages/Orders').then(m => ({ default: m.Orders })));
-const OrderDetails = lazy(() => import('./pages/OrderDetails').then(m => ({ default: m.OrderDetails })));
-const Wishlist = lazy(() => import('./pages/Wishlist').then(m => ({ default: m.Wishlist })));
-const Coupons = lazy(() => import('./pages/Coupons').then(m => ({ default: m.Coupons })));
-const Notifications = lazy(() => import('./pages/Notifications').then(m => ({ default: m.Notifications })));
-const CarePage = lazy(() => import('./pages/CarePage').then(m => ({ default: m.CarePage })));
-const AiConsultantPage = lazy(() => import('./pages/AiConsultantPage').then(m => ({ default: m.AiConsultantPage })));
-const About = lazy(() => import('./pages/About').then(m => ({ default: m.About })));
-const BenefitsPage = lazy(() => import('./pages/BenefitsPage').then(m => ({ default: m.BenefitsPage })));
-const IngredientsPage = lazy(() => import('./pages/IngredientsPage').then(m => ({ default: m.IngredientsPage })));
-const HowItWorksPage = lazy(() => import('./pages/HowItWorksPage').then(m => ({ default: m.HowItWorksPage })));
-const FaqPage = lazy(() => import('./pages/FaqPage').then(m => ({ default: m.FaqPage })));
-const Contact = lazy(() => import('./pages/Contact').then(m => ({ default: m.Contact })));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
-const RefundPolicy = lazy(() => import('./pages/RefundPolicy').then(m => ({ default: m.RefundPolicy })));
-const TermsOfService = lazy(() => import('./pages/TermsOfService').then(m => ({ default: m.TermsOfService })));
-const ReturnsRefunds = lazy(() => import('./pages/ReturnsRefunds').then(m => ({ default: m.ReturnsRefunds })));
+const Home = lazyWithRetry(() => import('./pages/Home').then(m => ({ default: m.Home })));
+const Shop = lazyWithRetry(() => import('./pages/Shop').then(m => ({ default: m.Shop })));
+const ProductDetails = lazyWithRetry(() => import('./pages/ProductDetails').then(m => ({ default: m.ProductDetails })));
+const Login = lazyWithRetry(() => import('./pages/Login').then(m => ({ default: m.Login })));
+const Register = lazyWithRetry(() => import('./pages/Register').then(m => ({ default: m.Register })));
+const Profile = lazyWithRetry(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
+const Cart = lazyWithRetry(() => import('./pages/Cart').then(m => ({ default: m.Cart })));
+const Checkout = lazyWithRetry(() => import('./pages/Checkout').then(m => ({ default: m.Checkout })));
+const OrderSuccess = lazyWithRetry(() => import('./pages/OrderSuccess').then(m => ({ default: m.OrderSuccess })));
+const Orders = lazyWithRetry(() => import('./pages/Orders').then(m => ({ default: m.Orders })));
+const OrderDetails = lazyWithRetry(() => import('./pages/OrderDetails').then(m => ({ default: m.OrderDetails })));
+const Wishlist = lazyWithRetry(() => import('./pages/Wishlist').then(m => ({ default: m.Wishlist })));
+const Coupons = lazyWithRetry(() => import('./pages/Coupons').then(m => ({ default: m.Coupons })));
+const Notifications = lazyWithRetry(() => import('./pages/Notifications').then(m => ({ default: m.Notifications })));
+const CarePage = lazyWithRetry(() => import('./pages/CarePage').then(m => ({ default: m.CarePage })));
+const AiConsultantPage = lazyWithRetry(() => import('./pages/AiConsultantPage').then(m => ({ default: m.AiConsultantPage })));
+const About = lazyWithRetry(() => import('./pages/About').then(m => ({ default: m.About })));
+const BenefitsPage = lazyWithRetry(() => import('./pages/BenefitsPage').then(m => ({ default: m.BenefitsPage })));
+const IngredientsPage = lazyWithRetry(() => import('./pages/IngredientsPage').then(m => ({ default: m.IngredientsPage })));
+const HowItWorksPage = lazyWithRetry(() => import('./pages/HowItWorksPage').then(m => ({ default: m.HowItWorksPage })));
+const FaqPage = lazyWithRetry(() => import('./pages/FaqPage').then(m => ({ default: m.FaqPage })));
+const Contact = lazyWithRetry(() => import('./pages/Contact').then(m => ({ default: m.Contact })));
+const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
+const RefundPolicy = lazyWithRetry(() => import('./pages/RefundPolicy').then(m => ({ default: m.RefundPolicy })));
+const TermsOfService = lazyWithRetry(() => import('./pages/TermsOfService').then(m => ({ default: m.TermsOfService })));
+const ReturnsRefunds = lazyWithRetry(() => import('./pages/ReturnsRefunds').then(m => ({ default: m.ReturnsRefunds })));
 
 // Global Loading Fallback
 const PageLoadingFallback = () => (
