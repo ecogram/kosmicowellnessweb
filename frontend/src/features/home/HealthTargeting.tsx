@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Activity, Heart, ShieldAlert, Scale, Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Container } from '../../components/ui/Container';
 
@@ -35,26 +35,7 @@ const healthCards = [
 
 export function HealthTargeting() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Auto-scroll on mobile view every 3.5 seconds
-  useEffect(() => {
-    if (isPaused) return;
-
-    const timer = setInterval(() => {
-      // Only auto-scroll on screens narrower than md breakpoint
-      if (window.innerWidth < 768) {
-        setActiveIndex((prev) => {
-          const next = (prev + 1) % healthCards.length;
-          scrollToIndex(next);
-          return next;
-        });
-      }
-    }, 3500);
-
-    return () => clearInterval(timer);
-  }, [isPaused]);
 
   const scrollToIndex = (index: number) => {
     setActiveIndex(index);
@@ -109,14 +90,14 @@ export function HealthTargeting() {
           <div className="md:hidden flex justify-between items-center absolute -top-12 right-0 gap-2 z-10">
             <button
               onClick={handlePrev}
-              className="p-1.5 rounded-full bg-white border border-border shadow-xs text-text-main hover:bg-neutral-100 active:scale-95 transition-all"
+              className="p-1.5 rounded-full bg-white border border-border shadow-xs text-text-main hover:bg-neutral-100 active:scale-95 transition-all cursor-pointer"
               aria-label="Previous card"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             <button
               onClick={handleNext}
-              className="p-1.5 rounded-full bg-white border border-border shadow-xs text-text-main hover:bg-neutral-100 active:scale-95 transition-all"
+              className="p-1.5 rounded-full bg-white border border-border shadow-xs text-text-main hover:bg-neutral-100 active:scale-95 transition-all cursor-pointer"
               aria-label="Next card"
             >
               <ChevronRight className="w-4 h-4" />
@@ -127,10 +108,6 @@ export function HealthTargeting() {
           <div
             ref={containerRef}
             onScroll={handleScroll}
-            onTouchStart={() => setIsPaused(true)}
-            onTouchEnd={() => setTimeout(() => setIsPaused(false), 2000)}
-            onMouseEnter={() => setIsPaused(true)}
-            onMouseLeave={() => setIsPaused(false)}
             className="flex md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 overflow-x-auto md:overflow-visible snap-x snap-mandatory scroll-smooth pb-4 md:pb-0 scrollbar-none"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
