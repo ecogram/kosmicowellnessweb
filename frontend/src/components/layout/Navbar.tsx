@@ -59,20 +59,23 @@ export function Navbar() {
 
   return (
     <nav className="bg-surface/95 backdrop-blur-md border-b border-border shadow-xs relative">
-      <Container>
-        <div className="flex items-center justify-between h-16 gap-2">
+      <Container className="px-2 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-1 sm:gap-2">
           {/* Left: Mobile Menu button & Brand Logo */}
-          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
               className="text-text-main p-1.5 focus:outline-none md:hidden shrink-0"
               aria-label="Open menu"
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
-            <Link to="/" className="flex items-center gap-1.5 sm:gap-2 font-serif text-base sm:text-xl md:text-2xl font-bold tracking-tight text-primary min-w-0">
-              <img src="/logo.png" alt="Kosmico" className="h-7 sm:h-8 w-auto object-contain rounded-md shrink-0" />
-              <span className="whitespace-nowrap">Kosmico Wellness</span>
+            <Link to="/" className="flex items-center gap-1 sm:gap-2 font-serif text-sm min-[400px]:text-base sm:text-xl md:text-2xl font-bold tracking-tight text-primary min-w-0">
+              <img src="/logo.png" alt="Kosmico" className="h-6 min-[400px]:h-7 sm:h-8 w-auto object-contain rounded-md shrink-0" />
+              <span className="whitespace-nowrap">
+                <span className="inline min-[400px]:hidden">Kosmico</span>
+                <span className="hidden min-[400px]:inline">Kosmico Wellness</span>
+              </span>
             </Link>
           </div>
 
@@ -90,7 +93,7 @@ export function Navbar() {
           </div>
 
           {/* Right: Action Icons */}
-          <div className="flex items-center space-x-2 sm:space-x-4 shrink-0">
+          <div className="flex items-center space-x-1 sm:space-x-3 md:space-x-4 shrink-0">
             <button
               className="text-text-main hover:text-primary transition-colors p-1"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
@@ -107,7 +110,7 @@ export function Navbar() {
             >
               <Heart className="h-5 w-5" />
               {wishlist?.items?.length > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-rose-500 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-xs">
+                <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] sm:text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-xs">
                   {wishlist.items.length > 9 ? '9+' : wishlist.items.length}
                 </span>
               )}
@@ -122,7 +125,7 @@ export function Navbar() {
             >
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-error text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-xs">
+                <span className="absolute -top-1 -right-1 bg-error text-white text-[9px] sm:text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-xs">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
