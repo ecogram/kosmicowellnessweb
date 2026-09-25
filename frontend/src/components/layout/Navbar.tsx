@@ -62,20 +62,17 @@ export function Navbar() {
       <Container className="px-2 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-1 sm:gap-2">
           {/* Left: Mobile Menu button & Brand Logo */}
-          <div className="flex items-center gap-1 sm:gap-2 min-w-0">
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0 shrink">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="text-text-main p-1.5 focus:outline-none md:hidden shrink-0"
+              className="text-text-main p-1 sm:p-1.5 focus:outline-none md:hidden shrink-0"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
-            <Link to="/" className="flex items-center gap-1 sm:gap-2 font-serif text-sm min-[400px]:text-base sm:text-xl md:text-2xl font-bold tracking-tight text-primary min-w-0">
-              <img src="/logo.png" alt="Kosmico" className="h-6 min-[400px]:h-7 sm:h-8 w-auto object-contain rounded-md shrink-0" />
-              <span className="whitespace-nowrap">
-                <span className="inline min-[400px]:hidden">Kosmico</span>
-                <span className="hidden min-[400px]:inline">Kosmico Wellness</span>
-              </span>
+            <Link to="/" className="flex items-center gap-1 sm:gap-2 font-serif text-[13px] sm:text-xl md:text-2xl font-bold tracking-tight text-primary min-w-0">
+              <img src="/logo.png" alt="Kosmico" className="h-6 sm:h-8 w-auto object-contain rounded-md shrink-0" />
+              <span className="whitespace-nowrap">Kosmico Wellness</span>
             </Link>
           </div>
 
