@@ -77,17 +77,42 @@ export const useProduct = (slug: string) => {
   return useQuery({
     queryKey: ['product', slug],
     queryFn: async () => {
-      let product: any;
-      try {
-        const { data } = await api.get(`/products/${slug}`);
-        product = data?.data?.product ?? data?.data ?? data;
-      } catch (e) {
-        // Fallback lookup if /products/:slug failed (e.g. live server non-ObjectId slug error)
+      let product: any = null;
+      const isObjectId = Boolean(slug && /^[0-9a-fA-F]{24}$/.test(slug));
+
+      if (isObjectId) {
+        // Direct query by MongoDB ObjectId works without CastError
+        try {
+          const { data } = await api.get(`/products/${slug}`);
+          product = data?.data?.product ?? data?.data ?? data;
+        } catch { }
+      } else {
+        // Safe slug lookup: Query bestsellers / user list without triggering backend CastError 500
         try {
           const { data } = await api.get('/products/bestsellers');
           const list = Array.isArray(data) ? data : (data?.data?.products ?? (Array.isArray(data?.data) ? data.data : []));
           product = list.find((p: any) => p.slug === slug || p._id === slug || p.id === slug);
         } catch { }
+
+        if (!product) {
+          try {
+            const res = await api.get('/products/user/list', { params: { limit: 50 } });
+            const pData = res?.data?.data ?? res?.data ?? {};
+            const list = Array.isArray(pData) ? pData : (pData.products ?? []);
+            product = list.find((p: any) => p.slug === slug || p._id === slug || p.id === slug);
+          } catch { }
+        }
+
+        // If found and has a valid ObjectId, fetch fresh detailed record by its real _id (200 OK)
+        if (product && product._id && /^[0-9a-fA-F]{24}$/.test(product._id)) {
+          try {
+            const { data } = await api.get(`/products/${product._id}`);
+            const fresh = data?.data?.product ?? data?.data ?? data;
+            if (fresh && (fresh.name || fresh._id)) {
+              product = { ...product, ...fresh };
+            }
+          } catch { }
+        }
       }
 
       if (!product || (!product.name && !product._id && !product.id)) {
