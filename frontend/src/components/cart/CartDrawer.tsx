@@ -61,7 +61,7 @@ export function CartDrawer() {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-6 overflow-hidden">
+    <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-6 overflow-hidden">
       {/* Backdrop with Backdrop Blur */}
       <div 
         className="fixed inset-0 bg-black/75 backdrop-blur-xs transition-opacity duration-300 animate-fadeIn touch-none" 
@@ -69,40 +69,45 @@ export function CartDrawer() {
         onTouchMove={(e) => e.preventDefault()}
       />
 
-      {/* Centered Animated Modal Panel - Solid Opaque White */}
+      {/* Animated Modal Panel: Bottom-Sheet on mobile, Centered Modal on Desktop */}
       <div 
-        className="relative w-full max-w-lg max-h-[90vh] bg-white rounded-3xl shadow-2xl flex flex-col border border-emerald-900/20 overflow-hidden z-10 transform transition-all duration-300 animate-fade-in-up text-neutral-900 overscroll-contain"
+        className="relative w-full max-w-lg max-h-[88vh] sm:max-h-[90vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col border border-emerald-900/20 overflow-hidden z-10 transform transition-all duration-300 animate-fade-in-up text-neutral-900 overscroll-contain"
         style={{ backgroundColor: '#ffffff' }}
       >
+        {/* Mobile Pull/Drag Handle */}
+        <div className="sm:hidden w-full flex justify-center pt-2 pb-1 bg-emerald-950">
+          <div className="w-10 h-1 bg-white/30 rounded-full" />
+        </div>
+
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-neutral-200 flex items-center justify-between bg-emerald-950 text-white shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 text-amber-300 flex items-center justify-center shadow-xs border border-white/10">
-              <ShoppingBag className="w-5 h-5" />
+        <div className="px-3.5 py-3 sm:p-5 border-b border-neutral-200 flex items-center justify-between bg-emerald-950 text-white shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-white/10 text-amber-300 flex items-center justify-center shadow-xs border border-white/10 shrink-0">
+              <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h2 className="font-serif text-lg font-bold text-white leading-none">Your Cart</h2>
-              <span className="text-[11px] font-semibold text-emerald-200 mt-1 block">
+              <h2 className="font-serif text-base sm:text-lg font-bold text-white leading-none">Your Cart</h2>
+              <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-200 mt-0.5 sm:mt-1 block">
                 {items.reduce((acc: number, item: any) => acc + item.quantity, 0)} items selected
               </span>
             </div>
           </div>
           <button 
             onClick={closeDrawer}
-            className="p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all active:scale-90"
+            className="p-1.5 sm:p-2 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-all active:scale-90"
             title="Close cart"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
 
         {/* Delivery Info Banner */}
-        <div className="p-3 sm:p-3.5 bg-emerald-50/90 border-b border-emerald-900/10 flex items-center justify-between text-xs font-semibold text-neutral-800 shrink-0">
-          <div className="flex items-center gap-2">
-            <Truck className="w-4 h-4 text-emerald-800 shrink-0" />
-            <span>🎉 <strong className="text-emerald-900">FREE Delivery</strong> on all Online Prepaid Orders!</span>
+        <div className="py-2 px-3 sm:p-3.5 bg-emerald-50/90 border-b border-emerald-900/10 flex items-center justify-between text-[11px] sm:text-xs font-semibold text-neutral-800 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <Truck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-800 shrink-0" />
+            <span>🎉 <strong className="text-emerald-900">FREE Delivery</strong> on all Prepaid Orders!</span>
           </div>
-          <span className="text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">Shiprocket</span>
+          <span className="text-[9px] sm:text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded-full">Shiprocket</span>
         </div>
 
         {/* Cart Content */}
@@ -144,10 +149,10 @@ export function CartDrawer() {
               return (
                 <div 
                   key={`${prod._id || item.product}-${item.variant || 'default'}`}
-                  className="group flex gap-3.5 p-3.5 bg-white border border-neutral-200 rounded-2xl shadow-xs hover:shadow-md hover:border-emerald-700/40 transition-all duration-200"
+                  className="group flex gap-2.5 sm:gap-3.5 p-2.5 sm:p-3.5 bg-white border border-neutral-200 rounded-xl sm:rounded-2xl shadow-xs hover:shadow-md hover:border-emerald-700/40 transition-all duration-200"
                   style={{ backgroundColor: '#ffffff' }}
                 >
-                  <div className="w-18 h-18 bg-neutral-100 border border-neutral-200 rounded-xl p-1 shrink-0 overflow-hidden">
+                  <div className="w-14 h-14 sm:w-18 sm:h-18 bg-neutral-100 border border-neutral-200 rounded-lg sm:rounded-xl p-1 shrink-0 overflow-hidden flex items-center justify-center">
                     <img 
                       src={imageSrc} 
                       alt={prod.name || 'Product'} 
@@ -155,37 +160,37 @@ export function CartDrawer() {
                     />
                   </div>
                   
-                  <div className="flex-1 flex flex-col justify-between">
+                  <div className="flex-1 flex flex-col justify-between min-w-0">
                     <div>
-                      <div className="flex justify-between items-start gap-2">
-                        <h4 className="font-serif font-bold text-xs sm:text-sm text-neutral-900 line-clamp-2 leading-snug">
+                      <div className="flex justify-between items-start gap-1.5 sm:gap-2">
+                        <h4 className="font-serif font-bold text-xs sm:text-sm text-neutral-900 line-clamp-2 leading-tight">
                           {prod.name || item.name || 'Sweet Monk (Monk Fruit Sweetener 10ml)'}
                         </h4>
                         <button
                           onClick={() => removeCartItem.mutate({ productId: prod._id || item.product, variant: item.variant })}
-                          className="text-neutral-400 hover:text-red-600 transition-colors p-1 active:scale-90"
+                          className="text-neutral-400 hover:text-red-600 transition-colors p-1 active:scale-90 shrink-0"
                           title="Remove item"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </button>
                       </div>
                       {item.variant && (
-                        <span className="inline-block text-[10px] font-extrabold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md mt-1 border border-emerald-200">
+                        <span className="inline-block text-[9px] sm:text-[10px] font-extrabold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded mt-0.5 border border-emerald-200">
                           {item.variant}
                         </span>
                       )}
                     </div>
 
-                    <div className="flex justify-between items-center mt-2.5">
-                      <div className="flex items-center border border-neutral-200 rounded-xl bg-white shadow-xs">
+                    <div className="flex justify-between items-center mt-2">
+                      <div className="flex items-center border border-neutral-200 rounded-lg sm:rounded-xl bg-white shadow-xs">
                         <button
                           onClick={() => handleQuantityChange(prod._id || item.product, item.quantity, -1, item.variant)}
-                          className="p-1.5 text-neutral-700 hover:text-emerald-800 transition-colors active:scale-90 disabled:opacity-40"
+                          className="p-1 sm:p-1.5 text-neutral-700 hover:text-emerald-800 transition-colors active:scale-90 disabled:opacity-40"
                           disabled={updateCartItem.isPending}
                         >
-                          <Minus className="w-3 h-3" />
+                          <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                         </button>
-                        <span className="px-2 text-xs font-bold text-neutral-900 min-w-[20px] text-center">
+                        <span className="px-1.5 sm:px-2 text-[11px] sm:text-xs font-bold text-neutral-900 min-w-[16px] sm:min-w-[20px] text-center">
                           {item.quantity}
                         </span>
                         {(() => {
@@ -194,18 +199,18 @@ export function CartDrawer() {
                           return (
                             <button
                               onClick={() => handleQuantityChange(prod._id || item.product, item.quantity, 1, item.variant, itemStock)}
-                              className={`p-1.5 transition-colors active:scale-90 cursor-pointer ${
+                              className={`p-1 sm:p-1.5 transition-colors active:scale-90 cursor-pointer ${
                                 isMaxStock ? 'text-amber-600 hover:text-amber-700 bg-amber-50/50' : 'text-neutral-700 hover:text-emerald-800'
                               }`}
                               disabled={updateCartItem.isPending}
                               title={isMaxStock ? `Only ${itemStock} items available in stock` : 'Increase quantity'}
                             >
-                              <Plus className="w-3 h-3" />
+                              <Plus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                             </button>
                           );
                         })()}
                       </div>
-                      <span className="font-bold text-sm text-emerald-900">
+                      <span className="font-bold text-xs sm:text-sm text-emerald-900">
                         ₹{(getItemPrice(item) * item.quantity).toLocaleString('en-IN')}
                       </span>
                     </div>
@@ -218,34 +223,34 @@ export function CartDrawer() {
 
         {/* Footer Checkout Summary */}
         {items.length > 0 && (
-          <div className="p-4 sm:p-5 border-t border-neutral-200 bg-white shadow-lg space-y-3 shrink-0" style={{ backgroundColor: '#ffffff' }}>
-            <div className="flex justify-between items-center text-xs text-neutral-600 font-medium">
+          <div className="p-3 sm:p-5 pb-5 sm:pb-5 border-t border-neutral-200 bg-white shadow-lg space-y-2.5 sm:space-y-3 shrink-0" style={{ backgroundColor: '#ffffff' }}>
+            <div className="flex justify-between items-center text-[11px] sm:text-xs text-neutral-600 font-medium">
               <span>Subtotal (Taxes Included)</span>
-              <span className="font-sans font-black text-neutral-900 text-lg">₹{totalAmount.toLocaleString('en-IN')}</span>
+              <span className="font-sans font-black text-neutral-900 text-base sm:text-lg">₹{totalAmount.toLocaleString('en-IN')}</span>
             </div>
 
-            <div className="flex items-center gap-1.5 text-[11px] text-emerald-900 bg-emerald-50 p-2.5 rounded-xl font-semibold border border-emerald-200">
-              <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] text-emerald-900 bg-emerald-50 p-2 sm:p-2.5 rounded-xl font-semibold border border-emerald-200">
+              <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-700 shrink-0" />
               <span>100% Secure Checkout | Live Shiprocket Delivery</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5 pt-1">
+            <div className="grid grid-cols-2 gap-2 sm:gap-2.5 pt-0.5 sm:pt-1">
               <button
                 onClick={() => {
                   closeDrawer();
                   navigate('/cart');
                 }}
-                className="py-3 px-3 border border-neutral-300 text-neutral-800 font-bold text-xs rounded-xl hover:bg-neutral-100 transition-colors text-center"
+                className="py-2.5 sm:py-3 px-2.5 sm:px-3 border border-neutral-300 text-neutral-800 font-bold text-xs rounded-xl hover:bg-neutral-100 transition-colors text-center active:scale-95"
               >
                 View Full Cart
               </button>
               <button
                 onClick={handleCheckout}
-                className="py-3 px-3 bg-amber-500 hover:bg-amber-600 text-neutral-950 font-black text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md active:scale-95 uppercase tracking-wide"
+                className="py-2.5 sm:py-3 px-2.5 sm:px-3 bg-amber-500 hover:bg-amber-600 text-neutral-950 font-black text-xs sm:text-xs rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md active:scale-95 uppercase tracking-wide"
               >
                 <Lock className="w-3.5 h-3.5" />
                 <span>CHECKOUT</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             </div>
           </div>

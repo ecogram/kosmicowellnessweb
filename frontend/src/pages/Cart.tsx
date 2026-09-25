@@ -54,35 +54,35 @@ export const Cart = () => {
                   const productName = prod.name || item.name || 'Sweet Monk (Monk Fruit Sweetener 10ml)';
                   const productSlug = prod.slug || 'kosmico-classic-monk-fruit-sweetener-10g';
 
-                  return (
-                    <li key={`${productId}-${item.variant || 'default'}`} className="p-6 flex flex-col sm:grid sm:grid-cols-12 gap-6 items-center">
-                      <div className="col-span-6 flex items-center gap-4 w-full">
-                        <div className="w-24 h-24 bg-background rounded-lg border border-border p-2 flex-shrink-0">
+                    return (
+                    <li key={`${productId}-${item.variant || 'default'}`} className="p-3.5 sm:p-6 flex flex-col sm:grid sm:grid-cols-12 gap-3.5 sm:gap-6 items-start sm:items-center">
+                      <div className="col-span-6 flex items-center gap-3 sm:gap-4 w-full">
+                        <div className="w-16 h-16 sm:w-24 sm:h-24 bg-background rounded-xl sm:rounded-lg border border-border p-1.5 sm:p-2 flex-shrink-0 flex items-center justify-center">
                           <img 
                             src={imageSrc} 
                             alt={productName}
                             className="w-full h-full object-contain mix-blend-multiply"
                           />
                         </div>
-                        <div>
-                          <Link to={`/products/${productSlug}`} className="font-serif font-bold text-lg hover:text-primary transition-colors line-clamp-2">
+                        <div className="flex-1 min-w-0">
+                          <Link to={`/products/${productSlug}`} className="font-serif font-bold text-sm sm:text-lg hover:text-primary transition-colors line-clamp-2">
                             {productName}
                           </Link>
-                          {item.variant && <div className="text-sm text-text-main mt-1">Size: {item.variant}</div>}
-                          <div className="text-sm text-text-muted mt-1">{formatINR(item.priceSnapshot)}</div>
+                          {item.variant && <div className="text-xs sm:text-sm text-text-main mt-0.5 sm:mt-1">Size: {item.variant}</div>}
+                          <div className="text-xs sm:text-sm text-text-muted mt-0.5 sm:mt-1 font-semibold">{formatINR(item.priceSnapshot)}</div>
                         </div>
                       </div>
                       
-                      <div className="col-span-3 flex justify-center w-full sm:w-auto">
-                        <div className="flex items-center border border-border rounded-full overflow-hidden bg-background w-32">
+                      <div className="col-span-3 flex justify-between sm:justify-center items-center w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-0 border-neutral-100">
+                        <div className="flex items-center border border-border rounded-full overflow-hidden bg-background h-8 sm:h-10 w-28 sm:w-32 shadow-xs">
                           <button
                             onClick={() => updateMutation.mutate({ productId, quantity: Math.max(1, item.quantity - 1), variant: item.variant })}
                             disabled={updateMutation.isPending}
-                            className="w-10 h-10 flex items-center justify-center hover:bg-neutral-100 transition-colors"
+                            className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center hover:bg-neutral-100 transition-colors text-sm"
                           >
                             -
                           </button>
-                          <span className="flex-1 text-center font-medium">{item.quantity}</span>
+                          <span className="flex-1 text-center font-bold text-xs sm:text-sm">{item.quantity}</span>
                           {(() => {
                             const itemStock = typeof item.stock === 'number' ? item.stock : (typeof prod.stock === 'number' ? prod.stock : 50);
                             const isMaxStock = item.quantity >= itemStock;
@@ -96,7 +96,7 @@ export const Cart = () => {
                                   updateMutation.mutate({ productId, quantity: item.quantity + 1, variant: item.variant });
                                 }}
                                 disabled={updateMutation.isPending}
-                                className={`w-10 h-10 flex items-center justify-center transition-colors cursor-pointer ${
+                                className={`w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center transition-colors cursor-pointer text-sm ${
                                   isMaxStock ? 'text-amber-600 hover:text-amber-700 bg-amber-50/50' : 'hover:bg-neutral-100'
                                 }`}
                                 title={isMaxStock ? `Only ${itemStock} items available in stock` : 'Increase quantity'}
@@ -106,13 +106,28 @@ export const Cart = () => {
                             );
                           })()}
                         </div>
+
+                        <div className="sm:hidden font-bold text-base text-primary">
+                          {formatINR(item.priceSnapshot * item.quantity)}
+                        </div>
+
+                        <div className="sm:hidden">
+                          <button 
+                            onClick={() => removeMutation.mutate({ productId, variant: item.variant })}
+                            disabled={removeMutation.isPending}
+                            className="text-text-muted hover:text-error transition-colors p-1.5"
+                            aria-label="Remove item"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
 
-                      <div className="col-span-2 text-right font-bold text-lg w-full sm:w-auto text-center sm:text-right">
+                      <div className="hidden sm:block col-span-2 text-right font-bold text-lg w-full sm:w-auto text-center sm:text-right">
                         {formatINR(item.priceSnapshot * item.quantity)}
                       </div>
 
-                      <div className="col-span-1 flex justify-end w-full sm:w-auto">
+                      <div className="hidden sm:flex col-span-1 justify-end w-full sm:w-auto">
                         <button 
                           onClick={() => removeMutation.mutate({ productId, variant: item.variant })}
                           disabled={removeMutation.isPending}
