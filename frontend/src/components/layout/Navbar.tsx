@@ -70,10 +70,15 @@ export function Navbar() {
             >
               <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
-            <Link to="/" className="flex items-center gap-1.5 sm:gap-2 font-serif text-primary min-w-0 shrink">
-              <img src="/logo.png" alt="Kosmico" className="h-5.5 sm:h-8 w-auto object-contain rounded-md shrink-0" />
-              <span className="font-bold text-[12px] min-[360px]:text-[13px] sm:text-lg md:text-xl tracking-tight whitespace-nowrap truncate max-w-[130px] min-[360px]:max-w-[170px] sm:max-w-none">
-                Kosmico Wellness
+            <Link to="/" className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 shrink group">
+              <img
+                src="/logo.png"
+                alt="Kosmico"
+                className="h-7 sm:h-8.5 md:h-10 w-auto object-contain rounded-lg shrink-0 filter drop-shadow-xs transition-transform duration-200 group-hover:scale-105"
+              />
+              <span className="font-serif font-black text-[14px] min-[360px]:text-[15.5px] sm:text-xl md:text-2xl tracking-tight whitespace-nowrap truncate max-w-[145px] min-[360px]:max-w-[190px] sm:max-w-none flex items-center gap-1 leading-none select-none">
+                <span className="text-emerald-950 font-black">Kosmico</span>
+                <span className="text-[#0a7a40] font-extrabold">Wellness</span>
               </span>
             </Link>
           </div>

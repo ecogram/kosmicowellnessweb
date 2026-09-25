@@ -20,7 +20,7 @@ export function Hero() {
           <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-start text-center lg:text-left z-10">
             
             {/* Top Pill Tag */}
-            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-emerald-800/10 border border-emerald-800/20 text-emerald-900 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-6 shadow-xs backdrop-blur-md max-w-full">
+            <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 rounded-full bg-emerald-800/10 border border-emerald-800/20 text-emerald-900 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-6 shadow-xs backdrop-blur-md max-w-[calc(100%-65px)] sm:max-w-full">
               <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 fill-amber-500 animate-pulse shrink-0" />
               <span className="truncate sm:whitespace-normal">India's #1 Sweet Monk Sweetener &amp; Care App</span>
             </div>
