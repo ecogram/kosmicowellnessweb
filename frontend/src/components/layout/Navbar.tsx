@@ -113,6 +113,21 @@ export function Navbar() {
               )}
             </Link>
 
+            {/* Notification Bell (Always accessible on Mobile & Desktop) */}
+            <Link
+              to="/notifications"
+              className="text-text-main hover:text-primary transition-colors relative p-1"
+              title="Notifications"
+              aria-label="Notifications"
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-error text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-xs">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </Link>
+
             {isAuthenticated ? (
               <div className="hidden sm:flex items-center space-x-3 lg:space-x-4">
                 <Link
@@ -120,17 +135,6 @@ export function Navbar() {
                   className="text-text-main hover:text-primary transition-colors font-medium text-sm"
                 >
                   Orders
-                </Link>
-                <Link
-                  to="/notifications"
-                  className="text-text-main hover:text-primary transition-colors relative"
-                >
-                  <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-error text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </span>
-                  )}
                 </Link>
                 <Link
                   to="/profile"
@@ -279,21 +283,6 @@ export function Navbar() {
                 {isAuthenticated ? (
                   <div className="space-y-2">
                     <Link
-                      to="/wishlist"
-                      className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm flex items-center justify-between"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Heart className="w-4 h-4 text-rose-500 fill-rose-500/20" />
-                        <span>❤️ My Wishlist</span>
-                      </div>
-                      {wishlist?.items?.length > 0 && (
-                        <span className="bg-rose-100 text-rose-700 text-xs px-2 py-0.5 rounded-full font-bold">
-                          {wishlist.items.length}
-                        </span>
-                      )}
-                    </Link>
-                    <Link
                       to="/coupons"
                       className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm flex items-center justify-between"
                       onClick={() => setIsMobileMenuOpen(false)}
@@ -305,21 +294,6 @@ export function Navbar() {
                       <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded-full">
                         Offers
                       </span>
-                    </Link>
-                    <Link
-                      to="/notifications"
-                      className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm flex items-center justify-between"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Bell className="w-4 h-4 text-emerald-800" />
-                        <span>🔔 Notifications</span>
-                      </div>
-                      {unreadCount > 0 && (
-                        <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                          {unreadCount > 99 ? '99+' : unreadCount}
-                        </span>
-                      )}
                     </Link>
                     <Link
                       to="/orders"
@@ -368,21 +342,6 @@ export function Navbar() {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <Link
-                      to="/wishlist"
-                      className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm flex items-center justify-between"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Heart className="w-4 h-4 text-rose-500 fill-rose-500/20" />
-                        <span>❤️ My Wishlist</span>
-                      </div>
-                      {wishlist?.items?.length > 0 && (
-                        <span className="bg-rose-100 text-rose-700 text-xs px-2 py-0.5 rounded-full font-bold">
-                          {wishlist.items.length}
-                        </span>
-                      )}
-                    </Link>
                     <Link
                       to="/coupons"
                       className="px-4 py-2.5 rounded-xl text-neutral-800 hover:bg-neutral-100 font-semibold text-sm flex items-center justify-between"
