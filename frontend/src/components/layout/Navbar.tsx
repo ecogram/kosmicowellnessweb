@@ -60,19 +60,21 @@ export function Navbar() {
   return (
     <nav className="bg-surface/95 backdrop-blur-md border-b border-border shadow-xs relative">
       <Container className="px-2 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-1 sm:gap-2">
+        <div className="flex items-center justify-between h-14 sm:h-16 gap-2">
           {/* Left: Mobile Menu button & Brand Logo */}
-          <div className="flex items-center gap-1 sm:gap-2 min-w-0 shrink">
+          <div className="flex items-center gap-1 sm:gap-2.5 min-w-0 shrink">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="text-text-main p-1 sm:p-1.5 focus:outline-none md:hidden shrink-0"
+              className="text-text-main p-1 sm:p-1.5 focus:outline-none md:hidden shrink-0 hover:text-primary transition-colors cursor-pointer"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
-            <Link to="/" className="flex items-center gap-1 sm:gap-2 font-serif text-[13px] sm:text-xl md:text-2xl font-bold tracking-tight text-primary min-w-0">
-              <img src="/logo.png" alt="Kosmico" className="h-6 sm:h-8 w-auto object-contain rounded-md shrink-0" />
-              <span className="whitespace-nowrap">Kosmico Wellness</span>
+            <Link to="/" className="flex items-center gap-1.5 sm:gap-2 font-serif text-primary min-w-0 shrink">
+              <img src="/logo.png" alt="Kosmico" className="h-5.5 sm:h-8 w-auto object-contain rounded-md shrink-0" />
+              <span className="font-bold text-[12px] min-[360px]:text-[13px] sm:text-lg md:text-xl tracking-tight whitespace-nowrap truncate max-w-[130px] min-[360px]:max-w-[170px] sm:max-w-none">
+                Kosmico Wellness
+              </span>
             </Link>
           </div>
 
@@ -90,24 +92,25 @@ export function Navbar() {
           </div>
 
           {/* Right: Action Icons */}
-          <div className="flex items-center space-x-1 sm:space-x-3 md:space-x-4 shrink-0">
+          <div className="flex items-center gap-0.5 min-[360px]:gap-1 sm:gap-3 md:gap-4 shrink-0">
             <button
-              className="text-text-main hover:text-primary transition-colors p-1"
+              className="text-text-main hover:text-primary transition-colors p-1 sm:p-1.5 rounded-full hover:bg-neutral-100 cursor-pointer"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
+              aria-label="Search"
             >
-              {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+              {isSearchOpen ? <X className="h-4.5 w-4.5 sm:h-5 sm:w-5" /> : <Search className="h-4.5 w-4.5 sm:h-5 sm:w-5" />}
             </button>
 
             {/* Wishlist Button (Always accessible) */}
             <Link
               to="/wishlist"
-              className="text-text-main hover:text-rose-600 transition-colors relative p-1"
+              className="text-text-main hover:text-rose-600 transition-colors relative p-1 sm:p-1.5 rounded-full hover:bg-neutral-100"
               title="My Wishlist"
               aria-label="Wishlist"
             >
-              <Heart className="h-5 w-5" />
+              <Heart className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
               {wishlist?.items?.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] sm:text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-xs">
+                <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[8px] sm:text-[9px] font-bold h-3.5 w-3.5 min-w-[14px] rounded-full flex items-center justify-center ring-1.5 ring-white shadow-xs">
                   {wishlist.items.length > 9 ? '9+' : wishlist.items.length}
                 </span>
               )}
@@ -116,13 +119,13 @@ export function Navbar() {
             {/* Notification Bell (Always accessible on Mobile & Desktop) */}
             <Link
               to="/notifications"
-              className="text-text-main hover:text-primary transition-colors relative p-1"
+              className="text-text-main hover:text-primary transition-colors relative p-1 sm:p-1.5 rounded-full hover:bg-neutral-100"
               title="Notifications"
               aria-label="Notifications"
             >
-              <Bell className="h-5 w-5" />
+              <Bell className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-error text-white text-[9px] sm:text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-xs">
+                <span className="absolute -top-0.5 -right-0.5 bg-red-600 text-white text-[8px] sm:text-[9px] font-bold h-3.5 w-3.5 min-w-[14px] rounded-full flex items-center justify-center ring-1.5 ring-white shadow-xs">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
@@ -165,19 +168,20 @@ export function Navbar() {
             ) : (
               <Link
                 to="/login"
-                className="text-text-main hover:text-primary transition-colors hidden sm:block p-1"
+                className="text-text-main hover:text-primary transition-colors hidden sm:block p-1 sm:p-1.5"
+                title="Account"
               >
                 <User className="h-5 w-5" />
               </Link>
             )}
             <button
               onClick={() => useCartDrawerStore.getState().openDrawer()}
-              className="text-text-main hover:text-primary transition-colors relative p-1 focus:outline-none"
+              className="text-text-main hover:text-primary transition-colors relative p-1 sm:p-1.5 rounded-full hover:bg-neutral-100 focus:outline-none cursor-pointer"
               aria-label="Open cart drawer"
             >
-              <ShoppingCart className="h-5 w-5" />
+              <ShoppingCart className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
               {cart?.items?.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-accent text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center shadow-xs animate-pulse">
+                <span className="absolute -top-0.5 -right-0.5 bg-accent text-white text-[8px] sm:text-[9px] font-bold h-3.5 w-3.5 min-w-[14px] rounded-full flex items-center justify-center ring-1.5 ring-white shadow-xs animate-pulse">
                   {cart.items.reduce((acc: number, item: any) => acc + item.quantity, 0)}
                 </span>
               )}

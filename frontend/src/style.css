@@ -20,9 +20,13 @@
   --color-error: #d32f2f;
 }
 
-html,
+html {
+  overflow-x: clip;
+  scroll-padding-top: 96px;
+}
+
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
   font-family: var(--font-sans);
   color: var(--color-text-main);
