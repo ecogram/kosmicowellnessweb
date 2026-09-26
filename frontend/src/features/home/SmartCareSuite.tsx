@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Container } from '../../components/ui/Container';
-import { Camera, Watch, BookOpen, Users, Sparkles, ArrowRight, Smartphone, Activity, HeartPulse, ShieldCheck, Zap } from 'lucide-react';
+import { Camera, Watch, BookOpen, Users, Sparkles, ArrowRight, Smartphone, Activity, HeartPulse, ShieldCheck, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PlayStoreModal } from '../../components/ui/PlayStoreModal';
 
 export const SmartCareSuite: React.FC = () => {
@@ -97,12 +97,57 @@ export const SmartCareSuite: React.FC = () => {
 
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [activeCycleIndex, setActiveCycleIndex] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isScrollingRef = useRef(false);
+
+  const scrollToIndex = (index: number) => {
+    setActiveCycleIndex(index);
+    if (containerRef.current) {
+      const card = containerRef.current.children[index] as HTMLElement;
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  };
+
+  const handlePrev = () => {
+    const prev = (activeCycleIndex - 1 + careFeatures.length) % careFeatures.length;
+    scrollToIndex(prev);
+  };
+
+  const handleNext = () => {
+    const next = (activeCycleIndex + 1) % careFeatures.length;
+    scrollToIndex(next);
+  };
+
+  // Sync active card with finger swipe/scroll on mobile
+  const handleScroll = () => {
+    if (!containerRef.current || window.innerWidth >= 768) return;
+    const container = containerRef.current;
+    const scrollLeft = container.scrollLeft;
+    const cardWidth = container.children[0]?.clientWidth || 1;
+    const newIdx = Math.round(scrollLeft / cardWidth);
+    if (newIdx >= 0 && newIdx < careFeatures.length && newIdx !== activeCycleIndex) {
+      isScrollingRef.current = true;
+      setActiveCycleIndex(newIdx);
+      setTimeout(() => { isScrollingRef.current = false; }, 400);
+    }
+  };
 
   // Auto-cycle through care features every 3.2 seconds when not hovering
   useEffect(() => {
     if (hoveredIndex !== null) return;
     const interval = setInterval(() => {
-      setActiveCycleIndex((prev) => (prev + 1) % careFeatures.length);
+      setActiveCycleIndex((prev) => {
+        const next = (prev + 1) % careFeatures.length;
+        if (window.innerWidth < 768 && containerRef.current && !isScrollingRef.current) {
+          const card = containerRef.current.children[next] as HTMLElement;
+          if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        }
+        return next;
+      });
     }, 3200);
     return () => clearInterval(interval);
   }, [hoveredIndex]);
@@ -117,7 +162,7 @@ export const SmartCareSuite: React.FC = () => {
 
       <Container className="relative z-10">
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-14 gap-6">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-14 gap-6">
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-900/10 border border-emerald-900/20 text-emerald-900 text-xs font-extrabold uppercase tracking-wider backdrop-blur-md shadow-2xs">
               <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500 animate-pulse" />
@@ -141,8 +186,37 @@ export const SmartCareSuite: React.FC = () => {
           </button>
         </div>
 
-        {/* Responsive Grid without manual horizontal scrolling on mobile */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+        {/* Mobile Swipe Navigation Bar (Arrows & Hint) */}
+        <div className="flex md:hidden items-center justify-between mb-4 px-1">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+            <span>Swipe features left / right</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handlePrev}
+              className="p-2 rounded-full bg-white border border-emerald-900/15 shadow-xs text-neutral-800 hover:bg-emerald-50 active:scale-95 transition-all cursor-pointer"
+              aria-label="Previous feature"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleNext}
+              className="p-2 rounded-full bg-white border border-emerald-900/15 shadow-xs text-neutral-800 hover:bg-emerald-50 active:scale-95 transition-all cursor-pointer"
+              aria-label="Next feature"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Cards: Horizontal Snap Carousel on Mobile, Responsive Grid on Desktop */}
+        <div
+          ref={containerRef}
+          onScroll={handleScroll}
+          className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 overflow-x-auto md:overflow-visible snap-x snap-mandatory scroll-smooth pb-4 md:pb-0 scrollbar-none"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           {careFeatures.map((item, index) => {
             const Icon = item.icon;
             const isActive = activeIndex === index;
@@ -153,11 +227,11 @@ export const SmartCareSuite: React.FC = () => {
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
                 onClick={() => {
-                  setActiveCycleIndex(index);
+                  scrollToIndex(index);
                   setHoveredIndex(index);
                   openAppModal(item.title, item.featureDetails);
                 }}
-                className={`group cursor-pointer rounded-[32px] p-7 transition-all duration-500 transform flex flex-col justify-between relative overflow-hidden select-none ${
+                className={`w-[85vw] sm:w-[75vw] max-w-[340px] md:w-auto shrink-0 snap-center group cursor-pointer rounded-[32px] p-7 transition-all duration-500 transform flex flex-col justify-between relative overflow-hidden select-none ${
                   isActive
                     ? 'bg-gradient-to-br from-emerald-500/10 via-emerald-50/70 to-amber-50/50 border-2 border-emerald-600/70 shadow-2xl shadow-emerald-900/15 -translate-y-2 scale-[1.02]'
                     : 'bg-white/90 backdrop-blur-md border border-emerald-900/10 shadow-lg shadow-emerald-950/5 hover:border-emerald-600/40 hover:-translate-y-1'
@@ -229,6 +303,22 @@ export const SmartCareSuite: React.FC = () => {
               </div>
             );
           })}
+        </div>
+
+        {/* Mobile Dot Indicators (Hidden on Desktop) */}
+        <div className="flex md:hidden justify-center items-center gap-2 mt-6">
+          {careFeatures.map((_, dotIdx) => (
+            <button
+              key={dotIdx}
+              onClick={() => scrollToIndex(dotIdx)}
+              className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                activeIndex === dotIdx
+                  ? 'w-7 bg-emerald-800'
+                  : 'w-2 bg-emerald-800/25 hover:bg-emerald-800/50'
+              }`}
+              aria-label={`Go to feature ${dotIdx + 1}`}
+            />
+          ))}
         </div>
       </Container>
 

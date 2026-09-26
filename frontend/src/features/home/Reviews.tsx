@@ -1,20 +1,67 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Container } from '../../components/ui/Container';
-import { Star, Quote } from 'lucide-react';
+import { Star, Quote, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useGlobalReviews } from '../../hooks/useGlobalReviews';
 
 export function Reviews() {
   const { data, isLoading } = useGlobalReviews(3, 'highest');
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [activeCycleIndex, setActiveCycleIndex] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const isScrollingRef = useRef(false);
 
   const reviewsList: any[] = data?.reviews || [];
+
+  const scrollToIndex = (index: number) => {
+    setActiveCycleIndex(index);
+    if (containerRef.current) {
+      const card = containerRef.current.children[index] as HTMLElement;
+      if (card) {
+        card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+  };
+
+  const handlePrev = () => {
+    if (reviewsList.length === 0) return;
+    const prev = (activeCycleIndex - 1 + reviewsList.length) % reviewsList.length;
+    scrollToIndex(prev);
+  };
+
+  const handleNext = () => {
+    if (reviewsList.length === 0) return;
+    const next = (activeCycleIndex + 1) % reviewsList.length;
+    scrollToIndex(next);
+  };
+
+  // Sync active review with finger swipe/scroll on mobile
+  const handleScroll = () => {
+    if (!containerRef.current || window.innerWidth >= 768 || reviewsList.length === 0) return;
+    const container = containerRef.current;
+    const scrollLeft = container.scrollLeft;
+    const cardWidth = container.children[0]?.clientWidth || 1;
+    const newIdx = Math.round(scrollLeft / cardWidth);
+    if (newIdx >= 0 && newIdx < reviewsList.length && newIdx !== activeCycleIndex) {
+      isScrollingRef.current = true;
+      setActiveCycleIndex(newIdx);
+      setTimeout(() => { isScrollingRef.current = false; }, 400);
+    }
+  };
 
   // Auto-cycle through reviews every 3.5s when not hovering
   useEffect(() => {
     if (hoveredIndex !== null || reviewsList.length === 0) return;
     const interval = setInterval(() => {
-      setActiveCycleIndex((prev) => (prev + 1) % reviewsList.length);
+      setActiveCycleIndex((prev) => {
+        const next = (prev + 1) % reviewsList.length;
+        if (window.innerWidth < 768 && containerRef.current && !isScrollingRef.current) {
+          const card = containerRef.current.children[next] as HTMLElement;
+          if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        }
+        return next;
+      });
     }, 3500);
     return () => clearInterval(interval);
   }, [hoveredIndex, reviewsList.length]);
@@ -24,7 +71,7 @@ export function Reviews() {
   return (
     <section className="py-16 md:py-24 bg-gradient-to-b from-background via-surface-secondary/20 to-background relative overflow-hidden">
       <Container>
-        <div className="text-center max-w-2xl mx-auto mb-10 md:mb-14">
+        <div className="text-center max-w-2xl mx-auto mb-8 md:mb-14">
           <h2 className="text-3xl md:text-4xl font-serif font-bold text-primary-dark mb-4 tracking-tight">
             Don't just take our word for it
           </h2>
@@ -43,14 +90,38 @@ export function Reviews() {
           <p className="text-text-muted text-sm sm:text-base">Based on verified customer reviews.</p>
         </div>
 
-        {/* Responsive Grid without manual horizontal scrolling on mobile */}
+        {/* Mobile Swipe Navigation Bar */}
+        <div className="flex md:hidden items-center justify-between mb-4 px-1">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-text-muted">
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+            <span>Swipe reviews left / right</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={handlePrev}
+              className="p-2 rounded-full bg-white border border-border shadow-xs text-text-main hover:bg-neutral-100 active:scale-95 transition-all cursor-pointer"
+              aria-label="Previous review"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleNext}
+              className="p-2 rounded-full bg-white border border-border shadow-xs text-text-main hover:bg-neutral-100 active:scale-95 transition-all cursor-pointer"
+              aria-label="Next review"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Cards: Horizontal Snap Carousel on Mobile, 3-column Grid on Desktop */}
         <div>
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+            <div className="flex md:grid md:grid-cols-3 gap-6 md:gap-8 overflow-x-auto md:overflow-visible snap-x snap-mandatory pb-4 md:pb-0 scrollbar-none">
               {[...Array(3)].map((_, i) => (
                 <div
                   key={i}
-                  className="bg-surface p-7 sm:p-8 rounded-3xl shadow-sm border border-border flex flex-col h-72 animate-pulse"
+                  className="w-[85vw] sm:w-[75vw] max-w-[340px] md:w-auto shrink-0 snap-center bg-surface p-7 sm:p-8 rounded-3xl shadow-sm border border-border flex flex-col h-72 animate-pulse"
                 >
                   <div className="bg-neutral-200 h-5 w-28 mb-4 rounded-full"></div>
                   <div className="bg-neutral-200 h-6 w-3/4 mb-4 rounded-lg"></div>
@@ -60,7 +131,12 @@ export function Reviews() {
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+            <div
+              ref={containerRef}
+              onScroll={handleScroll}
+              className="flex md:grid md:grid-cols-3 gap-6 md:gap-8 overflow-x-auto md:overflow-visible snap-x snap-mandatory scroll-smooth pb-4 md:pb-0 scrollbar-none"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
               {reviewsList.map((review: any, index: number) => {
                 const userName = review.user?.name || 'Verified Customer';
                 const initial = userName.charAt(0).toUpperCase();
@@ -72,10 +148,10 @@ export function Reviews() {
                     onMouseEnter={() => setHoveredIndex(index)}
                     onMouseLeave={() => setHoveredIndex(null)}
                     onClick={() => {
-                      setActiveCycleIndex(index);
+                      scrollToIndex(index);
                       setHoveredIndex(index);
                     }}
-                    className={`rounded-3xl p-7 sm:p-8 transition-all duration-500 transform cursor-pointer flex flex-col justify-between relative overflow-hidden group select-none ${
+                    className={`w-[85vw] sm:w-[75vw] max-w-[340px] md:w-auto shrink-0 snap-center rounded-3xl p-7 sm:p-8 transition-all duration-500 transform cursor-pointer flex flex-col justify-between relative overflow-hidden group select-none ${
                       isActive
                         ? 'bg-gradient-to-br from-amber-500/10 via-orange-50/60 to-amber-50/40 border-2 border-amber-400/80 shadow-2xl shadow-amber-500/15 -translate-y-2 scale-[1.02]'
                         : 'bg-surface border border-border/80 shadow-xs hover:border-primary/40 hover:-translate-y-1'
@@ -149,6 +225,22 @@ export function Reviews() {
               })}
             </div>
           )}
+
+          {/* Mobile Dot Indicators (Hidden on Desktop) */}
+          <div className="flex md:hidden justify-center items-center gap-2 mt-6">
+            {reviewsList.map((_: any, dotIdx: number) => (
+              <button
+                key={dotIdx}
+                onClick={() => scrollToIndex(dotIdx)}
+                className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                  activeIndex === dotIdx
+                    ? 'w-7 bg-amber-500'
+                    : 'w-2 bg-neutral-300 hover:bg-neutral-400'
+                }`}
+                aria-label={`Go to review ${dotIdx + 1}`}
+              />
+            ))}
+          </div>
         </div>
       </Container>
     </section>
