@@ -58,95 +58,100 @@ export function Navbar() {
   ];
 
   return (
-    <nav className="bg-surface/95 backdrop-blur-md border-b border-border shadow-xs relative">
-      <Container className="px-2 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-14 sm:h-16 gap-2">
-          {/* Left: Mobile Menu button & Brand Logo */}
-          <div className="flex items-center gap-1 sm:gap-2.5 min-w-0 shrink">
+    <nav className="bg-surface/95 backdrop-blur-md border-b border-border shadow-xs relative sticky top-0 z-40">
+      <Container className="px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 sm:h-18 gap-2 sm:gap-4">
+          
+          {/* Left: Mobile/Tab Menu button & Brand Logo */}
+          <div className="flex items-center gap-2 sm:gap-3.5 md:gap-4 min-w-0 shrink-0">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="text-text-main p-1 sm:p-1.5 focus:outline-none md:hidden shrink-0 hover:text-primary transition-colors cursor-pointer"
+              className="text-text-main w-10 h-10 rounded-xl flex items-center justify-center hover:bg-neutral-100 active:scale-95 md:hidden shrink-0 hover:text-primary transition-all cursor-pointer"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
             </button>
-            <Link to="/" className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 shrink group">
+
+            <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0 group">
               <img
                 src="/logo.png"
                 alt="Kosmico"
-                className="h-7 sm:h-8.5 md:h-10 w-auto object-contain rounded-lg shrink-0 filter drop-shadow-xs transition-transform duration-200 group-hover:scale-105"
+                className="h-8 sm:h-9 md:h-10 w-auto object-contain rounded-lg shrink-0 filter drop-shadow-xs transition-transform duration-200 group-hover:scale-105"
               />
-              <span className="font-serif font-black text-[14px] min-[360px]:text-[15.5px] sm:text-xl md:text-2xl tracking-tight whitespace-nowrap truncate max-w-[145px] min-[360px]:max-w-[190px] sm:max-w-none flex items-center gap-1 leading-none select-none">
+              <span className="font-serif font-black text-[15px] sm:text-xl md:text-2xl tracking-tight whitespace-nowrap flex items-center gap-1 leading-none select-none">
                 <span className="text-emerald-950 font-black">Kosmico</span>
                 <span className="text-[#0a7a40] font-extrabold">Wellness</span>
               </span>
             </Link>
           </div>
 
-          {/* Center: Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-6 lg:space-x-8 shrink-0">
+          {/* Center: Desktop Navigation (768px+) */}
+          <div className="hidden md:flex items-center space-x-3 lg:space-x-6 xl:space-x-8 shrink-0">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
                 to={link.path}
-                className="text-sm font-medium text-text-main hover:text-primary transition-colors"
+                className="text-xs lg:text-sm font-medium text-text-main hover:text-primary hover:bg-emerald-50/60 px-2.5 py-1.5 rounded-lg transition-all"
               >
                 {link.name}
               </Link>
             ))}
           </div>
 
-          {/* Right: Action Icons */}
-          <div className="flex items-center gap-0.5 min-[360px]:gap-1 sm:gap-3 md:gap-4 shrink-0">
+          {/* Right: Action Icons (Search, Wishlist, Notifications, Account, Cart) */}
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-3 shrink-0">
+            
+            {/* Search Button */}
             <button
-              className="text-text-main hover:text-primary transition-colors p-1 sm:p-1.5 rounded-full hover:bg-neutral-100 cursor-pointer"
+              className="text-text-main hover:text-primary transition-all w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center hover:bg-neutral-100 active:scale-95 cursor-pointer"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               aria-label="Search"
             >
-              {isSearchOpen ? <X className="h-4.5 w-4.5 sm:h-5 sm:w-5" /> : <Search className="h-4.5 w-4.5 sm:h-5 sm:w-5" />}
+              {isSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
             </button>
 
-            {/* Wishlist Button (Always accessible) */}
+            {/* Wishlist Button */}
             <Link
               to="/wishlist"
-              className="text-text-main hover:text-rose-600 transition-colors relative p-1 sm:p-1.5 rounded-full hover:bg-neutral-100"
+              className="text-text-main hover:text-rose-600 transition-all relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center hover:bg-neutral-100 active:scale-95"
               title="My Wishlist"
               aria-label="Wishlist"
             >
-              <Heart className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
+              <Heart className="h-5 w-5" />
               {wishlist?.items?.length > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-rose-500 text-white text-[8px] sm:text-[9px] font-bold h-3.5 w-3.5 min-w-[14px] rounded-full flex items-center justify-center ring-1.5 ring-white shadow-xs">
+                <span className="absolute top-0.5 right-0.5 bg-rose-500 text-white text-[9px] font-bold h-4 w-4 min-w-[16px] rounded-full flex items-center justify-center ring-2 ring-white shadow-xs">
                   {wishlist.items.length > 9 ? '9+' : wishlist.items.length}
                 </span>
               )}
             </Link>
 
-            {/* Notification Bell (Always accessible on Mobile & Desktop) */}
+            {/* Notification Bell */}
             <Link
               to="/notifications"
-              className="text-text-main hover:text-primary transition-colors relative p-1 sm:p-1.5 rounded-full hover:bg-neutral-100"
+              className="text-text-main hover:text-primary transition-all relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center hover:bg-neutral-100 active:scale-95"
               title="Notifications"
               aria-label="Notifications"
             >
-              <Bell className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
+              <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-red-600 text-white text-[8px] sm:text-[9px] font-bold h-3.5 w-3.5 min-w-[14px] rounded-full flex items-center justify-center ring-1.5 ring-white shadow-xs">
+                <span className="absolute top-0.5 right-0.5 bg-red-600 text-white text-[9px] font-bold h-4 w-4 min-w-[16px] rounded-full flex items-center justify-center ring-2 ring-white shadow-xs">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
             </Link>
 
+            {/* User Account / Login */}
             {isAuthenticated ? (
-              <div className="hidden sm:flex items-center space-x-3 lg:space-x-4">
+              <div className="hidden sm:flex items-center space-x-2 md:space-x-3">
                 <Link
                   to="/orders"
-                  className="text-text-main hover:text-primary transition-colors font-medium text-sm"
+                  className="text-text-main hover:text-primary hover:bg-emerald-50/60 px-2 py-1 rounded-lg transition-all font-medium text-xs lg:text-sm"
                 >
                   Orders
                 </Link>
                 <Link
                   to="/profile"
-                  className="text-text-main hover:text-primary transition-colors font-medium text-sm flex items-center gap-1.5"
+                  className="text-text-main hover:text-primary hover:bg-emerald-50/60 px-2 py-1 rounded-lg transition-all font-medium text-xs lg:text-sm flex items-center gap-1.5"
                 >
                   {(() => {
                     const navPic =
@@ -163,7 +168,7 @@ export function Navbar() {
                         src={normalizeImageUrl(navPic)}
                         alt={user?.name || 'User'}
                         onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
-                        className="w-6 h-6 rounded-full object-cover border border-emerald-600"
+                        className="w-6 h-6 rounded-full object-cover border border-emerald-600 shadow-2xs"
                       />
                     );
                   })()}
@@ -173,20 +178,23 @@ export function Navbar() {
             ) : (
               <Link
                 to="/login"
-                className="text-text-main hover:text-primary transition-colors hidden sm:block p-1 sm:p-1.5"
+                className="text-text-main hover:text-primary transition-all hidden sm:flex w-9 h-9 sm:w-10 sm:h-10 rounded-xl items-center justify-center hover:bg-neutral-100 active:scale-95"
                 title="Account"
+                aria-label="Account"
               >
                 <User className="h-5 w-5" />
               </Link>
             )}
+
+            {/* Shopping Cart Drawer Trigger */}
             <button
               onClick={() => useCartDrawerStore.getState().openDrawer()}
-              className="text-text-main hover:text-primary transition-colors relative p-1 sm:p-1.5 rounded-full hover:bg-neutral-100 focus:outline-none cursor-pointer"
+              className="text-text-main hover:text-primary transition-all relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center hover:bg-neutral-100 active:scale-95 focus:outline-none cursor-pointer"
               aria-label="Open cart drawer"
             >
-              <ShoppingCart className="h-4.5 w-4.5 sm:h-5 sm:w-5" />
+              <ShoppingCart className="h-5 w-5" />
               {cart?.items?.length > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-accent text-white text-[8px] sm:text-[9px] font-bold h-3.5 w-3.5 min-w-[14px] rounded-full flex items-center justify-center ring-1.5 ring-white shadow-xs animate-pulse">
+                <span className="absolute top-0.5 right-0.5 bg-accent text-white text-[9px] font-bold h-4 w-4 min-w-[16px] rounded-full flex items-center justify-center ring-2 ring-white shadow-xs animate-pulse">
                   {cart.items.reduce((acc: number, item: any) => acc + item.quantity, 0)}
                 </span>
               )}
