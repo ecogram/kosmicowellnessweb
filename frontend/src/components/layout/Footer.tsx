@@ -9,10 +9,10 @@ export function Footer() {
   return (
     <footer className="bg-emerald-950 text-white pt-16 pb-8 border-t border-emerald-900">
       <Container>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10 md:gap-12 mb-12">
           
-          {/* Brand Info */}
-          <div className="col-span-1 md:col-span-1 space-y-4">
+          {/* Brand Info (Full width on mobile, 1 column on desktop) */}
+          <div className="col-span-2 md:col-span-1 space-y-4">
             <h3 className="font-serif text-2xl font-bold text-amber-400">Kosmico Wellness</h3>
             <p className="text-sm text-neutral-300/80 leading-relaxed font-normal">
               KOSMICO WELLNESS PRIVATE LIMITED — India's leading manufacturer of 100% natural zero-calorie Sweet Monk sweeteners and Ayurvedic healthcare products.
@@ -35,8 +35,8 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Shop Column */}
-          <div>
+          {/* Shop Column (Left column on mobile) */}
+          <div className="col-span-1">
             <h4 className="font-bold text-sm uppercase tracking-wider text-amber-300 mb-4">Shop</h4>
             <ul className="space-y-2.5 text-xs text-emerald-100/80">
               <li>
@@ -64,8 +64,8 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Information Column */}
-          <div>
+          {/* Information Column (Right column on mobile) */}
+          <div className="col-span-1">
             <h4 className="font-bold text-sm uppercase tracking-wider text-amber-300 mb-4">Information</h4>
             <ul className="space-y-2.5 text-xs text-emerald-100/80">
               <li>
@@ -101,8 +101,8 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Contact Details Column matching App Video */}
-          <div className="space-y-3">
+          {/* Contact Details Column (Full width on mobile, 1 column on desktop) */}
+          <div className="col-span-2 md:col-span-1 space-y-3">
             <h4 className="font-bold text-sm uppercase tracking-wider text-amber-300 mb-4">Contact Details</h4>
             
             <div className="text-xs text-emerald-100/90 space-y-3 leading-relaxed">
