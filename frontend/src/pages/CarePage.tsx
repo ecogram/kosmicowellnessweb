@@ -32,6 +32,10 @@ export const CarePage: React.FC = () => {
   const handleTabChange = (tabId: string) => {
     if (tabId !== 'today') {
       const titles: Record<string, { title: string; desc: string }> = {
+        'bp-scan': {
+          title: 'Camera PPG Blood Pressure & Vitals Scanner',
+          desc: 'Instant non-invasive optical BP pulse estimation and blood pressure trend scanning via smartphone camera & flash is exclusively available on the Kosmico Mobile App on Google Play.',
+        },
         community: {
           title: 'Kosmico Community & Social',
           desc: 'Posting recipes, milestones and connecting with wellness buddies is exclusively available on the Kosmico Mobile App.',
@@ -113,10 +117,11 @@ export const CarePage: React.FC = () => {
           </button>
         </div>
 
-        {/* 5 Sub-Navigation Tabs */}
+        {/* 6 Sub-Navigation Tabs Matching Mobile App */}
         <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 scrollbar-none">
           {[
             { id: 'today', label: 'Today', isAppOnly: false },
+            { id: 'bp-scan', label: 'BP Scan', isAppOnly: true },
             { id: 'community', label: 'Community', isAppOnly: true },
             { id: 'scan', label: 'Scan Meal', isAppOnly: true },
             { id: 'log', label: 'Log Entry', isAppOnly: true },
@@ -406,6 +411,40 @@ export const CarePage: React.FC = () => {
 
             </div>
 
+          </div>
+        )}
+
+        {/* ================= APP-EXCLUSIVE TAB PREVIEW ================= */}
+        {activeTab !== 'today' && (
+          <div className="bg-white rounded-3xl p-8 sm:p-12 border border-neutral-200 shadow-sm text-center max-w-lg mx-auto space-y-4 my-8">
+            <div className="w-16 h-16 rounded-3xl bg-emerald-50 border border-emerald-200 text-[#16a34a] flex items-center justify-center mx-auto text-2xl shadow-xs">
+              {activeTab === 'bp-scan' ? '💓' : '📱'}
+            </div>
+            <h3 className="font-serif font-bold text-xl text-neutral-900">
+              {activeTab === 'bp-scan' ? 'Camera PPG Blood Pressure Scanner' : 'Kosmico Mobile App Exclusive'}
+            </h3>
+            <p className="text-xs text-neutral-600 leading-relaxed max-w-sm mx-auto">
+              {activeTab === 'bp-scan'
+                ? 'Instant optical BP vitals estimation requires native smartphone camera sensor & LED flash hardware, available exclusively on the Kosmico Mobile App on Google Play.'
+                : 'This clinical wellness feature requires native mobile hardware integration, exclusively available on the Kosmico Mobile App.'}
+            </p>
+            <div className="pt-3 flex flex-col sm:flex-row gap-3 justify-center">
+              <a
+                href={PLAY_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-3 bg-[#16a34a] hover:bg-[#15803d] text-white font-bold text-xs rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download on Google Play</span>
+              </a>
+              <button
+                onClick={() => setSearchParams({ tab: 'today' })}
+                className="px-5 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                Back to Dashboard
+              </button>
+            </div>
           </div>
         )}
 
