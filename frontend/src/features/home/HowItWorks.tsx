@@ -106,8 +106,9 @@ export function HowItWorks() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [activeCycleIndex, setActiveCycleIndex] = useState<number>(0);
 
-  // Auto-cycle through cards every 3 seconds when user is not hovering
+  // Auto-cycle through cards on desktop (>= 768px) when user is not hovering
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return;
     if (hoveredIndex !== null) return;
     const interval = setInterval(() => {
       setActiveCycleIndex((prev) => (prev + 1) % USAGE_ITEMS.length);

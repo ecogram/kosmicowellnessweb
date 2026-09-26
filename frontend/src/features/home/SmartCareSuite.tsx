@@ -98,7 +98,6 @@ export const SmartCareSuite: React.FC = () => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [activeCycleIndex, setActiveCycleIndex] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const isScrollingRef = useRef(false);
 
   const scrollToIndex = (index: number) => {
     setActiveCycleIndex(index);
@@ -128,26 +127,16 @@ export const SmartCareSuite: React.FC = () => {
     const cardWidth = container.children[0]?.clientWidth || 1;
     const newIdx = Math.round(scrollLeft / cardWidth);
     if (newIdx >= 0 && newIdx < careFeatures.length && newIdx !== activeCycleIndex) {
-      isScrollingRef.current = true;
       setActiveCycleIndex(newIdx);
-      setTimeout(() => { isScrollingRef.current = false; }, 400);
     }
   };
 
-  // Auto-cycle through care features every 3.2 seconds when not hovering
+  // Pure manual scrolling on mobile — auto-cycle highlight only on desktop (>= 768px) grid
   useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) return;
     if (hoveredIndex !== null) return;
     const interval = setInterval(() => {
-      setActiveCycleIndex((prev) => {
-        const next = (prev + 1) % careFeatures.length;
-        if (window.innerWidth < 768 && containerRef.current && !isScrollingRef.current) {
-          const card = containerRef.current.children[next] as HTMLElement;
-          if (card) {
-            card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-          }
-        }
-        return next;
-      });
+      setActiveCycleIndex((prev) => (prev + 1) % careFeatures.length);
     }, 3200);
     return () => clearInterval(interval);
   }, [hoveredIndex]);
