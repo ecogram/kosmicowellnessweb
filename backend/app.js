@@ -95,7 +95,6 @@ const glucoRoutes = require('./routes/glucoRoutes');
 const systemRoutes = require('./routes/systemRoutes');
 const shiprocketRoutes = require('./routes/shiprocketRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
-const cartRoutes = require('./routes/cartRoutes');
 
 // Helper to register routers on both /api and /api/v1 prefixes
 const registerRoutes = (prefix) => {
@@ -116,11 +115,10 @@ const registerRoutes = (prefix) => {
   app.use(`${prefix}/auth`, authRoutes);
   app.use(`${prefix}/users`, authRoutes);
 
-  // 3. User Address, Wishlist, Cart, Coupons (Modules 4, 5, 8 in Doc)
+  // 3. User Address, Wishlist, Coupons (Modules 4, 5, 8 in Doc)
   app.use(`${prefix}/addresses`, addressRoutes);
   app.use(`${prefix}/address`, addressRoutes);
   app.use(`${prefix}/wishlist`, wishlistRoutes);
-  app.use(`${prefix}/cart`, cartRoutes);
   app.use(`${prefix}/coupons`, couponRoutes);
 
   // 4. Orders, Payments, Tracking & Refunds/Returns (Modules 3, 6 in Doc)

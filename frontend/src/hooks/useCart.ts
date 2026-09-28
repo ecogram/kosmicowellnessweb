@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCartDrawerStore } from '../store/useCartDrawerStore';
-import { useAuthStore } from '../store/useAuthStore';
 import { api } from '../services/api';
 import toast from 'react-hot-toast';
 import { showStockToast } from '../utils/stockToast';
@@ -34,7 +33,7 @@ export interface CartData {
 
 const LOCAL_CART_KEY = 'kosmico_cart_v1';
 
-export const getLocalCart = (): CartData => {
+const getLocalCart = (): CartData => {
   try {
     const raw = localStorage.getItem(LOCAL_CART_KEY);
     if (raw) {
@@ -47,107 +46,29 @@ export const getLocalCart = (): CartData => {
   return { items: [], subtotal: 0, total: 0 };
 };
 
-export const saveLocalCart = (cart: CartData) => {
+const saveLocalCart = (cart: CartData) => {
   try {
     localStorage.setItem(LOCAL_CART_KEY, JSON.stringify(cart));
   } catch (_) {}
 };
 
-export const calculateTotals = (items: CartItem[]): CartData => {
+const calculateTotals = (items: CartItem[]): CartData => {
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   return { items, subtotal, total: subtotal };
 };
 
-export const mapServerCartToClient = (serverCart: any): CartData => {
-  if (!serverCart || !Array.isArray(serverCart.items)) {
-    return { items: [], subtotal: 0, total: 0 };
-  }
-
-  const items: CartItem[] = serverCart.items
-    .filter((item: any) => item && item.product)
-    .map((item: any) => {
-      const p = item.product;
-      const productId = (p._id || p.id || (typeof p === 'string' ? p : '')).toString();
-      const name = p.name || p.title || 'Product';
-      const price = typeof item.priceSnapshot === 'number'
-        ? item.priceSnapshot
-        : (typeof p.price === 'number' ? p.price : 0);
-      const image = p.image || (Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : undefined);
-      const images = Array.isArray(p.images) ? p.images : (image ? [image] : []);
-      const slug = p.slug || '';
-      const stock = typeof p.stock === 'number' ? p.stock : 0;
-
-      return {
-        _id: item._id ? item._id.toString() : `item-${productId}-${item.variant || ''}`,
-        productId,
-        product: {
-          _id: productId,
-          id: productId,
-          name,
-          title: name,
-          price,
-          image,
-          images,
-          slug,
-          stock,
-        },
-        quantity: item.quantity || 1,
-        price,
-        priceSnapshot: price,
-        variant: item.variant || undefined,
-        stock,
-      };
-    });
-
-  const subtotal = items.reduce((sum, it) => sum + (it.price * it.quantity), 0);
-  return { items, subtotal, total: subtotal };
-};
-
 export const useCart = () => {
-  const { isAuthenticated } = useAuthStore();
-
   return useQuery<CartData>({
-    queryKey: ['cart', isAuthenticated],
-    queryFn: async () => {
-      if (!isAuthenticated) {
-        return getLocalCart();
-      }
-
-      try {
-        // Sync any guest items to server upon login
-        const localCart = getLocalCart();
-        if (localCart.items && localCart.items.length > 0) {
-          for (const it of localCart.items) {
-            try {
-              await api.post('/cart', {
-                productId: it.productId,
-                quantity: it.quantity,
-                variant: it.variant,
-              });
-            } catch (_) {}
-          }
-          localStorage.removeItem(LOCAL_CART_KEY);
-        }
-
-        const response = await api.get('/cart');
-        const rawCart = response.data?.data?.cart ?? response.data?.cart ?? response.data;
-        const mapped = mapServerCartToClient(rawCart);
-        saveLocalCart(mapped);
-        return mapped;
-      } catch (err) {
-        return getLocalCart();
-      }
-    },
+    queryKey: ['cart'],
+    queryFn: () => getLocalCart(),
     initialData: getLocalCart,
     staleTime: 1000,
-    refetchOnWindowFocus: true,
   });
 };
 
 export const useAddToCart = () => {
   const queryClient = useQueryClient();
   const openDrawer = useCartDrawerStore((state) => state.openDrawer);
-  const { isAuthenticated } = useAuthStore();
 
   return useMutation({
     mutationFn: async ({
@@ -171,25 +92,7 @@ export const useAddToCart = () => {
       slug?: string;
       stock?: number;
     }) => {
-      // 1. Authenticated flow -> save to MongoDB Database
-      if (isAuthenticated) {
-        try {
-          const res = await api.post('/cart', {
-            productId,
-            quantity,
-            variant,
-          });
-          const rawCart = res.data?.data?.cart ?? res.data?.cart ?? res.data;
-          const mapped = mapServerCartToClient(rawCart);
-          saveLocalCart(mapped);
-          return mapped;
-        } catch (apiErr: any) {
-          const msg = apiErr?.response?.data?.message || apiErr?.message;
-          throw new Error(msg || 'Failed to add to cart');
-        }
-      }
-
-      // 2. Guest fallback -> save to browser LocalStorage
+      // 1. Fetch real stock from database / cache if not provided
       let availableStock = stock;
       if (availableStock === undefined) {
         try {
@@ -216,6 +119,7 @@ export const useAddToCart = () => {
       const existingQty = existingIdx > -1 ? currentCart.items[existingIdx].quantity : 0;
       const requestedTotalQty = existingQty + quantity;
 
+      // Real Database Stock Validation
       if (typeof availableStock === 'number') {
         if (availableStock <= 0) {
           throw new Error('This product is currently out of stock.');
@@ -266,11 +170,7 @@ export const useAddToCart = () => {
       return updatedCart;
     },
     onSuccess: (updatedCart) => {
-      queryClient.setQueryData(['cart', isAuthenticated], updatedCart);
-      queryClient.setQueryData(['cart', true], updatedCart);
-      queryClient.setQueryData(['cart', false], updatedCart);
       queryClient.setQueryData(['cart'], updatedCart);
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
       toast.success('Added to cart');
       openDrawer();
     },
@@ -289,7 +189,6 @@ export const useAddToCart = () => {
 
 export const useUpdateCartItem = () => {
   const queryClient = useQueryClient();
-  const { isAuthenticated } = useAuthStore();
 
   return useMutation({
     mutationFn: async ({
@@ -301,22 +200,6 @@ export const useUpdateCartItem = () => {
       quantity: number;
       variant?: string;
     }) => {
-      if (isAuthenticated) {
-        try {
-          const res = await api.put(`/cart/${productId}`, {
-            quantity,
-            variant,
-          });
-          const rawCart = res.data?.data?.cart ?? res.data?.cart ?? res.data;
-          const mapped = mapServerCartToClient(rawCart);
-          saveLocalCart(mapped);
-          return mapped;
-        } catch (apiErr: any) {
-          const msg = apiErr?.response?.data?.message || apiErr?.message;
-          throw new Error(msg || 'Could not update quantity');
-        }
-      }
-
       const currentCart = getLocalCart();
       const existing = currentCart.items.find(
         (it) => it.productId === productId && (it.variant ?? '') === (variant ?? '')
@@ -348,11 +231,7 @@ export const useUpdateCartItem = () => {
       return updatedCart;
     },
     onSuccess: (updatedCart) => {
-      queryClient.setQueryData(['cart', isAuthenticated], updatedCart);
-      queryClient.setQueryData(['cart', true], updatedCart);
-      queryClient.setQueryData(['cart', false], updatedCart);
       queryClient.setQueryData(['cart'], updatedCart);
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
     onError: (err: any) => {
       const msg = err?.message || 'Could not update quantity';
@@ -369,26 +248,9 @@ export const useUpdateCartItem = () => {
 
 export const useRemoveCartItem = () => {
   const queryClient = useQueryClient();
-  const { isAuthenticated } = useAuthStore();
 
   return useMutation({
     mutationFn: async ({ productId, variant }: { productId: string; variant?: string }) => {
-      if (isAuthenticated) {
-        try {
-          const res = await api.delete(`/cart/${productId}`, {
-            data: { variant },
-            params: { variant },
-          });
-          const rawCart = res.data?.data?.cart ?? res.data?.cart ?? res.data;
-          const mapped = mapServerCartToClient(rawCart);
-          saveLocalCart(mapped);
-          return mapped;
-        } catch (apiErr: any) {
-          const msg = apiErr?.response?.data?.message || apiErr?.message;
-          throw new Error(msg || 'Could not remove item');
-        }
-      }
-
       const currentCart = getLocalCart();
       const updatedItems = currentCart.items.filter(
         (it) => !(it.productId === productId && (it.variant ?? '') === (variant ?? ''))
@@ -399,36 +261,22 @@ export const useRemoveCartItem = () => {
       return updatedCart;
     },
     onSuccess: (updatedCart) => {
-      queryClient.setQueryData(['cart', isAuthenticated], updatedCart);
-      queryClient.setQueryData(['cart', true], updatedCart);
-      queryClient.setQueryData(['cart', false], updatedCart);
       queryClient.setQueryData(['cart'], updatedCart);
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
   });
 };
 
 export const useClearCart = () => {
   const queryClient = useQueryClient();
-  const { isAuthenticated } = useAuthStore();
 
   return useMutation({
     mutationFn: async () => {
-      if (isAuthenticated) {
-        try {
-          await api.delete('/cart');
-        } catch (_) {}
-      }
       const emptyCart: CartData = { items: [], subtotal: 0, total: 0 };
       saveLocalCart(emptyCart);
       return emptyCart;
     },
     onSuccess: (emptyCart) => {
-      queryClient.setQueryData(['cart', isAuthenticated], emptyCart);
-      queryClient.setQueryData(['cart', true], emptyCart);
-      queryClient.setQueryData(['cart', false], emptyCart);
       queryClient.setQueryData(['cart'], emptyCart);
-      queryClient.invalidateQueries({ queryKey: ['cart'] });
     },
   });
 };
