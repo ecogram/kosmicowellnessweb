@@ -88,8 +88,10 @@ class NotificationService {
     return await this.createNotification(userId, type, title, message, { orderId, orderNumber });
   }
 
-  async getUserNotifications(userId, page = 1, limit = 50) {
-    const skip = (page - 1) * limit;
+  async getUserNotifications(userId, page = 1, limit = 10) {
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.max(1, parseInt(limit, 10) || 10);
+    const skip = (pageNum - 1) * limitNum;
     const filter = {
       $or: [
         { user: userId },
@@ -102,17 +104,17 @@ class NotificationService {
     const notifications = await Notification.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limitNum);
       
     const total = await Notification.countDocuments(filter);
     
     return {
       notifications,
       meta: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / limit),
+        pages: Math.ceil(total / limitNum) || 1,
       }
     };
   }

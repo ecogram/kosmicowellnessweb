@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 
-// GET /api/notifications?page=1&limit=20
-export const useNotifications = (page = 1, limit = 20) => {
+// GET /api/notifications?page=1&limit=10
+export const useNotifications = (page = 1, limit = 10) => {
   const { isAuthenticated } = useAuthStore();
 
   return useQuery({

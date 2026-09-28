@@ -5,9 +5,11 @@ import {
   useDeleteNotification,
   useClearAllNotifications
 } from '../hooks/useNotifications';
-import { Bell, Package, Tag, Star, Info, CheckCheck, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { Bell, Package, Tag, Star, Info, CheckCheck, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
+
+const ITEMS_PER_PAGE = 10;
 
 const getIcon = (type: string) => {
   switch (type) {
@@ -20,13 +22,46 @@ const getIcon = (type: string) => {
 
 export function Notifications() {
   const [page, setPage] = useState(1);
-  const { data: notificationsData, isLoading } = useNotifications(page, 20);
+  const { data: notificationsData, isLoading } = useNotifications(page, ITEMS_PER_PAGE);
   const markAsRead = useMarkAsRead();
   const deleteNotification = useDeleteNotification();
   const clearAllNotifications = useClearAllNotifications();
 
   const notificationsList = notificationsData?.notifications || [];
+  const meta = notificationsData?.meta;
+  const totalItems = meta?.total ?? notificationsList.length;
+  const totalPages = meta?.pages ?? Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
   const hasUnread = notificationsList.some((n: any) => !n.isRead);
+
+  // If current page is beyond totalPages (e.g. after deletes), auto-navigate back
+  useEffect(() => {
+    if (totalPages > 0 && page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [totalPages, page]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages && newPage !== page) {
+      setPage(newPage);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (page <= 3) {
+        pages.push(1, 2, 3, 4, '...', totalPages);
+      } else if (page >= totalPages - 2) {
+        pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      } else {
+        pages.push(1, '...', page - 1, page, page + 1, '...', totalPages);
+      }
+    }
+    return pages;
+  };
 
   const handleMarkAsRead = (id: string, isRead: boolean) => {
     if (!isRead) {
@@ -60,6 +95,7 @@ export function Notifications() {
       try {
         const ids = notificationsList.map((n: any) => n._id || n.id).filter(Boolean);
         await clearAllNotifications.mutateAsync(ids);
+        setPage(1);
         toast.success('All notifications cleared');
       } catch (err: any) {
         toast.error(err?.response?.data?.message || 'Failed to clear notifications');
@@ -167,25 +203,64 @@ export function Notifications() {
             </div>
           ))}
 
-          {notificationsData?.meta?.pages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-8 pt-4 border-t border-neutral-100">
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-4 py-2 bg-white border border-neutral-200 rounded-xl text-xs font-bold disabled:opacity-40 cursor-pointer"
-              >
-                Previous
-              </button>
-              <span className="px-3 text-xs text-neutral-500 font-medium">
-                Page {page} of {notificationsData?.meta?.pages ?? 1}
-              </span>
-              <button
-                onClick={() => setPage(p => p + 1)}
-                disabled={page >= (notificationsData?.meta?.pages ?? 1)}
-                className="px-4 py-2 bg-white border border-neutral-200 rounded-xl text-xs font-bold disabled:opacity-40 cursor-pointer"
-              >
-                Next
-              </button>
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-neutral-200">
+              <p className="text-xs text-neutral-500 font-medium">
+                Showing{' '}
+                <span className="font-semibold text-neutral-800">
+                  {Math.min((page - 1) * ITEMS_PER_PAGE + 1, totalItems)}
+                </span>
+                –
+                <span className="font-semibold text-neutral-800">
+                  {Math.min(page * ITEMS_PER_PAGE, totalItems)}
+                </span>{' '}
+                of{' '}
+                <span className="font-semibold text-neutral-800">{totalItems}</span> notifications
+              </p>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page <= 1}
+                  className="flex items-center gap-1 px-3 py-2 bg-white border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 rounded-xl text-xs font-semibold text-neutral-700 disabled:opacity-40 disabled:hover:bg-white disabled:hover:border-neutral-200 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                  aria-label="Previous Page"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span className="hidden sm:inline">Prev</span>
+                </button>
+
+                <div className="flex items-center gap-1">
+                  {getPageNumbers().map((p, idx) =>
+                    p === '...' ? (
+                      <span key={`dots-${idx}`} className="w-8 h-8 flex items-center justify-center text-xs text-neutral-400">
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={`page-${p}`}
+                        onClick={() => handlePageChange(p as number)}
+                        className={`w-8 h-8 flex items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          page === p
+                            ? 'bg-[#0a7a40] text-white shadow-xs'
+                            : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+                </div>
+
+                <button
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page >= totalPages}
+                  className="flex items-center gap-1 px-3 py-2 bg-white border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 rounded-xl text-xs font-semibold text-neutral-700 disabled:opacity-40 disabled:hover:bg-white disabled:hover:border-neutral-200 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
+                  aria-label="Next Page"
+                >
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
         </div>
