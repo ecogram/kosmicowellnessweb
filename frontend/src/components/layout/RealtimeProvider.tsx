@@ -12,12 +12,16 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (!socket || !isConnected) return;
 
     // --- REALTIME CUSTOMER EVENTS ---
-    socket.on('notification:new', () => {
+    const refreshNotifications = () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
-    });
+    };
+
+    socket.on('notification:new', refreshNotifications);
+    socket.on('notification:updated', refreshNotifications);
 
     socket.on('notification:unread-count', ({ count }) => {
       queryClient.setQueryData(['unread-notifications-count'], count);
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     });
 
     // Wishlist Live Sync
@@ -43,6 +47,7 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       }
       queryClient.invalidateQueries({ queryKey: ['auth-profile'] });
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     };
 
     socket.on('profile:updated', handleProfileSync);
@@ -57,6 +62,7 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     socket.on('order:created', () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     });
 
     socket.on('order:processing', ({ orderId }) => {
@@ -103,7 +109,8 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     // Cleanup on unmount
     return () => {
-      socket.off('notification:new');
+      socket.off('notification:new', refreshNotifications);
+      socket.off('notification:updated', refreshNotifications);
       socket.off('notification:unread-count');
       socket.off('wishlist:updated');
       socket.off('profile:updated', handleProfileSync);

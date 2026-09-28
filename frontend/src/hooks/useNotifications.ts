@@ -40,7 +40,10 @@ export const useNotifications = (page = 1, limit = 10) => {
       }
     },
     enabled: isAuthenticated,
-    staleTime: 10 * 1000,
+    staleTime: 2000,
+    refetchInterval: 3000, // Real-time auto sync without manual refresh
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     retry: 1,
   });
 };
@@ -63,7 +66,10 @@ export const useUnreadCount = () => {
       }
     },
     enabled: isAuthenticated,
-    staleTime: 60 * 1000,
+    staleTime: 2000,
+    refetchInterval: 4000, // Real-time unread badge sync
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     retry: 1,
   });
 };

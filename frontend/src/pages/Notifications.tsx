@@ -5,6 +5,8 @@ import {
   useDeleteNotification,
   useClearAllNotifications
 } from '../hooks/useNotifications';
+import { useSocket } from '../hooks/useSocket';
+import { useQueryClient } from '@tanstack/react-query';
 import { Bell, Package, Tag, Star, Info, CheckCheck, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
@@ -26,6 +28,33 @@ export function Notifications() {
   const markAsRead = useMarkAsRead();
   const deleteNotification = useDeleteNotification();
   const clearAllNotifications = useClearAllNotifications();
+  const { socket } = useSocket();
+  const queryClient = useQueryClient();
+
+  // Instant real-time listener without manual refresh
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleRealtimeRefresh = () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    };
+
+    socket.on('notification:new', handleRealtimeRefresh);
+    socket.on('notification:updated', handleRealtimeRefresh);
+    socket.on('notification:unread-count', handleRealtimeRefresh);
+    socket.on('profile:updated', handleRealtimeRefresh);
+    socket.on('order:created', handleRealtimeRefresh);
+    socket.on('order:delivered', handleRealtimeRefresh);
+
+    return () => {
+      socket.off('notification:new', handleRealtimeRefresh);
+      socket.off('notification:updated', handleRealtimeRefresh);
+      socket.off('notification:unread-count', handleRealtimeRefresh);
+      socket.off('profile:updated', handleRealtimeRefresh);
+      socket.off('order:created', handleRealtimeRefresh);
+      socket.off('order:delivered', handleRealtimeRefresh);
+    };
+  }, [socket, queryClient]);
 
   const notificationsList = notificationsData?.notifications || [];
   const meta = notificationsData?.meta;

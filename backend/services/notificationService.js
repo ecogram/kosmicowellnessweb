@@ -6,24 +6,11 @@ const { redis } = require('../config/redis');
 class NotificationService {
   async createNotification(userId, type, title, message, data = {}) {
     try {
-      if (redis.status !== 'ready') {
-        console.warn('Redis unavailable, falling back to synchronous notification creation.');
-        await this._processPersistNotification({ userId, type, title, message, data });
-        return true;
-      }
-
-      // Enqueue job for background processing
-      await notificationQueue.add(
-        'create-notification',
-        { userId, type, title, message, data },
-        {
-          jobId: `notif-${userId}-${type}-${data?.orderId || Date.now()}`, // Enforce idempotency at the queue level
-        }
-      );
+      await this._processPersistNotification({ userId, type, title, message, data });
       return true;
     } catch (error) {
-      console.error('Failed to enqueue notification:', error.message);
-      return false; // Do not crash business logic
+      console.error('Failed to create notification:', error.message);
+      return false;
     }
   }
 
@@ -42,7 +29,9 @@ class NotificationService {
       const { emitToUser } = require('../realtime/emitter');
       const unreadCount = await Notification.countDocuments({ user: userId, isRead: false });
       emitToUser(userId, 'notification:new', notification);
+      emitToUser(userId.toString(), 'notification:new', notification);
       emitToUser(userId, 'notification:unread-count', { count: unreadCount });
+      emitToUser(userId.toString(), 'notification:unread-count', { count: unreadCount });
       
     } catch (error) {
       if (error.code === 11000) {
