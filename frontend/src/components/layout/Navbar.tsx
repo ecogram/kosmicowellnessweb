@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingCart, User, Menu, Search, X, Bell, Heart } from 'lucide-react';
 import { Container } from '../ui/Container';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -19,6 +19,46 @@ export function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isPlayStoreModalOpen, setIsPlayStoreModalOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const searchContainerRef = useRef<HTMLDivElement | null>(null);
+  const searchButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  // Close search bar when navigating to another page
+  useEffect(() => {
+    setIsSearchOpen(false);
+  }, [location.pathname]);
+
+  // Click outside and Escape key to close search bar
+  useEffect(() => {
+    if (!isSearchOpen) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      const clickedInsideContainer = searchContainerRef.current?.contains(target);
+      const clickedInsideButton = searchButtonRef.current?.contains(target);
+
+      if (!clickedInsideContainer && !clickedInsideButton) {
+        setIsSearchOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsSearchOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isSearchOpen]);
 
   // Lock body scroll when mobile menu drawer is open
   useEffect(() => {
@@ -103,6 +143,7 @@ export function Navbar() {
             
             {/* Search Button */}
             <button
+              ref={searchButtonRef}
               className="text-text-main hover:text-primary transition-all w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center hover:bg-neutral-100 active:scale-95 cursor-pointer"
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               aria-label="Search"
@@ -205,7 +246,10 @@ export function Navbar() {
 
       {/* Search Bar in document flow (Not absolute) so it pushes the page content down naturally without cutting any text */}
       {isSearchOpen && (
-        <div className="border-t border-emerald-950/10 bg-white/98 backdrop-blur-md px-4 py-3 sm:px-6 lg:px-8 w-full relative z-40 shadow-sm transition-all duration-300 animate-fadeIn">
+        <div
+          ref={searchContainerRef}
+          className="border-t border-emerald-950/10 bg-white/98 backdrop-blur-md px-4 py-3 sm:px-6 lg:px-8 w-full relative z-40 shadow-sm transition-all duration-300 animate-fadeIn"
+        >
           <form onSubmit={handleSearchSubmit} className="relative max-w-3xl mx-auto flex items-center">
             <Search className="absolute left-3.5 h-4 w-4 text-emerald-800 pointer-events-none" />
             <input
