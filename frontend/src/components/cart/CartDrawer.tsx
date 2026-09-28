@@ -144,11 +144,12 @@ export function CartDrawer() {
           ) : (
             items.map((item: any) => {
               const prod = item.product || {};
+              const itemProductId = item.productId || prod._id || (typeof item.product === 'string' ? item.product : (prod.id || ''));
               const imageSrc = (Array.isArray(prod.images) && prod.images.length > 0 ? prod.images[0] : null) || prod.image || item.image || '/assets/products/product-box.jpg';
 
               return (
                 <div 
-                  key={`${prod._id || item.product}-${item.variant || 'default'}`}
+                  key={`${itemProductId}-${item.variant || 'default'}`}
                   className="group flex gap-2.5 sm:gap-3.5 p-2.5 sm:p-3.5 bg-white border border-neutral-200 rounded-xl sm:rounded-2xl shadow-xs hover:shadow-md hover:border-emerald-700/40 transition-all duration-200"
                   style={{ backgroundColor: '#ffffff' }}
                 >
@@ -167,8 +168,8 @@ export function CartDrawer() {
                           {prod.name || item.name || 'Sweet Monk (Monk Fruit Sweetener 10ml)'}
                         </h4>
                         <button
-                          onClick={() => removeCartItem.mutate({ productId: prod._id || item.product, variant: item.variant })}
-                          className="text-neutral-400 hover:text-red-600 transition-colors p-1 active:scale-90 shrink-0"
+                          onClick={() => removeCartItem.mutate({ productId: itemProductId, variant: item.variant })}
+                          className="text-neutral-400 hover:text-red-600 transition-colors p-1 active:scale-90 shrink-0 cursor-pointer"
                           title="Remove item"
                         >
                           <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -184,8 +185,8 @@ export function CartDrawer() {
                     <div className="flex justify-between items-center mt-2">
                       <div className="flex items-center border border-neutral-200 rounded-lg sm:rounded-xl bg-white shadow-xs">
                         <button
-                          onClick={() => handleQuantityChange(prod._id || item.product, item.quantity, -1, item.variant)}
-                          className="p-1 sm:p-1.5 text-neutral-700 hover:text-emerald-800 transition-colors active:scale-90 disabled:opacity-40"
+                          onClick={() => handleQuantityChange(itemProductId, item.quantity, -1, item.variant)}
+                          className="p-1 sm:p-1.5 text-neutral-700 hover:text-emerald-800 transition-colors active:scale-90 disabled:opacity-40 cursor-pointer"
                           disabled={updateCartItem.isPending}
                         >
                           <Minus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
@@ -198,7 +199,7 @@ export function CartDrawer() {
                           const isMaxStock = item.quantity >= itemStock;
                           return (
                             <button
-                              onClick={() => handleQuantityChange(prod._id || item.product, item.quantity, 1, item.variant, itemStock)}
+                              onClick={() => handleQuantityChange(itemProductId, item.quantity, 1, item.variant, itemStock)}
                               className={`p-1 sm:p-1.5 transition-colors active:scale-90 cursor-pointer ${
                                 isMaxStock ? 'text-amber-600 hover:text-amber-700 bg-amber-50/50' : 'text-neutral-700 hover:text-emerald-800'
                               }`}

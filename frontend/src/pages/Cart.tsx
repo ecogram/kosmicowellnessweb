@@ -47,7 +47,7 @@ export const Cart = () => {
               <ul className="divide-y divide-border">
                 {cart.items.map((item: any) => {
                   const prod = typeof item.product === 'object' && item.product !== null ? item.product : {};
-                  const productId = prod._id || (typeof item.product === 'string' ? item.product : '');
+                  const productId = item.productId || prod._id || (typeof item.product === 'string' ? item.product : (prod.id || ''));
                   const imageSrc = Array.isArray(prod.images) && prod.images.length > 0 
                     ? prod.images[0] 
                     : (prod.image || item.image || '/assets/products/product-box.jpg');

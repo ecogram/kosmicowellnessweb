@@ -302,22 +302,44 @@ export const useUpdateCartItem = () => {
       variant?: string;
     }) => {
       if (isAuthenticated) {
-        try {
-          const res = await api.put(`/cart/${productId}`, {
-            quantity,
-            variant,
-          });
+        // Calculate difference from current cart state
+        const currentCart = queryClient.getQueryData<CartData>(['cart']) || getLocalCart();
+        const existingItem = currentCart.items.find(
+          (it) => String(it.productId) === String(productId) && (it.variant ?? '') === (variant ?? '')
+        );
+        const currentQty = existingItem ? existingItem.quantity : 0;
+
+        if (quantity <= 0) {
+          const res = await api.delete(`/cart/remove/${productId}`, { data: { variant } });
           const serverCart = extractCartData(res.data);
           saveLocalCart(serverCart);
           return serverCart;
-        } catch (apiErr: any) {
-          if (apiErr?.response?.status === 404) {
-            const res = await api.put(`/cart/update/${productId}`, { quantity, variant });
+        }
+
+        const diff = quantity - currentQty;
+        if (diff !== 0) {
+          try {
+            // Live production API synchronizes cart quantity via POST /cart/add delta
+            const res = await api.post('/cart/add', {
+              productId,
+              quantity: diff,
+              variant,
+            });
             const serverCart = extractCartData(res.data);
             saveLocalCart(serverCart);
             return serverCart;
+          } catch (apiErr: any) {
+            // Fallback to PUT in case backend has PUT router configured
+            if (apiErr?.response?.status === 404) {
+              const res = await api.put(`/cart/${productId}`, { quantity, variant });
+              const serverCart = extractCartData(res.data);
+              saveLocalCart(serverCart);
+              return serverCart;
+            }
+            throw apiErr;
           }
-          throw apiErr;
+        } else {
+          return currentCart;
         }
       }
 
