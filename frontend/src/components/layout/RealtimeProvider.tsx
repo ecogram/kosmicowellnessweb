@@ -107,12 +107,29 @@ export const RealtimeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       queryClient.invalidateQueries({ queryKey: ['reviews'] });
     });
 
+    // Cart Live Sync (Web & Mobile App cross-device)
+    socket.on('cart:updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['cart'] });
+    });
+
+    // Public Product Stock & Price Live Sync (Web & Mobile App)
+    const handleProductRefresh = () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['product'] });
+    };
+
+    socket.on('product:stock_updated', handleProductRefresh);
+    socket.on('product:updated', handleProductRefresh);
+
     // Cleanup on unmount
     return () => {
       socket.off('notification:new', refreshNotifications);
       socket.off('notification:updated', refreshNotifications);
       socket.off('notification:unread-count');
       socket.off('wishlist:updated');
+      socket.off('cart:updated');
+      socket.off('product:stock_updated', handleProductRefresh);
+      socket.off('product:updated', handleProductRefresh);
       socket.off('profile:updated', handleProfileSync);
       socket.off('user:profile_updated', handleProfileSync);
       socket.off('user:updated', handleProfileSync);

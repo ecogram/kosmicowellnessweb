@@ -28,6 +28,11 @@ class ProductService {
   async createProduct(data) {
     const product = await productRepository.create(data);
     await cacheService.deleteByPattern('product:list:*');
+    try {
+      const { emitter } = require('../realtime/emitter');
+      emitter.emit('product:updated', { product });
+      emitter.emit('product:stock_updated', { productId: product._id, stock: product.stock, price: product.price });
+    } catch (_) {}
     return product;
   }
 
@@ -36,6 +41,11 @@ class ProductService {
     if (product) {
       await cacheService.deleteByPattern('product:list:*');
       await cacheService.delete(`product:slug:${product.slug}`);
+      try {
+        const { emitter } = require('../realtime/emitter');
+        emitter.emit('product:updated', { product });
+        emitter.emit('product:stock_updated', { productId: product._id, stock: product.stock, price: product.price });
+      } catch (_) {}
     }
     return product;
   }
@@ -45,6 +55,11 @@ class ProductService {
     if (product) {
       await cacheService.deleteByPattern('product:list:*');
       await cacheService.delete(`product:slug:${product.slug}`);
+      try {
+        const { emitter } = require('../realtime/emitter');
+        emitter.emit('product:updated', { productId: id });
+        emitter.emit('product:stock_updated', { productId: id, stock: 0 });
+      } catch (_) {}
     }
     return product;
   }

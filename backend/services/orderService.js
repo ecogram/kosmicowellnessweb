@@ -155,8 +155,9 @@ class OrderService {
 
     if (order) {
       notificationService.createOrderNotification(userId, order._id, order.orderNumber, order.orderStatus).catch(console.error);
-      const { emitToUser } = require('../realtime/emitter');
+      const { emitToUser, emitter } = require('../realtime/emitter');
       emitToUser(userId, 'order:created', { orderId: order._id, orderNumber: order.orderNumber });
+      emitter.emit('product:stock_updated', { items: orderItems });
     }
 
     return order;
@@ -298,8 +299,9 @@ class OrderService {
     
     notificationService.createOrderNotification(userId, order._id, order.orderNumber, 'CANCELLED').catch(console.error);
     
-    const { emitToOrder } = require('../realtime/emitter');
+    const { emitToOrder, emitter } = require('../realtime/emitter');
     emitToOrder(order._id, 'order:cancelled', { orderId: order._id, status: 'CANCELLED' });
+    emitter.emit('product:stock_updated', { items: order.items });
 
     return order;
   }

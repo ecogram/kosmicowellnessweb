@@ -24,30 +24,24 @@ export const useSocket = () => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    if (!isAuthenticated || !accessToken) {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-        setIsConnected(false);
-      }
-      return;
-    }
-
-    // Initialize socket connection
+    // Initialize socket connection (works for both guests and authenticated users)
     if (!socketRef.current) {
       const socket = io(getSocketURL(), {
         path: '/socket.io',
-        auth: { token: accessToken },
+        auth: { token: accessToken || undefined },
         transports: ['websocket', 'polling'],
         reconnection: true,
-        reconnectionAttempts: 3,
-        reconnectionDelay: 5000,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 3000,
         timeout: 8000,
         autoConnect: true,
       });
 
       socket.on('connect', () => {
         setIsConnected(true);
+        if (accessToken) {
+          socket.emit('authenticate', accessToken);
+        }
       });
 
       socket.on('disconnect', () => {
@@ -59,11 +53,13 @@ export const useSocket = () => {
       });
 
       socketRef.current = socket;
+    } else {
+      // If token changed, update socket auth and authenticate in runtime
+      socketRef.current.auth = { token: accessToken || undefined };
+      if (accessToken && socketRef.current.connected) {
+        socketRef.current.emit('authenticate', accessToken);
+      }
     }
-
-    return () => {
-      // Keep persistent connection while authenticated
-    };
   }, [isAuthenticated, accessToken]);
 
   return {

@@ -41,7 +41,9 @@ const initializeSocket = (httpServer) => {
       const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.split(' ')[1];
       
       if (!token) {
-        return next(new Error('Authentication error: No token provided'));
+        // Allow guest / unauthenticated connection for public broadcasts (e.g. stock, product updates)
+        socket.user = null;
+        return next();
       }
 
       const secret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'Kosmico_Secret_Key_123';
@@ -49,7 +51,8 @@ const initializeSocket = (httpServer) => {
       
       const user = await User.findById(decoded.id).select('-password');
       if (!user) {
-        return next(new Error('Authentication error: User not found'));
+        socket.user = null;
+        return next();
       }
       
       if (!user.isActive) {
@@ -60,21 +63,43 @@ const initializeSocket = (httpServer) => {
       socket.user = user;
       next();
     } catch (error) {
-      next(new Error('Authentication error: Invalid or expired token'));
+      // Allow as guest connection rather than dropping
+      socket.user = null;
+      next();
     }
   });
 
   // Connection Handler
   io.on('connection', (socket) => {
-    console.log(`Socket connected: ${socket.id} (User: ${socket.user._id})`);
-
-    // Join specific user room
-    const userRoom = `user:${socket.user._id}`;
-    socket.join(userRoom);
-    socket.join(`user:${socket.user._id.toString()}`);
-    if (socket.user.email) {
-      socket.join(`user:${socket.user.email.toLowerCase()}`);
+    if (socket.user) {
+      console.log(`Socket connected: ${socket.id} (User: ${socket.user._id})`);
+      const userRoom = `user:${socket.user._id}`;
+      socket.join(userRoom);
+      socket.join(`user:${socket.user._id.toString()}`);
+      if (socket.user.email) {
+        socket.join(`user:${socket.user.email.toLowerCase()}`);
+      }
+    } else {
+      console.log(`Socket connected as guest/public: ${socket.id}`);
+      socket.join('public');
     }
+
+    // Support runtime authentication upgrade when guest logs in
+    socket.on('authenticate', async (token) => {
+      try {
+        if (!token) return;
+        const secret = process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'Kosmico_Secret_Key_123';
+        const decoded = jwt.verify(token, secret);
+        const user = await User.findById(decoded.id).select('-password');
+        if (user && user.isActive) {
+          socket.user = user;
+          socket.join(`user:${user._id}`);
+          socket.join(`user:${user._id.toString()}`);
+          if (user.email) socket.join(`user:${user.email.toLowerCase()}`);
+          console.log(`Socket ${socket.id} upgraded to authenticated user: ${user._id}`);
+        }
+      } catch (_) {}
+    });
 
     // Join specific order room
     socket.on('join:order', async (orderId) => {

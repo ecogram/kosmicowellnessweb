@@ -73,7 +73,9 @@ class CartService {
     }
 
     await cart.save();
-    return await cartRepository.model.findById(cart._id).populate('items.product');
+    const populated = await cartRepository.model.findById(cart._id).populate('items.product');
+    this._notifyCartUpdate(userId, populated);
+    return populated;
   }
 
   async updateItemQuantity(userId, productId, quantity, variantSize) {
@@ -108,7 +110,9 @@ class CartService {
     } else {
       throw new ApiError(404, 'Item not found in cart');
     }
-    return await cartRepository.model.findById(cart._id).populate('items.product');
+    const populated = await cartRepository.model.findById(cart._id).populate('items.product');
+    this._notifyCartUpdate(userId, populated);
+    return populated;
   }
 
   async removeCartItem(userId, productId, variantSize) {
@@ -124,7 +128,9 @@ class CartService {
     });
 
     await cart.save();
-    return await cartRepository.model.findById(cart._id).populate('items.product');
+    const populated = await cartRepository.model.findById(cart._id).populate('items.product');
+    this._notifyCartUpdate(userId, populated);
+    return populated;
   }
 
   async clearCart(userId) {
@@ -133,7 +139,17 @@ class CartService {
       cart.items = [];
       await cart.save();
     }
-    return await cartRepository.model.findById(cart._id).populate('items.product');
+    const populated = await cartRepository.model.findById(cart._id).populate('items.product');
+    this._notifyCartUpdate(userId, populated);
+    return populated;
+  }
+
+  _notifyCartUpdate(userId, populatedCart) {
+    try {
+      const { emitToUser } = require('../realtime/emitter');
+      emitToUser(userId, 'cart:updated', { cart: populatedCart });
+      emitToUser(userId.toString(), 'cart:updated', { cart: populatedCart });
+    } catch (_) {}
   }
 }
 
