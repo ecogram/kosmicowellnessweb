@@ -103,6 +103,11 @@ export function Notifications() {
     }
   };
 
+  // Bulletproof safety: cap to ITEMS_PER_PAGE on the UI
+  const displayedNotifications = (notificationsList.length > ITEMS_PER_PAGE)
+    ? notificationsList.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
+    : notificationsList;
+
   return (
     <Container className="py-10 md:py-16 max-w-3xl mx-auto">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 pb-4 border-b border-neutral-200">
@@ -159,7 +164,7 @@ export function Notifications() {
         </div>
       ) : (
         <div className="space-y-3">
-          {notificationsList.map((notification: any) => (
+          {displayedNotifications.map((notification: any) => (
             <div
               key={notification._id}
               onClick={() => handleMarkAsRead(notification._id, notification.isRead)}
@@ -203,12 +208,12 @@ export function Notifications() {
             </div>
           ))}
 
-          {totalPages > 1 && (
+          {totalItems > 0 && (
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 pt-6 border-t border-neutral-200">
               <p className="text-xs text-neutral-500 font-medium">
                 Showing{' '}
                 <span className="font-semibold text-neutral-800">
-                  {Math.min((page - 1) * ITEMS_PER_PAGE + 1, totalItems)}
+                  {totalItems === 0 ? 0 : Math.min((page - 1) * ITEMS_PER_PAGE + 1, totalItems)}
                 </span>
                 –
                 <span className="font-semibold text-neutral-800">
@@ -220,6 +225,7 @@ export function Notifications() {
 
               <div className="flex items-center gap-1.5">
                 <button
+                  type="button"
                   onClick={() => handlePageChange(page - 1)}
                   disabled={page <= 1}
                   className="flex items-center gap-1 px-3 py-2 bg-white border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 rounded-xl text-xs font-semibold text-neutral-700 disabled:opacity-40 disabled:hover:bg-white disabled:hover:border-neutral-200 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"
@@ -238,11 +244,13 @@ export function Notifications() {
                     ) : (
                       <button
                         key={`page-${p}`}
+                        type="button"
                         onClick={() => handlePageChange(p as number)}
-                        className={`w-8 h-8 flex items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        disabled={totalPages <= 1}
+                        className={`w-8 h-8 flex items-center justify-center rounded-xl text-xs font-bold transition-all ${
                           page === p
                             ? 'bg-[#0a7a40] text-white shadow-xs'
-                            : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300'
+                            : 'bg-white border border-neutral-200 text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300 cursor-pointer'
                         }`}
                       >
                         {p}
@@ -252,6 +260,7 @@ export function Notifications() {
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => handlePageChange(page + 1)}
                   disabled={page >= totalPages}
                   className="flex items-center gap-1 px-3 py-2 bg-white border border-neutral-200 hover:bg-neutral-50 hover:border-neutral-300 rounded-xl text-xs font-semibold text-neutral-700 disabled:opacity-40 disabled:hover:bg-white disabled:hover:border-neutral-200 disabled:cursor-not-allowed transition-all shadow-2xs cursor-pointer"

@@ -12,15 +12,35 @@ export const useNotifications = (page = 1, limit = 10) => {
       try {
         const response = await api.get('/notifications', { params: { page, limit } });
         const resData = response.data?.data ?? response.data ?? {};
-        const notifications = resData.notifications ?? (Array.isArray(resData) ? resData : []);
-        const meta = resData.meta ?? resData.pagination ?? { total: notifications.length, page, limit, pages: 1 };
+        const allOrPageList: any[] = resData.notifications ?? (Array.isArray(resData) ? resData : []);
+        
+        const backendMeta = resData.meta ?? resData.pagination;
+        const total = backendMeta?.total ?? allOrPageList.length;
+        const pages = backendMeta?.pages ?? Math.max(1, Math.ceil(total / limit));
+
+        // Fallback: If backend returned all records at once (> limit), slice for current page
+        const notifications = (allOrPageList.length > limit)
+          ? allOrPageList.slice((page - 1) * limit, page * limit)
+          : allOrPageList;
+
+        const calculatedPages = (allOrPageList.length > limit)
+          ? Math.max(1, Math.ceil(allOrPageList.length / limit))
+          : pages;
+
+        const meta = {
+          total,
+          page,
+          limit,
+          pages: calculatedPages,
+        };
+
         return { notifications, meta };
       } catch (err) {
         return { notifications: [], meta: { total: 0, page: 1, limit, pages: 1 } };
       }
     },
     enabled: isAuthenticated,
-    staleTime: 60 * 1000,
+    staleTime: 10 * 1000,
     retry: 1,
   });
 };
