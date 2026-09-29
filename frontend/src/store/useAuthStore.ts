@@ -14,12 +14,6 @@ export interface User {
   profilePicture?: string;
   profileImage?: string;
   avatar?: string;
-  avatarUrl?: string;
-  image?: string;
-  photo?: string;
-  picture?: string;
-  profile_picture?: string;
-  profile_image?: string;
 }
 
 interface AuthState {
@@ -39,28 +33,24 @@ import { normalizeImageUrl } from '../utils/imageUrl';
 const sanitizeUser = (user: User | null): User | null => {
   if (!user) return null;
   const sanitized = { ...user };
+
+  // Remove any legacy non-backend keys from storage/state
+  delete (sanitized as any).photo;
+  delete (sanitized as any).picture;
+  delete (sanitized as any).profile_picture;
+  delete (sanitized as any).profile_image;
+
+  // Only use fields provided by backend (profilePicture, profileImage, avatar)
   const rawPic =
     sanitized.profilePicture ||
     sanitized.profileImage ||
     sanitized.avatar ||
-    sanitized.avatarUrl ||
-    sanitized.image ||
-    (sanitized as any).photo ||
-    (sanitized as any).picture ||
-    (sanitized as any).profile_picture ||
-    (sanitized as any).profile_image ||
     '';
   const normalized = normalizeImageUrl(rawPic);
 
   sanitized.profilePicture = normalized;
   sanitized.profileImage = normalized;
   sanitized.avatar = normalized;
-  sanitized.avatarUrl = normalized;
-  sanitized.image = normalized;
-  sanitized.photo = normalized;
-  sanitized.picture = normalized;
-  sanitized.profile_picture = normalized;
-  sanitized.profile_image = normalized;
   return sanitized;
 };
 
@@ -88,6 +78,16 @@ export const useAuthStore = create<AuthState>()(
       updateUser: (updatedFields) => {
         set((state) => {
           const merged = state.user ? { ...state.user, ...updatedFields } : (updatedFields as User);
+          if (
+            updatedFields.profilePicture === '' ||
+            updatedFields.profilePicture === null ||
+            updatedFields.profileImage === '' ||
+            updatedFields.avatar === ''
+          ) {
+            merged.profilePicture = '';
+            merged.profileImage = '';
+            merged.avatar = '';
+          }
           return { user: sanitizeUser(merged) };
         });
       },

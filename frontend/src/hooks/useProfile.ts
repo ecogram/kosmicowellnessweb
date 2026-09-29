@@ -27,21 +27,11 @@ export const useProfile = () => {
           user.profilePicture ??
           user.profileImage ??
           user.avatar ??
-          user.avatarUrl ??
-          user.image ??
-          user.photo ??
-          user.picture ??
-          user.profile_picture ??
           '';
         const normalized = normalizeImageUrl(rawPic);
         user.profilePicture = normalized;
         user.profileImage = normalized;
         user.avatar = normalized;
-        user.avatarUrl = normalized;
-        user.image = normalized;
-        user.photo = normalized;
-        user.picture = normalized;
-        user.profile_picture = normalized;
 
         const current = useAuthStore.getState().user;
         const incomingPhone = user.phoneNumber || user.phone || (user as any)?.mobile || '';
@@ -142,16 +132,11 @@ export const useUpdateProfile = () => {
           updatedUser.profilePicture ??
           updatedUser.profileImage ??
           updatedUser.avatar ??
-          updatedUser.avatarUrl ??
-          updatedUser.image ??
-          updatedUser.photo ??
           '';
         const normalized = normalizeImageUrl(rawPic);
         updatedUser.profilePicture = normalized;
         updatedUser.profileImage = normalized;
         updatedUser.avatar = normalized;
-        updatedUser.avatarUrl = normalized;
-        updatedUser.image = normalized;
         const finalPhone = updatedUser.phoneNumber || updatedUser.phone || (updatedUser as any)?.mobile || '';
         updatedUser.phoneNumber = finalPhone;
         updatedUser.phone = finalPhone;
@@ -198,8 +183,6 @@ export const useRemoveProfilePicture = () => {
         profilePicture: '',
         profileImage: '',
         avatar: '',
-        avatarUrl: '',
-        image: '',
       };
       updateUser(updatedUser ?? cleared);
       queryClient.invalidateQueries({ queryKey: ['auth-profile'] });

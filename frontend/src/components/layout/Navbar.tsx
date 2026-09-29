@@ -199,9 +199,6 @@ export function Navbar() {
                       user?.profilePicture ||
                       user?.profileImage ||
                       user?.avatar ||
-                      user?.avatarUrl ||
-                      user?.image ||
-                      (user as any)?.photo ||
                       '';
                     if (!navPic) return null;
                     return (
@@ -373,9 +370,6 @@ export function Navbar() {
                           user?.profilePicture ||
                           user?.profileImage ||
                           user?.avatar ||
-                          user?.avatarUrl ||
-                          user?.image ||
-                          (user as any)?.photo ||
                           '';
                         if (navPic) {
                           return (

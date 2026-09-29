@@ -89,7 +89,7 @@ export const Profile: React.FC = () => {
   const [fullName, setFullName] = useState(user?.name || (user as any)?.fullName || '');
   const [email, setEmail] = useState(user?.email || '');
   const [phone, setPhone] = useState(user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || '');
-  const initialPic = user?.profilePicture || user?.profileImage || user?.avatar || user?.avatarUrl || user?.image || (user as any)?.photo || '';
+  const initialPic = user?.profilePicture || user?.profileImage || user?.avatar || '';
   const [profilePicture, setProfilePicture] = useState(normalizeImageUrl(initialPic));
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
@@ -264,9 +264,6 @@ export const Profile: React.FC = () => {
       user?.profilePicture ||
       user?.profileImage ||
       user?.avatar ||
-      user?.avatarUrl ||
-      user?.image ||
-      (user as any)?.photo ||
       '';
     setProfilePicture(normalizeImageUrl(currentPic));
     setImageLoadError(false);
@@ -741,7 +738,7 @@ export const Profile: React.FC = () => {
               setFullName(user?.name || (user as any)?.fullName || fullName || '');
               setEmail(user?.email || email || '');
               setPhone(user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || phone || '');
-              const editPic = profilePicture || user?.profilePicture || user?.profileImage || user?.avatar || user?.avatarUrl || user?.image || (user as any)?.photo || '';
+              const editPic = profilePicture || user?.profilePicture || user?.profileImage || user?.avatar || '';
               setProfilePicture(normalizeImageUrl(editPic));
               setIsEditProfileOpen(true);
             }}
