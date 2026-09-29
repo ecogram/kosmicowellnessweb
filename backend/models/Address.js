@@ -18,6 +18,11 @@ const addressSchema = new mongoose.Schema(
       required: [true, 'Please provide a full name'],
       trim: true,
     },
+    flatBuilding: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     streetAddress: {
       type: String,
       required: [true, 'Please provide street address'],

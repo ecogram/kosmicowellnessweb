@@ -35,6 +35,7 @@ interface SavedAddress {
   addressLabel?: string;
   fullName: string;
   phoneNumber: string;
+  flatBuilding?: string;
   streetAddress: string;
   city: string;
   state?: string;
@@ -185,6 +186,7 @@ export const Checkout: React.FC = () => {
     addressLabel: 'Home',
     fullName: user?.name || '',
     phoneNumber: '',
+    flatBuilding: '',
     streetAddress: '',
     city: '',
     state: '',
@@ -727,6 +729,7 @@ export const Checkout: React.FC = () => {
       addressLabel: addr.addressLabel || 'Home',
       fullName: addr.fullName,
       phoneNumber: addr.phoneNumber,
+      flatBuilding: addr.flatBuilding || '',
       streetAddress: addr.streetAddress,
       city: addr.city,
       state: addr.state || '',
@@ -760,13 +763,14 @@ export const Checkout: React.FC = () => {
 
   const handleSaveNewAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAddress.fullName || !newAddress.phoneNumber || !newAddress.streetAddress || !newAddress.pincode) {
+    if (!newAddress.fullName || !newAddress.phoneNumber || !newAddress.flatBuilding?.trim() || !newAddress.streetAddress || !newAddress.pincode) {
       return;
     }
 
     const addressPayload = {
       addressLabel: newAddress.addressLabel,
       fullName: newAddress.fullName,
+      flatBuilding: newAddress.flatBuilding.trim(),
       streetAddress: newAddress.streetAddress,
       city: newAddress.city,
       pincode: newAddress.pincode,
@@ -858,6 +862,7 @@ export const Checkout: React.FC = () => {
                 {selectedAddress.fullName || user?.name || ''}
               </p>
               <p className="text-neutral-600 text-xs leading-relaxed">
+                {selectedAddress.flatBuilding ? `${selectedAddress.flatBuilding}, ` : ''}
                 {selectedAddress.streetAddress || (selectedAddress as any).addressLine1 || ''}
                 {selectedAddress.city ? `, ${selectedAddress.city}` : ''}
                 {selectedAddress.state ? `, ${selectedAddress.state}` : ''}
@@ -1286,7 +1291,7 @@ export const Checkout: React.FC = () => {
                             </span>
                             <h4 className="font-bold text-sm text-neutral-900 mt-1">{addr.fullName}</h4>
                             <p className="text-xs text-neutral-600 mt-0.5">
-                              {addr.streetAddress}, {addr.city} - {addr.pincode}
+                              {addr.flatBuilding ? `${addr.flatBuilding}, ` : ''}{addr.streetAddress}, {addr.city} - {addr.pincode}
                             </p>
                             <p className="text-xs text-neutral-700 font-medium mt-1">{addr.phoneNumber}</p>
                           </div>
@@ -1328,6 +1333,7 @@ export const Checkout: React.FC = () => {
                         addressLabel: 'Home',
                         fullName: user?.name || '',
                         phoneNumber: '',
+                        flatBuilding: '',
                         streetAddress: '',
                         city: '',
                         state: '',
@@ -1368,6 +1374,21 @@ export const Checkout: React.FC = () => {
                       onChange={(e) => setNewAddress({ ...newAddress, fullName: e.target.value })}
                       className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:border-[#0a7a40]"
                       placeholder="Amit Kumar"
+                      required
+                    />
+                  </div>
+
+                  {/* Flat, House no., Building, Company, Apartment */}
+                  <div>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                      Flat, House no., Building, Company, Apartment <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={newAddress.flatBuilding || ''}
+                      onChange={(e) => setNewAddress({ ...newAddress, flatBuilding: e.target.value })}
+                      className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:border-[#0a7a40]"
+                      placeholder="Arcadia homes"
                       required
                     />
                   </div>

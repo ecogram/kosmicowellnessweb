@@ -8,7 +8,7 @@ const getAddresses = asyncHandler(async (req, res) => {
 });
 
 const addAddress = asyncHandler(async (req, res) => {
-  const { addressLabel, fullName, streetAddress, city, state, pincode, phoneNumber, isDefault } = req.body;
+  const { addressLabel, fullName, flatBuilding, streetAddress, city, state, pincode, phoneNumber, isDefault } = req.body;
 
   if (isDefault) {
     await Address.updateMany({ user: req.user._id }, { isDefault: false });
@@ -24,6 +24,7 @@ const addAddress = asyncHandler(async (req, res) => {
     user: req.user._id,
     addressLabel: addressLabel || 'Home',
     fullName,
+    flatBuilding: flatBuilding || '',
     streetAddress,
     city,
     state: state || '',

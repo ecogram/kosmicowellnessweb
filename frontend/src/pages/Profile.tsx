@@ -21,6 +21,7 @@ interface SavedAddress {
   _id: string;
   addressLabel: 'Home' | 'Work' | 'Other';
   fullName: string;
+  flatBuilding?: string;
   streetAddress: string;
   city: string;
   pincode: string;
@@ -114,6 +115,7 @@ export const Profile: React.FC = () => {
   // Address Form State (API-aligned field names)
   const [addrFormName, setAddrFormName] = useState('');
   const [addrFormPhone, setAddrFormPhone] = useState('');
+  const [addrFormFlat, setAddrFormFlat] = useState('');
   const [addrFormStreet, setAddrFormStreet] = useState('');
   const [addrFormCity, setAddrFormCity] = useState('');
   const [addrFormPincode, setAddrFormPincode] = useState('');
@@ -283,6 +285,7 @@ export const Profile: React.FC = () => {
           _id: a._id || a.id || '',
           addressLabel: (a.addressLabel as 'Home' | 'Work' | 'Other') || 'Home',
           fullName: a.fullName || '',
+          flatBuilding: a.flatBuilding || '',
           streetAddress: a.streetAddress || '',
           city: a.city || '',
           pincode: a.pincode || '',
@@ -583,11 +586,12 @@ export const Profile: React.FC = () => {
     navigate('/login');
   };
 
-  // Address Handlers — API fields: addressLabel, fullName, streetAddress, city, pincode, phoneNumber, isDefault
+  // Address Handlers — API fields: addressLabel, fullName, flatBuilding, streetAddress, city, pincode, phoneNumber, isDefault
   const handleOpenAddAddress = () => {
     setEditingAddressId(null);
     setAddrFormName(fullName);
     setAddrFormPhone(phone);
+    setAddrFormFlat('');
     setAddrFormStreet('');
     setAddrFormCity('');
     setAddrFormPincode('');
@@ -600,6 +604,7 @@ export const Profile: React.FC = () => {
     setEditingAddressId(addr._id);
     setAddrFormName(addr.fullName);
     setAddrFormPhone(addr.phoneNumber);
+    setAddrFormFlat(addr.flatBuilding || '');
     setAddrFormStreet(addr.streetAddress);
     setAddrFormCity(addr.city);
     setAddrFormPincode(addr.pincode);
@@ -635,13 +640,14 @@ export const Profile: React.FC = () => {
 
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addrFormStreet || !addrFormPincode || !addrFormCity) return;
+    if (!addrFormFlat.trim() || !addrFormStreet || !addrFormPincode || !addrFormCity) return;
 
     // API docs: POST/PUT /api/address
-    // Body: { addressLabel, fullName, streetAddress, city, pincode, phoneNumber, isDefault }
+    // Body: { addressLabel, fullName, flatBuilding, streetAddress, city, pincode, phoneNumber, isDefault }
     const payload = {
       addressLabel: addrFormLabel,
       fullName: addrFormName,
+      flatBuilding: addrFormFlat.trim(),
       streetAddress: addrFormStreet,
       city: addrFormCity,
       pincode: addrFormPincode,
@@ -1148,7 +1154,7 @@ export const Profile: React.FC = () => {
                               )}
                             </div>
                             <p className="text-xs text-neutral-700 leading-snug">
-                              {addr.streetAddress}
+                              {addr.flatBuilding ? `${addr.flatBuilding}, ` : ''}{addr.streetAddress}
                             </p>
                             <p className="text-xs text-neutral-600 font-medium">
                               {addr.city} - <span className="font-bold text-neutral-800">{addr.pincode}</span>
@@ -1237,6 +1243,21 @@ export const Profile: React.FC = () => {
                     value={addrFormName}
                     onChange={(e) => setAddrFormName(e.target.value)}
                     placeholder="Receiver name"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
+                  />
+                </div>
+
+                {/* Flat, House no., Building, Company, Apartment */}
+                <div>
+                  <label className="text-xs font-bold text-neutral-700 block mb-1">
+                    Flat, House no., Building, Company, Apartment <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={addrFormFlat}
+                    onChange={(e) => setAddrFormFlat(e.target.value)}
+                    placeholder="Arcadia homes"
                     className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
                   />
                 </div>

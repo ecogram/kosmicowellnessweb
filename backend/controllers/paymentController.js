@@ -31,7 +31,9 @@ const placeCodOrder = asyncHandler(async (req, res) => {
       addressData = {
         fullName: foundAddr.fullName,
         phone: foundAddr.phoneNumber,
-        addressLine1: foundAddr.streetAddress,
+        flatBuilding: foundAddr.flatBuilding || '',
+        addressLine1: foundAddr.flatBuilding ? `${foundAddr.flatBuilding}, ${foundAddr.streetAddress}` : foundAddr.streetAddress,
+        streetAddress: foundAddr.streetAddress,
         city: foundAddr.city,
         state: foundAddr.state || foundAddr.city,
         postalCode: foundAddr.pincode,
@@ -136,7 +138,9 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
       addressData = {
         fullName: foundAddr.fullName,
         phone: foundAddr.phoneNumber,
-        addressLine1: foundAddr.streetAddress,
+        flatBuilding: foundAddr.flatBuilding || '',
+        addressLine1: foundAddr.flatBuilding ? `${foundAddr.flatBuilding}, ${foundAddr.streetAddress}` : foundAddr.streetAddress,
+        streetAddress: foundAddr.streetAddress,
         city: foundAddr.city,
         state: foundAddr.state || foundAddr.city,
         postalCode: foundAddr.pincode,
@@ -357,7 +361,9 @@ const getMyOrders = asyncHandler(async (req, res) => {
             addressData = {
               fullName: foundAddr.fullName,
               phone: foundAddr.phoneNumber,
-              addressLine1: foundAddr.streetAddress,
+              flatBuilding: foundAddr.flatBuilding || '',
+              addressLine1: foundAddr.flatBuilding ? `${foundAddr.flatBuilding}, ${foundAddr.streetAddress}` : foundAddr.streetAddress,
+              streetAddress: foundAddr.streetAddress,
               city: foundAddr.city,
               state: foundAddr.state || foundAddr.city,
               postalCode: foundAddr.pincode,
@@ -446,7 +452,9 @@ const createCodUpfrontOrder = asyncHandler(async (req, res) => {
       addressData = {
         fullName: foundAddr.fullName,
         phone: foundAddr.phoneNumber,
-        addressLine1: foundAddr.streetAddress,
+        flatBuilding: foundAddr.flatBuilding || '',
+        addressLine1: foundAddr.flatBuilding ? `${foundAddr.flatBuilding}, ${foundAddr.streetAddress}` : foundAddr.streetAddress,
+        streetAddress: foundAddr.streetAddress,
         city: foundAddr.city,
         state: foundAddr.state || foundAddr.city,
         postalCode: foundAddr.pincode,
