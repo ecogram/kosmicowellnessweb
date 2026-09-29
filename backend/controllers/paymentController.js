@@ -240,12 +240,25 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
   );
 });
 
-// 3. Verify Payment (POST /api/payment/verify)
+// 3. Verify Payment (POST /api/payment/razorpay/verify & POST /api/payment/verify)
 const verifyPayment = asyncHandler(async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+  const razorpay_order_id =
+    req.body.razorpay_order_id ||
+    req.body.razorpayOrderId ||
+    req.body.orderId ||
+    req.body.order_id;
+  const razorpay_payment_id =
+    req.body.razorpay_payment_id ||
+    req.body.razorpayPaymentId ||
+    req.body.paymentId ||
+    req.body.payment_id;
+  const razorpay_signature =
+    req.body.razorpay_signature ||
+    req.body.razorpaySignature ||
+    req.body.signature;
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-    throw new ApiError(400, 'Missing payment verification payloads');
+    throw new ApiError(400, 'Missing payment verification payloads (razorpay_order_id, razorpay_payment_id, razorpay_signature are required)');
   }
 
   const payment = await paymentService.verifyPaymentSignature(req.user._id, {
@@ -255,16 +268,35 @@ const verifyPayment = asyncHandler(async (req, res) => {
   });
 
   // Update order status
-  if (payment.order) {
-    await Order.findByIdAndUpdate(payment.order, {
-      paymentStatus: 'PAID',
-      orderStatus: 'PROCESSING',
-      paymentReference: razorpay_payment_id,
-      trackingNumber: 'TRK-' + Math.floor(10000000 + Math.random() * 90000000),
-    });
+  const orderId = payment.order?._id || payment.order;
+  let order = null;
+  if (orderId) {
+    order = await Order.findByIdAndUpdate(
+      orderId,
+      {
+        paymentStatus: 'PAID',
+        orderStatus: 'PROCESSING',
+        paymentReference: razorpay_payment_id,
+        trackingNumber: 'TRK-' + Math.floor(10000000 + Math.random() * 90000000),
+      },
+      { new: true }
+    );
   }
 
-  res.status(200).json(new ApiResponse(200, { payment }, 'Payment verified successfully'));
+  res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        payment,
+        order: order || payment.order,
+        orderId: order?._id || orderId,
+        orderNumber: order?.orderNumber,
+        status: 'PAID',
+        success: true,
+      },
+      'Payment verified successfully'
+    )
+  );
 });
 
 // 4. Get My Orders (GET /api/payment/myorders)

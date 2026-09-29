@@ -86,9 +86,16 @@ class PaymentService {
    * Verify signature explicitly sent by frontend.
    */
   async verifyPaymentSignature(userId, { razorpay_order_id, razorpay_payment_id, razorpay_signature }) {
-    const payment = await Payment.findOne({ providerOrderId: razorpay_order_id, user: userId }).populate('order');
+    let payment = await Payment.findOne({ providerOrderId: razorpay_order_id, user: userId }).populate('order');
+    if (!payment) {
+      payment = await Payment.findOne({ providerOrderId: razorpay_order_id }).populate('order');
+    }
     if (!payment) {
       throw new ApiError(404, 'Payment record not found');
+    }
+
+    if (payment.status === 'PAID') {
+      return payment;
     }
 
     const isDevMock = razorpay_order_id.startsWith('order_dev_') || razorpay_payment_id.startsWith('pay_dev_');
