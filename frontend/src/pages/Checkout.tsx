@@ -374,19 +374,20 @@ export const Checkout: React.FC = () => {
     );
 
     const rzpOrderId =
-      order.orderId ||
-      order.providerOrderId ||
-      order.razorpayOrderId ||
-      order.id ||
-      (order.data && (order.data.orderId || order.data.providerOrderId)) ||
+      order?.order?.id ||
+      order?.orderId ||
+      order?.providerOrderId ||
+      order?.razorpayOrderId ||
+      order?.id ||
+      (order?.data && (order.data?.order?.id || order.data?.orderId || order.data?.providerOrderId)) ||
       undefined;
 
     const options: any = {
       key: razorpayKey,
       amount: calculatedPaise,
-      currency: order.currency || 'INR',
+      currency: order.currency || order?.order?.currency || 'INR',
       name: 'Kosmico Wellness',
-      description: `Order ${order.orderNumber || ''}`,
+      description: `Order ${order.orderNumber || order?.order?.id || ''}`,
       order_id: rzpOrderId,
       prefill: {
         name: selectedAddress?.fullName || user?.name || 'Customer',
@@ -443,6 +444,7 @@ export const Checkout: React.FC = () => {
           response?.razorpayOrderId ||
           response?.order_id ||
           rzpOrderId ||
+          order?.order?.id ||
           order?.orderId ||
           order?.providerOrderId ||
           '';
@@ -459,17 +461,26 @@ export const Checkout: React.FC = () => {
         }
 
         try {
-          await verifyPaymentMutation.mutateAsync({
+          const verifyRes = await verifyPaymentMutation.mutateAsync({
             razorpay_order_id: respOrderId,
             razorpay_payment_id: paymentId,
             razorpay_signature: signature,
           });
 
+          const finalOrder = verifyRes?.order || verifyRes?.data?.order || order?.order || order;
+          const finalOrderNum =
+            finalOrder?.orderNumber ||
+            finalOrder?._id ||
+            verifyRes?.orderNumber ||
+            order?.orderNumber ||
+            order?._id ||
+            'KW-SUCCESS';
+
           // ONLY after successful backend verification:
           localStorage.removeItem('kosmico_cart_v1');
           setIsPaymentProcessing(false);
           toast.success('Payment successful! Order placed.');
-          navigate(`/order-success/${order.orderNumber || 'KW-SUCCESS'}`);
+          navigate(`/order-success/${finalOrderNum}`);
         } catch (verifyErr: any) {
           setIsPaymentProcessing(false);
           console.error('Payment verification error:', verifyErr);

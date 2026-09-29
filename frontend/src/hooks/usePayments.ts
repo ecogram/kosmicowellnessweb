@@ -268,20 +268,52 @@ export const useDeletePaymentMethod = () => {
 };
 
 // ─── Razorpay ─────────────────────────────────────────────────────────────────
-// POST /api/payment/razorpay/create
+// POST /api/order/place/razorpay (fallback /api/payment/razorpay/create)
 export const useCreateRazorpayOrder = () => {
   return useMutation({
     mutationFn: async (payload: {
       amount: number;
       deliveryAddressId: string;
-      items: Array<{ productId: string; quantity: number; price: number }>;
+      items: Array<{ productId?: string; product?: string; quantity?: number; qty?: number; price: number }>;
       couponCode?: string;
       discountAmount?: number;
       deliveryFee?: number;
       gstCharge?: number;
     }) => {
-      const { data } = await api.post('/payment/razorpay/create', payload);
-      return data?.data ?? data;
+      const formattedItems = (payload.items || []).map((it: any) => ({
+        product: it.productId || it.product || it._id,
+        productId: it.productId || it.product || it._id,
+        qty: it.quantity || it.qty || 1,
+        quantity: it.quantity || it.qty || 1,
+        price: it.price || it.priceSnapshot || 0,
+      }));
+
+      const body = {
+        amount: payload.amount,
+        deliveryAddressId: payload.deliveryAddressId,
+        items: formattedItems,
+        couponCode: payload.couponCode,
+        discountAmount: payload.discountAmount,
+        deliveryFee: payload.deliveryFee,
+        gstCharge: payload.gstCharge,
+      };
+
+      let resData: any;
+      try {
+        const { data } = await api.post('/order/place/razorpay', body);
+        resData = data?.data ?? data;
+      } catch (err) {
+        const { data } = await api.post('/payment/razorpay/create', body);
+        resData = data?.data ?? data;
+      }
+
+      const rzpId = resData?.order?.id || resData?.orderId || resData?.providerOrderId || resData?.id;
+      return {
+        ...resData,
+        orderId: rzpId,
+        providerOrderId: rzpId,
+        keyId: resData?.keyId || resData?.key || 'rzp_live_TcH3s5Qdh4ngAp',
+      };
     },
   });
 };
@@ -306,21 +338,46 @@ export const useVerifyPayment = () => {
   });
 };
 
-// POST /api/payment/cod
+// POST /api/order/place/cod (fallback /api/payment/cod)
 export const usePlaceCodOrder = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (payload: {
       amount: number;
       deliveryAddressId: string;
-      items: Array<{ productId: string; quantity: number; price: number }>;
+      items: Array<{ productId?: string; product?: string; quantity?: number; qty?: number; price: number }>;
       couponCode?: string;
       discountAmount?: number;
       deliveryFee?: number;
       gstCharge?: number;
     }) => {
-      const { data } = await api.post('/payment/cod', payload);
-      return data?.data ?? data;
+      const formattedItems = (payload.items || []).map((it: any) => ({
+        product: it.productId || it.product || it._id,
+        productId: it.productId || it.product || it._id,
+        qty: it.quantity || it.qty || 1,
+        quantity: it.quantity || it.qty || 1,
+        price: it.price || it.priceSnapshot || 0,
+      }));
+
+      const body = {
+        amount: payload.amount,
+        deliveryAddressId: payload.deliveryAddressId,
+        items: formattedItems,
+        couponCode: payload.couponCode,
+        discountAmount: payload.discountAmount,
+        deliveryFee: payload.deliveryFee,
+        gstCharge: payload.gstCharge,
+      };
+
+      let resData: any;
+      try {
+        const { data } = await api.post('/order/place/cod', body);
+        resData = data?.data ?? data;
+      } catch (err) {
+        const { data } = await api.post('/payment/cod', body);
+        resData = data?.data ?? data;
+      }
+      return resData;
     },
     onSuccess: () => {
       localStorage.removeItem('kosmico_cart_v1');
