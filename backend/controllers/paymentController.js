@@ -555,16 +555,29 @@ const verifyCodUpfrontPayment = asyncHandler(async (req, res) => {
     razorpay_signature,
   });
 
+  let updatedOrder = null;
   if (payment.order) {
-    await Order.findByIdAndUpdate(payment.order, {
-      paymentStatus: 'PARTIAL_PAID',
-      orderStatus: 'PROCESSING',
-      paymentReference: razorpay_payment_id,
-      trackingNumber: 'TRK-' + Math.floor(10000000 + Math.random() * 90000000),
-    });
+    updatedOrder = await Order.findByIdAndUpdate(
+      payment.order,
+      {
+        paymentStatus: 'PARTIAL_PAID',
+        orderStatus: 'PROCESSING',
+        paymentReference: razorpay_payment_id,
+        trackingNumber: 'TRK-' + Math.floor(10000000 + Math.random() * 90000000),
+      },
+      { new: true }
+    );
+
+    try {
+      if (updatedOrder && (updatedOrder.userEmail || req.user.email)) {
+        await sendOrderConfirmationEmail(updatedOrder, updatedOrder.userEmail || req.user.email);
+      }
+    } catch (err) {
+      console.error('COD Upfront confirmation email error:', err);
+    }
   }
 
-  res.status(200).json(new ApiResponse(200, { payment }, 'COD Upfront payment verified successfully'));
+  res.status(200).json(new ApiResponse(200, { payment, order: updatedOrder }, 'COD Upfront payment verified successfully'));
 });
 
 // 7. Cancel Pending Razorpay Order (POST /api/payment/razorpay/cancel-pending)

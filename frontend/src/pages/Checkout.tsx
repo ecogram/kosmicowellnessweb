@@ -456,64 +456,85 @@ export const Checkout: React.FC = () => {
       return;
     }
 
-    const razorpayKey =
-      import.meta.env.VITE_RAZORPAY_KEY_ID ||
-      'rzp_live_TcH3s5Qdh4ngAp';
-
-    const calculatedPaise = Math.max(100, Math.round(advanceAmount * 100));
-
-    const options: any = {
-      key: razorpayKey,
-      amount: calculatedPaise,
-      currency: 'INR',
-      name: 'Kosmico Wellness',
-      description: 'Advance Delivery & GST for COD Order',
-      prefill: {
-        name: selectedAddress?.fullName || user?.name || 'Customer',
-        email: user?.email || '',
-        contact: selectedAddress?.phoneNumber || (user as any)?.phoneNumber || (user as any)?.phone || '',
-      },
-      theme: { color: '#0a7a40' },
-      modal: {
-        ondismiss: function () {
-          setIsPaymentProcessing(false);
-          toast.error('Advance payment cancelled. Your COD order was not placed.');
-        },
-      },
-      handler: async function (response: any) {
-        setIsPaymentProcessing(true);
-        if (!response?.razorpay_payment_id) {
-          setIsPaymentProcessing(false);
-          toast.error('Advance payment failed: Missing payment details. Order was not placed.');
-          return;
-        }
-
-        try {
-          // Advance payment confirmed on Razorpay!
-          // ONLY NOW create the order in the database
-          const res = await api.post('/payment/cod', {
-            ...orderPayload,
-            paymentReference: response.razorpay_payment_id,
-          });
-
-          const placedOrder = res.data?.data?.order || res.data?.data || res.data?.order;
-
-          localStorage.removeItem('kosmico_cart_v1');
-          setIsPaymentProcessing(false);
-          toast.success('Advance payment successful! COD Order placed.');
-          navigate(`/order-success/${placedOrder?.orderNumber || placedOrder?._id || 'KW-SUCCESS'}`);
-        } catch (placeErr: any) {
-          setIsPaymentProcessing(false);
-          console.error('COD Order creation error:', placeErr);
-          toast.error(
-            placeErr?.response?.data?.message ||
-              'Payment received but failed to record order. Please contact support with Payment ID: ' + response.razorpay_payment_id
-          );
-        }
-      },
-    };
-
     try {
+      // 1. Create COD upfront order on backend to get real Razorpay order_id (CRITICAL for UPI on mobile)
+      const upfrontRes = await api.post('/payment/cod-upfront/create', {
+        ...orderPayload,
+        upfrontAmount: advanceAmount,
+      });
+
+      const upfrontData = upfrontRes.data?.data || upfrontRes.data;
+      const rzpOrderId = upfrontData?.orderId || upfrontData?.providerOrderId;
+      const internalOrderId = upfrontData?.internalOrderId;
+      const orderNumber = upfrontData?.orderNumber || 'KW-COD';
+
+      const razorpayKey =
+        upfrontData?.keyId ||
+        upfrontData?.key ||
+        import.meta.env.VITE_RAZORPAY_KEY_ID ||
+        'rzp_live_TcH3s5Qdh4ngAp';
+
+      const calculatedPaise = Math.max(100, Math.round(advanceAmount * 100));
+
+      const options: any = {
+        key: razorpayKey,
+        amount: upfrontData?.amount || calculatedPaise,
+        currency: upfrontData?.currency || 'INR',
+        name: 'Kosmico Wellness',
+        description: 'Advance Delivery & GST for COD Order',
+        order_id: rzpOrderId, // <--- MANDATORY FOR RAZORPAY UPI INTENT (GPAY, PHONEPE, PAYTM) ON MOBILE!
+        prefill: {
+          name: selectedAddress?.fullName || user?.name || 'Customer',
+          email: user?.email || '',
+          contact: selectedAddress?.phoneNumber || (user as any)?.phoneNumber || (user as any)?.phone || '',
+        },
+        theme: { color: '#0a7a40' },
+        modal: {
+          ondismiss: async function () {
+            setIsPaymentProcessing(false);
+            if (rzpOrderId) {
+              try {
+                await api.post('/payment/razorpay/cancel-pending', {
+                  orderId: rzpOrderId,
+                  internalOrderId,
+                });
+              } catch (_) {}
+            }
+            toast.error('Advance payment cancelled. Your COD order was not placed.');
+          },
+        },
+        handler: async function (response: any) {
+          setIsPaymentProcessing(true);
+          if (!response?.razorpay_payment_id) {
+            setIsPaymentProcessing(false);
+            toast.error('Advance payment failed: Missing payment details. Order was not placed.');
+            return;
+          }
+
+          try {
+            const verifyRes = await api.post('/payment/cod-upfront/verify', {
+              razorpay_order_id: response.razorpay_order_id || rzpOrderId,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            const placedOrder = verifyRes.data?.data?.order || verifyRes.data?.order || { orderNumber };
+
+            localStorage.removeItem('kosmico_cart_v1');
+            setIsPaymentProcessing(false);
+            toast.success('Advance payment successful! COD Order placed.');
+            navigate(`/order-success/${placedOrder?.orderNumber || orderNumber || 'KW-SUCCESS'}`);
+          } catch (placeErr: any) {
+            setIsPaymentProcessing(false);
+            console.error('COD Order creation error:', placeErr);
+            toast.error(
+              placeErr?.response?.data?.message ||
+                'Payment received but failed to record order. Please contact support with Payment ID: ' + response.razorpay_payment_id
+            );
+          }
+        },
+      };
+
       const rzpInstance = new (window as any).Razorpay(options);
       rzpInstance.on('payment.failed', function (resp: any) {
         setIsPaymentProcessing(false);
@@ -523,7 +544,7 @@ export const Checkout: React.FC = () => {
     } catch (rzpErr: any) {
       console.error('Razorpay open error:', rzpErr);
       setIsPaymentProcessing(false);
-      toast.error('Unable to initialize Razorpay checkout for COD advance.');
+      toast.error(rzpErr?.response?.data?.message || 'Unable to initialize Razorpay checkout for COD advance.');
     }
   };
 
