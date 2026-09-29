@@ -1257,7 +1257,6 @@ export const Profile: React.FC = () => {
                     required
                     value={addrFormFlat}
                     onChange={(e) => setAddrFormFlat(e.target.value)}
-                    placeholder="Arcadia homes"
                     className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
                   />
                 </div>

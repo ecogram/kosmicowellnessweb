@@ -1388,7 +1388,6 @@ export const Checkout: React.FC = () => {
                       value={newAddress.flatBuilding || ''}
                       onChange={(e) => setNewAddress({ ...newAddress, flatBuilding: e.target.value })}
                       className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:border-[#0a7a40]"
-                      placeholder="Arcadia homes"
                       required
                     />
                   </div>
