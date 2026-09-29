@@ -71,30 +71,94 @@ export const useOrders = (params: { page?: number; limit?: number } = {}) => {
 // GET /api/order/track/{orderId}  (primary)
 // Fallback: search within GET /api/payment/myorders
 export const useOrder = (orderId: string) => {
+  const queryClient = useQueryClient();
+
   return useQuery({
     queryKey: ['orders', orderId],
     queryFn: async () => {
       if (!orderId) return null;
 
-      // 1. Track via API docs endpoint: GET /api/order/track/{orderId}
+      const normalize = (v: any) => String(v || '').replace(/^#/, '').trim().toLowerCase();
+      const targetId = normalize(orderId);
+
+      const isMatch = (o: any) => {
+        if (!o) return false;
+        const candidates = [
+          o._id,
+          o.id,
+          o.orderNumber,
+          o.orderId,
+          o.razorpayOrderId,
+          o.shiprocketOrderId,
+          o.trackingNumber,
+        ].filter(Boolean).map(normalize);
+
+        return candidates.includes(targetId) || candidates.some((c) => c && (c.includes(targetId) || targetId.includes(c)));
+      };
+
+      // 0. Search across ALL cached 'orders' queries in React Query cache
       try {
-        const response = await api.get(`/order/track/${orderId}`);
-        const orderData = response.data?.data?.order ?? response.data?.data ?? response.data;
-        if (orderData && (orderData._id || orderData.orderNumber)) return orderData;
+        const allCachedQueries = queryClient.getQueriesData<any>({ queryKey: ['orders'] });
+        for (const [, qData] of allCachedQueries) {
+          const list: any[] = qData?.orders ?? (Array.isArray(qData) ? qData : []);
+          const found = list.find(isMatch);
+          if (found) return found;
+        }
       } catch (_) { }
 
-      // 2. Search inside myorders list as secondary lookup
+      // 1. Search inside myorders list (live endpoint returns { success: true, orders: [...] })
       try {
         const response = await api.get('/payment/myorders', { params: { limit: 100 } });
+        const resData = response.data?.data ?? response.data ?? {};
         const orders: any[] =
-          response.data?.data?.orders ??
-          (Array.isArray(response.data?.data) ? response.data.data : []);
-        const matched = orders.find(
-          (o: any) =>
-            String(o._id) === String(orderId) ||
-            String(o.orderNumber) === String(orderId)
-        );
+          resData.orders ??
+          (Array.isArray(resData) ? resData : (Array.isArray(response.data?.data) ? response.data.data : []));
+        const matched = orders.find(isMatch);
         if (matched) return matched;
+      } catch (_) { }
+
+      // 2. Fallback to /order/myorders endpoint
+      try {
+        const response = await api.get('/order/myorders');
+        const resData = response.data?.data ?? response.data ?? {};
+        const orders: any[] =
+          resData.orders ??
+          (Array.isArray(resData) ? resData : (Array.isArray(response.data?.data) ? response.data.data : []));
+        const matched = orders.find(isMatch);
+        if (matched) return matched;
+      } catch (_) { }
+
+      // 3. Fallback to direct lookup endpoints (/orders/:id or /payment/:id)
+      try {
+        const response = await api.get(`/orders/${targetId}`);
+        const ord = response.data?.data?.order ?? response.data?.order ?? response.data?.data;
+        if (ord && (ord._id || ord.items)) return ord;
+      } catch (_) { }
+
+      try {
+        const response = await api.get(`/payment/${targetId}`);
+        const ord = response.data?.data?.order ?? response.data?.order ?? response.data?.data;
+        if (ord && (ord._id || ord.items)) return ord;
+      } catch (_) { }
+
+      // 4. Track via API endpoint: GET /api/order/track/{orderId}
+      try {
+        const response = await api.get(`/order/track/${targetId}`);
+        const orderData = response.data?.data?.order ?? response.data?.order ?? response.data?.data ?? response.data;
+        if (orderData && (orderData._id || orderData.orderNumber || orderData.items)) return orderData;
+        if (orderData && (orderData.orderNumber || orderData.currentStatus)) {
+          return {
+            _id: targetId,
+            orderNumber: orderData.orderNumber || targetId,
+            orderStatus: orderData.currentStatus || 'CONFIRMED',
+            paymentStatus: 'PAID',
+            createdAt: orderData.timeline?.[0]?.timestamp || new Date().toISOString(),
+            items: orderData.items || [],
+            shippingAddress: orderData.shippingAddress || {},
+            total: orderData.total || 0,
+            trackingDetails: orderData,
+          };
+        }
       } catch (_) { }
 
       return null;

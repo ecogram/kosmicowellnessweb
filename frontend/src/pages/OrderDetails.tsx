@@ -123,8 +123,28 @@ export const OrderDetails = () => {
     });
   };
 
-  if (isLoading) return <div className="py-32 text-center">Loading order...</div>;
-  if (isError || !order) return <div className="py-32 text-center text-error">Order not found.</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-12 h-12 border-3 border-emerald-600 border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-sm font-medium text-neutral-600">Loading order details...</p>
+      </div>
+    );
+  }
+
+  if (isError || !order) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-6 text-center">
+        <p className="text-lg font-semibold text-neutral-800 mb-2">Order Not Found</p>
+        <p className="text-sm text-neutral-500 mb-6 max-w-md">We couldn't retrieve this order's details. Please go back to your orders list or refresh.</p>
+        <Link to="/orders">
+          <Button variant="outline" size="sm" className="border-emerald-600 text-emerald-800 hover:bg-emerald-50">
+            Back to My Orders
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   const handleCancel = () => {
     if (confirm('Are you sure you want to cancel this order?')) {
@@ -147,30 +167,39 @@ export const OrderDetails = () => {
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-primary mb-2 break-all">
               Order #{order.orderNumber || (order._id ? (order._id.startsWith('ord_') ? order._id : order._id) : (order.shiprocketOrderId || 'Order'))}
             </h1>
-            <p className="text-text-muted mb-8">Placed on {new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+            <p className="text-text-muted mb-8">Placed on {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent'}</p>
 
             <div className="bg-surface rounded-2xl border border-border p-6 mb-8">
               <h2 className="font-bold text-lg mb-6">Items</h2>
               <ul className="divide-y divide-border">
-                {(order.items || []).map((item: any, idx: number) => (
-                  <li key={item._id || idx} className="py-4 flex gap-4 items-center">
-                    <div className="w-16 h-16 bg-background rounded border border-border p-1 flex-shrink-0">
-                      <img
-                        src={item.image || (item.product && item.product.images && item.product.images[0]) || '/assets/products/product-box.jpg'}
-                        alt={item.name || item.title || 'Product'}
-                        className="w-full h-full object-contain mix-blend-multiply"
-                      />
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-medium">{item.name || item.title || 'Sweet Monk (250ml)'}</div>
-                      {item.variant && <div className="text-sm text-text-muted mt-1">Size: {item.variant}</div>}
-                      <div className="text-sm text-text-muted">Qty: {item.quantity || item.qty || 1}</div>
-                    </div>
-                    <div className="font-medium">
-                      {formatINR((item.priceSnapshot || item.price || 0) * (item.quantity || item.qty || 1))}
-                    </div>
-                  </li>
-                ))}
+                {(order.items || []).map((item: any, idx: number) => {
+                  const itemImg =
+                    item.image ||
+                    (typeof item.product?.images?.[0] === 'string'
+                      ? item.product.images[0]
+                      : item.product?.images?.[0]?.url) ||
+                    '/assets/products/product-box.jpg';
+
+                  return (
+                    <li key={item._id || idx} className="py-4 flex gap-4 items-center">
+                      <div className="w-16 h-16 bg-background rounded border border-border p-1 flex-shrink-0">
+                        <img
+                          src={itemImg}
+                          alt={item.name || item.title || 'Product'}
+                          className="w-full h-full object-contain mix-blend-multiply"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium">{item.name || item.title || 'Sweet Monk (250ml)'}</div>
+                        {item.variant && <div className="text-sm text-text-muted mt-1">Size: {item.variant}</div>}
+                        <div className="text-sm text-text-muted">Qty: {item.quantity || item.qty || 1}</div>
+                      </div>
+                      <div className="font-medium">
+                        {formatINR((item.priceSnapshot || item.price || 0) * (item.quantity || item.qty || 1))}
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
 
