@@ -56,7 +56,7 @@ export function Footer() {
               </li>
               {categories?.map((cat: any) => (
                 <li key={cat._id}>
-                  <Link to={`/shop?category=${cat.slug}`} className="hover:text-white transition-colors">
+                  <Link to={`/shop?category=${cat._id || cat.slug || cat.name}`} className="hover:text-white transition-colors">
                     {cat.name}
                   </Link>
                 </li>

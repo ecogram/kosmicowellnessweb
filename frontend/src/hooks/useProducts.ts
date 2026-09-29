@@ -47,12 +47,6 @@ export const useProducts = (params: FetchProductsParams) => {
         );
       }
 
-      // Filter: strictly show Monk Fruit / Sweet Monk products
-      products = products.filter((p: any) => {
-        const str = (p.name || p.title || p.slug || '').toLowerCase();
-        return str.includes('sweet monk') || str.includes('monk') || str.includes('sweetener');
-      });
-
       // Normalize images
       products = products.map((p: any) => ({
         ...p,
@@ -141,6 +135,7 @@ export const useCategories = () => {
         let categories = (Array.isArray(data) ? data : (data?.data?.categories ?? data?.data ?? [])) as any[];
         return categories.map(c => ({
           ...c,
+          slug: c.slug || c._id || c.name?.toLowerCase().replace(/\s+/g, '-'),
           image: normalizeImageUrl(c.image),
         }));
       } catch {

@@ -7,16 +7,26 @@ import { X } from 'lucide-react';
 
 export const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { data: categoriesData } = useCategories();
   
   const page = Number(searchParams.get('page')) || 1;
   const search = searchParams.get('search') || '';
-  const category = searchParams.get('category') || '';
+  const rawCategory = searchParams.get('category') || '';
+  const cleanCategoryParam = (rawCategory === 'undefined' || rawCategory === 'null') ? '' : rawCategory;
+
+  // Resolve matching category ID from categoriesData (matches _id, slug, or name)
+  const matchedCategory = categoriesData?.find((c: any) =>
+    c._id === cleanCategoryParam ||
+    c.slug === cleanCategoryParam ||
+    c.name?.toLowerCase() === cleanCategoryParam.toLowerCase()
+  );
+  const category = matchedCategory ? matchedCategory._id : cleanCategoryParam;
+
   const sort = searchParams.get('sort') || '-createdAt';
 
   const hasActiveFilters = Boolean(search || category || (sort && sort !== '-createdAt'));
   
   const { data, isLoading, isError } = useProducts({ page, limit: 12, search, category, sortBy: sort });
-  const { data: categoriesData } = useCategories();
 
   const handlePageChange = (newPage: number) => {
     setSearchParams((prev) => {

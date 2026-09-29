@@ -107,8 +107,21 @@ export function ProductCard({ product }: ProductCardProps) {
     navigate('/checkout');
   };
 
+  const productUrl = `/products/${product.slug || product.id || (product as any)._id}`;
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('a')) {
+      return;
+    }
+    navigate(productUrl);
+  };
+
   return (
-    <div className="group relative bg-white border border-emerald-950/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-emerald-950/10 hover:border-emerald-600/40 transition-all duration-300 flex flex-col h-full">
+    <div 
+      onClick={handleCardClick}
+      className="group relative bg-white border border-emerald-950/10 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl hover:shadow-emerald-950/10 hover:border-emerald-600/40 transition-all duration-300 flex flex-col h-full cursor-pointer"
+    >
       {/* Light sweep ambient glow effect on hover */}
       <div className="absolute inset-0 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-500 bg-gradient-to-tr from-emerald-500/5 via-transparent to-amber-500/5 z-0" />
 
@@ -130,7 +143,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
       {/* Product Image Stage with 3D Pop & Hover Scale */}
       <Link
-        to={`/products/${product.slug}`}
+        to={productUrl}
         className="block relative aspect-square bg-gradient-to-b from-neutral-50/80 to-emerald-50/30 overflow-hidden p-6 z-10"
       >
         {/* Original Main Image */}
@@ -169,7 +182,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {/* Product Title */}
         <Link
-          to={`/products/${product.slug}`}
+          to={productUrl}
           className="block group/title"
         >
           <h3 className="font-serif font-bold text-base md:text-lg mb-2 line-clamp-2 text-neutral-800 group-hover/title:text-emerald-800 transition-colors duration-200">
