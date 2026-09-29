@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Container } from '../../components/ui/Container';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface UsageItem {
   id: string;
@@ -105,8 +105,45 @@ const USAGE_ITEMS: UsageItem[] = [
 export function HowItWorks() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [activeCycleIndex, setActiveCycleIndex] = useState<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-cycle through cards on desktop (>= 768px) when user is not hovering
+  const scrollToIndex = (index: number) => {
+    setActiveCycleIndex(index);
+    if (containerRef.current) {
+      const container = containerRef.current;
+      const card = container.children[index] as HTMLElement;
+      if (card) {
+        container.scrollTo({
+          left: card.offsetLeft,
+          behavior: 'smooth'
+        });
+      }
+    }
+  };
+
+  const handlePrev = () => {
+    const prev = (activeCycleIndex - 1 + USAGE_ITEMS.length) % USAGE_ITEMS.length;
+    scrollToIndex(prev);
+  };
+
+  const handleNext = () => {
+    const next = (activeCycleIndex + 1) % USAGE_ITEMS.length;
+    scrollToIndex(next);
+  };
+
+  // Sync active card with finger swipe/scroll on mobile
+  const handleScroll = () => {
+    if (!containerRef.current || window.innerWidth >= 768) return;
+    const container = containerRef.current;
+    const scrollLeft = container.scrollLeft;
+    const cardWidth = container.clientWidth || 1;
+    const newIdx = Math.round(scrollLeft / cardWidth);
+    if (newIdx >= 0 && newIdx < USAGE_ITEMS.length && newIdx !== activeCycleIndex) {
+      setActiveCycleIndex(newIdx);
+    }
+  };
+
+  // Pure manual scrolling on mobile — auto-cycle highlight only on desktop (>= 768px) grid
   useEffect(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 768) return;
     if (hoveredIndex !== null) return;
@@ -196,8 +233,31 @@ export function HowItWorks() {
               all your daily routines.
             </p>
 
-            {/* 4 Usage Cards with Animated Color Transitions */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {/* Mobile Navigation Arrows (Visible only on mobile) */}
+            <div className="md:hidden flex justify-end items-center mb-3 gap-2">
+              <button
+                onClick={handlePrev}
+                className="p-1.5 rounded-full bg-white border border-border shadow-xs text-text-main hover:bg-neutral-100 active:scale-95 transition-all cursor-pointer"
+                aria-label="Previous card"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={handleNext}
+                className="p-1.5 rounded-full bg-white border border-border shadow-xs text-text-main hover:bg-neutral-100 active:scale-95 transition-all cursor-pointer"
+                aria-label="Next card"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* 4 Usage Cards with Animated Color Transitions & Mobile Manual Horizontal Carousel */}
+            <div
+              ref={containerRef}
+              onScroll={handleScroll}
+              className="relative flex md:grid md:grid-cols-2 gap-4 sm:gap-5 overflow-x-auto md:overflow-visible snap-x snap-mandatory scroll-smooth pb-4 md:pb-0 scrollbar-none"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
               {USAGE_ITEMS.map((item, index) => {
                 const isActive = activeIndex === index;
 
@@ -207,10 +267,10 @@ export function HowItWorks() {
                     onMouseEnter={() => setHoveredIndex(index)}
                     onMouseLeave={() => setHoveredIndex(null)}
                     onClick={() => {
-                      setActiveCycleIndex(index);
+                      scrollToIndex(index);
                       setHoveredIndex(index);
                     }}
-                    className={`group relative p-6 rounded-2xl cursor-pointer transition-all duration-500 transform overflow-hidden ${
+                    className={`w-full md:w-auto shrink-0 snap-start group relative p-6 rounded-2xl cursor-pointer transition-all duration-500 transform overflow-hidden select-none flex flex-col justify-between ${
                       isActive
                         ? `bg-gradient-to-br ${item.theme.gradient} ${item.theme.border} ${item.theme.shadow} -translate-y-2 scale-[1.02] border-2`
                         : 'bg-surface/90 hover:bg-surface border border-border shadow-xs hover:-translate-y-1 hover:border-neutral-300'
@@ -256,20 +316,38 @@ export function HowItWorks() {
                     </h4>
 
                     {/* Description */}
-                    <p className="text-sm text-neutral-600 leading-relaxed">
+                    <p className="text-sm text-neutral-600 leading-relaxed mb-4">
                       {item.description}
                     </p>
 
                     {/* Live active glow pulse on the active card */}
-                    {isActive && (
-                      <div className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold text-neutral-600">
+                    {isActive ? (
+                      <div className="mt-auto flex items-center gap-1.5 text-[11px] font-semibold text-neutral-600">
                         <span className={`w-1.5 h-1.5 rounded-full ${item.theme.dotColor} animate-ping`} />
                         <span className="text-neutral-500">Perfect 1:1 measure</span>
                       </div>
+                    ) : (
+                      <div className="mt-auto h-4" />
                     )}
                   </div>
                 );
               })}
+            </div>
+
+            {/* Mobile Dot Indicators (Hidden on Desktop) */}
+            <div className="md:hidden flex justify-center items-center gap-2 mt-4">
+              {USAGE_ITEMS.map((item, dotIdx) => (
+                <button
+                  key={dotIdx}
+                  onClick={() => scrollToIndex(dotIdx)}
+                  className={`transition-all duration-300 rounded-full cursor-pointer ${
+                    activeIndex === dotIdx
+                      ? `w-6 h-2 ${item.theme.dotColor}`
+                      : 'w-2 h-2 bg-neutral-300 hover:bg-neutral-400'
+                  }`}
+                  aria-label={`Go to slide ${dotIdx + 1}`}
+                />
+              ))}
             </div>
 
             {/* Certified Trust Banner */}

@@ -102,9 +102,14 @@ export const SmartCareSuite: React.FC = () => {
   const scrollToIndex = (index: number) => {
     setActiveCycleIndex(index);
     if (containerRef.current) {
-      const card = containerRef.current.children[index] as HTMLElement;
+      const container = containerRef.current;
+      const card = container.children[index] as HTMLElement;
       if (card) {
-        card.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        const targetScrollLeft = card.offsetLeft - (container.clientWidth - card.clientWidth) / 2;
+        container.scrollTo({
+          left: Math.max(0, targetScrollLeft),
+          behavior: 'smooth'
+        });
       }
     }
   };
@@ -203,7 +208,7 @@ export const SmartCareSuite: React.FC = () => {
         <div
           ref={containerRef}
           onScroll={handleScroll}
-          className="flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 overflow-x-auto md:overflow-visible snap-x snap-mandatory scroll-smooth pb-4 md:pb-0 scrollbar-none"
+          className="relative flex md:grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 overflow-x-auto md:overflow-visible snap-x snap-mandatory scroll-smooth pb-4 md:pb-0 scrollbar-none"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {careFeatures.map((item, index) => {
