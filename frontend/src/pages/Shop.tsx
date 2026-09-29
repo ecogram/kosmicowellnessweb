@@ -3,6 +3,7 @@ import { Container } from '../components/ui/Container';
 import { ProductCard } from '../components/ui/ProductCard';
 import { useProducts, useCategories } from '../hooks/useProducts';
 import { Button } from '../components/ui/Button';
+import { X } from 'lucide-react';
 
 export const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -11,6 +12,8 @@ export const Shop = () => {
   const search = searchParams.get('search') || '';
   const category = searchParams.get('category') || '';
   const sort = searchParams.get('sort') || '-createdAt';
+
+  const hasActiveFilters = Boolean(search || category || (sort && sort !== '-createdAt'));
   
   const { data, isLoading, isError } = useProducts({ page, limit: 12, search, category, sortBy: sort });
   const { data: categoriesData } = useCategories();
@@ -68,6 +71,18 @@ export const Shop = () => {
               <option value="-price">Price: High to Low</option>
               <option value="-rating">Top Rated</option>
             </select>
+
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={() => setSearchParams(new URLSearchParams())}
+                className="px-4 py-2 border border-primary text-primary hover:bg-primary hover:text-white rounded-md text-sm font-semibold transition-all whitespace-nowrap cursor-pointer w-full sm:w-auto flex items-center justify-center gap-1.5 shadow-xs"
+                title="Clear all filters"
+              >
+                <X className="w-4 h-4" />
+                <span>Clear Filters</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -92,16 +107,13 @@ export const Shop = () => {
         {!isLoading && !isError && data?.products?.length === 0 && (
           <div className="text-center py-20">
             <h2 className="text-2xl font-serif text-primary mb-2">No products found</h2>
-            <p className="text-text-muted">Try adjusting your search or filters.</p>
-            {(search || category) && (
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={() => setSearchParams(new URLSearchParams())}
-              >
-                Clear Filters
-              </Button>
-            )}
+            <p className="text-text-muted mb-6">Try adjusting your search or filters.</p>
+            <Button 
+              className="px-8 shadow-sm"
+              onClick={() => setSearchParams(new URLSearchParams())}
+            >
+              Shop Now
+            </Button>
           </div>
         )}
 
