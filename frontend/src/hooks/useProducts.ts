@@ -47,6 +47,12 @@ export const useProducts = (params: FetchProductsParams) => {
         );
       }
 
+      // Filter: only show Sweet Monk product for now, hide others
+      products = products.filter((p: any) => {
+        const str = (p.name || p.title || p.slug || '').toLowerCase();
+        return str.includes('sweet monk') || str.includes('monk fruit');
+      });
+
       // Normalize images
       products = products.map((p: any) => ({
         ...p,
