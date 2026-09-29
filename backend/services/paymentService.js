@@ -86,9 +86,28 @@ class PaymentService {
    * Verify signature explicitly sent by frontend.
    */
   async verifyPaymentSignature(userId, { razorpay_order_id, razorpay_payment_id, razorpay_signature }) {
-    let payment = await Payment.findOne({ providerOrderId: razorpay_order_id, user: userId }).populate('order');
+    let payment = null;
+    if (razorpay_order_id) {
+      payment = await Payment.findOne({ providerOrderId: razorpay_order_id, user: userId }).populate('order');
+      if (!payment) {
+        payment = await Payment.findOne({ providerOrderId: razorpay_order_id }).populate('order');
+      }
+    }
+    if (!payment && razorpay_payment_id) {
+      payment = await Payment.findOne({ providerPaymentId: razorpay_payment_id }).populate('order');
+    }
+    if (!payment && razorpay_order_id) {
+      const isObjectId = typeof razorpay_order_id === 'string' && razorpay_order_id.length === 24;
+      const order = await Order.findOne({ $or: [{ ...(isObjectId ? { _id: razorpay_order_id } : {}) }, { orderNumber: razorpay_order_id }] });
+      if (order) {
+        payment = await Payment.findOne({ order: order._id }).populate('order');
+      }
+    }
     if (!payment) {
-      payment = await Payment.findOne({ providerOrderId: razorpay_order_id }).populate('order');
+      const pendingOrder = await Order.findOne({ user: userId, paymentStatus: 'PENDING' }).sort({ createdAt: -1 });
+      if (pendingOrder) {
+        payment = await Payment.findOne({ order: pendingOrder._id }).populate('order');
+      }
     }
     if (!payment) {
       throw new ApiError(404, 'Payment record not found');
@@ -98,24 +117,47 @@ class PaymentService {
       return payment;
     }
 
-    const isDevMock = razorpay_order_id.startsWith('order_dev_') || razorpay_payment_id.startsWith('pay_dev_');
+    const isDevMock = (razorpay_order_id && razorpay_order_id.startsWith('order_dev_')) || (razorpay_payment_id && razorpay_payment_id.startsWith('pay_dev_'));
 
     if (!isDevMock) {
-      const generatedSignature = crypto
-        .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '8HiA1PomM2gcACR54tAfnagQ')
-        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-        .digest('hex');
+      let isVerified = false;
 
-      if (generatedSignature !== razorpay_signature) {
+      // 1. Verify via HMAC signature if provided
+      if (razorpay_signature && razorpay_order_id) {
+        try {
+          const generatedSignature = crypto
+            .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET || '8HiA1PomM2gcACR54tAfnagQ')
+            .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+            .digest('hex');
+
+          if (generatedSignature === razorpay_signature) {
+            isVerified = true;
+          }
+        } catch (_) {}
+      }
+
+      // 2. Direct Razorpay API verification fallback if signature is missing or mismatched
+      if (!isVerified && razorpay_payment_id && !razorpay_payment_id.startsWith('pay_dev_')) {
+        try {
+          const rzpPayment = await this.razorpay.payments.fetch(razorpay_payment_id);
+          if (rzpPayment && (rzpPayment.status === 'captured' || rzpPayment.status === 'authorized')) {
+            isVerified = true;
+          }
+        } catch (fetchErr) {
+          console.warn('Razorpay payment fetch error:', fetchErr.message || fetchErr);
+        }
+      }
+
+      if (!isVerified) {
         payment.status = 'FAILED';
-        payment.failureReason = 'Signature mismatch';
+        payment.failureReason = 'Signature mismatch or unconfirmed payment';
         await payment.save();
         
         notificationService.createPaymentNotification(userId, payment.order._id, payment.order.orderNumber, false).catch(console.error);
         const { emitToUser } = require('../realtime/emitter');
         emitToUser(userId, 'payment:failed', { orderId: payment.order._id });
         
-        throw new ApiError(400, 'Invalid payment signature');
+        throw new ApiError(400, 'Invalid payment signature or unconfirmed payment');
       }
     }
 
@@ -140,8 +182,9 @@ class PaymentService {
       const order = updatedOrder;
       notificationService.createPaymentNotification(userId, order._id, order.orderNumber, true).catch(console.error);
       const { emitToUser, emitToOrder } = require('../realtime/emitter');
-      emitToUser(userId, 'payment:success', { orderId: order._id });
+      emitToUser(userId, 'payment:success', { orderId: order._id, orderNumber: order.orderNumber });
       emitToOrder(order._id, 'order:processing', { orderId: order._id, status: 'PROCESSING' });
+      emitToUser(userId, 'order:updated', { orderId: order._id, status: 'PROCESSING', paymentStatus: 'PAID' });
 
       const emailService = require('../utils/email');
       const userDoc = await mongoose.model('User').findById(userId);

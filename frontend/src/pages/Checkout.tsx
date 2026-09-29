@@ -374,11 +374,12 @@ export const Checkout: React.FC = () => {
     );
 
     const rzpOrderId =
-      order.orderId &&
-        order.orderId.startsWith('order_') &&
-        !order.orderId.startsWith('order_dev_')
-        ? order.orderId
-        : undefined;
+      order.orderId ||
+      order.providerOrderId ||
+      order.razorpayOrderId ||
+      order.id ||
+      (order.data && (order.data.orderId || order.data.providerOrderId)) ||
+      undefined;
 
     const options: any = {
       key: razorpayKey,
@@ -386,6 +387,7 @@ export const Checkout: React.FC = () => {
       currency: order.currency || 'INR',
       name: 'Kosmico Wellness',
       description: `Order ${order.orderNumber || ''}`,
+      order_id: rzpOrderId,
       prefill: {
         name: selectedAddress?.fullName || user?.name || 'Customer',
         email: user?.email || '',
@@ -431,7 +433,26 @@ export const Checkout: React.FC = () => {
       },
       handler: async function (response: any) {
         setIsPaymentProcessing(true);
-        if (!response?.razorpay_payment_id || !response?.razorpay_signature) {
+        const paymentId =
+          response?.razorpay_payment_id ||
+          response?.razorpayPaymentId ||
+          response?.payment_id ||
+          response?.paymentId;
+        const respOrderId =
+          response?.razorpay_order_id ||
+          response?.razorpayOrderId ||
+          response?.order_id ||
+          rzpOrderId ||
+          order?.orderId ||
+          order?.providerOrderId ||
+          '';
+        const signature =
+          response?.razorpay_signature ||
+          response?.razorpaySignature ||
+          response?.signature ||
+          '';
+
+        if (!paymentId) {
           setIsPaymentProcessing(false);
           toast.error('Payment verification failed: Incomplete payment response. Order was not placed.');
           return;
@@ -439,9 +460,9 @@ export const Checkout: React.FC = () => {
 
         try {
           await verifyPaymentMutation.mutateAsync({
-            razorpay_order_id: response.razorpay_order_id || rzpOrderId || '',
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
+            razorpay_order_id: respOrderId,
+            razorpay_payment_id: paymentId,
+            razorpay_signature: signature,
           });
 
           // ONLY after successful backend verification:

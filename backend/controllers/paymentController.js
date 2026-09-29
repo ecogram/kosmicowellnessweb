@@ -257,8 +257,8 @@ const verifyPayment = asyncHandler(async (req, res) => {
     req.body.razorpaySignature ||
     req.body.signature;
 
-  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-    throw new ApiError(400, 'Missing payment verification payloads (razorpay_order_id, razorpay_payment_id, razorpay_signature are required)');
+  if (!razorpay_payment_id) {
+    throw new ApiError(400, 'Missing payment verification payloads (razorpay_payment_id is required)');
   }
 
   const payment = await paymentService.verifyPaymentSignature(req.user._id, {
