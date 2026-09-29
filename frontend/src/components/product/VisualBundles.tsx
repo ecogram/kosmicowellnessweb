@@ -10,46 +10,53 @@ export interface BundleOption {
   isPopular?: boolean;
 }
 
+interface ProductVariant {
+  _id?: string;
+  size?: string;
+  price?: number;
+  stock?: number;
+}
+
 interface VisualBundlesProps {
   basePrice?: number;
+  variants?: ProductVariant[];
   selectedBundleId: string;
   onSelectBundle: (bundle: BundleOption) => void;
 }
 
-export function VisualBundles({ basePrice = 0, selectedBundleId, onSelectBundle }: VisualBundlesProps) {
-  const singlePrice = basePrice;
-  // const twinPrice = 750; // (Uncomment when re-enabling Twin Pack)
-  // const familyPrice = 999; // (Uncomment when re-enabling Family Combo Pack)
+export function VisualBundles({ basePrice = 0, variants, selectedBundleId, onSelectBundle }: VisualBundlesProps) {
+  const singlePrice = basePrice > 0 ? basePrice : (variants?.[0]?.price || 389);
 
-  const bundles: BundleOption[] = [
-    {
-      id: 'single',
-      name: 'Single Pack (10ml Bottle)',
-      quantity: 1,
-      price: singlePrice,
-      unitPrice: `₹${singlePrice} / pack`
-    },
-    /* TEMPORARILY COMMENTED OUT: Twin & Family Combo Packs (Uncomment to re-enable)
-    {
-      id: 'twin',
-      name: 'Pack of 2 (20ml Total)',
-      quantity: 2,
-      price: 750,
-      badge: 'TWIN PACK',
-      unitPrice: '₹375 / pack',
-      isPopular: true
-    },
-    
-    {
-      id: 'family',
-      name: 'Family 3-Pack (30ml Total)',
-      quantity: 3,
-      price: 999,
-      badge: 'FAMILY PACK',
-      unitPrice: `₹${Math.round(999 / 3)} / pack`
-    }
-    */
-  ];
+  // Dynamically map variants from API if present, otherwise single pack
+  const bundles: BundleOption[] = variants && variants.length > 0
+    ? variants.map((v, idx) => {
+        const isSingle = idx === 0;
+        // If single pack and product has a specific basePrice (e.g. ₹1 for test), use basePrice; otherwise variant price
+        const price = (isSingle && basePrice > 0) ? basePrice : (v.price || basePrice);
+        const qty = idx + 1;
+        const name = v.size || (isSingle ? 'Single Pack (10ml Bottle)' : `Pack of ${qty}`);
+        const badge = idx === 1 ? 'TWIN PACK' : idx === 2 ? 'FAMILY PACK' : undefined;
+        const unitPrice = qty > 1 ? `₹${Math.round(price / qty)} / bottle` : `₹${price} / pack`;
+
+        return {
+          id: v._id || `variant-${idx}`,
+          name,
+          quantity: qty,
+          price,
+          badge,
+          unitPrice,
+          isPopular: idx === 1,
+        };
+      })
+    : [
+        {
+          id: 'single',
+          name: 'Single Pack (10ml Bottle)',
+          quantity: 1,
+          price: singlePrice,
+          unitPrice: `₹${singlePrice} / pack`,
+        },
+      ];
 
   return (
     <div className="space-y-3 my-5">

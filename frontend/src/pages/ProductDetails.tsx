@@ -276,6 +276,7 @@ export function ProductDetails() {
             {/* Visual Pack Bundles Component */}
             <VisualBundles
               basePrice={product.price}
+              variants={product.variants}
               selectedBundleId={selectedBundleId}
               onSelectBundle={(bundle) => {
                 setSelectedBundleId(bundle.id);

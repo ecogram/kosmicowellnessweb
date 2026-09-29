@@ -138,8 +138,8 @@ export const Orders: React.FC = () => {
 
                     <div className="col-span-2 w-full md:text-right">
                       <Link to={`/orders/${order._id || order.orderNumber}`}>
-                        <Button variant="outline" size="sm" className="w-full md:w-auto text-xs font-bold rounded-xl border-emerald-300 hover:bg-emerald-50 text-emerald-800 flex items-center justify-center gap-1">
-                          <span>View Details</span>
+                        <Button size="sm" className="w-full md:w-auto text-xs font-bold rounded-xl bg-[#064e3b] hover:bg-emerald-800 text-white flex items-center justify-center gap-1.5 shadow-xs">
+                          <span>Track Order</span>
                           <ChevronRight className="w-3.5 h-3.5" />
                         </Button>
                       </Link>

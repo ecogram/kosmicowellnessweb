@@ -170,6 +170,27 @@ export const useOrder = (orderId: string) => {
   });
 };
 
+// GET /api/order/track/{orderId}
+export const useOrderTracking = (orderId: string) => {
+  return useQuery({
+    queryKey: ['order-track', orderId],
+    queryFn: async () => {
+      if (!orderId) return null;
+      const cleanId = String(orderId).replace(/^#/, '').trim();
+      try {
+        const response = await api.get(`/order/track/${cleanId}`);
+        const data = response.data?.data ?? response.data;
+        return data;
+      } catch (_) {
+        return null;
+      }
+    },
+    enabled: !!orderId,
+    staleTime: 15 * 1000,
+    retry: 1,
+  });
+};
+
 // POST /api/payment/cod — place COD order
 export const useCreateOrder = () => {
   const queryClient = useQueryClient();
