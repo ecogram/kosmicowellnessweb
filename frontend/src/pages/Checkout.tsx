@@ -392,6 +392,35 @@ export const Checkout: React.FC = () => {
       theme: {
         color: '#0a7a40',
       },
+      config: {
+        display: {
+          blocks: {
+            upi: {
+              name: 'Pay via UPI / QR Code',
+              instruments: [
+                {
+                  method: 'upi',
+                  flows: ['intent', 'qr'],
+                },
+              ],
+            },
+            other: {
+              name: 'Cards, Netbanking & Wallets',
+              instruments: [
+                { method: 'card' },
+                { method: 'netbanking' },
+                { method: 'wallet' },
+              ],
+            },
+          },
+          sequence: ['block.upi', 'block.other'],
+          preferences: {
+            show_default_blocks: true,
+          },
+        },
+      },
+      retry: { enabled: true, max_count: 3 },
+      send_sms_hash: true,
       modal: {
         ondismiss: function () {
           setIsPaymentProcessing(false);
@@ -489,6 +518,35 @@ export const Checkout: React.FC = () => {
           contact: selectedAddress?.phoneNumber || (user as any)?.phoneNumber || (user as any)?.phone || '',
         },
         theme: { color: '#0a7a40' },
+        config: {
+          display: {
+            blocks: {
+              upi: {
+                name: 'Pay via UPI / QR Code',
+                instruments: [
+                  {
+                    method: 'upi',
+                    flows: ['intent', 'qr'],
+                  },
+                ],
+              },
+              other: {
+                name: 'Cards, Netbanking & Wallets',
+                instruments: [
+                  { method: 'card' },
+                  { method: 'netbanking' },
+                  { method: 'wallet' },
+                ],
+              },
+            },
+            sequence: ['block.upi', 'block.other'],
+            preferences: {
+              show_default_blocks: true,
+            },
+          },
+        },
+        retry: { enabled: true, max_count: 3 },
+        send_sms_hash: true,
         modal: {
           ondismiss: async function () {
             setIsPaymentProcessing(false);
