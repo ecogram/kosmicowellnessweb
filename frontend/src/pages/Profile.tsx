@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { useAuthStore } from '../store/useAuthStore';
@@ -6,14 +6,12 @@ import { useWishlist } from '../hooks/useWishlist';
 import { useOrders } from '../hooks/useOrders';
 import { useCoupons } from '../hooks/useCoupons';
 import { useProfile, useUpdateProfile, useRemoveProfilePicture, dataUrlToFile } from '../hooks/useProfile';
-import { useSavedPaymentMethods, useSavePaymentMethod, useUpdatePaymentMethod, useDeletePaymentMethod } from '../hooks/usePayments';
-import { useSocket } from '../hooks/useSocket';
 import { normalizeImageUrl } from '../utils/imageUrl';
 import {
-  Package, Heart, Ticket, MapPin, CreditCard, RotateCcw,
+  Package, Heart, Ticket, MapPin, RotateCcw,
   Globe, Moon, HelpCircle, Info, LogOut, Edit3, X, Phone, MessageSquare, Mail, Building,
   Plus, Trash2, Home, Briefcase, CheckCircle2, Camera, RefreshCw, Check, AlertCircle,
-  Eye, Image as ImageIcon, User as UserIcon, Loader2, MoreHorizontal, QrCode, ShieldCheck, Pencil, ChevronLeft
+  Eye, Image as ImageIcon, User as UserIcon, Loader2
 } from 'lucide-react';
 
 // API docs address fields: addressLabel, fullName, streetAddress, city, pincode, phoneNumber, isDefault
@@ -29,15 +27,6 @@ interface SavedAddress {
   isDefault: boolean;
 }
 
-export interface SavedPaymentMethod {
-  _id?: string;
-  id?: string;
-  type: 'UPI';
-  displayName: string;
-  upiId: string;
-  isDefault: boolean;
-}
-
 export const Profile: React.FC = () => {
   const { user, logout } = useAuthStore();
   const { data: wishlist } = useWishlist();
@@ -45,33 +34,10 @@ export const Profile: React.FC = () => {
   const { data: couponsData } = useCoupons();
   const navigate = useNavigate();
 
-  // Real-time profile & payment method sync (polling + socket events)
+  // Real-time profile sync
   useProfile();
-  const { socket } = useSocket();
-
-  // Payment methods from API
-  const { data: paymentMethodsData, refetch: refetchPaymentMethods, isLoading: isPaymentMethodsLoading } = useSavedPaymentMethods();
-  const savePaymentMethodMutation = useSavePaymentMethod();
-  const updatePaymentMethodMutation = useUpdatePaymentMethod();
-  const deletePaymentMethodMutation = useDeletePaymentMethod();
   const updateProfileMutation = useUpdateProfile();
   const removeProfilePictureMutation = useRemoveProfilePicture();
-
-  useEffect(() => {
-    if (!socket) return;
-    const handleRealtimeSync = () => {
-      refetchPaymentMethods();
-    };
-    socket.on('profile:updated', handleRealtimeSync);
-    socket.on('user:profile_updated', handleRealtimeSync);
-    socket.on('payment_methods:updated', handleRealtimeSync);
-
-    return () => {
-      socket.off('profile:updated', handleRealtimeSync);
-      socket.off('user:profile_updated', handleRealtimeSync);
-      socket.off('payment_methods:updated', handleRealtimeSync);
-    };
-  }, [socket, refetchPaymentMethods]);
 
   const ordersCount = ordersData?.orders ? ordersData.orders.length : (ordersData?.pagination?.total ?? 0);
   const wishlistCount = wishlist?.items?.length || 0;
@@ -81,7 +47,6 @@ export const Profile: React.FC = () => {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
   const [isAddressesOpen, setIsAddressesOpen] = useState(false);
-  const [isPaymentMethodsOpen, setIsPaymentMethodsOpen] = useState(false);
   const [language, setLanguage] = useState<'EN' | 'HI'>('EN');
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -122,135 +87,6 @@ export const Profile: React.FC = () => {
   const [addrFormLabel, setAddrFormLabel] = useState<'Home' | 'Work' | 'Other'>('Home');
   const [addrFormIsDefault, setAddrFormIsDefault] = useState(false);
 
-  // Payment Methods State — loaded from API & merged with user profile methods (UPI only)
-  const paymentMethods: SavedPaymentMethod[] = useMemo(() => {
-    const rawList: any[] = [];
-    if (Array.isArray(paymentMethodsData)) {
-      rawList.push(...paymentMethodsData);
-    } else if (paymentMethodsData && typeof paymentMethodsData === 'object') {
-      const pmObj: any = paymentMethodsData;
-      const arr = pmObj.methods || pmObj.paymentMethods || pmObj.savedPaymentMethods;
-      if (Array.isArray(arr)) rawList.push(...arr);
-    }
-
-    const userMethods = (user as any)?.savedPaymentMethods || (user as any)?.paymentMethods || (user as any)?.savedMethods;
-    if (Array.isArray(userMethods)) {
-      rawList.push(...userMethods);
-    } else if ((user as any)?.upiId) {
-      rawList.push({
-        _id: (user as any).upiId,
-        id: (user as any).upiId,
-        type: 'UPI',
-        displayName: user?.name || 'UPI Account',
-        upiId: (user as any).upiId,
-        isDefault: true,
-      });
-    }
-
-    const seen = new Set<string>();
-    const result: SavedPaymentMethod[] = [];
-    for (const m of rawList) {
-      if (!m) continue;
-      const typeUpper = String(m.type || m.methodType || (m.upiId ? 'UPI' : '')).toUpperCase();
-      const upiId = (m.upiId || m.vpa || m.upi || '').trim();
-      if (typeUpper.includes('BANK')) continue;
-      if (!upiId) continue;
-
-      const displayName = m.displayName || m.title || m.name || m.accountHolder || user?.name || 'UPI Account';
-      const id = String(m._id || m.id || upiId);
-
-      const key = upiId.toLowerCase();
-      if (key && !seen.has(key)) {
-        seen.add(key);
-        result.push({
-          _id: id,
-          id,
-          type: 'UPI',
-          displayName,
-          upiId,
-          isDefault: !!m.isDefault,
-        });
-      }
-    }
-    return result;
-  }, [paymentMethodsData, user]);
-
-  const [isAddingPaymentMethod, setIsAddingPaymentMethod] = useState(false);
-  const [paymentSuccessMsg, setPaymentSuccessMsg] = useState('');
-  const [selectedActionMethod, setSelectedActionMethod] = useState<SavedPaymentMethod | null>(null);
-  const [editingPaymentMethod, setEditingPaymentMethod] = useState<SavedPaymentMethod | null>(null);
-
-  useEffect(() => {
-    if (isPaymentMethodsOpen) {
-      refetchPaymentMethods();
-    }
-  }, [isPaymentMethodsOpen]);
-
-  // UPI Payment form fields
-  const [upiDisplayName, setUpiDisplayName] = useState(fullName);
-  const [upiIdInput, setUpiIdInput] = useState('');
-  const [upiSetDefault, setUpiSetDefault] = useState(true);
-
-  const handleDeletePaymentMethod = async (method: SavedPaymentMethod) => {
-    try {
-      const idToUse = method._id || method.id || method.upiId || '';
-      await deletePaymentMethodMutation.mutateAsync(idToUse);
-
-      const currentUser = useAuthStore.getState().user;
-      if (currentUser) {
-        const remaining = ((currentUser as any).savedPaymentMethods || []).filter(
-          (m: any) =>
-            m._id !== idToUse &&
-            m.id !== idToUse &&
-            (m.upiId || '').toLowerCase() !== (method.upiId || '').toLowerCase()
-        );
-        useAuthStore.getState().updateUser({
-          ...currentUser,
-          savedPaymentMethods: remaining,
-          paymentMethods: remaining,
-          ...(remaining.length === 0 || ((currentUser as any).upiId || '').toLowerCase() === (method.upiId || '').toLowerCase() ? { upiId: '' } : {}),
-        } as any);
-      }
-
-      setPaymentSuccessMsg('Payment method removed successfully');
-      setTimeout(() => setPaymentSuccessMsg(''), 2500);
-      refetchPaymentMethods();
-    } catch (err) {
-      console.warn('Delete payment method error:', err);
-    } finally {
-      setSelectedActionMethod(null);
-    }
-  };
-
-  const handleSetDefaultPaymentMethod = async (method: SavedPaymentMethod) => {
-    try {
-      const idToUse = method._id || method.id || method.upiId || '';
-      await updatePaymentMethodMutation.mutateAsync({
-        methodId: idToUse,
-        payload: {
-          isDefault: true,
-          upiId: method.upiId,
-          displayName: method.displayName,
-        },
-      });
-      setPaymentSuccessMsg('Set as default payment method');
-      setTimeout(() => setPaymentSuccessMsg(''), 2500);
-      refetchPaymentMethods();
-    } catch (err) {
-      console.warn('Set default payment method error:', err);
-    } finally {
-      setSelectedActionMethod(null);
-    }
-  };
-
-  const handleStartEditPaymentMethod = (method: SavedPaymentMethod) => {
-    setEditingPaymentMethod(method);
-    setUpiDisplayName(method.displayName || fullName || user?.name || '');
-    setUpiIdInput(method.upiId || '');
-    setUpiSetDefault(!!method.isDefault);
-    setSelectedActionMethod(null);
-    setIsAddingPaymentMethod(true);
-  };
 
   // Synchronize form state when Zustand store user changes (driven by useProfile polling)
   useEffect(() => {
@@ -869,22 +705,7 @@ export const Profile: React.FC = () => {
               <span className="text-neutral-400 font-bold">&rsaquo;</span>
             </div>
 
-            {/* Payment Methods Trigger */}
-            <div
-              className={`flex items-center justify-between p-3.5 rounded-2xl cursor-pointer transition-colors ${isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'}`}
-              onClick={() => setIsPaymentMethodsOpen(true)}
-            >
-              <div className="flex items-center gap-3">
-                <CreditCard className="w-5 h-5 text-emerald-800" />
-                <div>
-                  <div className="text-sm font-bold">Payment Methods</div>
-                  <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
-                    {paymentMethods.length} saved method{paymentMethods.length === 1 ? '' : 's'} (UPI)
-                  </div>
-                </div>
-              </div>
-              <span className="text-neutral-400 font-bold">&rsaquo;</span>
-            </div>
+
           </div>
         </div>
 
@@ -1331,333 +1152,6 @@ export const Profile: React.FC = () => {
               </form>
             )}
           </div>
-        </div>
-      )}
-
-      {/* MODAL 3: PAYMENT METHODS (APP EXACT MATCH) */}
-      {isPaymentMethodsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs overflow-y-auto">
-          <div className="w-full max-w-md bg-white rounded-3xl p-5 sm:p-6 space-y-5 shadow-2xl border border-neutral-200 my-8 max-h-[92vh] overflow-y-auto">
-            {/* Header: Back arrow & Title matching App */}
-            <div className="flex justify-between items-center border-b pb-3">
-              <button
-                type="button"
-                onClick={() => {
-                  if (isAddingPaymentMethod) {
-                    setIsAddingPaymentMethod(false);
-                    setEditingPaymentMethod(null);
-                  } else {
-                    setIsPaymentMethodsOpen(false);
-                  }
-                }}
-                className="p-1 rounded-full text-neutral-700 hover:text-neutral-900 cursor-pointer -ml-1 transition-colors"
-                title="Back"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <h3 className="font-serif font-bold text-lg text-neutral-900">
-                {isAddingPaymentMethod ? (editingPaymentMethod ? 'Edit Details' : 'Add Payment Method') : 'Payment Methods'}
-              </h3>
-              <button
-                onClick={() => {
-                  setIsPaymentMethodsOpen(false);
-                  setIsAddingPaymentMethod(false);
-                  setEditingPaymentMethod(null);
-                }}
-                className="p-1 rounded-full text-neutral-400 hover:text-neutral-700 cursor-pointer transition-colors"
-                title="Close"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {paymentSuccessMsg && (
-              <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-xl flex items-center gap-2 animate-in fade-in">
-                <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
-                <span>{paymentSuccessMsg}</span>
-              </div>
-            )}
-
-            {!isAddingPaymentMethod ? (
-              <div className="space-y-4">
-                {/* Saved Methods Bar */}
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-sm text-neutral-900">Saved Methods</span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingPaymentMethod(null);
-                      setUpiDisplayName(fullName || user?.name || '');
-                      setUpiIdInput('');
-                      setUpiSetDefault(paymentMethods.length === 0);
-                      setIsAddingPaymentMethod(true);
-                    }}
-                    className="text-xs font-bold text-emerald-800 hover:text-emerald-900 flex items-center gap-0.5 cursor-pointer"
-                  >
-                    <span>+ Add New</span>
-                  </button>
-                </div>
-
-                {/* Cards List */}
-                <div className="space-y-3">
-                  {isPaymentMethodsLoading && paymentMethods.length === 0 ? (
-                    <div className="py-8 flex flex-col items-center justify-center gap-2 text-neutral-400">
-                      <Loader2 className="w-5 h-5 animate-spin text-emerald-700" />
-                      <span className="text-xs">Loading saved payment methods...</span>
-                    </div>
-                  ) : paymentMethods.length === 0 ? (
-                    <div className="text-center py-8 px-4 border border-dashed border-neutral-200 rounded-2xl">
-                      <p className="text-sm font-medium text-neutral-600">No saved payment methods yet.</p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingPaymentMethod(null);
-                          setUpiDisplayName(fullName || user?.name || '');
-                          setUpiIdInput('');
-                          setUpiSetDefault(true);
-                          setIsAddingPaymentMethod(true);
-                        }}
-                        className="mt-3 text-xs font-bold text-emerald-800 hover:underline cursor-pointer"
-                      >
-                        + Add UPI ID
-                      </button>
-                    </div>
-                  ) : (
-                    paymentMethods.map((pm) => (
-                      <div
-                        key={pm._id || pm.id || pm.upiId}
-                        className="relative overflow-hidden bg-[#007b3e] text-white rounded-[24px] p-5 shadow-md transition-all select-none"
-                      >
-                        {/* Background decorative circles matching user's screenshot 1 */}
-                        <div className="absolute -top-10 -right-10 w-44 h-44 rounded-full bg-white/10 pointer-events-none" />
-                        <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-white/5 pointer-events-none" />
-
-                        {/* Top Row: UPI pill badge & Three dots button */}
-                        <div className="relative z-10 flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <span className="bg-white/20 backdrop-blur-xs text-white text-[11px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
-                              <QrCode className="w-3.5 h-3.5" />
-                              <span>UPI</span>
-                            </span>
-                            {pm.isDefault && (
-                              <span className="bg-emerald-950/40 text-emerald-200 border border-emerald-400/30 text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full tracking-wider">
-                                DEFAULT
-                              </span>
-                            )}
-                          </div>
-
-                          {/* Three-dot button opening action bottom sheet */}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedActionMethod(pm);
-                            }}
-                            className="w-9 h-9 rounded-full bg-white/20 hover:bg-white/30 backdrop-blur-xs flex items-center justify-center text-white transition-all cursor-pointer shadow-xs active:scale-95"
-                            title="More options"
-                          >
-                            <MoreHorizontal className="w-5 h-5 text-white" />
-                          </button>
-                        </div>
-
-                        {/* Middle: UPI ID */}
-                        <div className="relative z-10 my-5">
-                          <p className="font-bold text-lg md:text-xl tracking-wide text-white drop-shadow-xs break-all">
-                            {pm.upiId}
-                          </p>
-                        </div>
-
-                        {/* Bottom: Display Name */}
-                        <div className="relative z-10">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-200 block mb-0.5">
-                            DISPLAY NAME
-                          </span>
-                          <p className="font-bold text-sm tracking-wide uppercase text-white drop-shadow-xs">
-                            {pm.displayName || fullName || user?.name || 'UPI USER'}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                {/* Secure Payments Notice matching screenshot 1 */}
-                <div className="bg-[#eef8f2] border border-[#d6ecdf] rounded-2xl p-4 flex items-center gap-3.5 mt-4">
-                  <div className="p-2 bg-[#dcf2e3] rounded-full text-[#007b3e] shrink-0">
-                    <ShieldCheck className="w-5 h-5 text-[#007b3e]" />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-neutral-900">Secure Payments</h4>
-                    <p className="text-[11px] text-neutral-500 mt-0.5">
-                      Your payment details are encrypted and stored securely.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              /* ADD / EDIT UPI METHOD FORM (UPI ONLY) */
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (!upiIdInput.trim()) return;
-                  try {
-                    const cleanDisplayName = (upiDisplayName || fullName || user?.name || 'User').trim().toUpperCase();
-                    const cleanUpiId = upiIdInput.trim();
-
-                    if (editingPaymentMethod) {
-                      const idToUse = editingPaymentMethod._id || editingPaymentMethod.id || editingPaymentMethod.upiId || '';
-                      await updatePaymentMethodMutation.mutateAsync({
-                        methodId: idToUse,
-                        payload: {
-                          upiId: cleanUpiId,
-                          displayName: cleanDisplayName,
-                          isDefault: upiSetDefault,
-                        },
-                      });
-                      setPaymentSuccessMsg('Payment details updated successfully');
-                    } else {
-                      await savePaymentMethodMutation.mutateAsync({
-                        type: 'UPI',
-                        displayName: cleanDisplayName,
-                        upiId: cleanUpiId,
-                        isDefault: upiSetDefault,
-                      });
-                      setPaymentSuccessMsg('New UPI method added successfully');
-                    }
-
-                    setUpiIdInput('');
-                    setEditingPaymentMethod(null);
-                    setIsAddingPaymentMethod(false);
-                    setTimeout(() => setPaymentSuccessMsg(''), 2500);
-                    refetchPaymentMethods();
-                  } catch (err) {
-                    console.warn('Save payment method error:', err);
-                  }
-                }}
-                className="space-y-4"
-              >
-                <div className="space-y-3 pt-1">
-                  <div>
-                    <label className="text-xs font-bold text-neutral-700 block mb-1">Display Name</label>
-                    <input
-                      type="text"
-                      required
-                      value={upiDisplayName}
-                      onChange={(e) => setUpiDisplayName(e.target.value)}
-                      placeholder="e.g. AMIT KUMAR"
-                      className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:outline-none focus:border-emerald-700 uppercase"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-neutral-700 block mb-1">UPI ID</label>
-                    <input
-                      type="text"
-                      required
-                      value={upiIdInput}
-                      onChange={(e) => setUpiIdInput(e.target.value)}
-                      placeholder="e.g. 8004116370@ybl or yourname@okaxis"
-                      className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:outline-none focus:border-emerald-700"
-                    />
-                  </div>
-                  <div className="flex items-start gap-1.5 p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-[11px] text-emerald-800">
-                    <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                    <span>Ensure your UPI ID is correct to avoid payment failures.</span>
-                  </div>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="text-xs font-medium text-neutral-700">Set as Default Method</span>
-                    <input
-                      type="checkbox"
-                      checked={upiSetDefault}
-                      onChange={(e) => setUpiSetDefault(e.target.checked)}
-                      className="w-4 h-4 rounded text-[#007b3e] focus:ring-[#007b3e] cursor-pointer"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsAddingPaymentMethod(false);
-                      setEditingPaymentMethod(null);
-                    }}
-                    className="flex-1 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs rounded-xl cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={savePaymentMethodMutation.isPending || updatePaymentMethodMutation.isPending}
-                    className="flex-2 py-3 bg-[#007b3e] hover:bg-[#006834] text-white font-bold text-xs rounded-xl shadow-md cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5"
-                  >
-                    {savePaymentMethodMutation.isPending || updatePaymentMethodMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>Saving...</span>
-                      </>
-                    ) : (
-                      editingPaymentMethod ? 'Update Details' : 'Save Details'
-                    )}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-
-          {/* ACTION BOTTOM SHEET (EXACT SCREENSHOT 2 MATCH) */}
-          {selectedActionMethod && (
-            <div
-              className="fixed inset-0 z-60 bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-150"
-              onClick={() => setSelectedActionMethod(null)}
-            >
-              <div
-                className="w-full max-w-md bg-[#f7f9f7] rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl border border-neutral-200 space-y-1 animate-in slide-in-from-bottom-5 duration-200"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* 1. Set as Default */}
-                <button
-                  type="button"
-                  onClick={() => handleSetDefaultPaymentMethod(selectedActionMethod)}
-                  disabled={updatePaymentMethodMutation.isPending}
-                  className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl hover:bg-white text-neutral-800 transition-colors text-left cursor-pointer group"
-                >
-                  <CheckCircle2 className="w-5 h-5 text-neutral-800 shrink-0 group-hover:text-emerald-800" />
-                  <span className="text-sm font-semibold text-neutral-800 group-hover:text-neutral-900">
-                    Set as Default
-                  </span>
-                </button>
-
-                {/* 2. Edit Details */}
-                <button
-                  type="button"
-                  onClick={() => handleStartEditPaymentMethod(selectedActionMethod)}
-                  className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl hover:bg-white text-neutral-800 transition-colors text-left cursor-pointer group"
-                >
-                  <Pencil className="w-5 h-5 text-neutral-800 shrink-0 group-hover:text-emerald-800" />
-                  <span className="text-sm font-semibold text-neutral-800 group-hover:text-neutral-900">
-                    Edit Details
-                  </span>
-                </button>
-
-                {/* 3. Remove Method */}
-                <button
-                  type="button"
-                  onClick={() => handleDeletePaymentMethod(selectedActionMethod)}
-                  disabled={deletePaymentMethodMutation.isPending}
-                  className="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-2xl hover:bg-red-50 text-red-500 transition-colors text-left cursor-pointer group"
-                >
-                  {deletePaymentMethodMutation.isPending ? (
-                    <Loader2 className="w-5 h-5 text-red-500 animate-spin shrink-0" />
-                  ) : (
-                    <Trash2 className="w-5 h-5 text-red-500 shrink-0" />
-                  )}
-                  <span className="text-sm font-semibold text-red-500">
-                    Remove Method
-                  </span>
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
