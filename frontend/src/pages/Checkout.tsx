@@ -13,15 +13,13 @@ import {
   ShoppingBag,
   Loader2,
   Pencil,
-  Trash2,
-  Smartphone,
-  Info
+  Trash2
 } from 'lucide-react';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
 import { useCart } from '../hooks/useCart';
 import { useProducts } from '../hooks/useProducts';
-import { useVerifyPayment, useCreateRazorpayOrder, useSavedPaymentMethods, useSavePaymentMethod } from '../hooks/usePayments';
+import { useVerifyPayment, useCreateRazorpayOrder } from '../hooks/usePayments';
 import { useAuthStore } from '../store/useAuthStore';
 import { formatINR } from '../utils/currency';
 
@@ -43,15 +41,6 @@ interface SavedAddress {
   isDefault?: boolean;
 }
 
-export interface SavedPaymentMethod {
-  id: string;
-  _id?: string;
-  type: 'UPI';
-  displayName: string;
-  upiId: string;
-  isDefault: boolean;
-}
-
 export const Checkout: React.FC = () => {
   const navigate = useNavigate();
   const { data: cart, isLoading: isCartLoading } = useCart();
@@ -63,8 +52,6 @@ export const Checkout: React.FC = () => {
 
   const createRazorpayOrderMutation = useCreateRazorpayOrder();
   const verifyPaymentMutation = useVerifyPayment();
-  const { data: savedMethodsData } = useSavedPaymentMethods();
-  const savePaymentMethodMutation = useSavePaymentMethod();
   const { data: dbCoupons } = useCoupons();
   const { user } = useAuthStore();
 
@@ -73,105 +60,6 @@ export const Checkout: React.FC = () => {
   const [isPaymentProcessing, setIsPaymentProcessing] = useState(false);
   const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
   const [createdOrder, setCreatedOrder] = useState<any>(null);
-
-  // Online Payment Method state (UPI strictly for this authenticated user)
-  const [paymentMethods, setPaymentMethods] = useState<SavedPaymentMethod[]>([]);
-
-  useEffect(() => {
-    const rawList: any[] = [];
-    if (Array.isArray(savedMethodsData)) {
-      rawList.push(...savedMethodsData);
-    } else if (savedMethodsData && typeof savedMethodsData === 'object') {
-      const arr = (savedMethodsData as any).methods || (savedMethodsData as any).paymentMethods || (savedMethodsData as any).savedPaymentMethods;
-      if (Array.isArray(arr)) rawList.push(...arr);
-    }
-
-    const userMethods = (user as any)?.savedPaymentMethods || (user as any)?.paymentMethods || (user as any)?.savedMethods || [];
-    if (Array.isArray(userMethods)) {
-      rawList.push(...userMethods);
-    }
-    if ((user as any)?.upiId) {
-      rawList.push({
-        type: 'UPI',
-        displayName: user?.name || 'UPI Account',
-        upiId: (user as any).upiId,
-        isDefault: true,
-      });
-    }
-
-    const seen = new Set<string>();
-    const formatted: SavedPaymentMethod[] = [];
-    for (const m of rawList) {
-      if (!m) continue;
-      const upiId = (m.upiId || m.vpa || m.upi || '').trim();
-      if (!upiId) continue; // Strictly UPI only
-
-      const displayName = m.displayName || m.title || m.name || 'UPI Account';
-      const id = String(m._id || m.id || upiId || `pm-${Date.now()}`);
-
-      const key = upiId.toLowerCase();
-      if (key && !seen.has(key)) {
-        seen.add(key);
-        formatted.push({
-          id,
-          _id: id,
-          type: 'UPI',
-          displayName,
-          upiId,
-          isDefault: !!m.isDefault,
-        });
-      }
-    }
-    setPaymentMethods(formatted);
-  }, [savedMethodsData, user]);
-
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<SavedPaymentMethod | undefined>();
-
-  useEffect(() => {
-    if (paymentMethods.length > 0 && !selectedPaymentMethod) {
-      setSelectedPaymentMethod(paymentMethods.find((m) => m.isDefault) || paymentMethods[0]);
-    }
-  }, [paymentMethods, selectedPaymentMethod]);
-
-  const [isPaymentMethodModalOpen, setIsPaymentMethodModalOpen] = useState(false);
-  const [isAddingNewPaymentMethod, setIsAddingNewPaymentMethod] = useState(false);
-
-  // Form states for Add Payment Method (UPI only)
-  const [upiDisplayName, setUpiDisplayName] = useState(user?.name || '');
-  const [upiIdInput, setUpiIdInput] = useState('');
-  const [upiSetDefault, setUpiSetDefault] = useState(true);
-
-  // Save Payment Method Helper (Persists to backend via API)
-  const handleSavePaymentMethod = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (!upiIdInput.trim()) return;
-      const res = await savePaymentMethodMutation.mutateAsync({
-        type: 'UPI',
-        displayName: (upiDisplayName || user?.name || 'User').toUpperCase(),
-        upiId: upiIdInput.trim(),
-        isDefault: upiSetDefault,
-      });
-      setUpiIdInput('');
-      if (res?.method) {
-        const m = res.method;
-        setSelectedPaymentMethod({
-          id: m._id || m.id,
-          _id: m._id || m.id,
-          type: 'UPI',
-          displayName: m.displayName || user?.name || 'User',
-          upiId: m.upiId,
-          isDefault: !!m.isDefault,
-        });
-      }
-      setIsAddingNewPaymentMethod(false);
-      setIsPaymentMethodModalOpen(false);
-      toast.success('UPI payment method saved successfully');
-    } catch (err: any) {
-      console.warn('Save payment method error:', err);
-      toast.error(err?.response?.data?.message || 'Failed to save payment method');
-    }
-  };
 
   // Addresses state
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
@@ -1013,88 +901,6 @@ export const Checkout: React.FC = () => {
           </div>
         </div>
 
-        {/* 3. Payment Method (When Online) */}
-        {paymentMode === 'ONLINE' && (
-          <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 mb-4 shadow-sm">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-bold text-base text-neutral-900">Payment Method</h2>
-              {paymentMethods.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsAddingNewPaymentMethod(false);
-                    setIsPaymentMethodModalOpen(true);
-                  }}
-                  className="text-[#0a7a40] font-bold text-sm hover:underline cursor-pointer"
-                >
-                  Change
-                </button>
-              )}
-            </div>
-
-            {selectedPaymentMethod ? (
-              <div
-                onClick={() => {
-                  setIsAddingNewPaymentMethod(false);
-                  setIsPaymentMethodModalOpen(true);
-                }}
-                className="p-4 rounded-2xl bg-[#0a7a40] text-white shadow-md cursor-pointer hover:bg-[#086333] transition-all flex items-center justify-between group"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-white/20 text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded backdrop-blur-xs flex items-center gap-1">
-                      <Smartphone className="w-3 h-3" />
-                      UPI
-                    </span>
-                    {selectedPaymentMethod.isDefault && (
-                      <span className="text-[10px] bg-emerald-200 text-emerald-950 font-bold px-1.5 py-0.2 rounded">
-                        DEFAULT
-                      </span>
-                    )}
-                  </div>
-
-                  <p className="font-bold text-base tracking-wide mt-1">
-                    {selectedPaymentMethod.upiId}
-                  </p>
-
-                  <div className="flex items-center gap-1.5 text-xs text-emerald-100 font-medium">
-                    <span className="text-[10px] uppercase font-bold text-emerald-200">DISPLAY NAME:</span>
-                    <span className="font-bold uppercase text-white">
-                      {selectedPaymentMethod.displayName || user?.name || 'User'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-[#0a7a40] shadow-sm shrink-0">
-                  <Check className="w-4 h-4 stroke-[3]" />
-                </div>
-              </div>
-            ) : (
-              <div className="p-4 rounded-2xl bg-[#0a7a40] text-white shadow-md flex items-center justify-between">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="bg-white/20 text-white text-[10px] font-extrabold uppercase px-2 py-0.5 rounded backdrop-blur-xs">
-                      Razorpay Gateway
-                    </span>
-                    <span className="text-[10px] bg-emerald-200 text-emerald-950 font-bold px-1.5 py-0.2 rounded">
-                      SECURE
-                    </span>
-                  </div>
-                  <p className="font-bold text-sm tracking-wide mt-0.5">
-                    Instant UPI Payment
-                  </p>
-                  <p className="text-xs text-emerald-100">
-                    Pay securely using Google Pay, PhonePe, Paytm or BHIM UPI
-                  </p>
-                </div>
-                <div className="w-7 h-7 rounded-full bg-white flex items-center justify-center text-[#0a7a40] shadow-sm shrink-0">
-                  <Check className="w-4 h-4 stroke-[3]" />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* 4. Apply Coupon Card */}
         <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 mb-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
@@ -1613,187 +1419,6 @@ export const Checkout: React.FC = () => {
           </div>
         )}
 
-        {/* --- PAYMENT METHOD SELECTION / ADD MODAL (APP EXACT MATCH) --- */}
-        {isPaymentMethodModalOpen && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-0 md:p-4">
-            <div className="bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-6 max-h-[88vh] overflow-y-auto shadow-2xl">
-              <div className="flex items-center justify-between pb-3 border-b border-neutral-100 mb-4">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-[#0a7a40]" />
-                  <h3 className="font-bold text-lg text-neutral-900">
-                    {isAddingNewPaymentMethod ? 'Add Payment Method' : 'Payment Methods'}
-                  </h3>
-                </div>
-                <button
-                  onClick={() => {
-                    setIsPaymentMethodModalOpen(false);
-                    setIsAddingNewPaymentMethod(false);
-                  }}
-                  className="w-8 h-8 rounded-full flex items-center justify-center bg-neutral-100 text-neutral-600 hover:bg-neutral-200 cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {!isAddingNewPaymentMethod ? (
-                <div>
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">Saved Methods</span>
-                    <button
-                      type="button"
-                      onClick={() => setIsAddingNewPaymentMethod(true)}
-                      className="text-xs font-bold text-[#0a7a40] hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>+ Add New</span>
-                    </button>
-                  </div>
-
-                  {/* List of Saved Methods */}
-                  <div className="space-y-3 mb-5">
-                    {paymentMethods.map((pm) => {
-                      const isSelected = selectedPaymentMethod?.id === pm.id;
-                      return (
-                        <div
-                          key={pm.id}
-                          onClick={() => {
-                            setSelectedPaymentMethod(pm);
-                            setIsPaymentMethodModalOpen(false);
-                          }}
-                          className={`p-4 rounded-2xl cursor-pointer transition-all ${isSelected
-                              ? 'bg-[#0a7a40] text-white shadow-md'
-                              : 'bg-neutral-50 text-neutral-800 border border-neutral-200 hover:border-emerald-400'
-                            }`}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-2">
-                                <span
-                                  className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded flex items-center gap-1 ${isSelected ? 'bg-white/20 text-white' : 'bg-emerald-100 text-[#0a7a40]'
-                                    }`}
-                                >
-                                  <Smartphone className="w-3 h-3" />
-                                  UPI
-                                </span>
-                                {pm.isDefault && (
-                                  <span
-                                    className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${isSelected ? 'bg-emerald-200 text-emerald-950' : 'bg-neutral-200 text-neutral-700'
-                                      }`}
-                                  >
-                                    DEFAULT
-                                  </span>
-                                )}
-                              </div>
-
-                              <p className={`font-bold text-sm tracking-wide ${isSelected ? 'text-white' : 'text-neutral-900'}`}>
-                                {pm.upiId}
-                              </p>
-
-                              <div className="flex items-center gap-1.5 text-xs">
-                                <span className={`text-[10px] uppercase font-bold ${isSelected ? 'text-emerald-200' : 'text-neutral-500'}`}>
-                                  DISPLAY NAME:
-                                </span>
-                                <span className={`font-bold uppercase ${isSelected ? 'text-white' : 'text-neutral-800'}`}>
-                                  {pm.displayName}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="shrink-0 mt-1">
-                              {isSelected ? (
-                                <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-[#0a7a40] shadow-sm">
-                                  <Check className="w-4 h-4 stroke-[3]" />
-                                </div>
-                              ) : (
-                                <div className="w-6 h-6 rounded-full border-2 border-neutral-300" />
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsPaymentMethodModalOpen(false)}
-                    className="w-full py-3.5 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-sm rounded-2xl shadow-md cursor-pointer transition-all"
-                  >
-                    Continue with UPI
-                  </button>
-                </div>
-              ) : (
-                /* ADD PAYMENT METHOD FORM (UPI ONLY) */
-                <form onSubmit={handleSavePaymentMethod} className="space-y-4">
-                  <div className="space-y-3 pt-1">
-                    <div>
-                      <label className="text-xs font-bold text-neutral-700 block mb-1">Display Name</label>
-                      <input
-                        type="text"
-                        required
-                        value={upiDisplayName}
-                        onChange={(e) => setUpiDisplayName(e.target.value)}
-                        placeholder="e.g. AMIT KUMAR"
-                        className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:outline-none focus:border-[#0a7a40]"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold text-neutral-700 block mb-1">UPI ID</label>
-                      <input
-                        type="text"
-                        required
-                        value={upiIdInput}
-                        onChange={(e) => setUpiIdInput(e.target.value)}
-                        placeholder="e.g. 7068368474@ybl or yourname@okaxis"
-                        className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:outline-none focus:border-[#0a7a40]"
-                      />
-                    </div>
-
-                    <div className="flex items-start gap-1.5 p-2.5 bg-emerald-50/70 border border-emerald-200/80 rounded-xl text-[11px] text-emerald-800">
-                      <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-                      <span>Ensure your UPI ID is correct to avoid payment failures.</span>
-                    </div>
-
-                    <div className="flex items-center justify-between pt-2">
-                      <span className="text-xs font-medium text-neutral-700">Set as Default Method</span>
-                      <input
-                        type="checkbox"
-                        checked={upiSetDefault}
-                        onChange={(e) => setUpiSetDefault(e.target.checked)}
-                        className="w-4 h-4 rounded text-[#0a7a40] focus:ring-[#0a7a40] cursor-pointer"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setIsAddingNewPaymentMethod(false)}
-                      className="flex-1 py-3 bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-bold text-xs rounded-xl cursor-pointer"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={savePaymentMethodMutation.isPending}
-                      className="flex-2 py-3 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-xs rounded-xl shadow-md cursor-pointer disabled:opacity-60 flex items-center justify-center gap-1.5"
-                    >
-                      {savePaymentMethodMutation.isPending ? (
-                        <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                          <span>Saving...</span>
-                        </>
-                      ) : (
-                        'Save Details'
-                      )}
-                    </button>
-                  </div>
-                </form>
-              )}
-            </div>
-          </div>
-        )}
       </Container>
     </div>
   );
