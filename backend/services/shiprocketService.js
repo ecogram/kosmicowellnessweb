@@ -117,6 +117,132 @@ class ShiprocketService {
       isFreeDelivery: isOnline,
     };
   }
+
+  /**
+   * Automatically places real order on Shiprocket
+   */
+  async createShiprocketOrder(order) {
+    if (!order) {
+      throw new Error('Order object is required to place on Shiprocket');
+    }
+
+    const token = await this.getToken();
+    const pickupLocation = 'work'; // Verified active pickup location for Kosmico Wellness
+
+    const address = order.shippingAddress || order.billingAddress || order.deliveryAddress || {};
+    const fullName = String(order.userName || address.fullName || address.name || 'Valued Customer').trim();
+    const email = String(order.userEmail || order.email || address.email || 'customer@kosmicowellness.com').trim();
+    const rawPhone = String(address.phone || address.phoneNumber || order.userPhone || '9876543210');
+    const phone = rawPhone.replace(/\D/g, '').slice(-10) || '9876543210';
+    
+    let street = String(address.addressLine1 || address.streetAddress || address.address || address.flatBuilding || 'A423 Sector 1').trim();
+    if (street.length < 5) street = street + ', Greater Noida';
+    const street2 = String(address.addressLine2 || address.flatBuilding || '').trim();
+    const city = String(address.city || 'Noida').trim();
+    const state = String(address.state || 'Uttar Pradesh').trim();
+    const pincode = String(address.postalCode || address.pincode || '201306').replace(/\D/g, '').slice(0, 6) || '201306';
+
+    const isCod = order.paymentMethod === 'COD' || order.paymentMethod === 'COD_UPFRONT';
+    const paymentMethod = isCod ? 'COD' : 'Prepaid';
+
+    let codCollectAmount = Number(order.total) || 0;
+    if (order.paymentMethod === 'COD_UPFRONT' && Number(order.upfrontAmount) > 0) {
+      codCollectAmount = Math.max(0, codCollectAmount - Number(order.upfrontAmount));
+    }
+    const finalAmount = isCod ? codCollectAmount : (Number(order.total) || 0);
+
+    const rawItems = Array.isArray(order.items) && order.items.length > 0 ? order.items : [];
+    const orderItems = rawItems.length > 0
+      ? rawItems.map((it, idx) => ({
+          name: String(it.name || it.title || 'Sweet Monk Monk Fruit Sweetener 10ml').slice(0, 100),
+          sku: String(it.sku || `KOSMICO-${String(it.product || it.productId || idx).slice(-6)}`).slice(0, 50),
+          units: Number(it.quantity || it.qty || 1),
+          selling_price: Math.max(1, Number(it.price || it.priceSnapshot || 499)),
+          discount: 0,
+          tax: 0,
+          hsn: 2106,
+        }))
+      : [
+          {
+            name: 'Sweet Monk Monk Fruit Sweetener 10ml',
+            sku: 'KOSMICO-6a9f68',
+            units: 1,
+            selling_price: Math.max(1, finalAmount),
+            discount: 0,
+            tax: 0,
+            hsn: 2106,
+          },
+        ];
+
+    const now = new Date();
+    const YYYY = now.getFullYear();
+    const MM = String(now.getMonth() + 1).padStart(2, '0');
+    const DD = String(now.getDate()).padStart(2, '0');
+    const HH = String(now.getHours()).padStart(2, '0');
+    const min = String(now.getMinutes()).padStart(2, '0');
+    const orderDate = `${YYYY}-${MM}-${DD} ${HH}:${min}`;
+
+    const payload = {
+      order_id: String(order.orderNumber || order._id),
+      order_date: orderDate,
+      pickup_location: pickupLocation,
+      channel_id: '',
+      comment: 'Kosmico Wellness Web Order',
+      billing_customer_name: fullName,
+      billing_last_name: '',
+      billing_address: street,
+      billing_address_2: street2,
+      billing_city: city,
+      billing_pincode: pincode,
+      billing_state: state,
+      billing_country: 'India',
+      billing_email: email,
+      billing_phone: phone,
+      shipping_is_billing: true,
+      order_items: orderItems,
+      payment_method: paymentMethod,
+      shipping_charges: Number(order.shipping || order.deliveryFee || 0),
+      giftwrap_charges: 0,
+      transaction_charges: 0,
+      total_discount: Number(order.discount || order.discountAmount || 0),
+      sub_total: finalAmount,
+      length: 10,
+      breadth: 10,
+      height: 10,
+      weight: Math.max(0.5, orderItems.reduce((acc, it) => acc + (it.units * 0.5), 0)),
+    };
+
+    console.log('Sending real order to Shiprocket:', payload.order_id, 'Amount:', payload.sub_total, 'Method:', payload.payment_method);
+
+    const response = await axios.post(`${this.baseUrl}/orders/create/adhoc`, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  }
+
+  /**
+   * Fetches order details / status from Shiprocket
+   */
+  async getShiprocketOrder(shiprocketOrderId) {
+    if (!shiprocketOrderId) return null;
+    const token = await this.getToken();
+    try {
+      const response = await axios.get(`${this.baseUrl}/orders/show/${encodeURIComponent(shiprocketOrderId)}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data?.data || response.data;
+    } catch (err) {
+      console.warn('Shiprocket show order error:', err.response?.data || err.message);
+      return null;
+    }
+  }
 }
 
 module.exports = new ShiprocketService();
+
