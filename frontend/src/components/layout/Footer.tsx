@@ -44,16 +44,6 @@ export function Footer() {
                   All Products
                 </Link>
               </li>
-              <li>
-                <Link to="/coupons" className="hover:text-white transition-colors text-amber-300 font-bold">
-                  Coupons &amp; Offers 🎟️
-                </Link>
-              </li>
-              <li>
-                <Link to="/wishlist" className="hover:text-white transition-colors">
-                  My Wishlist ❤️
-                </Link>
-              </li>
               {categories?.map((cat: any) => (
                 <li key={cat._id}>
                   <Link to={`/shop?category=${cat._id || cat.slug || cat.name}`} className="hover:text-white transition-colors">
