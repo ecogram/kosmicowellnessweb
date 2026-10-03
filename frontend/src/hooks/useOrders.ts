@@ -145,17 +145,32 @@ export const useOrder = (orderId: string) => {
       try {
         const response = await api.get(`/order/track/${targetId}`);
         const orderData = response.data?.data?.order ?? response.data?.order ?? response.data?.data ?? response.data;
-        if (orderData && (orderData._id || orderData.orderNumber || orderData.items)) return orderData;
+        if (orderData?.order && (orderData.order._id || orderData.order.orderNumber || orderData.order.items)) {
+          return orderData.order;
+        }
+        if (orderData && (orderData._id || orderData.orderNumber || orderData.items?.length > 0)) {
+          const itemsSum = Array.isArray(orderData.items)
+            ? orderData.items.reduce((s: number, it: any) => s + (Number(it.price || it.priceSnapshot || 499) * Number(it.quantity || it.qty || 1)), 0)
+            : 0;
+          return {
+            ...orderData,
+            total: Number(orderData.total) || Number(orderData.amount) || itemsSum || 499,
+          };
+        }
         if (orderData && (orderData.orderNumber || orderData.currentStatus)) {
+          const items = orderData.items || [];
+          const itemsSum = items.reduce((s: number, it: any) => s + (Number(it.price || it.priceSnapshot || 499) * Number(it.quantity || it.qty || 1)), 0);
           return {
             _id: targetId,
             orderNumber: orderData.orderNumber || targetId,
             orderStatus: orderData.currentStatus || 'CONFIRMED',
-            paymentStatus: 'PAID',
+            paymentStatus: orderData.paymentStatus || 'PAID',
+            paymentMethod: orderData.paymentMethod || 'ONLINE',
             createdAt: orderData.timeline?.[0]?.timestamp || new Date().toISOString(),
-            items: orderData.items || [],
+            items: items,
             shippingAddress: orderData.shippingAddress || {},
-            total: orderData.total || 0,
+            total: Number(orderData.total) || Number(orderData.amount) || itemsSum || 499,
+            amount: Number(orderData.total) || Number(orderData.amount) || itemsSum || 499,
             trackingDetails: orderData,
           };
         }

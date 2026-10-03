@@ -74,6 +74,14 @@ const trackOrder = asyncHandler(async (req, res) => {
         completed: String(order.orderStatus).toUpperCase() === 'DELIVERED',
       },
     ],
+    total: Number(order.total || order.amount || 0),
+    amount: Number(order.amount || order.total || 0),
+    subtotal: Number(order.subtotal || order.total || 0),
+    paymentMethod: order.paymentMethod,
+    paymentStatus: order.paymentStatus,
+    items: order.items || [],
+    shippingAddress: order.shippingAddress || order.deliveryAddress || {},
+    order: order,
   };
 
   res.status(200).json(new ApiResponse(200, trackingDetails, 'Order tracking details retrieved'));

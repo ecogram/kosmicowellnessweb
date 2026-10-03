@@ -73,6 +73,19 @@ export const OrderSuccess: React.FC = () => {
     shiprocketData?.shiprocket?.awb_code ||
     (srOrderId ? `TRK-${srOrderId}` : '');
 
+  const itemsTotal = Array.isArray(order?.items)
+    ? order.items.reduce((s: number, it: any) => s + (Number(it.price || it.priceSnapshot || 499) * Number(it.quantity || it.qty || 1)), 0)
+    : 0;
+
+  const displayTotal =
+    Number(order?.total) ||
+    Number(order?.amount) ||
+    Number(shiprocketData?.order?.total) ||
+    Number(shiprocketData?.order?.amount) ||
+    itemsTotal ||
+    Number(localStorage.getItem('kosmico_last_order_total')) ||
+    499;
+
   return (
     <div className="bg-[#f8faf8] min-h-screen py-16 px-4">
       <Container>
@@ -175,7 +188,7 @@ export const OrderSuccess: React.FC = () => {
                 </div>
                 <div className="flex justify-between text-neutral-900 pt-2 border-t border-neutral-200 font-bold text-base">
                   <span>Total Amount:</span>
-                  <span>{formatINR(order.total || 0)}</span>
+                  <span>{formatINR(displayTotal)}</span>
                 </div>
               </div>
             </div>
