@@ -1,7 +1,6 @@
 const asyncHandler = require('../utils/asyncHandler');
 const { ApiResponse, ApiError } = require('../utils/apiResponse');
 const paymentService = require('../services/paymentService');
-const shiprocketService = require('../services/shiprocketService');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Address = require('../models/Address');
@@ -115,21 +114,6 @@ const placeCodOrder = asyncHandler(async (req, res) => {
     paymentMethod: 'COD',
     trackingNumber: 'TRK-' + Math.floor(10000000 + Math.random() * 90000000),
   });
-
-  // Automatically place real order on Shiprocket
-  try {
-    const srRes = await shiprocketService.createShiprocketOrder(order);
-    if (srRes && (srRes.order_id || srRes.shipment_id)) {
-      order.shiprocketOrderId = String(srRes.order_id || '');
-      order.shiprocketShipmentId = String(srRes.shipment_id || '');
-      order.courierPartner = srRes.courier_name || 'Shiprocket';
-      order.shippingStatus = 'PLACED_ON_SHIPROCKET';
-      if (srRes.awb_code) order.trackingNumber = srRes.awb_code;
-      await order.save();
-    }
-  } catch (srErr) {
-    console.warn('Shiprocket COD order placement notice:', srErr.response?.data || srErr.message);
-  }
 
   // Attempt to send email async
   try {
@@ -305,21 +289,6 @@ const verifyPayment = asyncHandler(async (req, res) => {
       },
       { new: true }
     );
-
-    // Automatically place real order on Shiprocket upon successful payment
-    try {
-      const srRes = await shiprocketService.createShiprocketOrder(order);
-      if (srRes && (srRes.order_id || srRes.shipment_id)) {
-        order.shiprocketOrderId = String(srRes.order_id || '');
-        order.shiprocketShipmentId = String(srRes.shipment_id || '');
-        order.courierPartner = srRes.courier_name || 'Shiprocket';
-        order.shippingStatus = 'PLACED_ON_SHIPROCKET';
-        if (srRes.awb_code) order.trackingNumber = srRes.awb_code;
-        await order.save();
-      }
-    } catch (srErr) {
-      console.warn('Shiprocket prepaid order placement notice:', srErr.response?.data || srErr.message);
-    }
   }
 
   res.status(200).json(
@@ -660,21 +629,6 @@ const verifyCodUpfrontPayment = asyncHandler(async (req, res) => {
       },
       { new: true }
     );
-
-    // Automatically place real order on Shiprocket upon verified upfront payment
-    try {
-      const srRes = await shiprocketService.createShiprocketOrder(updatedOrder);
-      if (srRes && (srRes.order_id || srRes.shipment_id)) {
-        updatedOrder.shiprocketOrderId = String(srRes.order_id || '');
-        updatedOrder.shiprocketShipmentId = String(srRes.shipment_id || '');
-        updatedOrder.courierPartner = srRes.courier_name || 'Shiprocket';
-        updatedOrder.shippingStatus = 'PLACED_ON_SHIPROCKET';
-        if (srRes.awb_code) updatedOrder.trackingNumber = srRes.awb_code;
-        await updatedOrder.save();
-      }
-    } catch (srErr) {
-      console.warn('Shiprocket COD upfront placement notice:', srErr.response?.data || srErr.message);
-    }
 
     try {
       if (updatedOrder && (updatedOrder.userEmail || req.user.email)) {
