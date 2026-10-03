@@ -422,16 +422,37 @@ export const Checkout: React.FC = () => {
     }
 
     try {
-      // 1. Create COD upfront order on backend to get real Razorpay order_id (CRITICAL for UPI on mobile)
-      const upfrontRes = await api.post('/payment/cod-upfront/create', {
-        ...orderPayload,
-        upfrontAmount: advanceAmount,
-      });
+      // 1. Create COD upfront order on backend (Try Point 1 /api/order/place/razorpay with fallback to /payment/cod-upfront/create)
+      let upfrontData: any = null;
+      try {
+        const upfrontRes = await api.post('/order/place/razorpay', {
+          ...orderPayload,
+          amount: advanceAmount,
+          upfrontAmount: advanceAmount,
+          paymentMethod: 'COD_UPFRONT',
+        });
+        upfrontData = upfrontRes.data?.data || upfrontRes.data;
+      } catch (placeErr) {
+        const fallbackRes = await api.post('/payment/cod-upfront/create', {
+          ...orderPayload,
+          upfrontAmount: advanceAmount,
+        });
+        upfrontData = fallbackRes.data?.data || fallbackRes.data;
+      }
 
-      const upfrontData = upfrontRes.data?.data || upfrontRes.data;
-      const rzpOrderId = upfrontData?.orderId || upfrontData?.providerOrderId;
-      const internalOrderId = upfrontData?.internalOrderId;
-      const orderNumber = upfrontData?.orderNumber || 'KW-COD';
+      const rzpOrderId =
+        upfrontData?.orderId ||
+        upfrontData?.providerOrderId ||
+        upfrontData?.order?.id ||
+        (upfrontData?.data && (upfrontData.data?.orderId || upfrontData.data?.providerOrderId));
+      const internalOrderId =
+        upfrontData?.internalOrderId ||
+        upfrontData?.order?._id ||
+        upfrontData?._id;
+      const orderNumber =
+        upfrontData?.orderNumber ||
+        upfrontData?.order?.orderNumber ||
+        'KW-COD';
 
       const razorpayKey =
         upfrontData?.keyId ||
@@ -447,7 +468,7 @@ export const Checkout: React.FC = () => {
         currency: upfrontData?.currency || 'INR',
         name: 'Kosmico Wellness',
         description: 'Advance Delivery & GST for COD Order',
-        order_id: rzpOrderId, // <--- MANDATORY FOR RAZORPAY UPI INTENT (GPAY, PHONEPE, PAYTM) ON MOBILE!
+        order_id: rzpOrderId, // Mandatory for Razorpay UPI on mobile
         prefill: {
           name: selectedAddress?.fullName || user?.name || 'Customer',
           email: user?.email || '',
@@ -488,6 +509,7 @@ export const Checkout: React.FC = () => {
             setIsPaymentProcessing(false);
             if (rzpOrderId) {
               try {
+                // Point 5: Cancel Pending Razorpay Popup
                 await api.post('/payment/razorpay/cancel-pending', {
                   orderId: rzpOrderId,
                   internalOrderId,
@@ -499,31 +521,61 @@ export const Checkout: React.FC = () => {
         },
         handler: async function (response: any) {
           setIsPaymentProcessing(true);
-          if (!response?.razorpay_payment_id) {
+          const paymentId =
+            response?.razorpay_payment_id ||
+            response?.razorpayPaymentId ||
+            response?.payment_id ||
+            response?.paymentId;
+          const respOrderId =
+            response?.razorpay_order_id ||
+            response?.razorpayOrderId ||
+            response?.order_id ||
+            rzpOrderId ||
+            '';
+          const signature =
+            response?.razorpay_signature ||
+            response?.razorpaySignature ||
+            response?.signature ||
+            '';
+
+          if (!paymentId) {
             setIsPaymentProcessing(false);
             toast.error('Advance payment failed: Missing payment details. Order was not placed.');
             return;
           }
 
           try {
-            const verifyRes = await api.post('/payment/cod-upfront/verify', {
-              razorpay_order_id: response.razorpay_order_id || rzpOrderId,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-            });
+            // Point 2: Exact documented route /api/payment/razorpay/verify
+            let verifyRes: any = null;
+            try {
+              const res = await api.post('/payment/razorpay/verify', {
+                razorpay_order_id: respOrderId,
+                razorpay_payment_id: paymentId,
+                razorpay_signature: signature,
+              });
+              verifyRes = res.data?.data ?? res.data;
+            } catch (rErr) {
+              const fallbackRes = await api.post('/payment/cod-upfront/verify', {
+                razorpay_order_id: respOrderId,
+                razorpay_payment_id: paymentId,
+                razorpay_signature: signature,
+              });
+              verifyRes = fallbackRes.data?.data ?? fallbackRes.data;
+            }
 
-            const placedOrder = verifyRes.data?.data?.order || verifyRes.data?.order || { orderNumber };
+            const placedOrder = verifyRes?.order || verifyRes?.data?.order || { orderNumber };
+            const finalNum = placedOrder?.orderNumber || orderNumber || 'KW-SUCCESS';
 
             localStorage.removeItem('kosmico_cart_v1');
             setIsPaymentProcessing(false);
             toast.success('Advance payment successful! COD Order placed.');
-            navigate(`/order-success/${placedOrder?.orderNumber || orderNumber || 'KW-SUCCESS'}`);
+            navigate(`/order-success/${finalNum}`);
           } catch (placeErr: any) {
             setIsPaymentProcessing(false);
             console.error('COD Order creation error:', placeErr);
             toast.error(
               placeErr?.response?.data?.message ||
-                'Payment received but failed to record order. Please contact support with Payment ID: ' + response.razorpay_payment_id
+                'Payment received but failed to record order. Please contact support with Payment ID: ' + paymentId
             );
           }
         },

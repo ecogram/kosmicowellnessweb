@@ -197,7 +197,10 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
     }
   }
 
-  const finalTotal = amount || Math.max(0, calculatedSubtotal - Number(discountAmount) + Number(deliveryFee) + Number(gstCharge));
+  const upfrontAmount = Number(req.body.upfrontAmount) || 0;
+  const paymentMethod = req.body.paymentMethod || (upfrontAmount > 0 ? 'COD_UPFRONT' : 'ONLINE');
+  const finalTotal = req.body.total || amount || Math.max(0, calculatedSubtotal - Number(discountAmount) + Number(deliveryFee) + Number(gstCharge));
+  const payableNow = upfrontAmount > 0 ? upfrontAmount : finalTotal;
 
   const order = await Order.create({
     orderNumber: generateOrderNumber(),
@@ -213,14 +216,15 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
     gstCharge: Number(gstCharge) || 0,
     total: finalTotal,
     amount: finalTotal,
+    upfrontAmount: upfrontAmount,
     shippingAddress: addressData,
     billingAddress: addressData,
     orderStatus: 'PENDING',
     paymentStatus: 'PENDING',
-    paymentMethod: 'ONLINE',
+    paymentMethod: paymentMethod,
   });
 
-  const paymentData = await paymentService.createPayment(order._id, req.user._id);
+  const paymentData = await paymentService.createPayment(order._id, req.user._id, payableNow);
 
   res.status(200).json(
     new ApiResponse(
@@ -231,6 +235,7 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
         internalOrderId: order._id,
         orderNumber: order.orderNumber,
         amount: paymentData.amount,
+        upfrontAmount: upfrontAmount,
         currency: paymentData.currency,
         keyId: paymentData.keyId,
         key: paymentData.keyId,
@@ -271,10 +276,13 @@ const verifyPayment = asyncHandler(async (req, res) => {
   const orderId = payment.order?._id || payment.order;
   let order = null;
   if (orderId) {
+    const existingOrder = await Order.findById(orderId);
+    const isCodUpfront = existingOrder?.paymentMethod === 'COD_UPFRONT' || (existingOrder?.upfrontAmount && existingOrder?.upfrontAmount > 0);
     order = await Order.findByIdAndUpdate(
       orderId,
       {
-        paymentStatus: 'PAID',
+        paymentStatus: isCodUpfront ? 'PARTIAL_PAID' : 'PAID',
+        upfrontPaymentStatus: 'Paid',
         orderStatus: 'PROCESSING',
         paymentReference: razorpay_payment_id,
         trackingNumber: 'TRK-' + Math.floor(10000000 + Math.random() * 90000000),
@@ -585,9 +593,23 @@ const createCodUpfrontOrder = asyncHandler(async (req, res) => {
 });
 
 const verifyCodUpfrontPayment = asyncHandler(async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-  if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
-    throw new ApiError(400, 'Missing payment verification payloads');
+  const razorpay_order_id =
+    req.body.razorpay_order_id ||
+    req.body.razorpayOrderId ||
+    req.body.orderId ||
+    req.body.order_id;
+  const razorpay_payment_id =
+    req.body.razorpay_payment_id ||
+    req.body.razorpayPaymentId ||
+    req.body.paymentId ||
+    req.body.payment_id;
+  const razorpay_signature =
+    req.body.razorpay_signature ||
+    req.body.razorpaySignature ||
+    req.body.signature;
+
+  if (!razorpay_payment_id) {
+    throw new ApiError(400, 'Missing payment verification payloads (razorpay_payment_id is required)');
   }
   const payment = await paymentService.verifyPaymentSignature(req.user._id, {
     razorpay_order_id,
