@@ -22,6 +22,7 @@ interface SavedAddress {
   flatBuilding?: string;
   streetAddress: string;
   city: string;
+  state?: string;
   pincode: string;
   phoneNumber: string;
   isDefault: boolean;
@@ -102,12 +103,13 @@ export const Profile: React.FC = () => {
   const [addrFormFlat, setAddrFormFlat] = useState('');
   const [addrFormStreet, setAddrFormStreet] = useState('');
   const [addrFormCity, setAddrFormCity] = useState('');
+  const [addrFormState, setAddrFormState] = useState('');
   const [addrFormPincode, setAddrFormPincode] = useState('');
   const [addrFormLabel, setAddrFormLabel] = useState<'Home' | 'Work' | 'Other'>('Home');
   const [addrFormIsDefault, setAddrFormIsDefault] = useState(false);
   const [isPincodeDetecting, setIsPincodeDetecting] = useState(false);
 
-  // Auto-detect and populate City when a 6-digit Indian PIN code is entered
+  // Auto-detect and populate City and State when a 6-digit Indian PIN code is entered
   const fetchCityFromPincode = async (val: string) => {
     setIsPincodeDetecting(true);
     try {
@@ -119,10 +121,14 @@ export const Profile: React.FC = () => {
       if (data?.[0]?.Status === 'Success' && data[0].PostOffice?.length > 0) {
         const po = data[0].PostOffice[0];
         const detectedCity = po.District || po.Block || po.Name;
+        const detectedState = po.State;
         if (detectedCity) {
           setAddrFormCity(detectedCity);
-          return;
         }
+        if (detectedState) {
+          setAddrFormState(detectedState);
+        }
+        return;
       }
     } catch {
       // Fallback to fast zippopotam service if primary postal API is slow or throttled
@@ -130,9 +136,13 @@ export const Profile: React.FC = () => {
         const res = await fetch(`https://api.zippopotam.us/in/${val}`);
         if (res.ok) {
           const data = await res.json();
-          const detectedCity = data?.places?.[0]?.['place name'] || data?.places?.[0]?.state;
+          const detectedCity = data?.places?.[0]?.['place name'];
+          const detectedState = data?.places?.[0]?.state;
           if (detectedCity) {
             setAddrFormCity(detectedCity);
+          }
+          if (detectedState) {
+            setAddrFormState(detectedState);
           }
         }
       } catch (err) {
@@ -195,6 +205,7 @@ export const Profile: React.FC = () => {
           flatBuilding: a.flatBuilding || '',
           streetAddress: a.streetAddress || '',
           city: a.city || '',
+          state: a.state || '',
           pincode: a.pincode || '',
           phoneNumber: a.phoneNumber || '',
           isDefault: !!a.isDefault,
@@ -501,6 +512,7 @@ export const Profile: React.FC = () => {
     setAddrFormFlat('');
     setAddrFormStreet('');
     setAddrFormCity('');
+    setAddrFormState('');
     setAddrFormPincode('');
     setAddrFormLabel('Home');
     setAddrFormIsDefault(addresses.length === 0);
@@ -514,6 +526,7 @@ export const Profile: React.FC = () => {
     setAddrFormFlat(addr.flatBuilding || '');
     setAddrFormStreet(addr.streetAddress);
     setAddrFormCity(addr.city);
+    setAddrFormState(addr.state || '');
     setAddrFormPincode(addr.pincode);
     setAddrFormLabel(addr.addressLabel);
     setAddrFormIsDefault(addr.isDefault);
@@ -557,6 +570,7 @@ export const Profile: React.FC = () => {
       flatBuilding: addrFormFlat.trim(),
       streetAddress: addrFormStreet,
       city: addrFormCity,
+      state: addrFormState,
       pincode: addrFormPincode,
       phoneNumber: addrFormPhone,
     };
@@ -1049,7 +1063,7 @@ export const Profile: React.FC = () => {
                               {addr.flatBuilding ? `${addr.flatBuilding}, ` : ''}{addr.streetAddress}
                             </p>
                             <p className="text-xs text-neutral-600 font-medium">
-                              {addr.city} - <span className="font-bold text-neutral-800">{addr.pincode}</span>
+                              {addr.city}{addr.state ? `, ${addr.state}` : ''} - <span className="font-bold text-neutral-800">{addr.pincode}</span>
                             </p>
                             <p className="text-xs text-neutral-500 pt-0.5">
                               Phone: <span className="text-neutral-800 font-semibold">{addr.phoneNumber}</span>
@@ -1210,6 +1224,25 @@ export const Profile: React.FC = () => {
                       className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
                     />
                   </div>
+                </div>
+
+                {/* State Field (Directly under City & PIN Code matching screenshot) */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-neutral-700">State</label>
+                    {isPincodeDetecting && (
+                      <span className="text-[10px] text-neutral-400 font-medium animate-pulse">
+                        Auto-filling...
+                      </span>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    value={addrFormState}
+                    onChange={(e) => setAddrFormState(e.target.value)}
+                    placeholder="e.g. Bihar / Uttar Pradesh"
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
+                  />
                 </div>
 
                 <div>
