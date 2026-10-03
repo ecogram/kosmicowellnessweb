@@ -481,16 +481,14 @@ export const OrderDetails = () => {
                 </button>
               )}
 
-              {/* Need Help? Button (WhatsApp / Support) */}
-              <a
-                href={`https://wa.me/918004116370?text=Hi%2C%20I%20need%20help%20with%20my%20Kosmico%20order%20%23${order.orderNumber || order._id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3.5 px-4 rounded-2xl bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md active:scale-98"
+              {/* Need Help? Button (Redirect to Help Center) */}
+              <Link
+                to="/profile?openHelp=true"
+                className="w-full py-3.5 px-4 rounded-2xl bg-[#0f172a] hover:bg-[#1e293b] text-white font-bold text-sm flex items-center justify-center gap-2 transition-all shadow-md active:scale-98 cursor-pointer text-center"
               >
                 <HelpCircle className="w-4 h-4" />
                 <span>Need Help?</span>
-              </a>
+              </Link>
             </div>
 
           </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { useAuthStore } from '../store/useAuthStore';
 import { useWishlist } from '../hooks/useWishlist';
@@ -9,9 +9,9 @@ import { useProfile, useUpdateProfile, useRemoveProfilePicture, dataUrlToFile } 
 import { normalizeImageUrl } from '../utils/imageUrl';
 import {
   Package, Heart, Ticket, MapPin, RotateCcw,
-  Globe, Moon, HelpCircle, Info, LogOut, Edit3, X, Phone, MessageSquare, Mail, Building,
+  Globe, Moon, HelpCircle, Info, LogOut, Edit3, X, Phone, MessageSquare, Mail,
   Plus, Trash2, Home, Briefcase, CheckCircle2, Camera, RefreshCw, Check, AlertCircle,
-  Eye, Image as ImageIcon, User as UserIcon, Loader2
+  Eye, Image as ImageIcon, User as UserIcon, Loader2, ChevronLeft, Clock, Headphones
 } from 'lucide-react';
 
 // API docs address fields: addressLabel, fullName, streetAddress, city, pincode, phoneNumber, isDefault
@@ -44,11 +44,30 @@ export const Profile: React.FC = () => {
   const couponsCount = couponsData ? couponsData.filter((c: any) => c.isActive !== false).length : 0;
 
   // Settings State
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
   const [isAddressesOpen, setIsAddressesOpen] = useState(false);
   const [language, setLanguage] = useState<'EN' | 'HI'>('EN');
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Auto-open Help Center if URL contains ?openHelp=true or ?help=true or ?tab=help
+  useEffect(() => {
+    if (searchParams.get('openHelp') === 'true' || searchParams.get('help') === 'true' || searchParams.get('tab') === 'help') {
+      setIsHelpCenterOpen(true);
+    }
+  }, [searchParams]);
+
+  const handleCloseHelpCenter = () => {
+    setIsHelpCenterOpen(false);
+    if (searchParams.get('openHelp') || searchParams.get('help') || searchParams.get('tab') === 'help') {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('openHelp');
+      nextParams.delete('help');
+      if (nextParams.get('tab') === 'help') nextParams.delete('tab');
+      setSearchParams(nextParams, { replace: true });
+    }
+  };
 
   // Edit Profile Form State
   const [fullName, setFullName] = useState(user?.name || (user as any)?.fullName || '');
@@ -86,6 +105,24 @@ export const Profile: React.FC = () => {
   const [addrFormPincode, setAddrFormPincode] = useState('');
   const [addrFormLabel, setAddrFormLabel] = useState<'Home' | 'Work' | 'Other'>('Home');
   const [addrFormIsDefault, setAddrFormIsDefault] = useState(false);
+
+  // Lock body scroll when any modal (Help Center, Edit Profile, Addresses, etc.) is open
+  useEffect(() => {
+    const isAnyModalOpen = isHelpCenterOpen || isEditProfileOpen || isAddressesOpen || isPhotoPickerOpen || isPreviewModalOpen || isCameraModalOpen;
+    if (isAnyModalOpen) {
+      const origOverflow = document.body.style.overflow;
+      const origPaddingRight = document.body.style.paddingRight;
+      const scrollBarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.overflow = 'hidden';
+      if (scrollBarWidth > 0) {
+        document.body.style.paddingRight = `${scrollBarWidth}px`;
+      }
+      return () => {
+        document.body.style.overflow = origOverflow;
+        document.body.style.paddingRight = origPaddingRight;
+      };
+    }
+  }, [isHelpCenterOpen, isEditProfileOpen, isAddressesOpen, isPhotoPickerOpen, isPreviewModalOpen, isCameraModalOpen]);
 
 
   // Synchronize form state when Zustand store user changes (driven by useProfile polling)
@@ -1155,61 +1192,175 @@ export const Profile: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL 4: HELP CENTER matching App */}
+      {/* MODAL 4: HELP CENTER matching App Screenshot & Desktop Full Card Size */}
       {isHelpCenterOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 space-y-6 shadow-2xl border border-neutral-200">
-            <div className="flex justify-between items-center border-b pb-3">
-              <div>
-                <h3 className="font-serif font-bold text-lg text-neutral-900">Help Center</h3>
-                <p className="text-xs text-neutral-500">How can we help you today?</p>
+        <div
+          onClick={handleCloseHelpCenter}
+          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200 overscroll-contain"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-md md:max-w-2xl bg-[#f4f7f4] rounded-3xl overflow-hidden shadow-2xl border border-neutral-200/80 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200 overscroll-contain"
+          >
+            {/* Top Emerald Green Header matching Screenshot */}
+            <div className="bg-[#0e7440] px-5 pt-4 pb-6 text-white relative shrink-0">
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={handleCloseHelpCenter}
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                  aria-label="Back"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <div className="text-center font-bold text-base md:text-lg">Help Center</div>
+                <button
+                  type="button"
+                  onClick={handleCloseHelpCenter}
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button onClick={() => setIsHelpCenterOpen(false)} className="p-1 rounded-full text-neutral-400 hover:text-neutral-700 cursor-pointer">
-                <X className="w-5 h-5" />
-              </button>
+
+              {/* Center Agent Icon & Subtitle */}
+              <div className="text-center mt-2">
+                <div className="w-14 h-14 rounded-full bg-white/15 border border-white/25 flex items-center justify-center mx-auto shadow-inner text-white">
+                  <Headphones className="w-7 h-7" />
+                </div>
+                <p className="text-emerald-100 text-xs md:text-sm mt-2">How can we help you today?</p>
+              </div>
             </div>
 
-            {/* Quick Contact Cards */}
-            <div className="grid grid-cols-2 gap-3">
-              <a href="tel:+919793170555" className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1 hover:border-emerald-800 transition-colors">
-                <Phone className="w-5 h-5 text-emerald-800 mx-auto" />
-                <div className="font-bold text-xs text-neutral-900">Call Us</div>
-                <div className="text-[10px] text-neutral-500">Mon-Sat 11AM - 7PM</div>
-              </a>
+            {/* Scrollable Body: Single Column matching image */}
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-6 overscroll-contain [scrollbar-width:thin] [scrollbar-color:#c8d8cc_transparent]">
+              {/* Section 1: Quick Contact Section */}
+              <div className="space-y-3">
+                <h4 className="text-sm font-bold text-[#0e7440] tracking-tight">Quick Contact</h4>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  {/* Call Us */}
+                  <a
+                    href="tel:+919793170555"
+                    className="p-4 rounded-2xl bg-[#e8efe9] hover:bg-[#dfebe1] border border-transparent hover:border-[#0e7440]/20 text-center flex flex-col items-center justify-center transition-all group cursor-pointer"
+                  >
+                    <div className="w-11 h-11 rounded-full bg-[#d6e5d9] text-[#0e7440] flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <Phone className="w-5 h-5" />
+                    </div>
+                    <div className="font-bold text-xs text-neutral-900">Call Us</div>
+                    <div className="text-[10px] text-neutral-600 font-medium leading-tight mt-1">
+                      Mon-Sat<br />11AM - 7PM
+                    </div>
+                  </a>
 
-              <Link to="/ai-consultant" onClick={() => setIsHelpCenterOpen(false)} className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1 hover:border-emerald-800 transition-colors">
-                <MessageSquare className="w-5 h-5 text-emerald-800 mx-auto" />
-                <div className="font-bold text-xs text-neutral-900">Live Chat</div>
-                <div className="text-[10px] text-neutral-500">Instant AI Support</div>
-              </Link>
+                  {/* Live Chat - STATIC BUTTON / CARD (as requested) */}
+                  <div
+                    className="p-4 rounded-2xl bg-[#e8efe9] border border-transparent text-center flex flex-col items-center justify-center select-none"
+                  >
+                    <div className="w-11 h-11 rounded-full bg-[#d6e5d9] text-[#0e7440] flex items-center justify-center mb-2">
+                      <MessageSquare className="w-5 h-5" />
+                    </div>
+                    <div className="font-bold text-xs text-neutral-900">Live Chat</div>
+                    <div className="text-[10px] text-neutral-600 font-medium leading-tight mt-1">
+                      Instant<br />Support
+                    </div>
+                  </div>
 
-              <a href="mailto:support@kosmicowellness.com" className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1 hover:border-emerald-800 transition-colors">
-                <Mail className="w-5 h-5 text-emerald-800 mx-auto" />
-                <div className="font-bold text-xs text-neutral-900">Email Us</div>
-                <div className="text-[10px] text-neutral-500">Response in 24 hours</div>
-              </a>
+                  {/* Email Us */}
+                  <a
+                    href="mailto:support@kosmicowellness.com"
+                    className="p-4 rounded-2xl bg-[#e8efe9] hover:bg-[#dfebe1] border border-transparent hover:border-[#0e7440]/20 text-center flex flex-col items-center justify-center transition-all group cursor-pointer"
+                  >
+                    <div className="w-11 h-11 rounded-full bg-[#d6e5d9] text-[#0e7440] flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <Mail className="w-5 h-5" />
+                    </div>
+                    <div className="font-bold text-xs text-neutral-900">Email Us</div>
+                    <div className="text-[10px] text-neutral-600 font-medium leading-tight mt-1">
+                      Response in<br />24 hours
+                    </div>
+                  </a>
 
-              <a
-                href="https://www.google.com/maps/search/?api=1&query=NX+One+Tower+Greater+Noida+West+201306"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-4 rounded-2xl bg-stone-50 border border-stone-200 text-center space-y-1 hover:border-emerald-800 transition-colors block cursor-pointer"
-              >
-                <Building className="w-5 h-5 text-emerald-800 mx-auto" />
-                <div className="font-bold text-xs text-neutral-900">Visit Us</div>
-                <div className="text-[10px] text-neutral-500">Greater Noida</div>
-              </a>
-            </div>
+                  {/* Visit Us */}
+                  <a
+                    href="https://www.google.com/maps/search/?api=1&query=NX+One+Tower+Greater+Noida+West+201306"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-4 rounded-2xl bg-[#e8efe9] hover:bg-[#dfebe1] border border-transparent hover:border-[#0e7440]/20 text-center flex flex-col items-center justify-center transition-all group cursor-pointer"
+                  >
+                    <div className="w-11 h-11 rounded-full bg-[#d6e5d9] text-[#0e7440] flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
+                      <MapPin className="w-5 h-5" />
+                    </div>
+                    <div className="font-bold text-xs text-neutral-900">Visit Us</div>
+                    <div className="text-[10px] text-neutral-600 font-medium leading-tight mt-1">
+                      Greater<br />Noida
+                    </div>
+                  </a>
+                </div>
+              </div>
 
-            {/* Full Details Section matching Video */}
-            <div className="bg-emerald-50 border border-emerald-800/10 rounded-2xl p-4 space-y-2 text-xs">
-              <div className="font-bold text-emerald-900 text-xs">Main Office Address</div>
-              <p className="text-neutral-700 text-[11px] leading-relaxed">
-                423 A, 4th Floor, Tower 3, NX One Tower, Greater Noida (West), Gautam Buddha Nagar, UP, India - 201306
-              </p>
-              <div className="pt-2 border-t border-emerald-800/10 flex justify-between text-[11px]">
-                <span className="font-bold text-neutral-800">Support Line:</span>
-                <span className="text-emerald-800 font-bold">+91 97931 70555</span>
+              {/* Section 2: Full Details Section matching Image 2 (Single column directly below) */}
+              <div className="space-y-3 pt-1">
+                <h4 className="text-sm font-bold text-[#0e7440] tracking-tight">Full Details</h4>
+                <div className="space-y-2.5">
+                  {/* Head Office Address */}
+                  <div className="p-3.5 rounded-2xl bg-[#e8efe9] flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[#d6e5d9] text-[#0e7440] flex items-center justify-center shrink-0 mt-0.5">
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] font-semibold text-neutral-500">Head Office Address</div>
+                      <p className="text-xs text-neutral-800 leading-relaxed font-medium mt-0.5">
+                        423 A, 4th Floor, Tower 3, NX One Tower, Greater Noida (West), Gautam Buddha Nagar, UP, India - 201306
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Customer Support Line */}
+                  <a
+                    href="tel:+919793170555"
+                    className="p-3.5 rounded-2xl bg-[#e8efe9] hover:bg-[#dfebe1] flex items-start gap-3 transition-colors group cursor-pointer"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-[#d6e5d9] text-[#0e7440] flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
+                      <Phone className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] font-semibold text-neutral-500">Customer Support Line</div>
+                      <div className="text-xs font-bold text-neutral-900 group-hover:text-[#0e7440] transition-colors mt-0.5">
+                        +91 97931 70555
+                      </div>
+                    </div>
+                  </a>
+
+                  {/* Official Email Support */}
+                  <a
+                    href="mailto:support@kosmicowellness.com"
+                    className="p-3.5 rounded-2xl bg-[#e8efe9] hover:bg-[#dfebe1] flex items-start gap-3 transition-colors group cursor-pointer"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-[#d6e5d9] text-[#0e7440] flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
+                      <Mail className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] font-semibold text-neutral-500">Official Email Support</div>
+                      <div className="text-xs font-bold text-neutral-900 group-hover:text-[#0e7440] transition-colors mt-0.5">
+                        support@kosmicowellness.com
+                      </div>
+                    </div>
+                  </a>
+
+                  {/* Operational Hours */}
+                  <div className="p-3.5 rounded-2xl bg-[#e8efe9] flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[#d6e5d9] text-[#0e7440] flex items-center justify-center shrink-0 mt-0.5">
+                      <Clock className="w-4 h-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] font-semibold text-neutral-500">Operational Hours</div>
+                      <div className="text-xs text-neutral-800 font-medium mt-0.5 space-y-0.5">
+                        <div>Mon - Sat: 11:00 AM - 07:00 PM</div>
+                        <div className="text-neutral-500">Sunday: Closed</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

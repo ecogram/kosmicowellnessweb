@@ -176,6 +176,7 @@ function App() {
                     <Route path="/refunds" element={<RefundPolicy />} />
                     <Route path="/refund-policy" element={<RefundPolicy />} />
                     <Route path="/return-policy" element={<RefundPolicy />} />
+                    <Route path="/help-center" element={<Navigate to="/profile?openHelp=true" replace />} />
 
                     {/* Protected User Routes */}
                     <Route element={<ProtectedRoute />}>
