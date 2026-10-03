@@ -129,29 +129,7 @@ class ShiprocketService {
     const token = await this.getToken();
     const pickupLocation = 'work'; // Verified active pickup location for Kosmico Wellness
 
-    let address = order.shippingAddress || order.billingAddress || order.deliveryAddress || {};
-    if (typeof address === 'string' || (typeof address === 'object' && !address.addressLine1 && !address.streetAddress && order.deliveryAddress)) {
-      try {
-        const Address = require('../models/Address');
-        const addrId = typeof address === 'string' ? address : order.deliveryAddress;
-        if (addrId) {
-          const dbAddr = await Address.findById(addrId);
-          if (dbAddr) {
-            const streetClean = dbAddr.streetAddress || dbAddr.flatBuilding || 'A423 Sector 1';
-            address = {
-              fullName: dbAddr.fullName || order.userName || 'Customer',
-              phone: dbAddr.phoneNumber || dbAddr.phone,
-              addressLine1: streetClean.length < 5 ? `${streetClean}, Greater Noida` : streetClean,
-              addressLine2: dbAddr.flatBuilding || '',
-              city: dbAddr.city || 'Gautam Buddha Nagar',
-              state: dbAddr.state || 'Uttar Pradesh',
-              postalCode: dbAddr.pincode || '201306',
-            };
-          }
-        }
-      } catch (_) {}
-    }
-
+    const address = order.shippingAddress || order.billingAddress || order.deliveryAddress || {};
     const fullName = String(order.userName || address.fullName || address.name || 'Valued Customer').trim();
     const email = String(order.userEmail || order.email || address.email || 'customer@kosmicowellness.com').trim();
     const rawPhone = String(address.phone || address.phoneNumber || order.userPhone || '9876543210');
@@ -160,57 +138,41 @@ class ShiprocketService {
     let street = String(address.addressLine1 || address.streetAddress || address.address || address.flatBuilding || 'A423 Sector 1').trim();
     if (street.length < 5) street = street + ', Greater Noida';
     const street2 = String(address.addressLine2 || address.flatBuilding || '').trim();
-    const city = String(address.city || 'Gautam Buddha Nagar').trim();
+    const city = String(address.city || 'Noida').trim();
     const state = String(address.state || 'Uttar Pradesh').trim();
     const pincode = String(address.postalCode || address.pincode || '201306').replace(/\D/g, '').slice(0, 6) || '201306';
 
     const isCod = order.paymentMethod === 'COD' || order.paymentMethod === 'COD_UPFRONT';
     const paymentMethod = isCod ? 'COD' : 'Prepaid';
 
-    let codCollectAmount = Number(order.total || order.amount || 0);
+    let codCollectAmount = Number(order.total) || 0;
     if (order.paymentMethod === 'COD_UPFRONT' && Number(order.upfrontAmount) > 0) {
       codCollectAmount = Math.max(0, codCollectAmount - Number(order.upfrontAmount));
     }
-    const finalAmount = isCod ? codCollectAmount : (Number(order.total || order.amount || 0));
+    const finalAmount = isCod ? codCollectAmount : (Number(order.total) || 0);
 
     const rawItems = Array.isArray(order.items) && order.items.length > 0 ? order.items : [];
-    const orderItems = [];
-    if (rawItems.length > 0) {
-      for (let idx = 0; idx < rawItems.length; idx++) {
-        const it = rawItems[idx];
-        let pName = it.name || it.title;
-        let pPrice = Number(it.price || it.priceSnapshot || 499);
-        if (!pName && it.product) {
-          try {
-            const Product = require('../models/Product');
-            const dbProd = await Product.findById(it.product);
-            if (dbProd) {
-              pName = dbProd.title || dbProd.name;
-              pPrice = Number(dbProd.discountPrice || dbProd.price || pPrice);
-            }
-          } catch (_) {}
-        }
-        orderItems.push({
-          name: String(pName || 'Sweet Monk Monk Fruit Sweetener 10ml').slice(0, 100),
+    const orderItems = rawItems.length > 0
+      ? rawItems.map((it, idx) => ({
+          name: String(it.name || it.title || 'Sweet Monk Monk Fruit Sweetener 10ml').slice(0, 100),
           sku: String(it.sku || `KOSMICO-${String(it.product || it.productId || idx).slice(-6)}`).slice(0, 50),
-          units: Math.max(1, Number(it.quantity || it.qty || 1)),
-          selling_price: Math.max(1, pPrice),
+          units: Number(it.quantity || it.qty || 1),
+          selling_price: Math.max(1, Number(it.price || it.priceSnapshot || 499)),
           discount: 0,
           tax: 0,
           hsn: 2106,
-        });
-      }
-    } else {
-      orderItems.push({
-        name: 'Sweet Monk Monk Fruit Sweetener 10ml',
-        sku: 'KOSMICO-6a9f68',
-        units: 1,
-        selling_price: Math.max(1, finalAmount || 499),
-        discount: 0,
-        tax: 0,
-        hsn: 2106,
-      });
-    }
+        }))
+      : [
+          {
+            name: 'Sweet Monk Monk Fruit Sweetener 10ml',
+            sku: 'KOSMICO-6a9f68',
+            units: 1,
+            selling_price: Math.max(1, finalAmount),
+            discount: 0,
+            tax: 0,
+            hsn: 2106,
+          },
+        ];
 
     const now = new Date();
     const YYYY = now.getFullYear();
