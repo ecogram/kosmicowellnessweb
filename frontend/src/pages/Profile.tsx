@@ -105,6 +105,43 @@ export const Profile: React.FC = () => {
   const [addrFormPincode, setAddrFormPincode] = useState('');
   const [addrFormLabel, setAddrFormLabel] = useState<'Home' | 'Work' | 'Other'>('Home');
   const [addrFormIsDefault, setAddrFormIsDefault] = useState(false);
+  const [isPincodeDetecting, setIsPincodeDetecting] = useState(false);
+
+  // Auto-detect and populate City when a 6-digit Indian PIN code is entered
+  const fetchCityFromPincode = async (val: string) => {
+    setIsPincodeDetecting(true);
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch(`https://api.postalpincode.in/pincode/${val}`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      const data = await res.json();
+      if (data?.[0]?.Status === 'Success' && data[0].PostOffice?.length > 0) {
+        const po = data[0].PostOffice[0];
+        const detectedCity = po.District || po.Block || po.Name;
+        if (detectedCity) {
+          setAddrFormCity(detectedCity);
+          return;
+        }
+      }
+    } catch {
+      // Fallback to fast zippopotam service if primary postal API is slow or throttled
+      try {
+        const res = await fetch(`https://api.zippopotam.us/in/${val}`);
+        if (res.ok) {
+          const data = await res.json();
+          const detectedCity = data?.places?.[0]?.['place name'] || data?.places?.[0]?.state;
+          if (detectedCity) {
+            setAddrFormCity(detectedCity);
+          }
+        }
+      } catch (err) {
+        console.warn('Pincode lookup notice:', err);
+      }
+    } finally {
+      setIsPincodeDetecting(false);
+    }
+  };
 
   // Lock body scroll when any modal (Help Center, Edit Profile, Addresses, etc.) is open
   useEffect(() => {
@@ -1131,7 +1168,14 @@ export const Profile: React.FC = () => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-bold text-neutral-700 block mb-1">City</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-neutral-700">City</label>
+                      {isPincodeDetecting && (
+                        <span className="text-[10px] text-neutral-400 font-medium animate-pulse">
+                          Auto-filling...
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       required
@@ -1142,12 +1186,26 @@ export const Profile: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-neutral-700 block mb-1">PIN Code</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-neutral-700">PIN Code</label>
+                      {isPincodeDetecting && (
+                        <span className="text-[10px] text-emerald-800 font-bold animate-pulse">
+                          Detecting...
+                        </span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       required
+                      maxLength={6}
                       value={addrFormPincode}
-                      onChange={(e) => setAddrFormPincode(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        setAddrFormPincode(val);
+                        if (val.length === 6) {
+                          fetchCityFromPincode(val);
+                        }
+                      }}
                       placeholder="201301"
                       className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
                     />
