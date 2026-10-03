@@ -19,7 +19,8 @@ import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
 import { useCart } from '../hooks/useCart';
 import { useProducts } from '../hooks/useProducts';
-import { useVerifyPayment, useCreateRazorpayOrder } from '../hooks/usePayments';
+import { useVerifyPayment, useCreateRazorpayOrder, useSavedPaymentMethods, type SavedPaymentMethod } from '../hooks/usePayments';
+import { PaymentMethodsModal } from '../components/PaymentMethodsModal';
 import { useAuthStore } from '../store/useAuthStore';
 import { formatINR } from '../utils/currency';
 
@@ -86,6 +87,19 @@ export const Checkout: React.FC = () => {
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
   const [couponCodeInput, setCouponCodeInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discount: number } | null>(null);
+
+  // Payment Methods State (Matches Image 1, 2, 3)
+  const { data: savedPaymentMethods = [] } = useSavedPaymentMethods();
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<SavedPaymentMethod | null>(null);
+  const [isPaymentMethodsModalOpen, setIsPaymentMethodsModalOpen] = useState(false);
+
+  // Auto-select default payment method if available
+  useEffect(() => {
+    if (savedPaymentMethods && savedPaymentMethods.length > 0 && !selectedPaymentMethod) {
+      const def = savedPaymentMethods.find((m) => m.isDefault) || savedPaymentMethods[0];
+      setSelectedPaymentMethod(def);
+    }
+  }, [savedPaymentMethods]);
 
   // Delivery estimation from Shiprocket API (dynamic based on pincode & weight)
   const [deliveryEstimate, setDeliveryEstimate] = useState<{
@@ -747,7 +761,7 @@ export const Checkout: React.FC = () => {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="font-bold text-xl text-neutral-900">Checkout</h1>
+          <h1 className="font-serif font-bold text-xl text-neutral-900">Checkout</h1>
           <div className="w-10" />
         </div>
 
@@ -769,7 +783,7 @@ export const Checkout: React.FC = () => {
           {selectedAddress ? (
             <div className="space-y-1.5 text-neutral-700 text-sm">
               <div className="flex items-center gap-2">
-                <span className="bg-emerald-100 text-[#0a7a40] text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded">
+                <span className="bg-[#0e7440] text-white text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full">
                   {selectedAddress.addressLabel || (selectedAddress as any).type || 'HOME'}
                 </span>
                 {selectedAddress.isDefault && (
@@ -823,79 +837,154 @@ export const Checkout: React.FC = () => {
         </div>
 
         {/* 2. Payment Mode Selector (Exact App Design) */}
+        {/* 2. Payment Mode Selector (Exact Screenshot Design) */}
         <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 mb-4 shadow-sm">
           <h2 className="font-bold text-base text-neutral-900 mb-3">Payment Mode</h2>
 
           <div className="space-y-3">
-            {/* 1. Online Payment Card */}
+            {/* 1. Online Payment Card (Solid Emerald Green) */}
             <div
               onClick={() => setPaymentMode('ONLINE')}
-              className={`relative p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between ${paymentMode === 'ONLINE'
-                  ? 'border-[#0a7a40] bg-emerald-50/20 shadow-xs'
-                  : 'border-neutral-200 bg-white hover:border-neutral-300'
-                }`}
+              className={`relative p-4 rounded-2xl transition-all cursor-pointer flex items-center justify-between ${
+                paymentMode === 'ONLINE'
+                  ? 'bg-[#0e7440] text-white shadow-md border-2 border-[#0e7440]'
+                  : 'border-2 border-neutral-200 bg-white text-neutral-800 hover:border-neutral-300'
+              }`}
             >
               <div className="flex items-center gap-3.5">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${paymentMode === 'ONLINE' ? 'bg-[#0a7a40] text-white' : 'bg-neutral-100 text-neutral-700'
-                  }`}>
-                  <CreditCard className="w-5 h-5" />
+                <div
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                    paymentMode === 'ONLINE' ? 'text-white' : 'bg-neutral-100 text-neutral-700'
+                  }`}
+                >
+                  <CreditCard className="w-6 h-6 stroke-[1.75]" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-sm text-neutral-900">Online Payment</h3>
-                  <p className="text-xs text-neutral-500 mt-0.5">Pay full amount securely via UPI (Google Pay, PhonePe, Paytm)</p>
+                  <h3
+                    className={`font-bold text-sm md:text-base ${
+                      paymentMode === 'ONLINE' ? 'text-white' : 'text-neutral-900'
+                    }`}
+                  >
+                    Online Payment
+                  </h3>
+                  <p
+                    className={`text-xs mt-0.5 ${
+                      paymentMode === 'ONLINE' ? 'text-white/90' : 'text-neutral-500'
+                    }`}
+                  >
+                    Pay full amount securely via UPI, Cards, NetBanking
+                  </p>
                 </div>
               </div>
-              <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${paymentMode === 'ONLINE' ? 'border-[#0a7a40] bg-[#0a7a40]' : 'border-neutral-300'
-                }`}>
-                {paymentMode === 'ONLINE' && <div className="w-2 h-2 rounded-full bg-white" />}
+              <div
+                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                  paymentMode === 'ONLINE' ? 'border-white' : 'border-neutral-300'
+                }`}
+              >
+                {paymentMode === 'ONLINE' && <div className="w-2.5 h-2.5 rounded-full bg-white" />}
               </div>
             </div>
 
-            {/* 2. Cash on Delivery Card (Terracotta / Brown Style) */}
+            {/* 2. Cash on Delivery Card (Terracotta / Warm Brown) */}
             <div className="relative pt-1.5">
               {/* Floating Top-Right Green Badge */}
-              {paymentMode === 'COD' && (
-                <div className="absolute -top-1.5 right-4 z-10 bg-[#00a86b] text-white text-[11px] font-bold px-3 py-0.5 rounded-full shadow-sm">
-                  Pay ₹{deliveryFee + gst} now. Rest on delivery
-                </div>
-              )}
+              <div className="absolute -top-1.5 right-4 z-10 bg-[#00a86b] text-white text-[11px] font-bold px-3 py-0.5 rounded-full shadow-sm">
+                Pay ₹{deliveryFee + gst} now. Rest on delivery
+              </div>
 
               <div
                 onClick={() => setPaymentMode('COD')}
-                className={`relative p-4 rounded-2xl transition-all cursor-pointer overflow-hidden ${paymentMode === 'COD'
+                className={`relative p-4 rounded-2xl transition-all cursor-pointer overflow-hidden ${
+                  paymentMode === 'COD'
                     ? 'bg-[#965726] text-white shadow-md border-2 border-[#965726]'
                     : 'border-2 border-neutral-200 bg-white text-neutral-800 hover:border-neutral-300'
-                  }`}
+                }`}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3.5">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${paymentMode === 'COD' ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-700'
-                      }`}>
+                    <div
+                      className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
+                        paymentMode === 'COD' ? 'bg-white/20 text-white' : 'bg-neutral-100 text-neutral-700'
+                      }`}
+                    >
                       <Truck className="w-5 h-5" />
                     </div>
                     <div>
-                      <h3 className={`font-bold text-sm ${paymentMode === 'COD' ? 'text-white' : 'text-neutral-900'}`}>
+                      <h3
+                        className={`font-bold text-sm ${
+                          paymentMode === 'COD' ? 'text-white' : 'text-neutral-900'
+                        }`}
+                      >
                         Cash on Delivery
                       </h3>
-                      <p className={`text-xs mt-0.5 ${paymentMode === 'COD' ? 'text-[#f3e8df]' : 'text-neutral-500'}`}>
+                      <p
+                        className={`text-xs mt-0.5 ${
+                          paymentMode === 'COD' ? 'text-[#f3e8df]' : 'text-neutral-500'
+                        }`}
+                      >
                         Delivery + GST amount non-refundable
                       </p>
                     </div>
                   </div>
 
-                  {paymentMode === 'COD' ? (
-                    <div className="text-right pl-2 shrink-0">
-                      <div className="text-lg font-black tracking-tight text-white font-sans">
-                        ₹{deliveryFee + gst}
-                      </div>
-                      <div className="text-[10px] text-[#f3e8df] font-medium">
-                        pay now
-                      </div>
+                  <div className="text-right pl-2 shrink-0">
+                    <div
+                      className={`text-lg font-black tracking-tight font-sans ${
+                        paymentMode === 'COD' ? 'text-white' : 'text-neutral-900'
+                      }`}
+                    >
+                      ₹{deliveryFee + gst}
                     </div>
-                  ) : (
-                    <div className="w-5 h-5 rounded-full border-2 border-neutral-300 shrink-0" />
-                  )}
+                    <div
+                      className={`text-[10px] font-medium ${
+                        paymentMode === 'COD' ? 'text-[#f3e8df]' : 'text-neutral-400'
+                      }`}
+                    >
+                      pay now
+                    </div>
+                  </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Payment Method Card (Solid Emerald Green matching Screenshot) */}
+        <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 mb-4 shadow-sm">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-bold text-base text-neutral-900">Payment Method</h2>
+            <button
+              type="button"
+              onClick={() => setIsPaymentMethodsModalOpen(true)}
+              className="text-[#0a7a40] font-bold text-sm hover:underline cursor-pointer"
+            >
+              Change
+            </button>
+          </div>
+
+          {/* Solid Emerald Green Card */}
+          <div
+            onClick={() => setIsPaymentMethodsModalOpen(true)}
+            className="relative overflow-hidden p-4.5 rounded-2xl bg-[#0e7440] text-white shadow-md cursor-pointer transition-all hover:bg-[#0b5e34] group"
+          >
+            {/* Translucent background geometry */}
+            <div className="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
+
+            <div className="relative z-10 flex items-center justify-between">
+              <div>
+                <div className="inline-block px-2.5 py-0.5 bg-white/20 text-white text-[11px] font-semibold rounded-full mb-1">
+                  UPI
+                </div>
+                <p className="font-bold text-base md:text-lg text-white font-sans tracking-wide">
+                  {selectedPaymentMethod?.upiId || (user?.phoneNumber ? `${user.phoneNumber}@ybl` : '8004116370@ybl')}
+                </p>
+                <p className="text-[11px] font-bold uppercase text-emerald-100/90 tracking-wide mt-0.5">
+                  {selectedPaymentMethod?.displayName || user?.name || 'AMIT KUMAR'}
+                </p>
+              </div>
+
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white shrink-0 shadow-xs">
+                <Check className="w-4 h-4 stroke-[3]" />
               </div>
             </div>
           </div>
@@ -1418,6 +1507,15 @@ export const Checkout: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Payment Methods Modal (Matches Image 2 & Image 3) */}
+        <PaymentMethodsModal
+          isOpen={isPaymentMethodsModalOpen}
+          onClose={() => setIsPaymentMethodsModalOpen(false)}
+          selectedMethodId={selectedPaymentMethod?._id || selectedPaymentMethod?.id}
+          onSelectMethod={(method) => setSelectedPaymentMethod(method)}
+          isSelectionMode={true}
+        />
 
       </Container>
     </div>

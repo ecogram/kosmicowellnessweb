@@ -11,8 +11,10 @@ import {
   Package, Heart, Ticket, MapPin, RotateCcw,
   Globe, Moon, HelpCircle, Info, LogOut, Edit3, X, Phone, MessageSquare, Mail,
   Plus, Trash2, Home, Briefcase, CheckCircle2, Camera, RefreshCw, Check, AlertCircle,
-  Eye, Image as ImageIcon, User as UserIcon, Loader2, ChevronLeft, Clock, Headphones
+  Eye, Image as ImageIcon, User as UserIcon, Loader2, ChevronLeft, Clock, Headphones,
+  CreditCard, ShoppingBag, ChevronRight
 } from 'lucide-react';
+import { PaymentMethodsModal } from '../components/PaymentMethodsModal';
 
 // API docs address fields: addressLabel, fullName, streetAddress, city, pincode, phoneNumber, isDefault
 interface SavedAddress {
@@ -49,6 +51,8 @@ export const Profile: React.FC = () => {
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isHelpCenterOpen, setIsHelpCenterOpen] = useState(false);
   const [isAddressesOpen, setIsAddressesOpen] = useState(false);
+  const [isPaymentMethodsOpen, setIsPaymentMethodsOpen] = useState(false);
+
   const [language, setLanguage] = useState<'EN' | 'HI'>('EN');
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -153,9 +157,9 @@ export const Profile: React.FC = () => {
     }
   };
 
-  // Lock body scroll when any modal (Help Center, Edit Profile, Addresses, etc.) is open
+  // Lock body scroll when any modal (Help Center, Edit Profile, Addresses, Payment Methods, etc.) is open
   useEffect(() => {
-    const isAnyModalOpen = isHelpCenterOpen || isEditProfileOpen || isAddressesOpen || isPhotoPickerOpen || isPreviewModalOpen || isCameraModalOpen;
+    const isAnyModalOpen = isHelpCenterOpen || isEditProfileOpen || isAddressesOpen || isPaymentMethodsOpen || isPhotoPickerOpen || isPreviewModalOpen || isCameraModalOpen;
     if (isAnyModalOpen) {
       const origOverflow = document.body.style.overflow;
       const origPaddingRight = document.body.style.paddingRight;
@@ -169,7 +173,7 @@ export const Profile: React.FC = () => {
         document.body.style.paddingRight = origPaddingRight;
       };
     }
-  }, [isHelpCenterOpen, isEditProfileOpen, isAddressesOpen, isPhotoPickerOpen, isPreviewModalOpen, isCameraModalOpen]);
+  }, [isHelpCenterOpen, isEditProfileOpen, isAddressesOpen, isPaymentMethodsOpen, isPhotoPickerOpen, isPreviewModalOpen, isCameraModalOpen]);
 
 
   // Synchronize form state when Zustand store user changes (driven by useProfile polling)
@@ -709,91 +713,86 @@ export const Profile: React.FC = () => {
           </Link>
         </div>
 
-        {/* Section 1: Account Settings matching App */}
+        {/* Section 1: Account Settings matching App Screenshot */}
         <div className={`p-6 rounded-3xl border space-y-4 ${isDarkMode ? 'bg-neutral-800 border-neutral-700' : 'bg-surface border-border'}`}>
           <h2 className="text-xs font-extrabold uppercase tracking-wider text-emerald-800">Account Settings</h2>
 
           <div className="space-y-1">
-            <Link
-              to="/coupons"
-              className={`flex items-center justify-between p-3.5 rounded-2xl transition-colors ${isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'}`}
-            >
-              <div className="flex items-center gap-3">
-                <Ticket className="w-5 h-5 text-amber-600" />
-                <div>
-                  <div className="text-sm font-bold">My Coupons &amp; Offers</div>
-                  <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
-                    {couponsCount > 0 ? `${couponsCount} active promo voucher${couponsCount === 1 ? '' : 's'} available` : 'No active coupons available right now'}
-                  </div>
-                </div>
-              </div>
-              <span className="text-neutral-400 font-bold">&rsaquo;</span>
-            </Link>
-
-            <Link
-              to="/wishlist"
-              className={`flex items-center justify-between p-3.5 rounded-2xl transition-colors ${isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'}`}
-            >
-              <div className="flex items-center gap-3">
-                <Heart className="w-5 h-5 text-rose-600" />
-                <div>
-                  <div className="text-sm font-bold">My Wishlist</div>
-                  <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
-                    {wishlistCount ? `${wishlistCount} saved item(s)` : 'View and manage saved products'}
-                  </div>
-                </div>
-              </div>
-              <span className="text-neutral-400 font-bold">&rsaquo;</span>
-            </Link>
-
+            {/* 1. My Orders */}
             <Link
               to="/orders"
               className={`flex items-center justify-between p-3.5 rounded-2xl transition-colors ${isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'}`}
             >
-              <div className="flex items-center gap-3">
-                <Package className="w-5 h-5 text-emerald-800" />
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#e8efe9] text-[#0e7440] flex items-center justify-center shrink-0">
+                  <ShoppingBag className="w-5 h-5" />
+                </div>
                 <div>
                   <div className="text-sm font-bold">My Orders</div>
                   <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
-                    {ordersCount > 0 ? `${ordersCount} order${ordersCount === 1 ? '' : 's'} placed • Track status` : 'Track and manage your orders'}
+                    Track and manage your orders
                   </div>
                 </div>
               </div>
-              <span className="text-neutral-400 font-bold">&rsaquo;</span>
+              <ChevronRight className="w-4 h-4 text-neutral-400" />
             </Link>
 
+            {/* 2. Returns & Refunds */}
             <Link
               to="/returns-refunds"
               className={`flex items-center justify-between p-3.5 rounded-2xl transition-colors ${isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'}`}
             >
-              <div className="flex items-center gap-3">
-                <RotateCcw className="w-5 h-5 text-emerald-800" />
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#e8efe9] text-[#0e7440] flex items-center justify-center shrink-0">
+                  <RotateCcw className="w-5 h-5" />
+                </div>
                 <div>
                   <div className="text-sm font-bold">Returns &amp; Refunds</div>
-                  <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>Status of your refund/replacement requests</div>
+                  <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                    Status of your refund/replacement requests
+                  </div>
                 </div>
               </div>
-              <span className="text-neutral-400 font-bold">&rsaquo;</span>
+              <ChevronRight className="w-4 h-4 text-neutral-400" />
             </Link>
 
-            {/* Shipping Addresses Trigger */}
+            {/* 3. Shipping Addresses */}
             <div
               className={`flex items-center justify-between p-3.5 rounded-2xl cursor-pointer transition-colors ${isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'}`}
               onClick={() => setIsAddressesOpen(true)}
             >
-              <div className="flex items-center gap-3">
-                <MapPin className="w-5 h-5 text-emerald-800" />
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#e8efe9] text-[#0e7440] flex items-center justify-center shrink-0">
+                  <MapPin className="w-5 h-5" />
+                </div>
                 <div>
                   <div className="text-sm font-bold">Shipping Addresses</div>
                   <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
-                    {addresses.length} saved location{addresses.length === 1 ? '' : 's'}
+                    Manage your delivery locations
                   </div>
                 </div>
               </div>
-              <span className="text-neutral-400 font-bold">&rsaquo;</span>
+              <ChevronRight className="w-4 h-4 text-neutral-400" />
             </div>
 
-
+            {/* 4. Payment Methods */}
+            <div
+              className={`flex items-center justify-between p-3.5 rounded-2xl cursor-pointer transition-colors ${isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'}`}
+              onClick={() => setIsPaymentMethodsOpen(true)}
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#e8efe9] text-[#0e7440] flex items-center justify-center shrink-0">
+                  <CreditCard className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold">Payment Methods</div>
+                  <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                    Saved cards and UPI
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-neutral-400" />
+            </div>
           </div>
         </div>
 
@@ -1716,6 +1715,13 @@ export const Profile: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* MODAL 6: PAYMENT METHODS (Matches Image 2 & Image 3) */}
+      <PaymentMethodsModal
+        isOpen={isPaymentMethodsOpen}
+        onClose={() => setIsPaymentMethodsOpen(false)}
+        isSelectionMode={false}
+      />
 
     </div>
   );
