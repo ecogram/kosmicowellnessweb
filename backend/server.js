@@ -16,8 +16,16 @@ initializeSocket(server);
 connectDB().then(() => {
   server.listen(PORT, () => {
     console.log(`Server running in ${env.NODE_ENV} mode on port ${PORT}`);
+    // Start automatic Shiprocket order sync monitoring
+    try {
+      const { startSyncer } = require('./services/autoShiprocketSyncer');
+      startSyncer(4000);
+    } catch (e) {
+      console.error('Failed to start Shiprocket auto-syncer:', e.message);
+    }
   });
 });
+
 
 // Graceful Shutdown implementation
 const gracefulShutdown = async () => {
