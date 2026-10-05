@@ -22,6 +22,7 @@ router.post('/cod-upfront/verify', protect, paymentController.verifyCodUpfrontPa
 router.post('/razorpay/create', protect, paymentController.createRazorpayOrder);
 router.post('/razorpay/verify', protect, paymentController.verifyPayment);
 router.post('/razorpay/cancel-pending', protect, paymentController.cancelPendingRazorpayOrder);
+router.post('/cancel-pending', protect, paymentController.cancelPendingRazorpayOrder);
 router.post('/verify', protect, paymentController.verifyPayment);
 
 // 5. User Orders & Webhook

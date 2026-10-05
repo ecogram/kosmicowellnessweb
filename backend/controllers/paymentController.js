@@ -5,6 +5,7 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Address = require('../models/Address');
 const { sendOrderConfirmationEmail } = require('../utils/email');
+const shiprocketService = require('../services/shiprocketService');
 
 // Helper to generate readable order number
 const generateOrderNumber = () => {
@@ -123,6 +124,13 @@ const placeCodOrder = asyncHandler(async (req, res) => {
   } catch (err) {
     console.error('Email error:', err);
   }
+
+  // Auto-sync COD order with Shiprocket in background
+  try {
+    shiprocketService.createOrder(order).catch((err) => {
+      console.error('[Shiprocket] Auto-sync failed for COD order:', err.message || err);
+    });
+  } catch (_) {}
 
   res.status(201).json(new ApiResponse(201, { order }, 'COD Order placed successfully'));
 });
@@ -289,6 +297,13 @@ const verifyPayment = asyncHandler(async (req, res) => {
       },
       { new: true }
     );
+
+    // Auto-sync verified paid order with Shiprocket in background
+    try {
+      shiprocketService.createOrder(order || existingOrder).catch((err) => {
+        console.error('[Shiprocket] Auto-sync failed for verified payment:', err.message || err);
+      });
+    } catch (_) {}
   }
 
   res.status(200).json(
@@ -637,6 +652,13 @@ const verifyCodUpfrontPayment = asyncHandler(async (req, res) => {
     } catch (err) {
       console.error('COD Upfront confirmation email error:', err);
     }
+
+    // Auto-sync upfront COD order with Shiprocket in background
+    try {
+      shiprocketService.createOrder(updatedOrder).catch((err) => {
+        console.error('[Shiprocket] Auto-sync failed for COD Upfront order:', err.message || err);
+      });
+    } catch (_) {}
   }
 
   res.status(200).json(new ApiResponse(200, { payment, order: updatedOrder }, 'COD Upfront payment verified successfully'));

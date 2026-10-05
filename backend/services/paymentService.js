@@ -191,6 +191,16 @@ class PaymentService {
       if (userDoc) {
         await emailService.sendOrderConfirmationEmail(order, userDoc).catch(console.error);
       }
+
+      // Automatically sync order to Shiprocket
+      try {
+        const shiprocketService = require('./shiprocketService');
+        shiprocketService.createOrder(order).catch((err) => {
+          console.error('[Shiprocket] Auto-sync failed in verifyPaymentSignature:', err.message || err);
+        });
+      } catch (srErr) {
+        console.error('[Shiprocket] Service invocation error:', srErr.message || srErr);
+      }
     }
 
     return payment;
@@ -247,6 +257,14 @@ class PaymentService {
         if (userDoc) {
           await emailService.sendOrderConfirmationEmail(order, userDoc);
         }
+
+        // Auto-sync order with Shiprocket
+        try {
+          const shiprocketService = require('./shiprocketService');
+          shiprocketService.createOrder(order).catch((err) => {
+            console.error('[Shiprocket] Auto-sync failed in webhook:', err.message || err);
+          });
+        } catch (_) {}
       }
     } else if (event.event === 'payment.failed') {
       const paymentEntity = event.payload.payment.entity;

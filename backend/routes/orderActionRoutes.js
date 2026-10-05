@@ -17,8 +17,9 @@ router.post('/place/cod', protect, paymentController.placeCodOrder);
 // 4. Fetch User's Orders ("My Orders"): GET /api/order/myorders
 router.get('/myorders', protect, paymentController.getMyOrders);
 
-// 5. Cancel Pending Razorpay: POST /api/order/razorpay/cancel-pending
+// 5. Cancel Pending Razorpay: POST /api/order/razorpay/cancel-pending & /api/order/cancel-pending
 router.post('/razorpay/cancel-pending', protect, paymentController.cancelPendingRazorpayOrder);
+router.post('/cancel-pending', protect, paymentController.cancelPendingRazorpayOrder);
 
 // Order Actions (Tracking, Cancel, Return)
 router.get('/track/:orderId', protect, orderActionController.trackOrder);
