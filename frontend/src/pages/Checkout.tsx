@@ -1010,8 +1010,8 @@ export const Checkout: React.FC = () => {
           </div>
         </div>
 
-        {/* 3. Payment Method Card (Solid Emerald Green matching Screenshot) */}
-        <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 mb-4 shadow-sm">
+        {/* 3. Payment Method Card (Temporarily commented out, can be re-enabled later) */}
+        {/* <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 mb-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-bold text-base text-neutral-900">Payment Method</h2>
             <button
@@ -1023,12 +1023,10 @@ export const Checkout: React.FC = () => {
             </button>
           </div>
 
-          {/* Solid Emerald Green Card */}
           <div
             onClick={() => setIsPaymentMethodsModalOpen(true)}
             className="relative overflow-hidden p-4.5 rounded-2xl bg-[#0e7440] text-white shadow-md cursor-pointer transition-all hover:bg-[#0b5e34] group"
           >
-            {/* Translucent background geometry */}
             <div className="absolute -right-6 -bottom-6 w-32 h-32 rounded-full bg-white/10 pointer-events-none" />
 
             <div className="relative z-10 flex items-center justify-between">
@@ -1049,7 +1047,7 @@ export const Checkout: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* 4. Apply Coupon Card */}
         <div className="bg-white rounded-2xl border border-neutral-200/80 p-5 mb-4 shadow-sm">

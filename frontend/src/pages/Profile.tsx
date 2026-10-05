@@ -12,7 +12,7 @@ import {
   Globe, Moon, HelpCircle, Info, LogOut, Edit3, X, Phone, MessageSquare, Mail,
   Plus, Trash2, Home, Briefcase, CheckCircle2, Camera, RefreshCw, Check, AlertCircle,
   Eye, Image as ImageIcon, User as UserIcon, Loader2, ChevronLeft, Clock, Headphones,
-  CreditCard, ShoppingBag, ChevronRight
+  ShoppingBag, ChevronRight
 } from 'lucide-react';
 import { PaymentMethodsModal } from '../components/PaymentMethodsModal';
 
@@ -775,8 +775,8 @@ export const Profile: React.FC = () => {
               <ChevronRight className="w-4 h-4 text-neutral-400" />
             </div>
 
-            {/* 4. Payment Methods */}
-            <div
+            {/* 4. Payment Methods (Temporarily commented out, can be re-enabled later) */}
+            {/* <div
               className={`flex items-center justify-between p-3.5 rounded-2xl cursor-pointer transition-colors ${isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'}`}
               onClick={() => setIsPaymentMethodsOpen(true)}
             >
@@ -792,7 +792,7 @@ export const Profile: React.FC = () => {
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-neutral-400" />
-            </div>
+            </div> */}
           </div>
         </div>
 
