@@ -106,8 +106,20 @@ const cancelOrder = asyncHandler(async (req, res) => {
   order.cancelReason = req.body.reason || 'Cancelled by user';
   await order.save();
 
+  if (order.shiprocketOrderId) {
+    try {
+      const shiprocketService = require('../services/shiprocketService');
+      await shiprocketService.cancelOrder(order.shiprocketOrderId);
+      order.shippingStatus = 'CANCELED_ON_SHIPROCKET';
+      await order.save();
+    } catch (srErr) {
+      console.error('[Shiprocket] Cancel order error:', srErr.message);
+    }
+  }
+
   res.status(200).json(new ApiResponse(200, { order }, 'Order cancelled successfully'));
 });
+
 
 // Return Order
 const returnOrder = asyncHandler(async (req, res) => {

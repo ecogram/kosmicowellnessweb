@@ -330,6 +330,31 @@ class ShiprocketService {
       return null;
     }
   }
+
+  /**
+   * Cancel an order on Shiprocket
+   */
+  async cancelOrder(shiprocketOrderId) {
+    try {
+      if (!shiprocketOrderId) return { success: false, error: 'No Shiprocket Order ID provided' };
+      const token = await this.getToken();
+      const cleanId = Number(shiprocketOrderId) || shiprocketOrderId;
+      const response = await axios.post(`${this.baseUrl}/orders/cancel`, {
+        ids: [cleanId]
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        }
+      });
+      console.log(`[Shiprocket] Cancelled order ${shiprocketOrderId} successfully:`, response.data?.message || 'OK');
+      return { success: true, data: response.data };
+    } catch (err) {
+      console.error(`[Shiprocket] Error cancelling order ${shiprocketOrderId}:`, err.response?.data || err.message);
+      return { success: false, error: err.response?.data?.message || err.message };
+    }
+  }
 }
 
 module.exports = new ShiprocketService();
+

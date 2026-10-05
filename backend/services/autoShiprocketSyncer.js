@@ -4,20 +4,33 @@ const shiprocketService = require('./shiprocketService');
 let isSyncing = false;
 
 /**
- * Scans MongoDB for any orders that are Paid/Placed/Processing/COD
- * but not yet synced to Shiprocket, and pushes them immediately.
+ * Scans MongoDB for:
+ * 1. Confirmed & Paid orders (or valid COD) not yet synced to Shiprocket -> Pushes to Shiprocket
+ * 2. Cancelled orders that are still active on Shiprocket -> Cancels them on Shiprocket
  */
 async function syncPendingOrders() {
   if (isSyncing) return;
   isSyncing = true;
 
   try {
+    // 1. Find orders eligible for Shiprocket creation:
+    // MUST NOT be cancelled. Online orders MUST have paid status.
     const eligibleOrders = await Order.find({
       $and: [
         {
+          orderStatus: { $nin: ['Cancelled', 'CANCELLED', 'Refunded', 'REFUNDED'] },
+        },
+        {
           $or: [
-            { paymentStatus: { $in: ['Paid', 'PAID', 'PARTIAL_PAID', 'COD_PENDING', 'Completed', 'COMPLETED'] } },
-            { orderStatus: { $in: ['Placed', 'PLACED', 'PROCESSING', 'Processing', 'CONFIRMED', 'Confirmed'] } },
+            // Paid online orders (Payment is 100% verified)
+            {
+              paymentStatus: { $in: ['Paid', 'PAID', 'Completed', 'COMPLETED', 'PARTIAL_PAID'] },
+            },
+            // Pure Cash on Delivery orders
+            {
+              paymentMethod: 'COD',
+              paymentStatus: { $in: ['COD_PENDING', 'Pending', 'PENDING', 'Paid', 'PAID'] },
+            },
           ],
         },
         {
@@ -37,7 +50,7 @@ async function syncPendingOrders() {
       .limit(10);
 
     for (const order of eligibleOrders) {
-      console.log(`[Shiprocket Syncer] Found un-synced order ${order._id} (${order.orderNumber || order._id}). Syncing to Shiprocket...`);
+      console.log(`[Shiprocket Syncer] Found verified order ${order._id}. Syncing to Shiprocket...`);
       try {
         const result = await shiprocketService.createOrder(order);
         if (result && result.success) {
@@ -49,12 +62,36 @@ async function syncPendingOrders() {
         console.error(`[Shiprocket Syncer] Error placing order ${order._id} on Shiprocket:`, err.message);
       }
     }
+
+    // 2. Find cancelled orders that need to be cancelled on Shiprocket
+    const cancelledOrders = await Order.find({
+      $and: [
+        { orderStatus: { $in: ['Cancelled', 'CANCELLED'] } },
+        { shiprocketOrderId: { $exists: true, $ne: '', $ne: null } },
+        { shippingStatus: { $ne: 'CANCELED_ON_SHIPROCKET' } },
+      ],
+    }).limit(10);
+
+    for (const cancelOrd of cancelledOrders) {
+      try {
+        console.log(`[Shiprocket Syncer] Cancelling order ${cancelOrd._id} on Shiprocket (SR ID: ${cancelOrd.shiprocketOrderId})...`);
+        const cancelRes = await shiprocketService.cancelOrder(cancelOrd.shiprocketOrderId);
+        if (cancelRes.success) {
+          cancelOrd.shippingStatus = 'CANCELED_ON_SHIPROCKET';
+          await cancelOrd.save();
+          console.log(`[Shiprocket Syncer] Order ${cancelOrd._id} cancelled on Shiprocket successfully.`);
+        }
+      } catch (cErr) {
+        console.error(`[Shiprocket Syncer] Error cancelling order ${cancelOrd._id} on Shiprocket:`, cErr.message);
+      }
+    }
   } catch (err) {
     console.error('[Shiprocket Syncer] Polling error:', err.message);
   } finally {
     isSyncing = false;
   }
 }
+
 
 function startSyncer(intervalMs = 4000) {
   console.log('[Shiprocket Syncer] Background syncer initialized. Monitoring orders...');
