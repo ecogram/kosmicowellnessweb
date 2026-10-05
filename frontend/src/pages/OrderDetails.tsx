@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
 import { ArrowLeft, Check, XCircle, HelpCircle, Package, AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useOrder, useOrderTracking, useCancelOrder } from '../hooks/useOrders';
 import { useCreatePayment, useVerifyPayment } from '../hooks/usePayments';
 import { useProducts } from '../hooks/useProducts';
@@ -12,7 +13,7 @@ import { useEffect, useState } from 'react';
 
 export const OrderDetails = () => {
   const { orderNumber } = useParams();
-  const { data: order, isLoading, isError } = useOrder(orderNumber as string);
+  const { data: order, isLoading, isError, refetch } = useOrder(orderNumber as string);
   const { data: trackingData } = useOrderTracking(orderNumber as string);
   const { data: productsData } = useProducts({ page: 1, limit: 20 });
   const cancelMutation = useCancelOrder();
@@ -272,9 +273,25 @@ export const OrderDetails = () => {
     const confirmMsg = isAdvancePaid
       ? `Are you sure you want to cancel this order?\n\nNote: The advance payment of ${formatINR(paidAmount)} (Delivery Fee ${formatINR(shippingFee)} + GST ${formatINR(taxFee)}) is non-refundable.`
       : 'Are you sure you want to cancel this order?';
-    if (confirm(confirmMsg)) {
-      cancelMutation.mutate(order._id || order.orderNumber);
+    if (!window.confirm(confirmMsg)) {
+      return;
     }
+
+    const orderIdToCancel = order._id || order.id || order.orderNumber || orderNumber;
+    if (!orderIdToCancel) return;
+
+    const toastId = toast.loading('Cancelling order...');
+    cancelMutation.mutate(orderIdToCancel, {
+      onSuccess: () => {
+        toast.success('Order cancelled successfully', { id: toastId });
+        refetch();
+      },
+      onError: (err: any) => {
+        const errorMsg = err.response?.data?.message || err.message || 'Failed to cancel order';
+        toast.error(errorMsg, { id: toastId });
+        refetch();
+      },
+    });
   };
 
   const orderNum = order._id ? String(order._id) : (order.orderNumber || 'Order');
@@ -540,7 +557,9 @@ export const OrderDetails = () => {
               <div className="mt-6 pt-5 border-t border-neutral-100 space-y-3">
                 <div className="flex justify-between items-center bg-neutral-50 px-3.5 py-2.5 rounded-xl border border-neutral-200/60">
                   <span className="text-xs font-medium text-neutral-600">Order Status</span>
-                  <span className="text-xs font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                  <span className={`text-xs font-bold uppercase tracking-wide px-2.5 py-0.5 rounded-full ${
+                    isCancelled ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-800'
+                  }`}>
                     {currentStatus}
                   </span>
                 </div>
@@ -599,6 +618,19 @@ export const OrderDetails = () => {
                   <XCircle className="w-4 h-4 text-red-500" />
                   <span>{cancelMutation.isPending ? 'Cancelling...' : 'Cancel Order'}</span>
                 </button>
+              )}
+
+              {/* Order Cancelled Notification Card */}
+              {isCancelled && (
+                <div className="p-4 bg-red-50/90 border border-red-200 rounded-2xl text-xs text-red-900 flex items-start gap-3 shadow-2xs">
+                  <XCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-sm text-red-950">This Order is Cancelled</p>
+                    <p className="text-red-900/80 leading-relaxed text-xs">
+                      Your cancellation has been confirmed. No further actions or shipments are scheduled for this order.
+                    </p>
+                  </div>
+                </div>
               )}
 
               {/* Need Help? Button (Redirect to Help Center) */}

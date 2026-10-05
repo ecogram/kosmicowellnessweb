@@ -96,20 +96,7 @@ export const useOrder = (orderId: string) => {
         return candidates.includes(targetId) || candidates.some((c) => c && (c.includes(targetId) || targetId.includes(c)));
       };
 
-      // 0. Search across ALL cached 'orders' queries in React Query cache
-      try {
-        const allCachedQueries = queryClient.getQueriesData<any>({ queryKey: ['orders'] });
-        for (const [, qData] of allCachedQueries) {
-          const list: any[] = qData?.orders ?? (Array.isArray(qData) ? qData : []);
-          const found = list.find(isMatch);
-          if (found) return found;
-          if (['kw-cod', 'kw-success', 'success'].includes(targetId) && list.length > 0) {
-            return list[0];
-          }
-        }
-      } catch (_) { }
-
-      // 1. Search inside myorders list (live endpoint returns { success: true, orders: [...] })
+      // 1. Search inside myorders list (live endpoint returns fresh database orders)
       try {
         const response = await api.get('/payment/myorders', { params: { limit: 100 } });
         const resData = response.data?.data ?? response.data ?? {};
@@ -123,18 +110,7 @@ export const useOrder = (orderId: string) => {
         }
       } catch (_) { }
 
-      // 2. Fallback to /order/myorders endpoint
-      try {
-        const response = await api.get('/order/myorders');
-        const resData = response.data?.data ?? response.data ?? {};
-        const orders: any[] =
-          resData.orders ??
-          (Array.isArray(resData) ? resData : (Array.isArray(response.data?.data) ? response.data.data : []));
-        const matched = orders.find(isMatch);
-        if (matched) return matched;
-      } catch (_) { }
-
-      // 3. Fallback to direct lookup endpoints (/orders/:id or /payment/:id)
+      // 2. Direct lookup endpoints (/orders/:id or /payment/:id)
       try {
         const response = await api.get(`/orders/${targetId}`);
         const ord = response.data?.data?.order ?? response.data?.order ?? response.data?.data;
@@ -145,6 +121,17 @@ export const useOrder = (orderId: string) => {
         const response = await api.get(`/payment/${targetId}`);
         const ord = response.data?.data?.order ?? response.data?.order ?? response.data?.data;
         if (ord && (ord._id || ord.items)) return ord;
+      } catch (_) { }
+
+      // 3. Fallback to /order/myorders endpoint
+      try {
+        const response = await api.get('/order/myorders');
+        const resData = response.data?.data ?? response.data ?? {};
+        const orders: any[] =
+          resData.orders ??
+          (Array.isArray(resData) ? resData : (Array.isArray(response.data?.data) ? response.data.data : []));
+        const matched = orders.find(isMatch);
+        if (matched) return matched;
       } catch (_) { }
 
       // 4. Track via API endpoint: GET /api/order/track/{orderId}
@@ -185,6 +172,16 @@ export const useOrder = (orderId: string) => {
             amount: Number(orderData.total) || Number(orderData.amount) || itemsSum || 499,
             trackingDetails: orderData,
           };
+        }
+      } catch (_) { }
+
+      // 5. Final fallback to cached queries if offline
+      try {
+        const allCachedQueries = queryClient.getQueriesData<any>({ queryKey: ['orders'] });
+        for (const [, qData] of allCachedQueries) {
+          const list: any[] = qData?.orders ?? (Array.isArray(qData) ? qData : []);
+          const found = list.find(isMatch);
+          if (found) return found;
         }
       } catch (_) { }
 
@@ -250,11 +247,31 @@ export const useCancelOrder = () => {
 
   return useMutation({
     mutationFn: async (orderId: string) => {
-      const response = await api.post(`/order/cancel/${orderId}`);
+      const cleanId = String(orderId).replace(/^#/, '').trim();
+      const response = await api.post(`/order/cancel/${cleanId}`);
       return response.data?.data?.order ?? response.data?.data ?? response.data;
     },
-    onSuccess: () => {
+    onSuccess: (_data, orderId) => {
+      const cleanId = String(orderId).replace(/^#/, '').trim();
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      queryClient.invalidateQueries({ queryKey: ['order-track', cleanId] });
+      // Optimistically update status in all cached order collections
+      queryClient.setQueriesData({ queryKey: ['orders'] }, (old: any) => {
+        if (!old) return old;
+        if (Array.isArray(old)) {
+          return old.map((o: any) => (o._id === cleanId || o.orderNumber === cleanId) ? { ...o, orderStatus: 'CANCELLED' } : o);
+        }
+        if (old.orders && Array.isArray(old.orders)) {
+          return {
+            ...old,
+            orders: old.orders.map((o: any) => (o._id === cleanId || o.orderNumber === cleanId) ? { ...o, orderStatus: 'CANCELLED' } : o),
+          };
+        }
+        if (old._id === cleanId || old.orderNumber === cleanId) {
+          return { ...old, orderStatus: 'CANCELLED' };
+        }
+        return old;
+      });
     },
   });
 };

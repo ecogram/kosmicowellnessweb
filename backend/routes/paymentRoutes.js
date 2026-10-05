@@ -30,6 +30,8 @@ router.get('/myorders', protect, paymentController.getMyOrders);
 router.get('/', protect, paymentController.getMyOrders);
 router.post('/', protect, paymentController.placeCodOrder);
 router.get('/:orderId', protect, paymentController.getOrderById);
+const orderActionController = require('../controllers/orderActionController');
+router.post('/cancel/:orderId', protect, orderActionController.cancelOrder);
 router.post('/webhook', paymentController.handleWebhook);
 
 module.exports = router;

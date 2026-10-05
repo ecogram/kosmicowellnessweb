@@ -4,17 +4,20 @@ const Order = require('../models/Order');
 
 // Helper to build robust order lookup query
 const buildOrderQuery = (orderId, user) => {
-  const isObjectId = /^[0-9a-fA-F]{24}$/.test(orderId);
+  const cleanId = String(orderId || '').replace(/^#/, '').trim();
+  const isObjectId = /^[0-9a-fA-F]{24}$/.test(cleanId);
   const userEmail = user?.email ? user.email.toLowerCase().trim() : '';
 
   const idCondition = isObjectId
-    ? [{ _id: orderId }, { orderNumber: orderId }, { shiprocketOrderId: orderId }]
-    : [{ orderNumber: orderId }, { shiprocketOrderId: orderId }];
+    ? [{ _id: cleanId }, { orderNumber: cleanId }, { shiprocketOrderId: cleanId }]
+    : [{ orderNumber: cleanId }, { shiprocketOrderId: cleanId }];
 
   const userCondition = user
     ? [
         { user: user._id },
         { user: String(user._id) },
+        { userId: user._id },
+        { userId: String(user._id) },
         ...(userEmail ? [{ userEmail: new RegExp(`^${userEmail}$`, 'i') }] : []),
       ]
     : [];
@@ -142,6 +145,10 @@ const cancelOrder = asyncHandler(async (req, res) => {
 
   if (!order) {
     throw new ApiError(404, 'Order not found');
+  }
+
+  if (String(order.orderStatus).toUpperCase() === 'CANCELLED') {
+    return res.status(200).json(new ApiResponse(200, { order }, 'Order is already cancelled'));
   }
 
   if (['SHIPPED', 'DELIVERED'].includes(String(order.orderStatus).toUpperCase())) {
