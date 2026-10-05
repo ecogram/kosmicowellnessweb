@@ -4,13 +4,16 @@ import { Link } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
 import { useOrders } from '../hooks/useOrders';
-import { Package, Calendar, ChevronRight } from 'lucide-react';
+import { Package, Calendar, ChevronRight, ChevronLeft } from 'lucide-react';
 
 export const Orders: React.FC = () => {
-  const { data, isLoading } = useOrders({ page: 1, limit: 20 });
+  const { data, isLoading } = useOrders({ page: 1, limit: 200 });
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const pageSize = 10;
+  const tableRef = React.useRef<HTMLDivElement>(null);
 
   const rawOrders = data?.orders || [];
-  const orders = React.useMemo(() => {
+  const allOrders = React.useMemo(() => {
     return [...rawOrders].sort((a: any, b: any) => {
       const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -20,6 +23,27 @@ export const Orders: React.FC = () => {
       return (b.orderNumber || b._id || '').localeCompare(a.orderNumber || a._id || '');
     });
   }, [rawOrders]);
+
+  const totalOrders = allOrders.length;
+  const totalPages = Math.max(1, Math.ceil(totalOrders / pageSize));
+
+  React.useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedOrders = React.useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return allOrders.slice(startIndex, startIndex + pageSize);
+  }, [allOrders, currentPage, pageSize]);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    if (tableRef.current) {
+      tableRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -49,12 +73,12 @@ export const Orders: React.FC = () => {
           </Link>
         </div>
 
-        {orders.length === 0 ? (
+        {allOrders.length === 0 ? (
           <div className="bg-white rounded-3xl border border-emerald-100 p-8 sm:p-12 text-center shadow-sm max-w-lg mx-auto my-6">
             <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-5 text-emerald-600 shadow-inner">
               <Package className="w-10 h-10" />
             </div>
-            <h2 className="text-2xl font-serif font-bold text-[#064e3b] mb-2">
+            <h2 className="text-2xl font-serif text-bold text-[#064e3b] mb-2 font-bold">
               No orders placed yet
             </h2>
             <p className="text-xs sm:text-sm text-neutral-500 mb-8 max-w-sm mx-auto leading-relaxed">
@@ -69,7 +93,7 @@ export const Orders: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-3xl border border-neutral-200/80 shadow-sm overflow-hidden">
+          <div ref={tableRef} className="bg-white rounded-3xl border border-neutral-200/80 shadow-sm overflow-hidden scroll-mt-24">
             <div className="hidden md:grid grid-cols-12 gap-4 p-5 bg-neutral-50/80 border-b border-neutral-200 text-xs font-bold text-neutral-600 uppercase tracking-wider">
               <div className="col-span-3">Order Identifier</div>
               <div className="col-span-3">Date Placed</div>
@@ -79,7 +103,7 @@ export const Orders: React.FC = () => {
             </div>
 
             <ul className="divide-y divide-neutral-100">
-              {orders.map((order: any) => {
+              {paginatedOrders.map((order: any) => {
                 const orderNum = order._id ? String(order._id) : (order.orderNumber || 'Order');
                 const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
                 const orderStatus = String(order.orderStatus || order.status || 'CONFIRMED').toUpperCase();
@@ -180,6 +204,59 @@ export const Orders: React.FC = () => {
                 );
               })}
             </ul>
+
+            {/* Pagination Bar (10 orders per page with numbering & navigation) */}
+            {totalOrders > 0 && (
+              <div className="p-4 sm:p-5 bg-neutral-50/80 border-t border-neutral-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-xs text-neutral-500 font-medium">
+                  Showing <span className="font-bold text-neutral-800">{(currentPage - 1) * pageSize + 1}</span> to{' '}
+                  <span className="font-bold text-neutral-800">{Math.min(currentPage * pageSize, totalOrders)}</span> of{' '}
+                  <span className="font-bold text-neutral-800">{totalOrders}</span> orders
+                </div>
+
+                <div className="flex items-center gap-1.5">
+                  {/* Prev Button (Left) */}
+                  <button
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    disabled={currentPage <= 1}
+                    className="px-3 py-1.5 rounded-xl border border-neutral-200 text-xs font-bold text-neutral-700 hover:bg-white hover:border-[#064e3b] hover:text-[#064e3b] transition-all disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1 cursor-pointer bg-white shadow-2xs"
+                    aria-label="Previous Page"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Prev</span>
+                  </button>
+
+                  {/* Page Numbers */}
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
+                    const isActive = pageNum === currentPage;
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`min-w-8 h-8 px-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center ${
+                          isActive
+                            ? 'bg-[#064e3b] text-white shadow-xs scale-105'
+                            : 'bg-white border border-neutral-200 text-neutral-700 hover:border-[#064e3b] hover:text-[#064e3b]'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  {/* Next Button (Right) */}
+                  <button
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage >= totalPages}
+                    className="px-3 py-1.5 rounded-xl border border-neutral-200 text-xs font-bold text-neutral-700 hover:bg-white hover:border-[#064e3b] hover:text-[#064e3b] transition-all disabled:opacity-40 disabled:pointer-events-none flex items-center gap-1 cursor-pointer bg-white shadow-2xs"
+                    aria-label="Next Page"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </Container>
