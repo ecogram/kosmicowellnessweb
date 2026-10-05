@@ -380,6 +380,8 @@ export const Checkout: React.FC = () => {
 
           // ONLY after successful backend verification:
           localStorage.removeItem('kosmico_cart_v1');
+          localStorage.setItem('kosmico_last_payment_method', 'ONLINE');
+          localStorage.setItem('kosmico_last_order_id', String(finalOrderNum));
           localStorage.setItem('kosmico_last_order_total', String(total || finalOrder?.total || 499));
           setIsPaymentProcessing(false);
           toast.success('Payment successful! Order placed.');
@@ -457,7 +459,8 @@ export const Checkout: React.FC = () => {
       const orderNumber =
         upfrontData?.orderNumber ||
         upfrontData?.order?.orderNumber ||
-        'KW-COD';
+        internalOrderId ||
+        '';
 
       const razorpayKey =
         upfrontData?.keyId ||
@@ -568,10 +571,20 @@ export const Checkout: React.FC = () => {
               verifyRes = fallbackRes.data?.data ?? fallbackRes.data;
             }
 
-            const placedOrder = verifyRes?.order || verifyRes?.data?.order || { orderNumber };
-            const finalNum = placedOrder?.orderNumber || orderNumber || 'KW-SUCCESS';
+            const placedOrder = verifyRes?.order || verifyRes?.data?.order || upfrontData?.order || null;
+            const finalNum =
+              placedOrder?._id ||
+              placedOrder?.id ||
+              verifyRes?.orderId ||
+              verifyRes?.data?.orderId ||
+              internalOrderId ||
+              placedOrder?.orderNumber ||
+              orderNumber ||
+              'KW-SUCCESS';
 
             localStorage.removeItem('kosmico_cart_v1');
+            localStorage.setItem('kosmico_last_payment_method', 'COD');
+            localStorage.setItem('kosmico_last_order_id', String(finalNum));
             localStorage.setItem('kosmico_last_order_total', String(total || placedOrder?.total || 499));
             setIsPaymentProcessing(false);
             toast.success('Advance payment successful! COD Order placed.');

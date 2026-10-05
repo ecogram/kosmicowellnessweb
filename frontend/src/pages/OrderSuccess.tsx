@@ -8,7 +8,11 @@ import { useOrder } from '../hooks/useOrders';
 
 export const OrderSuccess: React.FC = () => {
   const { orderNumber } = useParams();
-  const { data: order, isLoading } = useOrder(orderNumber as string);
+  const effectiveOrderId =
+    orderNumber && !orderNumber.toUpperCase().includes('KW-COD')
+      ? orderNumber
+      : (localStorage.getItem('kosmico_last_order_id') || orderNumber);
+  const { data: order, isLoading } = useOrder(effectiveOrderId as string);
 
   if (isLoading && !order) {
     return (
@@ -35,6 +39,30 @@ export const OrderSuccess: React.FC = () => {
     Number(localStorage.getItem('kosmico_last_order_total')) ||
     499;
 
+  const isCOD =
+    order?.paymentMethod === 'COD' ||
+    order?.paymentMethod === 'COD_UPFRONT' ||
+    String(order?.paymentMethod || '').toUpperCase().includes('COD') ||
+    String(order?.paymentStatus || '').toUpperCase().includes('COD') ||
+    order?.paymentStatus === 'PARTIAL_PAID' ||
+    order?.isCOD === true ||
+    (order?.upfrontAmount && Number(order.upfrontAmount) > 0) ||
+    String(orderNumber || '').toUpperCase().includes('COD') ||
+    localStorage.getItem('kosmico_last_payment_method') === 'COD';
+
+  const rawSavedId = localStorage.getItem('kosmico_last_order_id');
+  const validSavedId = rawSavedId && !rawSavedId.toUpperCase().includes('KW-COD') ? rawSavedId : null;
+  const isParamValid = orderNumber && !orderNumber.toUpperCase().includes('KW-COD');
+
+  const displayOrderNumber =
+    order?._id ||
+    (order?.orderNumber && !order.orderNumber.toUpperCase().includes('KW-COD') ? order.orderNumber : null) ||
+    (isParamValid ? orderNumber : null) ||
+    validSavedId ||
+    orderNumber;
+
+  const displayStatus = String(order?.orderStatus || order?.status || 'PLACED').toUpperCase();
+
   return (
     <div className="bg-[#f8faf8] min-h-screen py-16 px-4">
       <Container>
@@ -52,7 +80,7 @@ export const OrderSuccess: React.FC = () => {
             Thank you for your order!
           </h1>
           <p className="text-sm md:text-base text-neutral-600 mb-8 max-w-md mx-auto leading-relaxed">
-            Your order <strong className="text-neutral-900 font-bold">#{orderNumber}</strong> has been confirmed.
+            Your order <strong className="text-neutral-900 font-bold">#{displayOrderNumber}</strong> has been confirmed.
           </p>
 
           {/* Order Details Card */}
@@ -64,28 +92,24 @@ export const OrderSuccess: React.FC = () => {
               <div className="flex justify-between text-neutral-600">
                 <span>Status:</span>
                 <span className="font-bold text-neutral-900 uppercase">
-                  {order?.orderStatus || 'CONFIRMED'}
+                  {displayStatus}
                 </span>
               </div>
               <div className="flex justify-between text-neutral-600">
                 <span>Payment Method:</span>
                 <span className="font-bold text-emerald-800">
-                  {order?.paymentMethod === 'COD'
+                  {isCOD
                     ? '💵 Cash on Delivery (COD)'
-                    : order?.paymentMethod === 'COD_UPFRONT'
-                    ? '💵 COD (Advance Paid ₹104)'
                     : '💳 Online Payment'}
                 </span>
               </div>
               <div className="flex justify-between text-neutral-600">
                 <span>Payment Status:</span>
                 <span className="font-semibold text-emerald-700">
-                  {order?.paymentMethod === 'COD'
-                    ? 'Pay upon delivery'
-                    : order?.paymentStatus === 'PARTIAL_PAID'
-                    ? 'Advance Paid'
-                    : order?.paymentStatus === 'PAID'
-                    ? 'Paid'
+                  {isCOD
+                    ? (order?.paymentStatus === 'PARTIAL_PAID' || order?.upfrontPaymentStatus === 'Paid'
+                        ? 'Advance Paid'
+                        : 'Pay upon delivery')
                     : 'Paid'}
                 </span>
               </div>

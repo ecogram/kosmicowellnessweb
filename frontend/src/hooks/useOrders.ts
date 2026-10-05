@@ -103,6 +103,9 @@ export const useOrder = (orderId: string) => {
           const list: any[] = qData?.orders ?? (Array.isArray(qData) ? qData : []);
           const found = list.find(isMatch);
           if (found) return found;
+          if (['kw-cod', 'kw-success', 'success'].includes(targetId) && list.length > 0) {
+            return list[0];
+          }
         }
       } catch (_) { }
 
@@ -115,6 +118,9 @@ export const useOrder = (orderId: string) => {
           (Array.isArray(resData) ? resData : (Array.isArray(response.data?.data) ? response.data.data : []));
         const matched = orders.find(isMatch);
         if (matched) return matched;
+        if (['kw-cod', 'kw-success', 'success'].includes(targetId) && orders.length > 0) {
+          return orders[0];
+        }
       } catch (_) { }
 
       // 2. Fallback to /order/myorders endpoint
