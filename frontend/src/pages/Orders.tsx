@@ -153,8 +153,10 @@ export const Orders: React.FC = () => {
                 const recipientCity = order.shippingAddress?.city || order.shippingAddress?.state || '';
 
                 const isPartCod = isAdvancePaid;
-                const paidAmount = Number(order.paidAmount ?? order.upfrontAmount ?? (isPartCod ? advancePaidAmount : (isCOD ? 0 : orderTotal)));
-                const balanceAmount = Number(order.balanceAmount ?? (isCOD ? payOnDeliveryAmount : 0));
+                const rawPaid = Number(order.paidAmount || order.upfrontAmount || 0);
+                const deliveryPlusGst = (shippingFee + taxFee) || 104;
+                const paidAmount = isPartCod ? (rawPaid > 0 ? rawPaid : deliveryPlusGst) : (paymentStatusUpper === 'PAID' ? orderTotal : 0);
+                const balanceAmount = isPartCod ? payOnDeliveryAmount : (isCOD ? orderTotal : 0);
 
                 return (
                   <li key={order._id || orderNum} className="p-5 sm:p-6 flex flex-col md:grid md:grid-cols-12 gap-4 items-center hover:bg-emerald-50/30 transition-colors">

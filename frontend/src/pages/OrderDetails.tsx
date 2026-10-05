@@ -254,25 +254,23 @@ export const OrderDetails = () => {
     orderTotal = orderSubtotal - discountAmt + shippingFee + taxFee;
   }
 
-  // Extract numeric paidAmount and balanceAmount directly from order / trackingData (ensure pure numbers)
-  const rawPaid = order.paidAmount ?? trackingData?.paidAmount ?? trackingData?.order?.paidAmount ?? order.upfrontAmount;
-  const rawBalance = order.balanceAmount ?? trackingData?.balanceAmount ?? trackingData?.order?.balanceAmount;
+  // Advance paid in COD is strictly Delivery Fee + GST (e.g. ₹88 + ₹16 = ₹104)
+  const deliveryPlusGst = (shippingFee + taxFee) || 104;
+  const payOnDeliveryProductPrice = Math.max(0, orderSubtotal - discountAmt);
 
-  const paidAmount = Number(
-    rawPaid !== undefined && rawPaid !== null
-      ? rawPaid
-      : (isAdvancePaid ? advancePaidAmount : (isCOD ? 0 : orderTotal))
-  );
+  const rawPaid = Number(order.paidAmount || trackingData?.paidAmount || trackingData?.order?.paidAmount || order.upfrontAmount || 0);
+  const paidAmount = isAdvancePaid
+    ? (rawPaid > 0 ? rawPaid : deliveryPlusGst)
+    : (isPaid ? orderTotal : 0);
 
-  const balanceAmount = Number(
-    rawBalance !== undefined && rawBalance !== null
-      ? rawBalance
-      : (isCOD ? Math.max(0, orderTotal - paidAmount) : 0)
-  );
+  // Balance payable on delivery is strictly the product price (subtotal - discount)
+  const balanceAmount = isAdvancePaid
+    ? payOnDeliveryProductPrice
+    : (isCOD ? orderTotal : 0);
 
   const handleCancel = () => {
     const confirmMsg = isAdvancePaid
-      ? `Are you sure you want to cancel this order?\n\nNote: The advance payment of ${formatINR(paidAmount)} (Delivery Fee + GST) is non-refundable.`
+      ? `Are you sure you want to cancel this order?\n\nNote: The advance payment of ${formatINR(paidAmount)} (Delivery Fee ${formatINR(shippingFee)} + GST ${formatINR(taxFee)}) is non-refundable.`
       : 'Are you sure you want to cancel this order?';
     if (confirm(confirmMsg)) {
       cancelMutation.mutate(order._id || order.orderNumber);
@@ -513,18 +511,18 @@ export const OrderDetails = () => {
                 {isAdvancePaid ? (
                   <div className="pt-2 border-t border-neutral-100 space-y-2">
                     <div className="flex justify-between items-center text-sm font-semibold text-emerald-800 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200/70">
-                      <span>Advance Paid (Delivery + GST)</span>
+                      <span>Advance Paid (Delivery Fee + GST)</span>
                       <span className="font-bold">{formatINR(paidAmount)}</span>
                     </div>
                     <div className="flex justify-between items-center text-sm font-bold text-neutral-900 bg-[#ede7df] px-3 py-2 rounded-xl border border-[#ded5c8]">
-                      <span className="text-[#8b5e34]">Balance Payable on Delivery</span>
+                      <span className="text-[#8b5e34]">Pay on Delivery (Product Price)</span>
                       <span className="text-base text-neutral-900 font-sans">{formatINR(balanceAmount)}</span>
                     </div>
                   </div>
                 ) : isCOD ? (
                   <div className="pt-2 border-t border-neutral-100">
                     <div className="flex justify-between items-center text-sm font-bold text-neutral-900 bg-amber-50 px-3 py-2 rounded-xl border border-amber-200">
-                      <span className="text-amber-900">Balance Payable on Delivery</span>
+                      <span className="text-amber-900">Pay on Delivery</span>
                       <span className="text-base text-neutral-900 font-sans">{formatINR(balanceAmount || orderTotal)}</span>
                     </div>
                   </div>
@@ -581,7 +579,10 @@ export const OrderDetails = () => {
                   <div className="space-y-0.5">
                     <p className="font-bold text-amber-950">Non-Refundable Advance Policy</p>
                     <p className="text-amber-900/90 leading-relaxed">
-                      Please note: The advance payment of <strong>{formatINR(paidAmount)}</strong> (Delivery Fee + GST) is non-refundable upon order cancellation.
+                      Please note: The advance payment of <strong>{formatINR(paidAmount)}</strong> (Delivery Fee {formatINR(shippingFee)} + GST {formatINR(taxFee)}) is non-refundable upon order cancellation.
+                    </p>
+                    <p className="text-amber-800 font-medium pt-0.5">
+                      • Balance product price of <strong>{formatINR(balanceAmount)}</strong> will be collected upon delivery.
                     </p>
                   </div>
                 </div>
