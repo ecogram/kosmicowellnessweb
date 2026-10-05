@@ -16,13 +16,13 @@ export const useOrders = (params: { page?: number; limit?: number } = {}) => {
         const resData = response.data?.data ?? response.data ?? {};
         const rawOrders: any[] = resData.orders ?? (Array.isArray(resData) ? resData : []);
 
-        // Strictly show only valid, confirmed/completed orders — no pending, failed, or mock data
+        // Show all user orders from database (placed, paid, partial_paid, cancelled, cod)
         const orders = rawOrders.filter((o: any) => {
           const payStatus = String(o.paymentStatus || '').toUpperCase();
           const ordStatus = String(o.orderStatus || o.status || '').toUpperCase();
 
-          // Exclude any pending or failed orders where payment was not successful
-          if (['PENDING', 'FAILED', 'CANCELLED'].includes(payStatus) || ordStatus === 'PENDING') {
+          // Only exclude unplaced abandoned checkout drafts
+          if (ordStatus === 'PENDING' && (payStatus === 'PENDING' || payStatus === 'FAILED')) {
             return false;
           }
 

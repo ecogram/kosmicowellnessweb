@@ -341,22 +341,33 @@ const getMyOrders = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   const userEmail = req.user.email ? req.user.email.toLowerCase().trim() : '';
+  const userPhone = req.user.phoneNumber || req.user.phone || '';
+  const cleanPhone = String(userPhone).replace(/[^0-9]/g, '');
+
   const userConditions = [
     { user: req.user._id },
     { user: String(req.user._id) },
+    { userId: req.user._id },
+    { userId: String(req.user._id) },
     ...(userEmail ? [{ userEmail: new RegExp(`^${userEmail}$`, 'i') }] : []),
+    ...(cleanPhone.length >= 10 ? [
+      { 'shippingAddress.phone': new RegExp(cleanPhone.slice(-10)) },
+      { 'shippingAddress.phoneNumber': new RegExp(cleanPhone.slice(-10)) },
+      { 'deliveryAddress.phone': new RegExp(cleanPhone.slice(-10)) },
+      { 'deliveryAddress.phoneNumber': new RegExp(cleanPhone.slice(-10)) },
+    ] : []),
   ];
 
   const query = {
     $and: [
       { $or: userConditions },
       {
+        // Include all placed, paid, COD, partial paid, and active/cancelled user orders
         $or: [
-          { paymentStatus: { $in: ['PAID', 'paid', 'PARTIAL_PAID', 'partial_paid', 'COMPLETED', 'completed', 'COD_PENDING', 'REFUNDED', 'refunded'] } },
-          {
-            orderStatus: { $in: ['PROCESSING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED'] },
-            paymentStatus: { $nin: ['PENDING', 'pending', 'FAILED', 'failed'] }
-          }
+          { paymentStatus: { $regex: /^(paid|partial_paid|completed|cod_pending|refunded)/i } },
+          { orderStatus: { $regex: /^(placed|confirmed|processing|shipped|delivered|cancelled|returned|refunded)/i } },
+          { upfrontAmount: { $gt: 0 } },
+          { paymentMethod: { $regex: /cod/i } },
         ]
       },
       // Exclude test data & dummy orders
@@ -778,26 +789,7 @@ const getOrderById = asyncHandler(async (req, res) => {
     ? { $and: [{ $or: idCondition }, { $or: userCondition }] }
     : { $or: idCondition };
 
-  const query = {
-    $and: [
-      baseQuery,
-      {
-        $or: [
-          { paymentStatus: { $in: ['PAID', 'paid', 'PARTIAL_PAID', 'partial_paid', 'COMPLETED', 'completed', 'COD_PENDING', 'REFUNDED', 'refunded'] } },
-          {
-            orderStatus: { $in: ['PROCESSING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED', 'RETURNED', 'REFUNDED'] },
-            paymentStatus: { $nin: ['PENDING', 'pending', 'FAILED', 'failed'] }
-          }
-        ]
-      },
-      {
-        orderNumber: { $not: /^TEST|^MOCK|^DEMO|^DEV_|^DUMMY_/i },
-        isTest: { $ne: true },
-        testOrder: { $ne: true },
-        isMock: { $ne: true }
-      }
-    ]
-  };
+  const query = baseQuery;
 
   const order = await Order.findOne(query).lean();
   if (!order) {
