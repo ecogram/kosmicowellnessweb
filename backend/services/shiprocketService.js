@@ -172,8 +172,17 @@ class ShiprocketService {
       const cleanPincode = String(addr.pincode || addr.postalCode || '201306').trim();
       const cleanCity = String(addr.city || 'Gautam Buddha Nagar').trim();
       const cleanState = String(addr.state || 'Uttar Pradesh').trim();
-      const cleanAddress1 = String(addr.streetAddress || addr.addressLine1 || addr.flatBuilding || 'Delivery Address').trim();
-      const cleanAddress2 = String(addr.flatBuilding && addr.streetAddress ? addr.flatBuilding : addr.landmark || '').trim();
+      
+      let fullAddressParts = [
+        addr.flatBuilding,
+        addr.streetAddress,
+        addr.landmark,
+      ].filter(Boolean);
+      let cleanAddress1 = fullAddressParts.join(', ').trim();
+      if (cleanAddress1.length < 10) {
+        cleanAddress1 = `${cleanAddress1 ? cleanAddress1 + ', ' : ''}${cleanCity}, ${cleanState}`;
+      }
+      const cleanAddress2 = String(addr.landmark || addr.flatBuilding || '').trim();
 
       // Format Items
       const orderItems = [];
@@ -221,7 +230,11 @@ class ShiprocketService {
       const orderDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 
       const isCod = (order.paymentMethod === 'COD' || order.paymentStatus === 'COD_PENDING') && order.paymentStatus !== 'PAID';
-      const cleanOrderNumber = String(order.orderNumber || order._id.toString()).replace(/[^a-zA-Z0-9_-]/g, '');
+      let cleanOrderNumber = order.orderNumber;
+      if (!cleanOrderNumber) {
+        cleanOrderNumber = 'KW' + Date.now().toString().slice(-6) + Math.floor(100 + Math.random() * 900);
+      }
+      cleanOrderNumber = String(cleanOrderNumber).replace(/[^a-zA-Z0-9_-]/g, '');
 
       const payload = {
         order_id: cleanOrderNumber,
@@ -240,6 +253,16 @@ class ShiprocketService {
         billing_email: order.userEmail || 'orders@kosmicowellness.com',
         billing_phone: cleanPhone,
         shipping_is_billing: true,
+        shipping_customer_name: firstName,
+        shipping_last_name: lastName,
+        shipping_address: cleanAddress1,
+        shipping_address_2: cleanAddress2,
+        shipping_city: cleanCity,
+        shipping_pincode: cleanPincode,
+        shipping_state: cleanState,
+        shipping_country: 'India',
+        shipping_email: order.userEmail || 'orders@kosmicowellness.com',
+        shipping_phone: cleanPhone,
         order_items: orderItems,
         payment_method: isCod ? 'COD' : 'Prepaid',
         shipping_charges: Number(order.shipping || order.deliveryFee) || 0,
@@ -266,12 +289,17 @@ class ShiprocketService {
 
       if (shiprocketOrderId) {
         await Order.findByIdAndUpdate(order._id, {
+          orderNumber: cleanOrderNumber,
           shiprocketOrderId,
           shiprocketShipmentId,
           courierPartner: 'Shiprocket Express',
+          orderStatus: 'PROCESSING',
+          shippingStatus: 'SYNCED_TO_SHIPROCKET',
+          trackingNumber: 'TRK-' + cleanOrderNumber,
         });
         console.log(`[Shiprocket] Successfully created order ${cleanOrderNumber} -> Shiprocket Order ID: ${shiprocketOrderId}`);
       }
+
 
       return {
         success: true,
