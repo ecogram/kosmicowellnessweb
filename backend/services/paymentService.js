@@ -172,7 +172,7 @@ class PaymentService {
       payment.order._id || payment.order,
       {
         paymentStatus: 'PAID',
-        orderStatus: 'PROCESSING',
+        orderStatus: 'Placed',
         paymentReference: razorpay_payment_id || `pay_dev_${Date.now()}`,
       },
       { new: true }
@@ -242,14 +242,14 @@ class PaymentService {
       if (order && order.paymentStatus !== 'PAID') {
         order.paymentStatus = 'PAID';
         if (order.orderStatus === 'PENDING') {
-          order.orderStatus = 'PROCESSING';
+          order.orderStatus = 'Placed';
         }
         await order.save();
         notificationService.createPaymentNotification(payment.user, order._id, order.orderNumber, true).catch(console.error);
         const { emitToUser, emitToOrder } = require('../realtime/emitter');
         emitToUser(payment.user, 'payment:success', { orderId: order._id });
-        if (order.orderStatus === 'PROCESSING') {
-          emitToOrder(order._id, 'order:processing', { orderId: order._id, status: 'PROCESSING' });
+        if (order.orderStatus === 'Placed') {
+          emitToOrder(order._id, 'order:processing', { orderId: order._id, status: 'Placed' });
         }
         
         const emailService = require('../utils/email');

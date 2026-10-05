@@ -293,7 +293,7 @@ class ShiprocketService {
           shiprocketOrderId,
           shiprocketShipmentId,
           courierPartner: 'Shiprocket Express',
-          orderStatus: 'PROCESSING',
+          orderStatus: 'Placed',
           shippingStatus: 'SYNCED_TO_SHIPROCKET',
           trackingNumber: 'TRK-' + cleanOrderNumber,
         });

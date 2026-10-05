@@ -110,7 +110,7 @@ const placeCodOrder = asyncHandler(async (req, res) => {
     amount: finalTotal,
     shippingAddress: addressData,
     billingAddress: addressData,
-    orderStatus: 'PROCESSING',
+    orderStatus: 'Placed',
     paymentStatus: 'COD_PENDING',
     paymentMethod: 'COD',
     trackingNumber: 'TRK-' + Math.floor(10000000 + Math.random() * 90000000),
@@ -291,7 +291,7 @@ const verifyPayment = asyncHandler(async (req, res) => {
       {
         paymentStatus: isCodUpfront ? 'PARTIAL_PAID' : 'PAID',
         upfrontPaymentStatus: 'Paid',
-        orderStatus: 'PROCESSING',
+        orderStatus: 'Placed',
         paymentReference: razorpay_payment_id,
         trackingNumber: 'TRK-' + Math.floor(10000000 + Math.random() * 90000000),
       },
@@ -638,7 +638,7 @@ const verifyCodUpfrontPayment = asyncHandler(async (req, res) => {
       payment.order,
       {
         paymentStatus: 'PARTIAL_PAID',
-        orderStatus: 'PROCESSING',
+        orderStatus: 'Placed',
         paymentReference: razorpay_payment_id,
         trackingNumber: 'TRK-' + Math.floor(10000000 + Math.random() * 90000000),
       },
