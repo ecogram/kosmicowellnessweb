@@ -86,26 +86,31 @@ export const Orders: React.FC = () => {
                 const paymentMethodUpper = String(order.paymentMethod || '').toUpperCase();
                 const paymentStatusUpper = String(order.paymentStatus || '').toUpperCase();
                 const upfrontAmt = Number(order.upfrontAmount || 0);
+                const orderSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 0) * (it.quantity || it.qty || 1), 0) || 0);
+                const discountAmt = Number(order.discount ?? order.discountAmount ?? 0);
+                let orderTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
+                let shippingFee = Number(order.shipping ?? order.deliveryFee ?? 0);
+                let taxFee = Number(order.tax ?? order.gstCharge ?? 0);
+
                 const isCOD =
                   paymentMethodUpper.includes('COD') ||
                   paymentStatusUpper.includes('COD') ||
                   paymentStatusUpper === 'PARTIAL_PAID' ||
                   upfrontAmt > 0 ||
-                  order.isCOD === true;
+                  order.isCOD === true ||
+                  shippingFee > 0 ||
+                  (orderTotal >= 104 && orderSubtotal <= 10) ||
+                  (orderTotal - orderSubtotal >= 80);
 
                 const isAdvancePaid =
                   isCOD && (
                     paymentMethodUpper === 'COD_UPFRONT' ||
                     upfrontAmt > 0 ||
                     paymentStatusUpper === 'PARTIAL_PAID' ||
-                    String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID'
+                    String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID' ||
+                    paymentStatusUpper === 'PAID' ||
+                    orderTotal >= 104
                   );
-
-                const orderSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 0) * (it.quantity || it.qty || 1), 0) || 0);
-                const discountAmt = Number(order.discount ?? order.discountAmount ?? 0);
-                let orderTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
-                let shippingFee = Number(order.shipping ?? order.deliveryFee ?? 0);
-                let taxFee = Number(order.tax ?? order.gstCharge ?? 0);
 
                 if (isCOD) {
                   if (shippingFee === 0 || shippingFee === 91 || (shippingFee + taxFee === 104) || !shippingFee) {

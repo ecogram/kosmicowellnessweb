@@ -431,12 +431,16 @@ export const Checkout: React.FC = () => {
           amount: advanceAmount,
           upfrontAmount: advanceAmount,
           paymentMethod: 'COD_UPFRONT',
+          isCOD: true,
         });
         upfrontData = upfrontRes.data?.data || upfrontRes.data;
       } catch (placeErr) {
         const fallbackRes = await api.post('/payment/cod-upfront/create', {
           ...orderPayload,
+          amount: advanceAmount,
           upfrontAmount: advanceAmount,
+          paymentMethod: 'COD_UPFRONT',
+          isCOD: true,
         });
         upfrontData = fallbackRes.data?.data || fallbackRes.data;
       }
@@ -640,12 +644,15 @@ export const Checkout: React.FC = () => {
 
       const payload = {
         amount: total,
+        total: total,
         deliveryAddressId: selectedAddress._id!,
         items: itemsToOrder,
         couponCode: appliedCoupon?.code || undefined,
         discountAmount: discount,
         deliveryFee,
         gstCharge: gst,
+        paymentMethod: paymentMode === 'COD' ? 'COD_UPFRONT' : 'ONLINE',
+        isCOD: paymentMode === 'COD',
       };
 
       if (paymentMode === 'COD') {

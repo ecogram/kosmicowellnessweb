@@ -161,12 +161,22 @@ export const OrderDetails = () => {
   const paymentStatusUpper = String(order.paymentStatus || '').toUpperCase();
   const upfrontAmt = Number(order.upfrontAmount || 0);
 
+  // Compute raw subtotal and total to catch all COD orders even if paymentMethod was not explicitly set
+  const rawSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 0) * (it.quantity || it.qty || 1), 0) || 0);
+  const rawTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
+  const rawDelivery = Number(order.shipping ?? order.deliveryFee ?? 0);
+
+  // In Kosmico, online prepaid orders ALWAYS have free delivery (total == subtotal).
+  // Any order with COD tag, upfront amount, delivery fee, or total >= 104 with subtotal <= 10 is COD!
   const isCOD =
     paymentMethodUpper.includes('COD') ||
     paymentStatusUpper.includes('COD') ||
     paymentStatusUpper === 'PARTIAL_PAID' ||
     upfrontAmt > 0 ||
-    order.isCOD === true;
+    order.isCOD === true ||
+    rawDelivery > 0 ||
+    (rawTotal >= 104 && rawSubtotal <= 10) ||
+    (rawTotal - rawSubtotal >= 80);
 
   const isAdvancePaid =
     isCOD && (
@@ -174,7 +184,8 @@ export const OrderDetails = () => {
       upfrontAmt > 0 ||
       paymentStatusUpper === 'PARTIAL_PAID' ||
       String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID' ||
-      paymentStatusUpper === 'PAID'
+      paymentStatusUpper === 'PAID' ||
+      rawTotal >= 104
     );
 
   const isPaid = !isCOD && ['PAID', 'COMPLETED'].includes(paymentStatusUpper);

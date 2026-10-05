@@ -42,6 +42,24 @@ const trackOrder = asyncHandler(async (req, res) => {
   const orderNum = order.orderNumber || order.shiprocketOrderId || order._id.toString();
   const trackingNumber = order.trackingNumber || order.shiprocketShipmentId || 'TRK-' + String(orderNum).slice(-8);
 
+  const orderTotal = Number(order.total || order.amount || 0);
+  const orderSubtotal = Number(order.subtotal || order.total || 0);
+
+  const isCodOrder =
+    (order.paymentMethod || '').toUpperCase().includes('COD') ||
+    (order.paymentStatus || '').toUpperCase().includes('COD') ||
+    (order.paymentStatus || '').toUpperCase() === 'PARTIAL_PAID' ||
+    Number(order.upfrontAmount || 0) > 0 ||
+    Number(order.deliveryFee || order.shipping || 0) > 0 ||
+    (orderTotal >= 104 && orderSubtotal <= 10) ||
+    (orderTotal - orderSubtotal >= 80);
+
+  const resolvedDeliveryFee = isCodOrder ? (Number(order.deliveryFee ?? order.shipping ?? 0) || 88) : 0;
+  const resolvedGstCharge = isCodOrder ? (Number(order.gstCharge ?? order.tax ?? 0) || 16) : 0;
+  const resolvedUpfrontAmount = isCodOrder ? (Number(order.upfrontAmount || 0) || (resolvedDeliveryFee + resolvedGstCharge) || 104) : 0;
+  const resolvedPaymentMethod = isCodOrder ? (order.paymentMethod && order.paymentMethod.toUpperCase().includes('COD') ? order.paymentMethod : 'COD_UPFRONT') : (order.paymentMethod || 'ONLINE');
+  const resolvedPaymentStatus = isCodOrder && ['PAID', 'COMPLETED'].includes(String(order.paymentStatus || '').toUpperCase()) ? 'PARTIAL_PAID' : (order.paymentStatus || 'PENDING');
+
   const trackingDetails = {
     orderNumber: orderNum,
     currentStatus: String(order.orderStatus || 'PROCESSING').toUpperCase(),
@@ -74,20 +92,29 @@ const trackOrder = asyncHandler(async (req, res) => {
         completed: String(order.orderStatus).toUpperCase() === 'DELIVERED',
       },
     ],
-    total: Number(order.total || order.amount || 0),
-    amount: Number(order.amount || order.total || 0),
-    subtotal: Number(order.subtotal || order.total || 0),
-    deliveryFee: Number(order.deliveryFee ?? order.shipping ?? 0),
-    shipping: Number(order.shipping ?? order.deliveryFee ?? 0),
-    gstCharge: Number(order.gstCharge ?? order.tax ?? 0),
-    tax: Number(order.tax ?? order.gstCharge ?? 0),
+    total: orderTotal,
+    amount: orderTotal,
+    subtotal: orderSubtotal,
+    deliveryFee: resolvedDeliveryFee,
+    shipping: resolvedDeliveryFee,
+    gstCharge: resolvedGstCharge,
+    tax: resolvedGstCharge,
     discount: Number(order.discount ?? order.discountAmount ?? 0),
-    upfrontAmount: Number(order.upfrontAmount || 0),
-    paymentMethod: order.paymentMethod,
-    paymentStatus: order.paymentStatus,
+    upfrontAmount: resolvedUpfrontAmount,
+    paymentMethod: resolvedPaymentMethod,
+    paymentStatus: resolvedPaymentStatus,
     items: order.items || [],
     shippingAddress: order.shippingAddress || order.deliveryAddress || {},
-    order: order,
+    order: {
+      ...(order.toObject ? order.toObject() : order),
+      paymentMethod: resolvedPaymentMethod,
+      paymentStatus: resolvedPaymentStatus,
+      deliveryFee: resolvedDeliveryFee,
+      shipping: resolvedDeliveryFee,
+      gstCharge: resolvedGstCharge,
+      tax: resolvedGstCharge,
+      upfrontAmount: resolvedUpfrontAmount,
+    },
   };
 
   res.status(200).json(new ApiResponse(200, trackingDetails, 'Order tracking details retrieved'));
