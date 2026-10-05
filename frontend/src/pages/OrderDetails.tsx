@@ -209,7 +209,7 @@ export const OrderDetails = () => {
     orderTotal = orderSubtotal - discountAmt + shippingFee + taxFee;
   }
 
-  const orderNum = order.orderNumber || (order._id ? `#${order._id}` : (order.shiprocketOrderId || 'Order'));
+  const orderNum = order._id ? String(order._id) : (order.orderNumber || 'Order');
 
   return (
     <div className="bg-[#f8faf8] min-h-screen py-8 sm:py-12">

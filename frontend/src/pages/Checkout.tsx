@@ -371,11 +371,11 @@ export const Checkout: React.FC = () => {
 
           const finalOrder = verifyRes?.order || verifyRes?.data?.order || order?.order || order;
           const finalOrderNum =
-            finalOrder?.orderNumber ||
             finalOrder?._id ||
+            order?._id ||
+            finalOrder?.orderNumber ||
             verifyRes?.orderNumber ||
             order?.orderNumber ||
-            order?._id ||
             'KW-SUCCESS';
 
           // ONLY after successful backend verification:

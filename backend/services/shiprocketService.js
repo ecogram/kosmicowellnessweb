@@ -230,11 +230,7 @@ class ShiprocketService {
       const orderDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 
       const isCod = (order.paymentMethod === 'COD' || order.paymentStatus === 'COD_PENDING') && order.paymentStatus !== 'PAID';
-      let cleanOrderNumber = order.orderNumber;
-      if (!cleanOrderNumber) {
-        cleanOrderNumber = 'KW' + Date.now().toString().slice(-6) + Math.floor(100 + Math.random() * 900);
-      }
-      cleanOrderNumber = String(cleanOrderNumber).replace(/[^a-zA-Z0-9_-]/g, '');
+      const cleanOrderNumber = order._id ? order._id.toString() : String(order.orderNumber || Date.now());
 
       const payload = {
         order_id: cleanOrderNumber,

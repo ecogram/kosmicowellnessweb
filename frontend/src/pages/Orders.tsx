@@ -80,7 +80,7 @@ export const Orders: React.FC = () => {
 
             <ul className="divide-y divide-neutral-100">
               {orders.map((order: any) => {
-                const orderNum = order.orderNumber || (order._id ? `#${order._id}` : (order.shiprocketOrderId || 'Order'));
+                const orderNum = order._id ? String(order._id) : (order.orderNumber || 'Order');
                 const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
                 const orderStatus = String(order.orderStatus || order.status || 'CONFIRMED').toUpperCase();
                 const isCOD = (order.paymentMethod || '').toUpperCase() === 'COD';
