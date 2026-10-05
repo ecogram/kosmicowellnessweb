@@ -73,7 +73,7 @@ export const OrderSuccess: React.FC = () => {
                   {order?.paymentMethod === 'COD'
                     ? '💵 Cash on Delivery (COD)'
                     : order?.paymentMethod === 'COD_UPFRONT'
-                    ? '💵 COD (Advance Paid ₹93)'
+                    ? '💵 COD (Advance Paid ₹104)'
                     : '💳 Online Payment'}
                 </span>
               </div>

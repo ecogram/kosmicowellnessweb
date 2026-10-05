@@ -220,25 +220,15 @@ export const OrderDetails = () => {
   // Pricing calculations
   const orderSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 0) * (it.quantity || it.qty || 1), 0) || 0);
   const discountAmt = Number(order.discount ?? order.discountAmount ?? 0);
-  let orderTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
 
   let shippingFee = Number(order.shipping ?? order.deliveryFee ?? 0);
   let taxFee = Number(order.tax ?? order.gstCharge ?? 0);
 
   if (isCOD) {
-    const extra = Math.max(0, orderTotal - orderSubtotal + discountAmt);
-    if (shippingFee === 0 && taxFee === 0) {
-      if (extra > 0) {
-        shippingFee = Math.round(extra / 1.18);
-        taxFee = extra - shippingFee;
-      } else {
-        shippingFee = 91;
-        taxFee = 13;
-      }
-    } else if (shippingFee > 0 && taxFee === 0) {
-      if (extra > shippingFee) {
-        taxFee = extra - shippingFee;
-      }
+    // In checkout, COD delivery fee is ₹88 and GST is ₹16 (Total advance: ₹104)
+    if (shippingFee === 0 || shippingFee === 91 || (shippingFee + taxFee === 104) || !shippingFee) {
+      shippingFee = 88;
+      taxFee = 16;
     }
   } else {
     if (shippingFee === 0 && !order.shipping && !order.deliveryFee) {
@@ -249,7 +239,13 @@ export const OrderDetails = () => {
     }
   }
 
-  if (!orderTotal || (isCOD && orderTotal <= orderSubtotal && (shippingFee > 0 || taxFee > 0))) {
+  const advancePaidAmount = Number(order.upfrontAmount) || (shippingFee + taxFee) || 104;
+  const payOnDeliveryAmount = Math.max(0, orderSubtotal - discountAmt);
+  let orderTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
+
+  if (isCOD) {
+    orderTotal = payOnDeliveryAmount + advancePaidAmount;
+  } else if (!orderTotal) {
     orderTotal = orderSubtotal - discountAmt + shippingFee + taxFee;
   }
 
@@ -481,6 +477,33 @@ export const OrderDetails = () => {
                   <span className="font-sans font-black text-2xl text-[#064e3b]">{formatINR(orderTotal)}</span>
                 </div>
               </div>
+
+              {/* COD Advance & Pay on Delivery Breakdown (Matching Checkout Page Exactly) */}
+              {isCOD && (
+                <div className="mt-4 p-4 bg-[#ede7df] border border-[#ded5c8] rounded-2xl space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-semibold text-[#8b5e34]">
+                      Pay Online Now (Delivery + GST)
+                    </span>
+                    <span className="text-sm font-bold text-neutral-900">
+                      {formatINR(advancePaidAmount)}
+                    </span>
+                  </div>
+
+                  <div className="text-xs font-semibold text-[#0a7a40]">
+                    • Non-Refundable advance payment
+                  </div>
+
+                  <div className="flex justify-between items-center pt-2 border-t border-[#ded5c8]/60">
+                    <span className="text-sm font-bold text-neutral-900">
+                      Pay on Delivery (Product Price)
+                    </span>
+                    <span className="text-sm font-bold text-neutral-900">
+                      {formatINR(payOnDeliveryAmount)}
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {/* Order & Payment Status Pills */}
               <div className="mt-6 pt-5 border-t border-neutral-100 space-y-3">

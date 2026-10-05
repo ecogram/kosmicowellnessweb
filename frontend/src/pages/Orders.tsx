@@ -108,18 +108,16 @@ export const Orders: React.FC = () => {
                 let taxFee = Number(order.tax ?? order.gstCharge ?? 0);
 
                 if (isCOD) {
-                  const extra = Math.max(0, orderTotal - orderSubtotal + discountAmt);
-                  if (shippingFee === 0 && taxFee === 0) {
-                    if (extra > 0) {
-                      shippingFee = Math.round(extra / 1.18);
-                      taxFee = extra - shippingFee;
-                    } else {
-                      shippingFee = 91;
-                      taxFee = 13;
-                    }
+                  if (shippingFee === 0 || shippingFee === 91 || (shippingFee + taxFee === 104) || !shippingFee) {
+                    shippingFee = 88;
+                    taxFee = 16;
                   }
                 }
-                if (!orderTotal) {
+                const advancePaidAmount = Number(order.upfrontAmount) || (shippingFee + taxFee) || 104;
+                const payOnDeliveryAmount = Math.max(0, orderSubtotal - discountAmt);
+                if (isCOD) {
+                  orderTotal = payOnDeliveryAmount + advancePaidAmount;
+                } else if (!orderTotal) {
                   orderTotal = orderSubtotal - discountAmt + shippingFee + taxFee;
                 }
                 const recipientName = order.shippingAddress?.fullName || order.userName || 'Customer';
