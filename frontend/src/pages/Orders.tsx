@@ -83,18 +83,47 @@ export const Orders: React.FC = () => {
                 const orderNum = order._id ? String(order._id) : (order.orderNumber || 'Order');
                 const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Recent';
                 const orderStatus = String(order.orderStatus || order.status || 'CONFIRMED').toUpperCase();
-                const isCOD = (order.paymentMethod || '').toUpperCase() === 'COD';
-                const orderSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 0) * (it.quantity || it.qty || 1), 0) || 0);
-                const shippingFee = Number(order.shipping ?? order.deliveryFee ?? (isCOD ? 77 : 0));
-                const taxFee = Number(order.tax ?? order.gstCharge ?? (isCOD ? 13 : 0));
-                const discountAmt = Number(order.discount ?? order.discountAmount ?? 0);
-                const recipientName = order.shippingAddress?.fullName || order.userName || 'Customer';
-                const recipientCity = order.shippingAddress?.city || order.shippingAddress?.state || '';
+                const paymentMethodUpper = String(order.paymentMethod || '').toUpperCase();
+                const paymentStatusUpper = String(order.paymentStatus || '').toUpperCase();
+                const upfrontAmt = Number(order.upfrontAmount || 0);
+                const isCOD =
+                  paymentMethodUpper.includes('COD') ||
+                  paymentStatusUpper.includes('COD') ||
+                  paymentStatusUpper === 'PARTIAL_PAID' ||
+                  upfrontAmt > 0 ||
+                  order.isCOD === true;
 
+                const isAdvancePaid =
+                  isCOD && (
+                    paymentMethodUpper === 'COD_UPFRONT' ||
+                    upfrontAmt > 0 ||
+                    paymentStatusUpper === 'PARTIAL_PAID' ||
+                    String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID'
+                  );
+
+                const orderSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 0) * (it.quantity || it.qty || 1), 0) || 0);
+                const discountAmt = Number(order.discount ?? order.discountAmount ?? 0);
                 let orderTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
+                let shippingFee = Number(order.shipping ?? order.deliveryFee ?? 0);
+                let taxFee = Number(order.tax ?? order.gstCharge ?? 0);
+
+                if (isCOD) {
+                  const extra = Math.max(0, orderTotal - orderSubtotal + discountAmt);
+                  if (shippingFee === 0 && taxFee === 0) {
+                    if (extra > 0) {
+                      shippingFee = Math.round(extra / 1.18);
+                      taxFee = extra - shippingFee;
+                    } else {
+                      shippingFee = 91;
+                      taxFee = 13;
+                    }
+                  }
+                }
                 if (!orderTotal) {
                   orderTotal = orderSubtotal - discountAmt + shippingFee + taxFee;
                 }
+                const recipientName = order.shippingAddress?.fullName || order.userName || 'Customer';
+                const recipientCity = order.shippingAddress?.city || order.shippingAddress?.state || '';
 
                 return (
                   <li key={order._id || orderNum} className="p-5 sm:p-6 flex flex-col md:grid md:grid-cols-12 gap-4 items-center hover:bg-emerald-50/30 transition-colors">
@@ -132,7 +161,7 @@ export const Orders: React.FC = () => {
                       <span className="md:hidden text-neutral-400 text-xs font-normal mr-2">Total:</span>
                       <div className="font-extrabold text-sm text-[#064e3b]">{formatINR(orderTotal)}</div>
                       <div className="text-[10px] font-medium text-neutral-500">
-                        {isCOD ? `💵 COD` : '💳 Prepaid (Free Del.)'}
+                        {isCOD ? (isAdvancePaid ? '💵 COD (Advance Paid)' : '💵 COD') : '💳 Online / Prepaid'}
                       </div>
                     </div>
 
