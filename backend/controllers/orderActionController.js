@@ -59,6 +59,12 @@ const trackOrder = asyncHandler(async (req, res) => {
   const resolvedUpfrontAmount = isCodOrder ? (Number(order.upfrontAmount || 0) || (resolvedDeliveryFee + resolvedGstCharge) || 104) : 0;
   const resolvedPaymentMethod = isCodOrder ? (order.paymentMethod && order.paymentMethod.toUpperCase().includes('COD') ? order.paymentMethod : 'COD_UPFRONT') : (order.paymentMethod || 'ONLINE');
   const resolvedPaymentStatus = isCodOrder && ['PAID', 'COMPLETED'].includes(String(order.paymentStatus || '').toUpperCase()) ? 'PARTIAL_PAID' : (order.paymentStatus || 'PENDING');
+  const resolvedPaidAmount = isCodOrder
+    ? resolvedUpfrontAmount
+    : (['PAID', 'COMPLETED'].includes(String(order.paymentStatus || '').toUpperCase()) ? orderTotal : 0);
+  const resolvedBalanceAmount = isCodOrder
+    ? Math.max(0, orderTotal - resolvedUpfrontAmount)
+    : (['PAID', 'COMPLETED'].includes(String(order.paymentStatus || '').toUpperCase()) ? 0 : orderTotal);
 
   const trackingDetails = {
     orderNumber: orderNum,
@@ -101,12 +107,17 @@ const trackOrder = asyncHandler(async (req, res) => {
     tax: resolvedGstCharge,
     discount: Number(order.discount ?? order.discountAmount ?? 0),
     upfrontAmount: resolvedUpfrontAmount,
+    paidAmount: resolvedPaidAmount,
+    balanceAmount: resolvedBalanceAmount,
     paymentMethod: resolvedPaymentMethod,
     paymentStatus: resolvedPaymentStatus,
     items: order.items || [],
     shippingAddress: order.shippingAddress || order.deliveryAddress || {},
     order: {
       ...(order.toObject ? order.toObject() : order),
+      total: orderTotal,
+      amount: orderTotal,
+      subtotal: orderSubtotal,
       paymentMethod: resolvedPaymentMethod,
       paymentStatus: resolvedPaymentStatus,
       deliveryFee: resolvedDeliveryFee,
@@ -114,6 +125,8 @@ const trackOrder = asyncHandler(async (req, res) => {
       gstCharge: resolvedGstCharge,
       tax: resolvedGstCharge,
       upfrontAmount: resolvedUpfrontAmount,
+      paidAmount: resolvedPaidAmount,
+      balanceAmount: resolvedBalanceAmount,
     },
   };
 

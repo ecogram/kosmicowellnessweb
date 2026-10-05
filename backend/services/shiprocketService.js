@@ -229,7 +229,19 @@ class ShiprocketService {
       const pad = (n) => String(n).padStart(2, '0');
       const orderDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 
-      const isCod = (order.paymentMethod === 'COD' || order.paymentStatus === 'COD_PENDING') && order.paymentStatus !== 'PAID';
+      const isCod =
+        order.paymentMethod === 'COD' ||
+        order.paymentMethod === 'COD_UPFRONT' ||
+        order.paymentStatus === 'COD_PENDING' ||
+        order.paymentStatus === 'PARTIAL_PAID';
+
+      const totalAmt = Number(order.total || order.amount || 0);
+      const upfrontAmt = Number(order.upfrontAmount || 0);
+      const isPartialCod = order.paymentMethod === 'COD_UPFRONT' || order.paymentStatus === 'PARTIAL_PAID' || upfrontAmt > 0;
+      const collectableCodAmount = isPartialCod
+        ? Math.max(1, Math.round(totalAmt - upfrontAmt))
+        : Math.max(1, Math.round(totalAmt || 100));
+
       const cleanOrderNumber = order._id ? order._id.toString() : String(order.orderNumber || Date.now());
 
       const payload = {
@@ -237,7 +249,7 @@ class ShiprocketService {
         order_date: orderDate,
         pickup_location: process.env.SHIPROCKET_PICKUP_LOCATION || 'work',
         channel_id: '',
-        comment: 'Kosmico Wellness Order',
+        comment: isPartialCod ? `Kosmico Wellness Order (Advance ₹${upfrontAmt} Paid, Balance ₹${collectableCodAmount} COD)` : 'Kosmico Wellness Order',
         billing_customer_name: firstName,
         billing_last_name: lastName,
         billing_address: cleanAddress1,
@@ -265,7 +277,7 @@ class ShiprocketService {
         giftwrap_charges: 0,
         transaction_charges: 0,
         total_discount: Number(order.discount || order.discountAmount) || 0,
-        sub_total: Math.max(1, Math.round(Number(order.total || order.amount) || 100)),
+        sub_total: isCod ? collectableCodAmount : Math.max(1, Math.round(totalAmt || 100)),
         length: 10,
         breadth: 10,
         height: 10,

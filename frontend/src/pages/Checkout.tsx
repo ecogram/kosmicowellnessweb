@@ -425,22 +425,30 @@ export const Checkout: React.FC = () => {
     }
 
     try {
-      // 1. Create COD upfront order on backend (Try Point 1 /api/order/place/razorpay with fallback to /payment/cod-upfront/create)
+      // 1. Create COD upfront order on backend via POST /api/payment/cod-upfront/create
       let upfrontData: any = null;
       try {
-        const upfrontRes = await api.post('/order/place/razorpay', {
+        const upfrontRes = await api.post('/payment/cod-upfront/create', {
           ...orderPayload,
           amount: advanceAmount,
           upfrontAmount: advanceAmount,
+          total: total,
+          subtotal: subtotal,
+          deliveryFee,
+          gstCharge: gst,
           paymentMethod: 'COD_UPFRONT',
           isCOD: true,
         });
         upfrontData = upfrontRes.data?.data || upfrontRes.data;
-      } catch (placeErr) {
-        const fallbackRes = await api.post('/payment/cod-upfront/create', {
+      } catch (createErr) {
+        const fallbackRes = await api.post('/order/place/razorpay', {
           ...orderPayload,
           amount: advanceAmount,
           upfrontAmount: advanceAmount,
+          total: total,
+          subtotal: subtotal,
+          deliveryFee,
+          gstCharge: gst,
           paymentMethod: 'COD_UPFRONT',
           isCOD: true,
         });
@@ -553,17 +561,17 @@ export const Checkout: React.FC = () => {
           }
 
           try {
-            // Point 2: Exact documented route /api/payment/razorpay/verify
+            // Success: Call POST /api/payment/cod-upfront/verify
             let verifyRes: any = null;
             try {
-              const res = await api.post('/payment/razorpay/verify', {
+              const res = await api.post('/payment/cod-upfront/verify', {
                 razorpay_order_id: respOrderId,
                 razorpay_payment_id: paymentId,
                 razorpay_signature: signature,
               });
               verifyRes = res.data?.data ?? res.data;
-            } catch (rErr) {
-              const fallbackRes = await api.post('/payment/cod-upfront/verify', {
+            } catch (vErr) {
+              const fallbackRes = await api.post('/payment/razorpay/verify', {
                 razorpay_order_id: respOrderId,
                 razorpay_payment_id: paymentId,
                 razorpay_signature: signature,

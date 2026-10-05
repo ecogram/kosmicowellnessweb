@@ -99,7 +99,9 @@ export const OrderSuccess: React.FC = () => {
                 <span>Payment Method:</span>
                 <span className="font-bold text-emerald-800">
                   {isCOD
-                    ? '💵 Cash on Delivery (COD)'
+                    ? (order?.paymentStatus === 'PARTIAL_PAID' || order?.upfrontPaymentStatus === 'Paid' || Number(order?.upfrontAmount) > 0
+                        ? '💵 PART COD (Advance Paid)'
+                        : '💵 Cash on Delivery (COD)')
                     : '💳 Online Payment'}
                 </span>
               </div>
@@ -107,8 +109,8 @@ export const OrderSuccess: React.FC = () => {
                 <span>Payment Status:</span>
                 <span className="font-semibold text-emerald-700">
                   {isCOD
-                    ? (order?.paymentStatus === 'PARTIAL_PAID' || order?.upfrontPaymentStatus === 'Paid'
-                        ? 'Advance Paid'
+                    ? (order?.paymentStatus === 'PARTIAL_PAID' || order?.upfrontPaymentStatus === 'Paid' || Number(order?.upfrontAmount) > 0
+                        ? 'Advance Paid (Balance Due on Delivery)'
                         : 'Pay upon delivery')
                     : 'Paid'}
                 </span>

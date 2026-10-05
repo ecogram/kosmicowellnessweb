@@ -152,6 +152,10 @@ export const Orders: React.FC = () => {
                 const recipientName = order.shippingAddress?.fullName || order.userName || 'Customer';
                 const recipientCity = order.shippingAddress?.city || order.shippingAddress?.state || '';
 
+                const isPartCod = isAdvancePaid;
+                const paidAmount = Number(order.paidAmount ?? order.upfrontAmount ?? (isPartCod ? advancePaidAmount : (isCOD ? 0 : orderTotal)));
+                const balanceAmount = Number(order.balanceAmount ?? (isCOD ? payOnDeliveryAmount : 0));
+
                 return (
                   <li key={order._id || orderNum} className="p-5 sm:p-6 flex flex-col md:grid md:grid-cols-12 gap-4 items-center hover:bg-emerald-50/30 transition-colors">
                     <div className="col-span-3 w-full">
@@ -162,6 +166,15 @@ export const Orders: React.FC = () => {
                       <div className="text-[11px] text-neutral-500 truncate">
                         Deliver to: <span className="font-medium text-neutral-700">{recipientName}</span>{recipientCity ? ` (${recipientCity})` : ''}
                       </div>
+                      {isPartCod ? (
+                        <div className="text-[11px] font-medium text-[#8b5e34] mt-1 flex items-center gap-1">
+                          <span>Advance Paid: <strong className="text-neutral-900">{formatINR(paidAmount)}</strong> · Balance <strong className="text-neutral-900">{formatINR(balanceAmount)}</strong> due on delivery</span>
+                        </div>
+                      ) : (
+                        <div className="text-[11px] font-medium text-neutral-500 mt-1">
+                          {isCOD ? `Pay ${formatINR(orderTotal)} on delivery` : 'Paid in full online'}
+                        </div>
+                      )}
                     </div>
 
                     <div className="col-span-3 w-full text-xs text-neutral-500 flex items-center gap-1.5">
@@ -169,7 +182,7 @@ export const Orders: React.FC = () => {
                       <span>{orderDate}</span>
                     </div>
 
-                    <div className="col-span-2 w-full">
+                    <div className="col-span-2 w-full flex flex-col gap-1.5 items-start">
                       <span
                         className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${orderStatus === 'DELIVERED'
                             ? 'bg-emerald-100 text-emerald-800'
@@ -182,14 +195,35 @@ export const Orders: React.FC = () => {
                       >
                         {orderStatus}
                       </span>
+
+                      {/* Payment mode badge: PART COD, Online, COD */}
+                      {isPartCod ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-[#ede7df] text-[#8b5e34] border border-[#ded5c8]">
+                          PART COD
+                        </span>
+                      ) : isCOD ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                          COD
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          Online
+                        </span>
+                      )}
                     </div>
 
                     <div className="col-span-2 w-full md:text-right">
                       <span className="md:hidden text-neutral-400 text-xs font-normal mr-2">Total:</span>
                       <div className="font-extrabold text-sm text-[#064e3b]">{formatINR(orderTotal)}</div>
-                      <div className="text-[10px] font-medium text-neutral-500">
-                        {isCOD ? (isAdvancePaid ? '💵 COD (Advance Paid)' : '💵 COD') : '💳 Online / Prepaid'}
-                      </div>
+                      {isPartCod ? (
+                        <div className="text-[10px] font-semibold text-[#8b5e34]">
+                          Due: {formatINR(balanceAmount)}
+                        </div>
+                      ) : (
+                        <div className="text-[10px] font-medium text-neutral-500">
+                          {isCOD ? 'Due on delivery' : 'Paid online'}
+                        </div>
+                      )}
                     </div>
 
                     <div className="col-span-2 w-full md:text-right">

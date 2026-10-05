@@ -2,7 +2,7 @@ import { formatINR } from '../utils/currency';
 import { useParams, Link } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
-import { ArrowLeft, Check, XCircle, HelpCircle, Package } from 'lucide-react';
+import { ArrowLeft, Check, XCircle, HelpCircle, Package, AlertCircle } from 'lucide-react';
 import { useOrder, useOrderTracking, useCancelOrder } from '../hooks/useOrders';
 import { useCreatePayment, useVerifyPayment } from '../hooks/usePayments';
 import { useProducts } from '../hooks/useProducts';
@@ -149,12 +149,6 @@ export const OrderDetails = () => {
     );
   }
 
-  const handleCancel = () => {
-    if (confirm('Are you sure you want to cancel this order?')) {
-      cancelMutation.mutate(order._id || order.orderNumber);
-    }
-  };
-
   // Status & payment flags
   const currentStatus = String(order.orderStatus || order.status || trackingData?.currentStatus || 'PLACED').toUpperCase();
   const paymentMethodUpper = String(order.paymentMethod || '').toUpperCase();
@@ -259,6 +253,31 @@ export const OrderDetails = () => {
   } else if (!orderTotal) {
     orderTotal = orderSubtotal - discountAmt + shippingFee + taxFee;
   }
+
+  // Extract numeric paidAmount and balanceAmount directly from order / trackingData (ensure pure numbers)
+  const rawPaid = order.paidAmount ?? trackingData?.paidAmount ?? trackingData?.order?.paidAmount ?? order.upfrontAmount;
+  const rawBalance = order.balanceAmount ?? trackingData?.balanceAmount ?? trackingData?.order?.balanceAmount;
+
+  const paidAmount = Number(
+    rawPaid !== undefined && rawPaid !== null
+      ? rawPaid
+      : (isAdvancePaid ? advancePaidAmount : (isCOD ? 0 : orderTotal))
+  );
+
+  const balanceAmount = Number(
+    rawBalance !== undefined && rawBalance !== null
+      ? rawBalance
+      : (isCOD ? Math.max(0, orderTotal - paidAmount) : 0)
+  );
+
+  const handleCancel = () => {
+    const confirmMsg = isAdvancePaid
+      ? `Are you sure you want to cancel this order?\n\nNote: The advance payment of ${formatINR(paidAmount)} (Delivery Fee + GST) is non-refundable.`
+      : 'Are you sure you want to cancel this order?';
+    if (confirm(confirmMsg)) {
+      cancelMutation.mutate(order._id || order.orderNumber);
+    }
+  };
 
   const orderNum = order._id ? String(order._id) : (order.orderNumber || 'Order');
 
@@ -457,9 +476,11 @@ export const OrderDetails = () => {
                 <div className="flex justify-between items-center text-neutral-600">
                   <span>Payment Mode</span>
                   <span className="font-semibold text-neutral-900">
-                    {isCOD
-                      ? (isAdvancePaid ? 'Cash on Delivery (Advance Paid)' : 'Cash on Delivery (COD)')
-                      : 'Online Payment'}
+                    {isAdvancePaid
+                      ? 'PART COD (Advance Paid)'
+                      : isCOD
+                        ? 'Cash on Delivery (COD)'
+                        : 'Online Payment'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-neutral-600">
@@ -487,34 +508,35 @@ export const OrderDetails = () => {
                   <span className="font-bold text-base text-neutral-900">Total Amount</span>
                   <span className="font-sans font-black text-2xl text-[#064e3b]">{formatINR(orderTotal)}</span>
                 </div>
+
+                {/* Total ke neeche: Advance Paid (Delivery + GST) aur Balance Payable on Delivery rows */}
+                {isAdvancePaid ? (
+                  <div className="pt-2 border-t border-neutral-100 space-y-2">
+                    <div className="flex justify-between items-center text-sm font-semibold text-emerald-800 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200/70">
+                      <span>Advance Paid (Delivery + GST)</span>
+                      <span className="font-bold">{formatINR(paidAmount)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm font-bold text-neutral-900 bg-[#ede7df] px-3 py-2 rounded-xl border border-[#ded5c8]">
+                      <span className="text-[#8b5e34]">Balance Payable on Delivery</span>
+                      <span className="text-base text-neutral-900 font-sans">{formatINR(balanceAmount)}</span>
+                    </div>
+                  </div>
+                ) : isCOD ? (
+                  <div className="pt-2 border-t border-neutral-100">
+                    <div className="flex justify-between items-center text-sm font-bold text-neutral-900 bg-amber-50 px-3 py-2 rounded-xl border border-amber-200">
+                      <span className="text-amber-900">Balance Payable on Delivery</span>
+                      <span className="text-base text-neutral-900 font-sans">{formatINR(balanceAmount || orderTotal)}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="pt-2 border-t border-neutral-100">
+                    <div className="flex justify-between items-center text-sm font-semibold text-emerald-800 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200/70">
+                      <span>Paid in Full Online</span>
+                      <span className="font-bold">{formatINR(orderTotal)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
-
-              {/* COD Advance & Pay on Delivery Breakdown (Matching Checkout Page Exactly) */}
-              {isCOD && (
-                <div className="mt-4 p-4 bg-[#ede7df] border border-[#ded5c8] rounded-2xl space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-semibold text-[#8b5e34]">
-                      Pay Online Now (Delivery + GST)
-                    </span>
-                    <span className="text-sm font-bold text-neutral-900">
-                      {formatINR(advancePaidAmount)}
-                    </span>
-                  </div>
-
-                  <div className="text-xs font-semibold text-[#0a7a40]">
-                    • Non-Refundable advance payment
-                  </div>
-
-                  <div className="flex justify-between items-center pt-2 border-t border-[#ded5c8]/60">
-                    <span className="text-sm font-bold text-neutral-900">
-                      Pay on Delivery (Product Price)
-                    </span>
-                    <span className="text-sm font-bold text-neutral-900">
-                      {formatINR(payOnDeliveryAmount)}
-                    </span>
-                  </div>
-                </div>
-              )}
 
               {/* Order & Payment Status Pills */}
               <div className="mt-6 pt-5 border-t border-neutral-100 space-y-3">
@@ -531,7 +553,7 @@ export const OrderDetails = () => {
                     (isPaid || isAdvancePaid) ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
                   }`}>
                     {isCOD
-                      ? (isAdvancePaid ? 'ADVANCE PAID (COD)' : 'PAY ON DELIVERY')
+                      ? (isAdvancePaid ? 'ADVANCE PAID (PART COD)' : 'PAY ON DELIVERY')
                       : (isPaid ? 'PAID' : (order.paymentStatus || 'PENDING'))}
                   </span>
                 </div>
@@ -550,6 +572,19 @@ export const OrderDetails = () => {
                 >
                   {isPaymentProcessing || createPaymentMutation.isPending ? 'Connecting...' : verifyPaymentMutation.isPending ? 'Verifying...' : 'Pay Now Securely'}
                 </Button>
+              )}
+
+              {/* Cancellation Note for Advance COD */}
+              {!isCancelled && ['PLACED', 'PROCESSING', 'PENDING'].includes(currentStatus) && isAdvancePaid && (
+                <div className="p-3.5 bg-amber-50/90 border border-amber-200 rounded-2xl text-xs text-amber-900 flex items-start gap-2.5 shadow-2xs">
+                  <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-amber-950">Non-Refundable Advance Policy</p>
+                    <p className="text-amber-900/90 leading-relaxed">
+                      Please note: The advance payment of <strong>{formatINR(paidAmount)}</strong> (Delivery Fee + GST) is non-refundable upon order cancellation.
+                    </p>
+                  </div>
+                </div>
               )}
 
               {/* Cancel Order Button */}
