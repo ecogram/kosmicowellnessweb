@@ -9,7 +9,8 @@ import { useAddToCart } from '../hooks/useCart';
 import { useToggleWishlist, useWishlist } from '../hooks/useWishlist';
 import { useAuthStore } from '../store/useAuthStore';
 import { ProductReviews } from '../components/reviews/ProductReviews';
-import { VisualBundles, type BundleOption } from '../components/product/VisualBundles';
+import type { BundleOption } from '../components/product/VisualBundles';
+// import { VisualBundles } from '../components/product/VisualBundles';
 import { PincodeEstimator } from '../components/product/PincodeEstimator';
 import toast from 'react-hot-toast';
 import { showStockToast } from '../utils/stockToast';
@@ -25,8 +26,10 @@ export function ProductDetails() {
 
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState<string>('/assets/products/product-box.jpg');
-  const [selectedBundleId, setSelectedBundleId] = useState<string>('single');
-  const [selectedBundle, setSelectedBundle] = useState<BundleOption | null>(null);
+  // Pack quantity bundle state (commented out for now, can be re-enabled later)
+  // const [selectedBundleId, setSelectedBundleId] = useState<string>('single');
+  // const [selectedBundle, setSelectedBundle] = useState<BundleOption | null>(null);
+  const [selectedBundle] = useState<BundleOption | null>(null);
 
   useEffect(() => {
     if (product?.images?.length) {
@@ -273,8 +276,8 @@ export function ProductDetails() {
               {product.description}
             </p>
 
-            {/* Visual Pack Bundles Component */}
-            <VisualBundles
+            {/* Visual Pack Bundles Component (Temporarily commented out, can be re-enabled later) */}
+            {/* <VisualBundles
               basePrice={product.price}
               variants={product.variants}
               selectedBundleId={selectedBundleId}
@@ -282,7 +285,7 @@ export function ProductDetails() {
                 setSelectedBundleId(bundle.id);
                 setSelectedBundle(bundle);
               }}
-            />
+            /> */}
 
             {/* Delivery Pincode Checker Component */}
             <PincodeEstimator />
