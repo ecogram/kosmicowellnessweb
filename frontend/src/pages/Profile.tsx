@@ -242,6 +242,27 @@ export const Profile: React.FC = () => {
     if (userPhone) setPhone(userPhone);
   }, [user, isEditProfileOpen]);
 
+  // Helper to parse backend address fields cleanly
+  const parseAddressFields = (addr: any) => {
+    let flat = (addr.flatBuilding || addr.houseNo || addr.apartment || addr.flat || addr.building || '').trim();
+    let area = (addr.landmark || addr.areaColony || addr.colony || addr.area || '').trim();
+    const rawStreet = (addr.streetAddress || addr.addressLine1 || '').trim();
+
+    if (rawStreet) {
+      if (rawStreet.includes(' | ')) {
+        const parts = rawStreet.split(' | ');
+        flat = (parts[0] || '').trim();
+        area = (parts.slice(1).join(' | ') || '').trim();
+      } else if (!flat && !area) {
+        flat = rawStreet;
+      } else if (flat && !area && rawStreet !== flat) {
+        area = rawStreet;
+      }
+    }
+
+    return { flat, area };
+  };
+
   // Fetch live addresses from backend (API-aligned field mapping)
   const fetchLiveAddresses = async () => {
     try {
@@ -249,20 +270,23 @@ export const Profile: React.FC = () => {
       const res = await api.get('/address');
       const list: any[] = res.data?.data?.addresses ?? res.data?.data ?? (Array.isArray(res.data) ? res.data : []);
       if (Array.isArray(list)) {
-        const formatted: SavedAddress[] = list.map((a: any) => ({
-          _id: a._id || a.id || '',
-          addressLabel: a.addressLabel || 'Home',
-          fullName: a.fullName || '',
-          flatBuilding: a.flatBuilding || a.houseNo || a.apartment || a.flat || a.building || '',
-          streetAddress: a.streetAddress || a.landmark || a.areaColony || '',
-          landmark: a.landmark || a.streetAddress || a.areaColony || '',
-          areaColony: a.areaColony || a.streetAddress || a.landmark || '',
-          city: a.city || '',
-          state: a.state || '',
-          pincode: a.pincode || '',
-          phoneNumber: a.phoneNumber || a.phone || '',
-          isDefault: !!a.isDefault,
-        }));
+        const formatted: SavedAddress[] = list.map((a: any) => {
+          const { flat, area } = parseAddressFields(a);
+          return {
+            _id: a._id || a.id || '',
+            addressLabel: a.addressLabel || 'Home',
+            fullName: a.fullName || '',
+            flatBuilding: flat,
+            streetAddress: area,
+            landmark: area,
+            areaColony: area,
+            city: a.city || '',
+            state: a.state || '',
+            pincode: a.pincode || '',
+            phoneNumber: a.phoneNumber || a.phone || '',
+            isDefault: !!a.isDefault,
+          };
+        });
         setAddresses(formatted);
       }
     } catch (err) {
@@ -575,10 +599,12 @@ export const Profile: React.FC = () => {
   const handleEditAddress = (addr: SavedAddress) => {
     setEditingAddressId(addr._id);
 
+    const { flat, area } = parseAddressFields(addr);
+
     setAddrFormName(addr.fullName || '');
     setAddrFormPhone(addr.phoneNumber || (addr as any).phone || '');
-    setAddrFormFlat(addr.flatBuilding || '');
-    setAddrFormStreet(addr.streetAddress || addr.landmark || addr.areaColony || '');
+    setAddrFormFlat(flat);
+    setAddrFormStreet(area);
     setAddrFormCity(addr.city || '');
     setAddrFormState(addr.state || '');
     setAddrFormPincode(addr.pincode || (addr as any).postalCode || '');
@@ -618,14 +644,16 @@ export const Profile: React.FC = () => {
 
     const flat = (addrFormFlat || '').trim();
     const area = (addrFormStreet || '').trim();
+    const combinedStreet = area ? `${flat} | ${area}` : flat;
 
     // API docs: POST/PUT /api/address
-    // Body: { addressLabel, fullName, flatBuilding, streetAddress, landmark, areaColony, city, pincode, phoneNumber, isDefault }
     const payload = {
       addressLabel: (addrFormLabel || 'Home').trim(),
       fullName: addrFormName.trim(),
       flatBuilding: flat,
-      streetAddress: area,
+      houseNo: flat,
+      apartment: flat,
+      streetAddress: combinedStreet,
       landmark: area,
       areaColony: area,
       city: addrFormCity.trim(),
@@ -1126,7 +1154,11 @@ export const Profile: React.FC = () => {
                             </div>
                             <h4 className="font-bold text-sm text-neutral-900">{addr.fullName}</h4>
                             <p className="text-xs text-neutral-600 leading-relaxed">
-                              {addr.flatBuilding ? `${addr.flatBuilding}, ` : ''}{addr.streetAddress && addr.streetAddress !== addr.flatBuilding ? `${addr.streetAddress}, ` : ''}{addr.city}{addr.state ? `, ${addr.state}` : ''} - <span className="font-bold text-neutral-800">{addr.pincode}</span>
+                              {addr.flatBuilding ? `${addr.flatBuilding}` : ''}
+                              {addr.flatBuilding && addr.streetAddress ? ', ' : ''}
+                              {addr.streetAddress ? `${addr.streetAddress}` : ''}
+                              {(addr.flatBuilding || addr.streetAddress) ? ', ' : ''}
+                              {addr.city}{addr.state ? `, ${addr.state}` : ''} - <span className="font-bold text-neutral-800">{addr.pincode}</span>
                             </p>
                             <p className="text-xs text-neutral-700 font-medium mt-1">
                               Phone: <span className="font-bold">{addr.phoneNumber}</span>

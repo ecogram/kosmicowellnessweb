@@ -167,6 +167,27 @@ export const Checkout: React.FC = () => {
     gstCharge: 0,
   });
 
+  // Helper to parse backend address fields cleanly
+  const parseAddressFields = (addr: any) => {
+    let flat = (addr.flatBuilding || addr.houseNo || addr.apartment || addr.flat || addr.building || '').trim();
+    let area = (addr.landmark || addr.areaColony || addr.colony || addr.area || '').trim();
+    const rawStreet = (addr.streetAddress || addr.addressLine1 || '').trim();
+
+    if (rawStreet) {
+      if (rawStreet.includes(' | ')) {
+        const parts = rawStreet.split(' | ');
+        flat = (parts[0] || '').trim();
+        area = (parts.slice(1).join(' | ') || '').trim();
+      } else if (!flat && !area) {
+        flat = rawStreet;
+      } else if (flat && !area && rawStreet !== flat) {
+        area = rawStreet;
+      }
+    }
+
+    return { flat, area };
+  };
+
   // Fetch saved addresses from backend
   const fetchAddresses = async () => {
     try {
@@ -174,20 +195,23 @@ export const Checkout: React.FC = () => {
       const list = res.data?.data?.addresses ?? res.data?.data ?? (Array.isArray(res.data) ? res.data : []);
 
       if (Array.isArray(list) && list.length > 0) {
-        const formatted: SavedAddress[] = list.map((a: any) => ({
-          _id: a._id || a.id || '',
-          addressLabel: a.addressLabel || 'Home',
-          fullName: a.fullName || '',
-          flatBuilding: a.flatBuilding || a.houseNo || a.apartment || a.flat || a.building || '',
-          streetAddress: a.streetAddress || a.landmark || a.areaColony || '',
-          landmark: a.landmark || a.streetAddress || a.areaColony || '',
-          areaColony: a.areaColony || a.streetAddress || a.landmark || '',
-          city: a.city || '',
-          state: a.state || '',
-          pincode: a.pincode || '',
-          phoneNumber: a.phoneNumber || a.phone || '',
-          isDefault: !!a.isDefault,
-        }));
+        const formatted: SavedAddress[] = list.map((a: any) => {
+          const { flat, area } = parseAddressFields(a);
+          return {
+            _id: a._id || a.id || '',
+            addressLabel: a.addressLabel || 'Home',
+            fullName: a.fullName || '',
+            flatBuilding: flat,
+            streetAddress: area,
+            landmark: area,
+            areaColony: area,
+            city: a.city || '',
+            state: a.state || '',
+            pincode: a.pincode || '',
+            phoneNumber: a.phoneNumber || a.phone || '',
+            isDefault: !!a.isDefault,
+          };
+        });
 
         setSavedAddresses(formatted);
         const def = formatted.find((a: any) => a.isDefault) || formatted[0];
@@ -811,13 +835,15 @@ export const Checkout: React.FC = () => {
     e.stopPropagation();
     setEditingAddressId(addr._id || null);
 
+    const { flat, area } = parseAddressFields(addr);
+
     setNewAddress({
       _id: addr._id,
       addressLabel: addr.addressLabel || 'Home',
       fullName: addr.fullName || '',
       phoneNumber: addr.phoneNumber || (addr as any).phone || '',
-      flatBuilding: addr.flatBuilding || '',
-      streetAddress: addr.streetAddress || addr.landmark || addr.areaColony || '',
+      flatBuilding: flat,
+      streetAddress: area,
       city: addr.city || '',
       state: addr.state || '',
       pincode: addr.pincode || (addr as any).postalCode || '',
@@ -857,12 +883,15 @@ export const Checkout: React.FC = () => {
 
     const flat = (newAddress.flatBuilding || '').trim();
     const area = (newAddress.streetAddress || '').trim();
+    const combinedStreet = area ? `${flat} | ${area}` : flat;
 
     const addressPayload = {
       addressLabel: (newAddress.addressLabel || 'Home').trim(),
       fullName: newAddress.fullName.trim(),
       flatBuilding: flat,
-      streetAddress: area,
+      houseNo: flat,
+      apartment: flat,
+      streetAddress: combinedStreet,
       landmark: area,
       areaColony: area,
       city: newAddress.city.trim(),
@@ -959,11 +988,11 @@ export const Checkout: React.FC = () => {
                 {selectedAddress.fullName || user?.name || ''}
               </p>
               <p className="text-neutral-600 text-xs leading-relaxed">
-                {selectedAddress.flatBuilding ? `${selectedAddress.flatBuilding}, ` : ''}
-                {selectedAddress.streetAddress && selectedAddress.streetAddress !== selectedAddress.flatBuilding ? `${selectedAddress.streetAddress}, ` : ''}
-                {selectedAddress.city ? `${selectedAddress.city}` : ''}
-                {selectedAddress.state ? `, ${selectedAddress.state}` : ''}
-                {selectedAddress.pincode ? ` - ${selectedAddress.pincode}` : ''}
+                {selectedAddress.flatBuilding ? `${selectedAddress.flatBuilding}` : ''}
+                {selectedAddress.flatBuilding && selectedAddress.streetAddress ? ', ' : ''}
+                {selectedAddress.streetAddress ? `${selectedAddress.streetAddress}` : ''}
+                {(selectedAddress.flatBuilding || selectedAddress.streetAddress) ? ', ' : ''}
+                {selectedAddress.city}{selectedAddress.state ? `, ${selectedAddress.state}` : ''} - {selectedAddress.pincode}
               </p>
               {selectedAddress.phoneNumber && (
                 <p className="text-neutral-700 font-medium text-xs">
@@ -1441,7 +1470,11 @@ export const Checkout: React.FC = () => {
                               </div>
                               <h4 className="font-bold text-sm text-neutral-900">{addr.fullName}</h4>
                               <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
-                                {addr.flatBuilding ? `${addr.flatBuilding}, ` : ''}{addr.streetAddress && addr.streetAddress !== addr.flatBuilding ? `${addr.streetAddress}, ` : ''}{addr.city}{addr.state ? `, ${addr.state}` : ''} - {addr.pincode}
+                                {addr.flatBuilding ? `${addr.flatBuilding}` : ''}
+                                {addr.flatBuilding && addr.streetAddress ? ', ' : ''}
+                                {addr.streetAddress ? `${addr.streetAddress}` : ''}
+                                {(addr.flatBuilding || addr.streetAddress) ? ', ' : ''}
+                                {addr.city}{addr.state ? `, ${addr.state}` : ''} - {addr.pincode}
                               </p>
                               <p className="text-xs text-neutral-700 font-medium mt-1.5">
                                 Phone: <span className="font-bold">{addr.phoneNumber}</span>
