@@ -16,7 +16,8 @@ import {
   Trash2,
   MapPin,
   Map,
-  Home as HomeIcon
+  Home as HomeIcon,
+  AlertCircle
 } from 'lucide-react';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
@@ -713,10 +714,45 @@ export const Checkout: React.FC = () => {
     }
   };
 
+  // Strict Address Validation function
+  const validateAddress = (addr: any): { isValid: boolean; message?: string; missingField?: string } => {
+    if (!addr) {
+      return { isValid: false, message: 'Please add a delivery address to place your order.', missingField: 'Shipping Address' };
+    }
+    if (!addr.fullName || !addr.fullName.trim()) {
+      return { isValid: false, message: 'Please provide full recipient name in delivery address.', missingField: 'Full Name' };
+    }
+    const flat = (addr.flatBuilding || addr.streetAddress || '').trim();
+    if (!flat) {
+      return { isValid: false, message: 'Please provide Flat, House no. or Building details in delivery address.', missingField: 'Flat / House No.' };
+    }
+    if (!addr.city || !addr.city.trim()) {
+      return { isValid: false, message: 'Please provide city in delivery address.', missingField: 'City' };
+    }
+    const pin = String(addr.pincode || '').replace(/\D/g, '');
+    if (!pin || pin.length !== 6) {
+      return { isValid: false, message: 'Please provide a valid 6-digit PIN code in delivery address.', missingField: '6-Digit Pincode' };
+    }
+    const phone = String(addr.phoneNumber || addr.phone || '').replace(/\D/g, '');
+    if (!phone || phone.length < 10) {
+      return { isValid: false, message: 'Please provide a valid 10-digit phone number in delivery address.', missingField: '10-Digit Phone Number' };
+    }
+    return { isValid: true };
+  };
+
   const handlePlaceOrder = async () => {
     toast.dismiss();
-    if (!selectedAddress) {
-      toast.error('Please select or add a shipping address.');
+
+    // 1. Strict Delivery Address Validation before payment or order creation
+    const addrCheck = validateAddress(selectedAddress);
+    if (!addrCheck.isValid) {
+      toast.error(addrCheck.message || 'Complete delivery address is required before making payment.');
+      setIsAddressModalOpen(true);
+      if (selectedAddress) {
+        handleEditAddress(selectedAddress, { stopPropagation: () => {} } as any);
+      } else {
+        setIsAddAddressFormOpen(true);
+      }
       return;
     }
 
@@ -755,10 +791,16 @@ export const Checkout: React.FC = () => {
     try {
       setIsPaymentProcessing(true);
 
+      if (!selectedAddress) {
+        toast.error('Shipping address is required.');
+        setIsPaymentProcessing(false);
+        return;
+      }
+
       const payload = {
         amount: total,
         total: total,
-        deliveryAddressId: selectedAddress._id!,
+        deliveryAddressId: selectedAddress._id || '',
         shippingAddress: selectedAddress,
         deliveryAddress: selectedAddress,
         items: itemsToOrder,
@@ -999,6 +1041,32 @@ export const Checkout: React.FC = () => {
                   📞 {selectedAddress.phoneNumber}
                 </p>
               )}
+
+              {/* Incomplete Address Warning */}
+              {(() => {
+                const check = validateAddress(selectedAddress);
+                if (!check.isValid) {
+                  return (
+                    <div className="mt-2.5 p-2.5 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between gap-2 text-xs text-amber-900">
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                        <span className="truncate"><strong>Incomplete Address:</strong> Missing {check.missingField}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddressModalOpen(true);
+                          handleEditAddress(selectedAddress, { stopPropagation: () => {} } as any);
+                        }}
+                        className="text-xs font-bold text-[#0a7a40] hover:underline whitespace-nowrap cursor-pointer"
+                      >
+                        Complete Address
+                      </button>
+                    </div>
+                  );
+                }
+                return null;
+              })()}
             </div>
           ) : (
             <div className="p-4 bg-amber-50/70 border border-amber-200/80 rounded-xl text-center space-y-2.5">

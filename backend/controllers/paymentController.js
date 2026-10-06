@@ -46,16 +46,8 @@ const placeCodOrder = asyncHandler(async (req, res) => {
     }
   }
 
-  if (!addressData) {
-    addressData = {
-      fullName: req.user.name || 'Valued Customer',
-      phone: req.user.phoneNumber || '9876543210',
-      addressLine1: 'Default Address',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      postalCode: '400001',
-      country: 'India',
-    };
+  if (!addressData || !addressData.fullName || (!addressData.addressLine1 && !addressData.streetAddress && !addressData.flatBuilding) || !addressData.city || !addressData.postalCode || !addressData.phone) {
+    throw new ApiError(400, 'A complete shipping address with Full Name, House/Building details, City, Pincode, and Phone Number is required.');
   }
 
   // Format order items
@@ -164,16 +156,8 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
     }
   }
 
-  if (!addressData) {
-    addressData = {
-      fullName: req.user.name || 'Valued Customer',
-      phone: req.user.phoneNumber || '9876543210',
-      addressLine1: 'Default Address',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      postalCode: '400001',
-      country: 'India',
-    };
+  if (!addressData || !addressData.fullName || (!addressData.addressLine1 && !addressData.streetAddress && !addressData.flatBuilding) || !addressData.city || !addressData.postalCode || !addressData.phone) {
+    throw new ApiError(400, 'A complete shipping address with Full Name, House/Building details, City, Pincode, and Phone Number is required.');
   }
 
   const formattedItems = [];
