@@ -1155,26 +1155,28 @@ export const Profile: React.FC = () => {
                 {/* Flat, House no., Building, Company, Apartment */}
                 <div>
                   <label className="text-xs font-bold text-neutral-700 block mb-1">
-                    Flat, House no., Building, Company, Apartment <span className="text-red-500">*</span>
+                    Flat, House no., Building, Company, Apartment
                   </label>
                   <input
                     type="text"
-                    required
                     value={addrFormFlat}
                     onChange={(e) => setAddrFormFlat(e.target.value)}
+                    placeholder="e.g. Flat 101, Apartment / Building (Optional)"
                     className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
                   />
                 </div>
 
                 <div>
                   {/* API field: streetAddress */}
-                  <label className="text-xs font-bold text-neutral-700 block mb-1">Street Address / Landmark</label>
+                  <label className="text-xs font-bold text-neutral-700 block mb-1">
+                    Street Address / Colony / Landmark <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     required
                     value={addrFormStreet}
                     onChange={(e) => setAddrFormStreet(e.target.value)}
-                    placeholder="e.g. Flat 402, Green Valley Apartments, Sector 62"
+                    placeholder="e.g. Gangapuram, Near Temple"
                     className="w-full px-3 py-2 border border-neutral-300 rounded-xl text-xs text-neutral-900 focus:ring-2 focus:ring-emerald-800"
                   />
                 </div>
