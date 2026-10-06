@@ -13,7 +13,10 @@ import {
   ShoppingBag,
   Loader2,
   Pencil,
-  Trash2
+  Trash2,
+  MapPin,
+  Map,
+  Home as HomeIcon
 } from 'lucide-react';
 import { Container } from '../components/ui/Container';
 import { Button } from '../components/ui/Button';
@@ -68,6 +71,7 @@ export const Checkout: React.FC = () => {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [isAddAddressFormOpen, setIsAddAddressFormOpen] = useState(false);
   const [isPincodeLoading, setIsPincodeLoading] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
 
   // New address form state
@@ -82,6 +86,51 @@ export const Checkout: React.FC = () => {
     pincode: '',
     isDefault: true,
   });
+
+  const handleLocateOnMap = () => {
+    if (!navigator.geolocation) {
+      toast.error('Geolocation is not supported by your browser');
+      return;
+    }
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const { latitude, longitude } = pos.coords;
+          const res = await axios.get(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&addressdetails=1`
+          );
+          if (res.data && res.data.address) {
+            const addr = res.data.address;
+            const detectedPincode = addr.postcode ? addr.postcode.replace(/\D/g, '').slice(0, 6) : '';
+            const detectedCity = addr.city || addr.town || addr.village || addr.county || addr.district || '';
+            const detectedState = addr.state || '';
+            const detectedArea = [addr.suburb, addr.neighbourhood, addr.road].filter(Boolean).join(', ');
+
+            setNewAddress((prev) => ({
+              ...prev,
+              pincode: detectedPincode || prev.pincode,
+              city: detectedCity || prev.city,
+              state: detectedState || prev.state,
+              streetAddress: detectedArea || prev.streetAddress,
+            }));
+            toast.success('Location detected successfully!');
+          }
+        } catch (err) {
+          console.warn('Geolocation error:', err);
+          toast.error('Could not detect exact address from location');
+        } finally {
+          setIsLocating(false);
+        }
+      },
+      (err) => {
+        console.warn('Geolocation error:', err);
+        toast.error('Location permission denied or unavailable');
+        setIsLocating(false);
+      },
+      { timeout: 10000, enableHighAccuracy: true }
+    );
+  };
 
   // Coupon state
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
@@ -781,20 +830,20 @@ export const Checkout: React.FC = () => {
 
   const handleSaveNewAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAddress.fullName || !newAddress.phoneNumber || !newAddress.streetAddress || !newAddress.pincode || !newAddress.city) {
+    if (!newAddress.fullName || !newAddress.phoneNumber || !newAddress.flatBuilding || !newAddress.pincode || !newAddress.city) {
       toast.error('Please fill in all required address fields.');
       return;
     }
 
     const addressPayload = {
-      addressLabel: newAddress.addressLabel || 'Home',
-      fullName: newAddress.fullName,
+      addressLabel: (newAddress.addressLabel || 'Home').trim(),
+      fullName: newAddress.fullName.trim(),
       flatBuilding: (newAddress.flatBuilding || '').trim(),
-      streetAddress: newAddress.streetAddress,
-      city: newAddress.city,
-      state: newAddress.state || '',
-      pincode: newAddress.pincode,
-      phoneNumber: newAddress.phoneNumber,
+      streetAddress: (newAddress.streetAddress || '').trim() || (newAddress.flatBuilding || '').trim(),
+      city: newAddress.city.trim(),
+      state: (newAddress.state || '').trim(),
+      pincode: newAddress.pincode.trim(),
+      phoneNumber: newAddress.phoneNumber.trim(),
       isDefault: newAddress.isDefault,
     };
 
@@ -1265,19 +1314,38 @@ export const Checkout: React.FC = () => {
 
         {/* --- ADDRESS SELECTION / ADD MODAL --- */}
         {isAddressModalOpen && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end md:items-center justify-center p-0 md:p-4">
-            <div className="bg-white w-full max-w-lg rounded-t-3xl md:rounded-3xl p-6 max-h-[85vh] overflow-y-auto shadow-2xl">
-              <div className="flex items-center justify-between pb-4 border-b border-neutral-100 mb-4">
-                <h3 className="font-bold text-lg text-neutral-900">
-                  {isAddAddressFormOpen ? (editingAddressId ? 'Edit Address' : 'Add New Address') : 'Saved Addresses'}
-                </h3>
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-end md:items-center justify-center p-0 md:p-4 overflow-y-auto">
+            <div className="bg-[#f7f9f6] w-full max-w-lg rounded-t-[2rem] md:rounded-3xl p-6 max-h-[90vh] overflow-y-auto shadow-2xl border border-neutral-200/80 my-auto">
+              
+              {/* Main Modal Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-neutral-200/60 mb-4">
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isAddAddressFormOpen) {
+                        setIsAddAddressFormOpen(false);
+                        setEditingAddressId(null);
+                      } else {
+                        setIsAddressModalOpen(false);
+                      }
+                    }}
+                    className="p-1.5 -ml-1.5 rounded-full text-[#0a7a40] hover:bg-emerald-100/50 transition-colors"
+                  >
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  <h3 className="font-serif font-bold text-lg text-[#0a7a40]">
+                    Shipping Addresses
+                  </h3>
+                </div>
                 <button
+                  type="button"
                   onClick={() => {
                     setIsAddressModalOpen(false);
                     setIsAddAddressFormOpen(false);
                     setEditingAddressId(null);
                   }}
-                  className="w-8 h-8 rounded-full flex items-center justify-center bg-neutral-100 text-neutral-600 hover:bg-neutral-200"
+                  className="w-8 h-8 rounded-full flex items-center justify-center bg-white border border-neutral-200 text-neutral-500 hover:bg-neutral-100 transition-colors"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -1285,242 +1353,349 @@ export const Checkout: React.FC = () => {
 
               {!isAddAddressFormOpen ? (
                 <div>
-                  <div className="space-y-3 mb-5">
-                    {savedAddresses.map((addr, idx) => (
-                      <div
-                        key={idx}
-                        onClick={() => {
-                          setSelectedAddress(addr);
-                          setIsAddressModalOpen(false);
-                        }}
-                        className={`p-4 rounded-2xl border-2 cursor-pointer transition-all ${selectedAddress?._id === addr._id || selectedAddress?.streetAddress === addr.streetAddress
-                            ? 'border-[#0a7a40] bg-emerald-50/40'
-                            : 'border-neutral-200 bg-white hover:border-neutral-300'
-                          }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1">
-                            <span className="bg-emerald-100 text-[#0a7a40] text-[10px] font-extrabold uppercase px-2 py-0.5 rounded">
-                              {addr.addressLabel || 'HOME'}
-                            </span>
-                            <h4 className="font-bold text-sm text-neutral-900 mt-1">{addr.fullName}</h4>
-                            <p className="text-xs text-neutral-600 mt-0.5">
-                              {addr.flatBuilding ? `${addr.flatBuilding}, ` : ''}{addr.streetAddress}, {addr.city} - {addr.pincode}
-                            </p>
-                            <p className="text-xs text-neutral-700 font-medium mt-1">{addr.phoneNumber}</p>
-                          </div>
-
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            {/* Edit Button */}
-                            <button
-                              type="button"
-                              onClick={(e) => handleEditAddress(addr, e)}
-                              className="p-2 rounded-xl text-neutral-500 hover:text-[#0a7a40] hover:bg-emerald-100/60 transition-colors"
-                              title="Edit address"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </button>
-
-                            {/* Delete Button */}
-                            <button
-                              type="button"
-                              onClick={(e) => handleDeleteAddress(addr._id, e)}
-                              className="p-2 rounded-xl text-neutral-500 hover:text-red-600 hover:bg-red-50 transition-colors"
-                              title="Delete address"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-
-                            {(selectedAddress?._id === addr._id || selectedAddress?.streetAddress === addr.streetAddress) && (
-                              <Check className="w-5 h-5 text-[#0a7a40] ml-1" />
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-sm text-neutral-900">Saved Addresses</h4>
+                    <span className="text-xs text-neutral-500">
+                      {savedAddresses.length} {savedAddresses.length === 1 ? 'address' : 'addresses'}
+                    </span>
                   </div>
 
+                  {savedAddresses.length === 0 ? (
+                    <div className="text-center py-8 bg-white border-2 border-dashed border-neutral-200 rounded-2xl space-y-3 mb-4">
+                      <MapPin className="w-8 h-8 text-neutral-300 mx-auto" />
+                      <p className="text-sm font-semibold text-neutral-600">No saved addresses yet</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingAddressId(null);
+                          setNewAddress({
+                            addressLabel: 'Home',
+                            fullName: user?.name || '',
+                            phoneNumber: user?.phoneNumber || user?.phone || '',
+                            flatBuilding: '',
+                            streetAddress: '',
+                            city: '',
+                            state: '',
+                            pincode: '',
+                            isDefault: true,
+                          });
+                          setIsAddAddressFormOpen(true);
+                        }}
+                        className="px-4 py-2 bg-[#0a7a40] text-white text-xs font-bold rounded-xl hover:bg-[#086333]"
+                      >
+                        Add Address
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 mb-5">
+                      {savedAddresses.map((addr, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            setSelectedAddress(addr);
+                            setIsAddressModalOpen(false);
+                          }}
+                          className={`p-4 rounded-2xl border transition-all cursor-pointer bg-white ${
+                            selectedAddress?._id === addr._id || selectedAddress?.streetAddress === addr.streetAddress
+                              ? 'border-[#0a7a40] ring-1 ring-[#0a7a40] bg-emerald-50/20'
+                              : 'border-neutral-200 hover:border-neutral-300'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className="inline-flex items-center gap-1 bg-emerald-100 text-[#0a7a40] text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md">
+                                  <HomeIcon className="w-3 h-3" />
+                                  {addr.addressLabel || 'HOME'}
+                                </span>
+                                {addr.isDefault && (
+                                  <span className="text-[10px] font-bold text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded">
+                                    Default
+                                  </span>
+                                )}
+                              </div>
+                              <h4 className="font-bold text-sm text-neutral-900">{addr.fullName}</h4>
+                              <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
+                                {addr.flatBuilding ? `${addr.flatBuilding}, ` : ''}{addr.streetAddress ? `${addr.streetAddress}, ` : ''}{addr.city}{addr.state ? `, ${addr.state}` : ''} - {addr.pincode}
+                              </p>
+                              <p className="text-xs text-neutral-700 font-medium mt-1.5">
+                                Phone: <span className="font-bold">{addr.phoneNumber}</span>
+                              </p>
+                            </div>
+
+                            <div className="flex items-center gap-1 shrink-0 ml-2">
+                              {/* Edit Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => handleEditAddress(addr, e)}
+                                className="p-2 rounded-xl text-neutral-400 hover:text-[#0a7a40] hover:bg-emerald-50 transition-colors"
+                                title="Edit address"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+
+                              {/* Delete Button */}
+                              <button
+                                type="button"
+                                onClick={(e) => handleDeleteAddress(addr._id, e)}
+                                className="p-2 rounded-xl text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                title="Delete address"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+
+                              {(selectedAddress?._id === addr._id || selectedAddress?.streetAddress === addr.streetAddress) && (
+                                <Check className="w-5 h-5 text-[#0a7a40] ml-1" />
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <button
+                    type="button"
                     onClick={() => {
                       setEditingAddressId(null);
                       setNewAddress({
                         addressLabel: 'Home',
                         fullName: user?.name || '',
-                        phoneNumber: '',
+                        phoneNumber: user?.phoneNumber || user?.phone || '',
                         flatBuilding: '',
                         streetAddress: '',
                         city: '',
                         state: '',
                         pincode: '',
-                        isDefault: false,
+                        isDefault: savedAddresses.length === 0,
                       });
                       setIsAddAddressFormOpen(true);
                     }}
-                    className="w-full py-3.5 border-2 border-dashed border-[#0a7a40] text-[#0a7a40] font-bold text-sm rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-50/50 transition-colors"
+                    className="w-full py-3.5 bg-white border-2 border-dashed border-[#0a7a40] text-[#0a7a40] font-bold text-sm rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-50/50 transition-colors cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     Add New Address
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleSaveNewAddress} className="space-y-4">
-                  {/* Address Label */}
-                  <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                      Address Label (e.g. Home, Office)
-                    </label>
-                    <input
-                      type="text"
-                      value={newAddress.addressLabel}
-                      onChange={(e) => setNewAddress({ ...newAddress, addressLabel: e.target.value })}
-                      className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:border-[#0a7a40]"
-                      placeholder="Home"
-                      required
-                    />
-                  </div>
-
-                  {/* Full Name */}
-                  <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1">Full Name</label>
-                    <input
-                      type="text"
-                      value={newAddress.fullName}
-                      onChange={(e) => setNewAddress({ ...newAddress, fullName: e.target.value })}
-                      className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:border-[#0a7a40]"
-                      placeholder="Amit Kumar"
-                      required
-                    />
-                  </div>
-
-                  {/* Flat, House no., Building, Company, Apartment */}
-                  <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                      Flat, House no., Building, Company, Apartment
-                    </label>
-                    <input
-                      type="text"
-                      value={newAddress.flatBuilding || ''}
-                      onChange={(e) => setNewAddress({ ...newAddress, flatBuilding: e.target.value })}
-                      className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:border-[#0a7a40]"
-                      placeholder="e.g. Flat 101, Galaxy Tower (Optional)"
-                    />
-                  </div>
-
-                  {/* Street Address */}
-                  <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                      Street Address / Colony / Landmark <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={newAddress.streetAddress}
-                      onChange={(e) => setNewAddress({ ...newAddress, streetAddress: e.target.value })}
-                      className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:border-[#0a7a40]"
-                      placeholder="e.g. Gangapuram, Near Temple"
-                      required
-                    />
-                  </div>
-
-                  {/* City | Pincode */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-semibold text-neutral-700 mb-1">City</label>
-                      <input
-                        type="text"
-                        value={newAddress.city}
-                        onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
-                        className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:border-[#0a7a40]"
-                        placeholder="Noida"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-xs font-semibold text-neutral-700">Pincode</label>
-                        {isPincodeLoading && <span className="text-[10px] text-[#0a7a40] font-bold animate-pulse">Detecting...</span>}
-                      </div>
-                      <input
-                        type="text"
-                        maxLength={6}
-                        value={newAddress.pincode}
-                        onChange={async (e) => {
-                          const val = e.target.value.replace(/\D/g, '');
-                          setNewAddress((prev) => ({ ...prev, pincode: val }));
-                          if (val.length === 6) {
-                            setIsPincodeLoading(true);
-                            try {
-                              const res = await axios.get(`https://api.postalpincode.in/pincode/${val}`);
-                              if (res.data?.[0]?.Status === 'Success' && res.data[0].PostOffice?.length > 0) {
-                                const po = res.data[0].PostOffice[0];
-                                const detectedCity = po.District || po.Block || po.Name;
-                                const detectedState = po.State;
-                                setNewAddress((prev) => ({
-                                  ...prev,
-                                  pincode: val,
-                                  city: detectedCity,
-                                  state: detectedState,
-                                }));
-                              }
-                            } catch (err) {
-                              console.warn('Pincode fetch error:', err);
-                            } finally {
-                              setIsPincodeLoading(false);
-                            }
-                          }
-                        }}
-                        className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-sm font-semibold focus:outline-none focus:border-[#0a7a40]"
-                        placeholder="201318"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Phone Number */}
-                  <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1">Phone Number</label>
-                    <input
-                      type="tel"
-                      value={newAddress.phoneNumber}
-                      onChange={(e) => setNewAddress({ ...newAddress, phoneNumber: e.target.value })}
-                      className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:border-[#0a7a40]"
-                      placeholder="9876543210"
-                      required
-                    />
-                  </div>
-
-                  {/* Set as Default Address (Toggle) */}
-                  <div className="flex items-center justify-between pt-2 pb-1">
-                    <label className="text-sm font-semibold text-neutral-700 cursor-pointer" htmlFor="isDefaultCheck">
-                      Set as Default Address
-                    </label>
-                    <div
-                      className={`w-11 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${newAddress.isDefault ? 'bg-[#0a7a40]' : 'bg-neutral-300'}`}
-                      onClick={() => setNewAddress({ ...newAddress, isDefault: !newAddress.isDefault })}
-                    >
-                      <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${newAddress.isDefault ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </div>
-                  </div>
-
-                  {/* Save Button */}
-                  <div className="pt-2">
-                    <button
-                      type="submit"
-                      className="w-full py-3.5 bg-[#0a7a40] text-white font-bold text-sm rounded-xl hover:bg-[#086333]"
-                    >
-                      {editingAddressId ? 'Update Address' : 'Save Address'}
-                    </button>
+                /* Add / Edit Address Form Container matching Screenshot */
+                <div className="bg-white rounded-2xl p-5 shadow-xs border border-neutral-200/70">
+                  {/* Form Subheader with Locate on Map */}
+                  <div className="flex items-center justify-between pb-3 mb-3 border-b border-neutral-100">
+                    <h3 className="font-bold text-base text-neutral-900">
+                      {editingAddressId ? 'Edit Address' : 'Add New Address'}
+                    </h3>
                     <button
                       type="button"
-                      onClick={() => {
-                        setIsAddAddressFormOpen(false);
-                        setEditingAddressId(null);
-                      }}
-                      className="w-full mt-2 py-3 text-neutral-600 font-bold text-sm hover:text-neutral-900 text-center"
+                      onClick={handleLocateOnMap}
+                      disabled={isLocating}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0a7a40] hover:text-[#086333] cursor-pointer disabled:opacity-50 transition-colors"
+                      title="Use GPS location"
                     >
-                      Cancel
+                      {isLocating ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-[#0a7a40]" />
+                      ) : (
+                        <Map className="w-4 h-4 text-[#0a7a40]" />
+                      )}
+                      <span>{isLocating ? 'Locating...' : 'Locate on Map'}</span>
                     </button>
                   </div>
-                </form>
+
+                  <form onSubmit={handleSaveNewAddress} className="space-y-3.5">
+                    {/* Address Label */}
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                        Address Label (e.g. Home, Office)
+                      </label>
+                      <input
+                        type="text"
+                        value={newAddress.addressLabel}
+                        onChange={(e) => setNewAddress({ ...newAddress, addressLabel: e.target.value })}
+                        className="w-full px-4 py-3 bg-[#fbfcfb] border border-neutral-300 rounded-xl text-sm font-medium text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-[#0a7a40] focus:ring-1 focus:ring-[#0a7a40] transition-all"
+                        placeholder="Home"
+                        required
+                      />
+                    </div>
+
+                    {/* Full Name */}
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                        Full Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={newAddress.fullName}
+                        onChange={(e) => setNewAddress({ ...newAddress, fullName: e.target.value })}
+                        className="w-full px-4 py-3 bg-[#fbfcfb] border border-neutral-300 rounded-xl text-sm font-medium text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-[#0a7a40] focus:ring-1 focus:ring-[#0a7a40] transition-all"
+                        placeholder="Full Name"
+                        required
+                      />
+                    </div>
+
+                    {/* Flat, House no., Building, Company, Apartment * */}
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                        Flat, House no., Building, Company, Apartment <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={newAddress.flatBuilding || ''}
+                        onChange={(e) => setNewAddress({ ...newAddress, flatBuilding: e.target.value })}
+                        className="w-full px-4 py-3 bg-[#fbfcfb] border border-neutral-300 rounded-xl text-sm font-medium text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-[#0a7a40] focus:ring-1 focus:ring-[#0a7a40] transition-all"
+                        placeholder="Flat, House no., Building, Company, Apartment *"
+                        required
+                      />
+                    </div>
+
+                    {/* Area, Colony, Landmark (Optional) */}
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                        Area, Colony, Landmark (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={newAddress.streetAddress || ''}
+                        onChange={(e) => setNewAddress({ ...newAddress, streetAddress: e.target.value })}
+                        className="w-full px-4 py-3 bg-[#fbfcfb] border border-neutral-300 rounded-xl text-sm font-medium text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-[#0a7a40] focus:ring-1 focus:ring-[#0a7a40] transition-all"
+                        placeholder="Area, Colony, Landmark (Optional)"
+                      />
+                    </div>
+
+                    {/* City & Pincode Grid */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                          City <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={newAddress.city}
+                          onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
+                          className="w-full px-4 py-3 bg-[#fbfcfb] border border-neutral-300 rounded-xl text-sm font-medium text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-[#0a7a40] focus:ring-1 focus:ring-[#0a7a40] transition-all"
+                          placeholder="City"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="block text-xs font-semibold text-neutral-700">
+                            Pincode <span className="text-red-500">*</span>
+                          </label>
+                          {isPincodeLoading && (
+                            <span className="text-[10px] text-[#0a7a40] font-bold animate-pulse">
+                              Detecting...
+                            </span>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={newAddress.pincode}
+                          onChange={async (e) => {
+                            const val = e.target.value.replace(/\D/g, '');
+                            setNewAddress((prev) => ({ ...prev, pincode: val }));
+                            if (val.length === 6) {
+                              setIsPincodeLoading(true);
+                              try {
+                                const res = await axios.get(`https://api.postalpincode.in/pincode/${val}`);
+                                if (res.data?.[0]?.Status === 'Success' && res.data[0].PostOffice?.length > 0) {
+                                  const po = res.data[0].PostOffice[0];
+                                  const detectedCity = po.District || po.Block || po.Name;
+                                  const detectedState = po.State;
+                                  setNewAddress((prev) => ({
+                                    ...prev,
+                                    pincode: val,
+                                    city: detectedCity,
+                                    state: detectedState,
+                                  }));
+                                }
+                              } catch (err) {
+                                console.warn('Pincode fetch error:', err);
+                              } finally {
+                                setIsPincodeLoading(false);
+                              }
+                            }
+                          }}
+                          className="w-full px-4 py-3 bg-[#fbfcfb] border border-neutral-300 rounded-xl text-sm font-semibold text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-[#0a7a40] focus:ring-1 focus:ring-[#0a7a40] transition-all"
+                          placeholder="Pincode"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {/* State */}
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                        State
+                      </label>
+                      <input
+                        type="text"
+                        value={newAddress.state || ''}
+                        onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })}
+                        className="w-full px-4 py-3 bg-[#fbfcfb] border border-neutral-300 rounded-xl text-sm font-medium text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-[#0a7a40] focus:ring-1 focus:ring-[#0a7a40] transition-all"
+                        placeholder="State"
+                      />
+                    </div>
+
+                    {/* Phone Number */}
+                    <div>
+                      <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                        Phone Number <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        maxLength={10}
+                        value={newAddress.phoneNumber}
+                        onChange={(e) => setNewAddress({ ...newAddress, phoneNumber: e.target.value.replace(/\D/g, '') })}
+                        className="w-full px-4 py-3 bg-[#fbfcfb] border border-neutral-300 rounded-xl text-sm font-medium text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:border-[#0a7a40] focus:ring-1 focus:ring-[#0a7a40] transition-all"
+                        placeholder="Phone Number"
+                        required
+                      />
+                    </div>
+
+                    {/* Set as Default Address (Toggle Switch) */}
+                    <div className="flex items-center justify-between pt-2 pb-1">
+                      <label
+                        className="text-sm font-medium text-neutral-800 cursor-pointer"
+                        onClick={() => setNewAddress((prev) => ({ ...prev, isDefault: !prev.isDefault }))}
+                      >
+                        Set as Default Address
+                      </label>
+                      <div
+                        className={`w-12 h-6 flex items-center rounded-full p-0.5 cursor-pointer transition-colors duration-200 ${
+                          newAddress.isDefault ? 'bg-[#0a7a40]' : 'bg-neutral-300'
+                        }`}
+                        onClick={() => setNewAddress((prev) => ({ ...prev, isDefault: !prev.isDefault }))}
+                      >
+                        <div
+                          className={`bg-white w-5 h-5 rounded-full shadow-sm transform transition-transform duration-200 ${
+                            newAddress.isDefault ? 'translate-x-6' : 'translate-x-0'
+                          }`}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Submit and Cancel Buttons */}
+                    <div className="pt-3">
+                      <button
+                        type="submit"
+                        className="w-full py-3.5 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-sm sm:text-base rounded-2xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        {editingAddressId ? 'Update Address' : 'Save Address'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddAddressFormOpen(false);
+                          setEditingAddressId(null);
+                        }}
+                        className="w-full mt-2 py-2 text-neutral-500 font-semibold text-xs hover:text-neutral-800 transition-colors text-center cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </div>
               )}
             </div>
           </div>

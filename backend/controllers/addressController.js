@@ -25,7 +25,7 @@ const addAddress = asyncHandler(async (req, res) => {
     addressLabel: addressLabel || 'Home',
     fullName,
     flatBuilding: flatBuilding || '',
-    streetAddress,
+    streetAddress: streetAddress || flatBuilding || '',
     city,
     state: state || '',
     pincode,

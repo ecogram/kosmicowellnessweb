@@ -25,7 +25,7 @@ const addressSchema = new mongoose.Schema(
     },
     streetAddress: {
       type: String,
-      required: [true, 'Please provide street address'],
+      default: '',
       trim: true,
     },
     city: {
