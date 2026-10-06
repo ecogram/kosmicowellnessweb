@@ -20,9 +20,11 @@ const addAddress = asyncHandler(async (req, res) => {
     }
   }
 
-  const finalFlatBuilding = (flatBuilding || houseNo || apartment || '').trim() || (streetAddress && !landmark && !areaColony ? streetAddress.trim() : '');
-  const finalAreaColony = (landmark || areaColony || (flatBuilding && streetAddress && flatBuilding !== streetAddress ? streetAddress : '') || '').trim();
-  const finalStreetAddress = (streetAddress || finalAreaColony || finalFlatBuilding || '').trim();
+  const rawFlat = (flatBuilding || houseNo || apartment || '').trim();
+  const rawArea = (landmark || areaColony || (rawFlat && streetAddress && rawFlat !== streetAddress ? streetAddress : '') || '').trim();
+  const finalFlatBuilding = rawFlat || (streetAddress ? streetAddress.trim() : '');
+  const finalAreaColony = rawArea;
+  const finalStreetAddress = rawArea || finalFlatBuilding;
 
   const address = await Address.create({
     user: req.user._id,
@@ -54,17 +56,26 @@ const updateAddress = asyncHandler(async (req, res) => {
     await Address.updateMany({ user: req.user._id }, { isDefault: false });
   }
 
-  const { flatBuilding, streetAddress, landmark, areaColony, houseNo, apartment } = req.body;
-  const finalFlatBuilding = (flatBuilding || houseNo || apartment || address.flatBuilding || '').trim() || (streetAddress && !landmark && !areaColony ? streetAddress.trim() : '');
-  const finalAreaColony = (landmark || areaColony || (flatBuilding && streetAddress && flatBuilding !== streetAddress ? streetAddress : '') || '').trim();
-  const finalStreetAddress = (streetAddress || finalAreaColony || finalFlatBuilding || address.streetAddress || '').trim();
+  const { addressLabel, fullName, flatBuilding, streetAddress, landmark, areaColony, houseNo, apartment, city, state, pincode, phoneNumber, isDefault } = req.body;
+  
+  const rawFlat = (flatBuilding !== undefined ? flatBuilding : (houseNo || apartment || address.flatBuilding || '')).trim();
+  const rawArea = (landmark !== undefined ? landmark : (areaColony !== undefined ? areaColony : address.landmark || address.areaColony || '')).trim();
+  const finalFlatBuilding = rawFlat || (streetAddress ? streetAddress.trim() : address.flatBuilding);
+  const finalAreaColony = rawArea;
+  const finalStreetAddress = rawArea || finalFlatBuilding;
 
-  Object.assign(address, req.body, {
-    flatBuilding: finalFlatBuilding,
-    streetAddress: finalStreetAddress,
-    landmark: finalAreaColony,
-    areaColony: finalAreaColony,
-  });
+  if (addressLabel !== undefined) address.addressLabel = addressLabel;
+  if (fullName) address.fullName = fullName;
+  address.flatBuilding = finalFlatBuilding;
+  address.streetAddress = finalStreetAddress;
+  address.landmark = finalAreaColony;
+  address.areaColony = finalAreaColony;
+  if (city) address.city = city;
+  if (state !== undefined) address.state = state;
+  if (pincode) address.pincode = pincode;
+  if (phoneNumber) address.phoneNumber = phoneNumber;
+  if (isDefault !== undefined) address.isDefault = isDefault;
+
   await address.save();
 
   res.status(200).json(new ApiResponse(200, address, 'Address updated successfully'));

@@ -39,6 +39,8 @@ interface SavedAddress {
   phoneNumber: string;
   flatBuilding?: string;
   streetAddress: string;
+  landmark?: string;
+  areaColony?: string;
   city: string;
   state?: string;
   pincode: string;

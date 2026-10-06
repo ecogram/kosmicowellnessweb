@@ -249,10 +249,12 @@ export const Profile: React.FC = () => {
       if (Array.isArray(list)) {
         const formatted: SavedAddress[] = list.map((a: any) => ({
           _id: a._id || a.id || '',
-          addressLabel: (a.addressLabel as 'Home' | 'Work' | 'Other') || 'Home',
+          addressLabel: a.addressLabel || 'Home',
           fullName: a.fullName || '',
           flatBuilding: a.flatBuilding || '',
           streetAddress: a.streetAddress || '',
+          landmark: a.landmark || a.areaColony || '',
+          areaColony: a.areaColony || a.landmark || '',
           city: a.city || '',
           state: a.state || '',
           pincode: a.pincode || '',
