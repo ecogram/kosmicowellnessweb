@@ -27,7 +27,10 @@ const placeCodOrder = asyncHandler(async (req, res) => {
 
   let addressData = directAddress;
   if (!addressData && deliveryAddressId) {
-    const foundAddr = await Address.findOne({ _id: deliveryAddressId, user: req.user._id });
+    let foundAddr = await Address.findOne({ _id: deliveryAddressId, user: req.user._id });
+    if (!foundAddr) {
+      foundAddr = await Address.findById(deliveryAddressId);
+    }
     if (foundAddr) {
       addressData = {
         fullName: foundAddr.fullName,
@@ -109,6 +112,7 @@ const placeCodOrder = asyncHandler(async (req, res) => {
     total: finalTotal,
     amount: finalTotal,
     shippingAddress: addressData,
+    deliveryAddress: addressData,
     billingAddress: addressData,
     orderStatus: 'Placed',
     paymentStatus: 'COD_PENDING',
@@ -141,7 +145,10 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
 
   let addressData = directAddress;
   if (!addressData && deliveryAddressId) {
-    const foundAddr = await Address.findOne({ _id: deliveryAddressId, user: req.user._id });
+    let foundAddr = await Address.findOne({ _id: deliveryAddressId, user: req.user._id });
+    if (!foundAddr) {
+      foundAddr = await Address.findById(deliveryAddressId);
+    }
     if (foundAddr) {
       addressData = {
         fullName: foundAddr.fullName,
@@ -226,6 +233,7 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
     amount: finalTotal,
     upfrontAmount: upfrontAmount,
     shippingAddress: addressData,
+    deliveryAddress: addressData,
     billingAddress: addressData,
     orderStatus: 'PENDING',
     paymentStatus: 'PENDING',
@@ -551,7 +559,10 @@ const createCodUpfrontOrder = asyncHandler(async (req, res) => {
 
   let addressData = directAddress;
   if (!addressData && deliveryAddressId) {
-    const foundAddr = await Address.findOne({ _id: deliveryAddressId, user: req.user._id });
+    let foundAddr = await Address.findOne({ _id: deliveryAddressId, user: req.user._id });
+    if (!foundAddr) {
+      foundAddr = await Address.findById(deliveryAddressId);
+    }
     if (foundAddr) {
       addressData = {
         fullName: foundAddr.fullName,
@@ -634,6 +645,7 @@ const createCodUpfrontOrder = asyncHandler(async (req, res) => {
     amount: finalTotal,
     upfrontAmount: payableUpfront,
     shippingAddress: addressData,
+    deliveryAddress: addressData,
     billingAddress: addressData,
     orderStatus: 'PENDING',
     paymentStatus: 'PENDING',

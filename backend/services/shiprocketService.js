@@ -161,12 +161,36 @@ class ShiprocketService {
         } catch (_) {}
       }
 
+      // If address is still missing required fields, look up any address belonging to this user
+      if ((!addr.streetAddress && !addr.flatBuilding && !addr.addressLine1) && order.user) {
+        try {
+          const Address = require('../models/Address');
+          const foundUserAddr = await Address.findOne({ user: order.user }).sort({ isDefault: -1, createdAt: -1 }).lean();
+          if (foundUserAddr) addr = foundUserAddr;
+        } catch (_) {}
+      }
+
+      // Resolve user email/phone from User model if missing in order
+      let resolvedEmail = String(order.userEmail || '').trim();
+      let resolvedUserPhone = '';
+      if (!resolvedEmail && order.user) {
+        try {
+          const User = require('../models/User');
+          const u = await User.findById(order.user).lean();
+          if (u) {
+            resolvedEmail = u.email || '';
+            resolvedUserPhone = u.phoneNumber || u.phone || '';
+          }
+        } catch (_) {}
+      }
+      if (!resolvedEmail) resolvedEmail = 'orders@kosmicowellness.com';
+
       const fullName = (addr.fullName || order.userName || 'Customer').trim();
       const nameParts = fullName.split(' ');
       const firstName = nameParts[0] || 'Customer';
       const lastName = nameParts.slice(1).join(' ') || '';
 
-      const rawPhone = String(addr.phoneNumber || addr.phone || '9876543210').replace(/[^0-9]/g, '');
+      const rawPhone = String(addr.phoneNumber || addr.phone || resolvedUserPhone || '9876543210').replace(/[^0-9]/g, '');
       const cleanPhone = rawPhone.length >= 10 ? rawPhone.slice(-10) : '9876543210';
 
       const cleanPincode = String(addr.pincode || addr.postalCode || '201306').trim();
@@ -258,7 +282,7 @@ class ShiprocketService {
         billing_pincode: cleanPincode,
         billing_state: cleanState,
         billing_country: 'India',
-        billing_email: order.userEmail || 'orders@kosmicowellness.com',
+        billing_email: resolvedEmail,
         billing_phone: cleanPhone,
         shipping_is_billing: true,
         shipping_customer_name: firstName,
@@ -269,7 +293,7 @@ class ShiprocketService {
         shipping_pincode: cleanPincode,
         shipping_state: cleanState,
         shipping_country: 'India',
-        shipping_email: order.userEmail || 'orders@kosmicowellness.com',
+        shipping_email: resolvedEmail,
         shipping_phone: cleanPhone,
         order_items: orderItems,
         payment_method: isCod ? 'COD' : 'Prepaid',

@@ -667,6 +667,8 @@ export const Checkout: React.FC = () => {
         amount: total,
         total: total,
         deliveryAddressId: selectedAddress._id!,
+        shippingAddress: selectedAddress,
+        deliveryAddress: selectedAddress,
         items: itemsToOrder,
         couponCode: appliedCoupon?.code || undefined,
         discountAmount: discount,
