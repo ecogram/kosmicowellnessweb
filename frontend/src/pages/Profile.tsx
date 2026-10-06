@@ -23,6 +23,8 @@ interface SavedAddress {
   fullName: string;
   flatBuilding?: string;
   streetAddress: string;
+  landmark?: string;
+  areaColony?: string;
   city: string;
   state?: string;
   pincode: string;
@@ -573,24 +575,15 @@ export const Profile: React.FC = () => {
   const handleEditAddress = (addr: SavedAddress) => {
     setEditingAddressId(addr._id);
 
-    // Accurately map mandatory Flat/Building vs optional Area/Landmark
-    const rawFlat = addr.flatBuilding || (addr as any).houseNo || (addr as any).apartment || (addr as any).flat || (addr as any).building || '';
-    const rawLandmark = (addr as any).landmark || (addr as any).areaColony || (addr as any).colony || (addr as any).area || (addr as any).addressLine2 || '';
-
-    let flatVal = rawFlat;
-    let areaVal = rawLandmark;
-
-    if (!flatVal && addr.streetAddress) {
-      // If flatBuilding was empty in DB, the primary streetAddress is the flat/house details!
-      flatVal = addr.streetAddress;
-      areaVal = rawLandmark;
-    } else if (flatVal && addr.streetAddress && flatVal !== addr.streetAddress && !areaVal) {
-      areaVal = addr.streetAddress;
-    }
+    // Flat / Building (Mandatory) vs Area / Colony / Landmark (Optional)
+    const flatVal = addr.flatBuilding || (addr as any).houseNo || (addr as any).apartment || (addr as any).flat || (addr as any).building || '';
+    const rawLandmark = addr.landmark || addr.areaColony || (addr as any).colony || (addr as any).area || '';
+    const rawStreet = addr.streetAddress && addr.streetAddress !== flatVal ? addr.streetAddress : '';
+    const areaVal = rawLandmark || rawStreet || '';
 
     setAddrFormName(addr.fullName);
     setAddrFormPhone(addr.phoneNumber || (addr as any).phone || '');
-    setAddrFormFlat(flatVal);
+    setAddrFormFlat(flatVal || (areaVal ? '' : addr.streetAddress || ''));
     setAddrFormStreet(areaVal);
     setAddrFormCity(addr.city);
     setAddrFormState(addr.state || '');
@@ -638,7 +631,7 @@ export const Profile: React.FC = () => {
       addressLabel: (addrFormLabel || 'Home').trim(),
       fullName: addrFormName.trim(),
       flatBuilding: flat,
-      streetAddress: area || flat,
+      streetAddress: area,
       landmark: area,
       areaColony: area,
       city: addrFormCity.trim(),
@@ -1139,7 +1132,7 @@ export const Profile: React.FC = () => {
                             </div>
                             <h4 className="font-bold text-sm text-neutral-900">{addr.fullName}</h4>
                             <p className="text-xs text-neutral-600 leading-relaxed">
-                              {addr.flatBuilding ? `${addr.flatBuilding}, ` : ''}{addr.streetAddress ? `${addr.streetAddress}, ` : ''}{addr.city}{addr.state ? `, ${addr.state}` : ''} - <span className="font-bold text-neutral-800">{addr.pincode}</span>
+                              {addr.flatBuilding ? `${addr.flatBuilding}, ` : ''}{addr.streetAddress && addr.streetAddress !== addr.flatBuilding ? `${addr.streetAddress}, ` : ''}{addr.city}{addr.state ? `, ${addr.state}` : ''} - <span className="font-bold text-neutral-800">{addr.pincode}</span>
                             </p>
                             <p className="text-xs text-neutral-700 font-medium mt-1">
                               Phone: <span className="font-bold">{addr.phoneNumber}</span>

@@ -796,27 +796,18 @@ export const Checkout: React.FC = () => {
     e.stopPropagation();
     setEditingAddressId(addr._id || null);
 
-    // Accurately map mandatory Flat/Building vs optional Area/Landmark
-    const rawFlat = addr.flatBuilding || (addr as any).houseNo || (addr as any).apartment || (addr as any).flat || (addr as any).building || '';
-    const rawLandmark = (addr as any).landmark || (addr as any).areaColony || (addr as any).colony || (addr as any).area || (addr as any).addressLine2 || '';
-
-    let flatVal = rawFlat;
-    let areaVal = rawLandmark;
-
-    if (!flatVal && addr.streetAddress) {
-      // If flatBuilding was empty in DB, the primary streetAddress is the flat/house details!
-      flatVal = addr.streetAddress;
-      areaVal = rawLandmark;
-    } else if (flatVal && addr.streetAddress && flatVal !== addr.streetAddress && !areaVal) {
-      areaVal = addr.streetAddress;
-    }
+    // Flat / Building (Mandatory) vs Area / Colony / Landmark (Optional)
+    const flatVal = addr.flatBuilding || (addr as any).houseNo || (addr as any).apartment || (addr as any).flat || (addr as any).building || '';
+    const rawLandmark = addr.landmark || addr.areaColony || (addr as any).colony || (addr as any).area || '';
+    const rawStreet = addr.streetAddress && addr.streetAddress !== flatVal ? addr.streetAddress : '';
+    const areaVal = rawLandmark || rawStreet || '';
 
     setNewAddress({
       _id: addr._id,
       addressLabel: addr.addressLabel || 'Home',
       fullName: addr.fullName,
       phoneNumber: addr.phoneNumber || (addr as any).phone || '',
-      flatBuilding: flatVal,
+      flatBuilding: flatVal || (areaVal ? '' : addr.streetAddress || ''),
       streetAddress: areaVal,
       city: addr.city,
       state: addr.state || '',
@@ -862,7 +853,7 @@ export const Checkout: React.FC = () => {
       addressLabel: (newAddress.addressLabel || 'Home').trim(),
       fullName: newAddress.fullName.trim(),
       flatBuilding: flat,
-      streetAddress: area || flat,
+      streetAddress: area,
       landmark: area,
       areaColony: area,
       city: newAddress.city.trim(),
@@ -960,8 +951,8 @@ export const Checkout: React.FC = () => {
               </p>
               <p className="text-neutral-600 text-xs leading-relaxed">
                 {selectedAddress.flatBuilding ? `${selectedAddress.flatBuilding}, ` : ''}
-                {selectedAddress.streetAddress || (selectedAddress as any).addressLine1 || ''}
-                {selectedAddress.city ? `, ${selectedAddress.city}` : ''}
+                {selectedAddress.streetAddress && selectedAddress.streetAddress !== selectedAddress.flatBuilding ? `${selectedAddress.streetAddress}, ` : ''}
+                {selectedAddress.city ? `${selectedAddress.city}` : ''}
                 {selectedAddress.state ? `, ${selectedAddress.state}` : ''}
                 {selectedAddress.pincode ? ` - ${selectedAddress.pincode}` : ''}
               </p>
@@ -1441,7 +1432,7 @@ export const Checkout: React.FC = () => {
                               </div>
                               <h4 className="font-bold text-sm text-neutral-900">{addr.fullName}</h4>
                               <p className="text-xs text-neutral-600 mt-1 leading-relaxed">
-                                {addr.flatBuilding ? `${addr.flatBuilding}, ` : ''}{addr.streetAddress ? `${addr.streetAddress}, ` : ''}{addr.city}{addr.state ? `, ${addr.state}` : ''} - {addr.pincode}
+                                {addr.flatBuilding ? `${addr.flatBuilding}, ` : ''}{addr.streetAddress && addr.streetAddress !== addr.flatBuilding ? `${addr.streetAddress}, ` : ''}{addr.city}{addr.state ? `, ${addr.state}` : ''} - {addr.pincode}
                               </p>
                               <p className="text-xs text-neutral-700 font-medium mt-1.5">
                                 Phone: <span className="font-bold">{addr.phoneNumber}</span>
