@@ -153,10 +153,10 @@ class ShiprocketService {
 
       // Resolve address details
       let addr = order.shippingAddress || order.deliveryAddress || {};
-      if (typeof addr === 'string' || (addr && addr._bsontype)) {
+      if (typeof addr === 'string' || mongoose.isValidObjectId(addr) || (addr && addr._bsontype) || (addr && !addr.streetAddress && addr._id)) {
         try {
           const Address = require('../models/Address');
-          const found = await Address.findById(addr).lean();
+          const found = await Address.findById(addr._id || addr).lean();
           if (found) addr = found;
         } catch (_) {}
       }
