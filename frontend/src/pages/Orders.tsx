@@ -110,53 +110,24 @@ export const Orders: React.FC = () => {
                 const paymentMethodUpper = String(order.paymentMethod || '').toUpperCase();
                 const paymentStatusUpper = String(order.paymentStatus || '').toUpperCase();
                 const upfrontAmt = Number(order.upfrontAmount || 0);
-                const orderSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 0) * (it.quantity || it.qty || 1), 0) || 0);
-                const discountAmt = Number(order.discount ?? order.discountAmount ?? 0);
-                let orderTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
-                let shippingFee = Number(order.shipping ?? order.deliveryFee ?? 0);
-                let taxFee = Number(order.tax ?? order.gstCharge ?? 0);
+                const orderTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
+                const shippingFee = Number(order.shipping ?? order.deliveryFee ?? 0);
+                const taxFee = Number(order.tax ?? order.gstCharge ?? 0);
 
-                const isCOD =
-                  paymentMethodUpper.includes('COD') ||
-                  paymentStatusUpper.includes('COD') ||
-                  paymentStatusUpper === 'PARTIAL_PAID' ||
-                  upfrontAmt > 0 ||
-                  order.isCOD === true ||
-                  shippingFee > 0 ||
-                  (orderTotal >= 104 && orderSubtotal <= 10) ||
-                  (orderTotal - orderSubtotal >= 80);
+                const isCOD = paymentMethodUpper.includes('COD') || upfrontAmt > 0 || order.isCOD === true;
+                const isPartCod = isCOD && (paymentMethodUpper === 'COD_UPFRONT' || upfrontAmt > 0 || paymentStatusUpper === 'PARTIAL_PAID' || String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID');
+                const isOnlinePaid = !isCOD && ['PAID', 'COMPLETED'].includes(paymentStatusUpper);
 
-                const isAdvancePaid =
-                  isCOD && (
-                    paymentMethodUpper === 'COD_UPFRONT' ||
-                    upfrontAmt > 0 ||
-                    paymentStatusUpper === 'PARTIAL_PAID' ||
-                    String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID' ||
-                    paymentStatusUpper === 'PAID' ||
-                    orderTotal >= 104
-                  );
+                const rawPaid = Number(order.paidAmount || order.upfrontAmount || 0);
+                const paidAmount = isPartCod
+                  ? (rawPaid > 0 ? rawPaid : (upfrontAmt || (shippingFee + taxFee)))
+                  : (isOnlinePaid ? orderTotal : 0);
+                const balanceAmount = isPartCod
+                  ? Math.max(0, orderTotal - paidAmount)
+                  : (isCOD ? orderTotal : 0);
 
-                if (isCOD) {
-                  if (shippingFee === 0 || shippingFee === 91 || (shippingFee + taxFee === 104) || !shippingFee) {
-                    shippingFee = 88;
-                    taxFee = 16;
-                  }
-                }
-                const advancePaidAmount = Number(order.upfrontAmount) || (shippingFee + taxFee) || 104;
-                const payOnDeliveryAmount = Math.max(0, orderSubtotal - discountAmt);
-                if (isCOD) {
-                  orderTotal = payOnDeliveryAmount + advancePaidAmount;
-                } else if (!orderTotal) {
-                  orderTotal = orderSubtotal - discountAmt + shippingFee + taxFee;
-                }
                 const recipientName = order.shippingAddress?.fullName || order.userName || 'Customer';
                 const recipientCity = order.shippingAddress?.city || order.shippingAddress?.state || '';
-
-                const isPartCod = isAdvancePaid;
-                const rawPaid = Number(order.paidAmount || order.upfrontAmount || 0);
-                const deliveryPlusGst = (shippingFee + taxFee) || 104;
-                const paidAmount = isPartCod ? (rawPaid > 0 ? rawPaid : deliveryPlusGst) : (paymentStatusUpper === 'PAID' ? orderTotal : 0);
-                const balanceAmount = isPartCod ? payOnDeliveryAmount : (isCOD ? orderTotal : 0);
 
                 return (
                   <li key={order._id || orderNum} className="p-5 sm:p-6 flex flex-col md:grid md:grid-cols-12 gap-4 items-center hover:bg-emerald-50/30 transition-colors">

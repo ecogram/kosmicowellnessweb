@@ -156,33 +156,8 @@ export const OrderDetails = () => {
   const paymentStatusUpper = String(order.paymentStatus || '').toUpperCase();
   const upfrontAmt = Number(order.upfrontAmount || 0);
 
-  // Compute raw subtotal and total to catch all COD orders even if paymentMethod was not explicitly set
-  const rawSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 0) * (it.quantity || it.qty || 1), 0) || 0);
-  const rawTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
-  const rawDelivery = Number(order.shipping ?? order.deliveryFee ?? 0);
-
-  // In Kosmico, online prepaid orders ALWAYS have free delivery (total == subtotal).
-  // Any order with COD tag, upfront amount, delivery fee, or total >= 104 with subtotal <= 10 is COD!
-  const isCOD =
-    paymentMethodUpper.includes('COD') ||
-    paymentStatusUpper.includes('COD') ||
-    paymentStatusUpper === 'PARTIAL_PAID' ||
-    upfrontAmt > 0 ||
-    order.isCOD === true ||
-    rawDelivery > 0 ||
-    (rawTotal >= 104 && rawSubtotal <= 10) ||
-    (rawTotal - rawSubtotal >= 80);
-
-  const isAdvancePaid =
-    isCOD && (
-      paymentMethodUpper === 'COD_UPFRONT' ||
-      upfrontAmt > 0 ||
-      paymentStatusUpper === 'PARTIAL_PAID' ||
-      String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID' ||
-      paymentStatusUpper === 'PAID' ||
-      rawTotal >= 104
-    );
-
+  const isCOD = paymentMethodUpper.includes('COD') || upfrontAmt > 0 || order.isCOD === true;
+  const isAdvancePaid = isCOD && (paymentMethodUpper === 'COD_UPFRONT' || upfrontAmt > 0 || paymentStatusUpper === 'PARTIAL_PAID' || String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID');
   const isPaid = !isCOD && ['PAID', 'COMPLETED'].includes(paymentStatusUpper);
   const isCancelled = currentStatus === 'CANCELLED';
 
@@ -223,50 +198,20 @@ export const OrderDetails = () => {
     },
   ];
 
-  // Pricing calculations
-  const orderSubtotal = Number(order.subtotal || (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 0) * (it.quantity || it.qty || 1), 0) || 0);
+  // Pricing calculations (use exact values from DB/API)
+  const orderTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
+  const orderSubtotal = Number(order.subtotal ?? (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 0) * (it.quantity || it.qty || 1), 0) ?? orderTotal);
   const discountAmt = Number(order.discount ?? order.discountAmount ?? 0);
-
-  let shippingFee = Number(order.shipping ?? order.deliveryFee ?? 0);
-  let taxFee = Number(order.tax ?? order.gstCharge ?? 0);
-
-  if (isCOD) {
-    // In checkout, COD delivery fee is ₹88 and GST is ₹16 (Total advance: ₹104)
-    if (shippingFee === 0 || shippingFee === 91 || (shippingFee + taxFee === 104) || !shippingFee) {
-      shippingFee = 88;
-      taxFee = 16;
-    }
-  } else {
-    if (shippingFee === 0 && !order.shipping && !order.deliveryFee) {
-      shippingFee = 0;
-    }
-    if (taxFee === 0 && !order.tax && !order.gstCharge) {
-      taxFee = 0;
-    }
-  }
-
-  const advancePaidAmount = Number(order.upfrontAmount) || (shippingFee + taxFee) || 104;
-  const payOnDeliveryAmount = Math.max(0, orderSubtotal - discountAmt);
-  let orderTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
-
-  if (isCOD) {
-    orderTotal = payOnDeliveryAmount + advancePaidAmount;
-  } else if (!orderTotal) {
-    orderTotal = orderSubtotal - discountAmt + shippingFee + taxFee;
-  }
-
-  // Advance paid in COD is strictly Delivery Fee + GST (e.g. ₹88 + ₹16 = ₹104)
-  const deliveryPlusGst = (shippingFee + taxFee) || 104;
-  const payOnDeliveryProductPrice = Math.max(0, orderSubtotal - discountAmt);
+  const shippingFee = isCOD ? Number(order.shipping ?? order.deliveryFee ?? 0) : 0;
+  const taxFee = isCOD ? Number(order.tax ?? order.gstCharge ?? 0) : 0;
 
   const rawPaid = Number(order.paidAmount || trackingData?.paidAmount || trackingData?.order?.paidAmount || order.upfrontAmount || 0);
   const paidAmount = isAdvancePaid
-    ? (rawPaid > 0 ? rawPaid : deliveryPlusGst)
+    ? (rawPaid > 0 ? rawPaid : (upfrontAmt || (shippingFee + taxFee)))
     : (isPaid ? orderTotal : 0);
 
-  // Balance payable on delivery is strictly the product price (subtotal - discount)
   const balanceAmount = isAdvancePaid
-    ? payOnDeliveryProductPrice
+    ? Math.max(0, orderTotal - paidAmount)
     : (isCOD ? orderTotal : 0);
 
   const handleCancel = () => {

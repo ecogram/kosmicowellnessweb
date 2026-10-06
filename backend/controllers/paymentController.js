@@ -295,10 +295,7 @@ const verifyPayment = asyncHandler(async (req, res) => {
     const existingOrder = await Order.findById(orderId);
     const isCodUpfront =
       existingOrder?.paymentMethod === 'COD_UPFRONT' ||
-      existingOrder?.paymentMethod === 'COD' ||
-      (existingOrder?.upfrontAmount && existingOrder?.upfrontAmount > 0) ||
-      (Number(existingOrder?.total || existingOrder?.amount || 0) >= 104 && Number(existingOrder?.subtotal || 0) <= 10) ||
-      Number(existingOrder?.deliveryFee || existingOrder?.shipping || 0) > 0;
+      (existingOrder?.upfrontAmount && existingOrder?.upfrontAmount > 0);
 
     order = await Order.findByIdAndUpdate(
       orderId,
@@ -306,11 +303,11 @@ const verifyPayment = asyncHandler(async (req, res) => {
         paymentMethod: isCodUpfront ? 'COD_UPFRONT' : (existingOrder?.paymentMethod || 'ONLINE'),
         paymentStatus: isCodUpfront ? 'PARTIAL_PAID' : 'PAID',
         upfrontPaymentStatus: isCodUpfront ? 'Paid' : undefined,
-        upfrontAmount: isCodUpfront ? (existingOrder?.upfrontAmount || 104) : 0,
-        deliveryFee: isCodUpfront ? (existingOrder?.deliveryFee || 88) : 0,
-        shipping: isCodUpfront ? (existingOrder?.shipping || 88) : 0,
-        gstCharge: isCodUpfront ? (existingOrder?.gstCharge || 16) : 0,
-        tax: isCodUpfront ? (existingOrder?.tax || 16) : 0,
+        upfrontAmount: isCodUpfront ? Number(existingOrder?.upfrontAmount || 0) : 0,
+        deliveryFee: Number(existingOrder?.deliveryFee || existingOrder?.shipping || 0),
+        shipping: Number(existingOrder?.shipping || existingOrder?.deliveryFee || 0),
+        gstCharge: Number(existingOrder?.gstCharge || existingOrder?.tax || 0),
+        tax: Number(existingOrder?.tax || existingOrder?.gstCharge || 0),
         orderStatus: 'Placed',
         paymentReference: razorpay_payment_id,
         trackingNumber: 'TRK-' + Math.floor(10000000 + Math.random() * 90000000),
@@ -358,12 +355,6 @@ const getMyOrders = asyncHandler(async (req, res) => {
     { userId: req.user._id },
     { userId: String(req.user._id) },
     ...(userEmail ? [{ userEmail: new RegExp(`^${userEmail}$`, 'i') }] : []),
-    ...(cleanPhone.length >= 10 ? [
-      { 'shippingAddress.phone': new RegExp(cleanPhone.slice(-10)) },
-      { 'shippingAddress.phoneNumber': new RegExp(cleanPhone.slice(-10)) },
-      { 'deliveryAddress.phone': new RegExp(cleanPhone.slice(-10)) },
-      { 'deliveryAddress.phoneNumber': new RegExp(cleanPhone.slice(-10)) },
-    ] : []),
   ];
 
   const query = {
@@ -474,26 +465,25 @@ const getMyOrders = asyncHandler(async (req, res) => {
       const orderTotal = o.total !== undefined ? Number(o.total) : (o.amount !== undefined ? Number(o.amount) : 0);
       const orderSubtotal = o.subtotal !== undefined ? Number(o.subtotal) : orderTotal;
       const orderNum = o.orderNumber || o.shiprocketOrderId || o._id.toString();
+      const deliveryFee = Number(o.deliveryFee ?? o.shipping ?? 0);
+      const gstCharge = Number(o.gstCharge ?? o.tax ?? 0);
+      const upfrontAmount = Number(o.upfrontAmount || 0);
 
-      const isCodOrder =
-        (o.paymentMethod || '').toUpperCase().includes('COD') ||
-        (o.paymentStatus || '').toUpperCase().includes('COD') ||
-        (o.paymentStatus || '').toUpperCase() === 'PARTIAL_PAID' ||
-        Number(o.upfrontAmount || 0) > 0 ||
-        Number(o.deliveryFee || o.shipping || 0) > 0 ||
-        (orderTotal >= 104 && orderSubtotal <= 10) ||
-        (orderTotal - orderSubtotal >= 80);
+      const paymentMethodUpper = String(o.paymentMethod || '').toUpperCase();
+      const paymentStatusUpper = String(o.paymentStatus || '').toUpperCase();
+      const isCodOrder = paymentMethodUpper.includes('COD') || upfrontAmount > 0;
+      const isPartCod = paymentMethodUpper === 'COD_UPFRONT' || paymentStatusUpper === 'PARTIAL_PAID' || upfrontAmount > 0;
 
-      const resolvedDeliveryFee = isCodOrder ? (Number(o.deliveryFee ?? o.shipping ?? 0) || 88) : 0;
-      const resolvedGstCharge = isCodOrder ? (Number(o.gstCharge ?? o.tax ?? 0) || 16) : 0;
-      const resolvedUpfrontAmount = isCodOrder ? (Number(o.upfrontAmount || 0) || (resolvedDeliveryFee + resolvedGstCharge) || 104) : 0;
-      const resolvedPaymentMethod = isCodOrder ? (o.paymentMethod && o.paymentMethod.toUpperCase().includes('COD') ? o.paymentMethod : 'COD_UPFRONT') : (o.paymentMethod || 'ONLINE');
-      const resolvedPaidAmount = isCodOrder
+      const resolvedDeliveryFee = isCodOrder ? deliveryFee : 0;
+      const resolvedGstCharge = isCodOrder ? gstCharge : 0;
+      const resolvedUpfrontAmount = isPartCod ? (upfrontAmount || (resolvedDeliveryFee + resolvedGstCharge)) : 0;
+      const resolvedPaymentMethod = isPartCod ? 'COD_UPFRONT' : (isCodOrder ? 'COD' : (o.paymentMethod || 'ONLINE'));
+      const resolvedPaidAmount = isPartCod
         ? resolvedUpfrontAmount
-        : (['PAID', 'COMPLETED'].includes(String(o.paymentStatus || '').toUpperCase()) ? orderTotal : 0);
-      const resolvedBalanceAmount = isCodOrder
+        : (['PAID', 'COMPLETED'].includes(paymentStatusUpper) ? orderTotal : 0);
+      const resolvedBalanceAmount = isPartCod
         ? Math.max(0, orderTotal - resolvedUpfrontAmount)
-        : (['PAID', 'COMPLETED'].includes(String(o.paymentStatus || '').toUpperCase()) ? 0 : orderTotal);
+        : (isCodOrder ? orderTotal : 0);
 
       return {
         ...o,
@@ -516,7 +506,7 @@ const getMyOrders = asyncHandler(async (req, res) => {
         discount: o.discount !== undefined ? Number(o.discount) : (o.discountAmount !== undefined ? Number(o.discountAmount) : 0),
         discountAmount: o.discountAmount !== undefined ? Number(o.discountAmount) : (o.discount !== undefined ? Number(o.discount) : 0),
         orderStatus: String(o.orderStatus || 'PROCESSING').toUpperCase(),
-        paymentStatus: isCodOrder && ['PAID', 'COMPLETED'].includes(String(o.paymentStatus || '').toUpperCase()) ? 'PARTIAL_PAID' : String(o.paymentStatus || 'PENDING').toUpperCase(),
+        paymentStatus: isPartCod ? 'PARTIAL_PAID' : (['PAID', 'COMPLETED'].includes(paymentStatusUpper) ? 'PAID' : String(o.paymentStatus || 'PENDING').toUpperCase()),
         paymentMethod: resolvedPaymentMethod,
         shippingAddress: addressData,
         deliveryAddress: addressData,
@@ -810,24 +800,24 @@ const getOrderById = asyncHandler(async (req, res) => {
 
   const orderTotal = order.total !== undefined ? Number(order.total) : (order.amount !== undefined ? Number(order.amount) : 0);
   const orderSubtotal = order.subtotal !== undefined ? Number(order.subtotal) : orderTotal;
-  const isCodOrder =
-    (order.paymentMethod || '').toUpperCase().includes('COD') ||
-    (order.paymentStatus || '').toUpperCase().includes('COD') ||
-    (order.paymentStatus || '').toUpperCase() === 'PARTIAL_PAID' ||
-    Number(order.upfrontAmount || 0) > 0 ||
-    Number(order.deliveryFee || order.shipping || 0) > 0 ||
-    (orderTotal >= 104 && orderSubtotal <= 10) ||
-    (orderTotal - orderSubtotal >= 80);
+  const deliveryFee = Number(order.deliveryFee ?? order.shipping ?? 0);
+  const gstCharge = Number(order.gstCharge ?? order.tax ?? 0);
+  const upfrontAmount = Number(order.upfrontAmount || 0);
 
-  const resolvedDeliveryFee = isCodOrder ? (Number(order.deliveryFee ?? order.shipping ?? 0) || 88) : 0;
-  const resolvedGstCharge = isCodOrder ? (Number(order.gstCharge ?? order.tax ?? 0) || 16) : 0;
-  const resolvedUpfrontAmount = isCodOrder ? (Number(order.upfrontAmount || 0) || (resolvedDeliveryFee + resolvedGstCharge) || 104) : 0;
-  const resolvedPaidAmount = isCodOrder
+  const paymentMethodUpper = String(order.paymentMethod || '').toUpperCase();
+  const paymentStatusUpper = String(order.paymentStatus || '').toUpperCase();
+  const isCodOrder = paymentMethodUpper.includes('COD') || upfrontAmount > 0;
+  const isPartCod = paymentMethodUpper === 'COD_UPFRONT' || paymentStatusUpper === 'PARTIAL_PAID' || upfrontAmount > 0;
+
+  const resolvedDeliveryFee = isCodOrder ? deliveryFee : 0;
+  const resolvedGstCharge = isCodOrder ? gstCharge : 0;
+  const resolvedUpfrontAmount = isPartCod ? (upfrontAmount || (resolvedDeliveryFee + resolvedGstCharge)) : 0;
+  const resolvedPaidAmount = isPartCod
     ? resolvedUpfrontAmount
-    : (['PAID', 'COMPLETED'].includes(String(order.paymentStatus || '').toUpperCase()) ? orderTotal : 0);
-  const resolvedBalanceAmount = isCodOrder
+    : (['PAID', 'COMPLETED'].includes(paymentStatusUpper) ? orderTotal : 0);
+  const resolvedBalanceAmount = isPartCod
     ? Math.max(0, orderTotal - resolvedUpfrontAmount)
-    : (['PAID', 'COMPLETED'].includes(String(order.paymentStatus || '').toUpperCase()) ? 0 : orderTotal);
+    : (isCodOrder ? orderTotal : 0);
 
   const formattedOrder = {
     ...order,
@@ -841,8 +831,8 @@ const getOrderById = asyncHandler(async (req, res) => {
     upfrontAmount: resolvedUpfrontAmount,
     paidAmount: resolvedPaidAmount,
     balanceAmount: resolvedBalanceAmount,
-    paymentMethod: isCodOrder ? (order.paymentMethod && order.paymentMethod.toUpperCase().includes('COD') ? order.paymentMethod : 'COD_UPFRONT') : (order.paymentMethod || 'ONLINE'),
-    paymentStatus: isCodOrder && ['PAID', 'COMPLETED'].includes(String(order.paymentStatus || '').toUpperCase()) ? 'PARTIAL_PAID' : (order.paymentStatus || 'PENDING'),
+    paymentMethod: isPartCod ? 'COD_UPFRONT' : (isCodOrder ? 'COD' : (order.paymentMethod || 'ONLINE')),
+    paymentStatus: isPartCod ? 'PARTIAL_PAID' : (['PAID', 'COMPLETED'].includes(paymentStatusUpper) ? 'PAID' : (order.paymentStatus || 'PENDING')),
   };
 
   res.status(200).json(new ApiResponse(200, { order: formattedOrder }, 'Order retrieved successfully'));
