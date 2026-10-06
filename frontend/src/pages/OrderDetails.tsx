@@ -199,19 +199,29 @@ export const OrderDetails = () => {
   ];
 
   // Pricing calculations (use exact values from DB/API)
-  const orderTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
-  const orderSubtotal = Number(order.subtotal ?? (order.items || []).reduce((s: number, it: any) => s + (it.priceSnapshot || it.price || 0) * (it.quantity || it.qty || 1), 0) ?? orderTotal);
+  const rawOrderTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
   const discountAmt = Number(order.discount ?? order.discountAmount ?? 0);
   const shippingFee = isCOD ? Number(order.shipping ?? order.deliveryFee ?? 0) : 0;
   const taxFee = isCOD ? Number(order.tax ?? order.gstCharge ?? 0) : 0;
 
+  const itemsSubtotal = Number(
+    order.subtotal ||
+    (order.items || []).reduce((s: number, it: any) => s + (Number(it.priceSnapshot || it.price || it.unitPrice || 0) * Number(it.quantity || it.qty || 1)), 0) ||
+    0
+  );
+  const orderSubtotal = itemsSubtotal > 0 ? itemsSubtotal : rawOrderTotal;
+
   const rawPaid = Number(order.paidAmount || trackingData?.paidAmount || trackingData?.order?.paidAmount || order.upfrontAmount || 0);
   const paidAmount = isAdvancePaid
     ? (rawPaid > 0 ? rawPaid : (upfrontAmt || (shippingFee + taxFee)))
-    : (isPaid ? orderTotal : 0);
+    : (isPaid ? rawOrderTotal : 0);
+
+  const orderTotal = isAdvancePaid
+    ? Math.max(rawOrderTotal, itemsSubtotal + paidAmount - discountAmt, itemsSubtotal + shippingFee + taxFee - discountAmt)
+    : rawOrderTotal;
 
   const balanceAmount = isAdvancePaid
-    ? Math.max(0, orderTotal - paidAmount)
+    ? Math.max(0, orderTotal - paidAmount, itemsSubtotal - discountAmt)
     : (isCOD ? orderTotal : 0);
 
   const handleCancel = () => {

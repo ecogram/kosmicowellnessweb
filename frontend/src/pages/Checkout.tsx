@@ -523,7 +523,7 @@ export const Checkout: React.FC = () => {
       try {
         const upfrontRes = await api.post('/payment/cod-upfront/create', {
           ...orderPayload,
-          amount: advanceAmount,
+          amount: total,
           upfrontAmount: advanceAmount,
           total: total,
           subtotal: subtotal,
@@ -536,7 +536,7 @@ export const Checkout: React.FC = () => {
       } catch (createErr) {
         const fallbackRes = await api.post('/order/place/razorpay', {
           ...orderPayload,
-          amount: advanceAmount,
+          amount: total,
           upfrontAmount: advanceAmount,
           total: total,
           subtotal: subtotal,

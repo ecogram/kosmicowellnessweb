@@ -110,9 +110,19 @@ export const Orders: React.FC = () => {
                 const paymentMethodUpper = String(order.paymentMethod || '').toUpperCase();
                 const paymentStatusUpper = String(order.paymentStatus || '').toUpperCase();
                 const upfrontAmt = Number(order.upfrontAmount || 0);
-                const orderTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
+                const rawOrderTotal = Number(order.total ?? (order.amount && order.amount > 10000 ? order.amount / 100 : order.amount) ?? 0);
                 const shippingFee = Number(order.shipping ?? order.deliveryFee ?? 0);
                 const taxFee = Number(order.tax ?? order.gstCharge ?? 0);
+                const discountAmt = Number(order.discount ?? order.discountAmount ?? 0);
+
+                const itemsSubtotal = Number(
+                  order.subtotal ||
+                  (order.items || []).reduce(
+                    (sum: number, it: any) => sum + Number(it.priceSnapshot || it.price || it.unitPrice || 0) * Number(it.quantity || it.qty || 1),
+                    0
+                  ) ||
+                  0
+                );
 
                 const isCOD = paymentMethodUpper.includes('COD') || upfrontAmt > 0 || order.isCOD === true;
                 const isPartCod = isCOD && (paymentMethodUpper === 'COD_UPFRONT' || upfrontAmt > 0 || paymentStatusUpper === 'PARTIAL_PAID' || String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID');
@@ -121,9 +131,14 @@ export const Orders: React.FC = () => {
                 const rawPaid = Number(order.paidAmount || order.upfrontAmount || 0);
                 const paidAmount = isPartCod
                   ? (rawPaid > 0 ? rawPaid : (upfrontAmt || (shippingFee + taxFee)))
-                  : (isOnlinePaid ? orderTotal : 0);
+                  : (isOnlinePaid ? rawOrderTotal : 0);
+
+                const orderTotal = isPartCod
+                  ? Math.max(rawOrderTotal, itemsSubtotal + paidAmount - discountAmt, itemsSubtotal + shippingFee + taxFee - discountAmt)
+                  : rawOrderTotal;
+
                 const balanceAmount = isPartCod
-                  ? Math.max(0, orderTotal - paidAmount)
+                  ? Math.max(0, orderTotal - paidAmount, itemsSubtotal - discountAmt)
                   : (isCOD ? orderTotal : 0);
 
                 const recipientName = order.shippingAddress?.fullName || order.userName || 'Customer';

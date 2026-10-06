@@ -261,9 +261,13 @@ class ShiprocketService {
 
       const totalAmt = Number(order.total || order.amount || 0);
       const upfrontAmt = Number(order.upfrontAmount || 0);
+      const itemsSubtotal = (order.items || []).reduce(
+        (sum, item) => sum + (Number(item.price || item.priceSnapshot || 0) * Number(item.quantity || item.qty || 1)),
+        0
+      );
       const isPartialCod = order.paymentMethod === 'COD_UPFRONT' || order.paymentStatus === 'PARTIAL_PAID' || upfrontAmt > 0;
       const collectableCodAmount = isPartialCod
-        ? Math.max(1, Math.round(totalAmt - upfrontAmt))
+        ? Math.max(1, Math.round(totalAmt - upfrontAmt), Math.round(itemsSubtotal))
         : Math.max(1, Math.round(totalAmt || 100));
 
       const cleanOrderNumber = order._id ? order._id.toString() : String(order.orderNumber || Date.now());
