@@ -18,14 +18,6 @@ export const useOrders = (params: { page?: number; limit?: number } = {}) => {
 
         // Show all user orders from database (placed, paid, partial_paid, cancelled, cod)
         const orders = rawOrders.filter((o: any) => {
-          const payStatus = String(o.paymentStatus || '').toUpperCase();
-          const ordStatus = String(o.orderStatus || o.status || '').toUpperCase();
-
-          // Only exclude unplaced abandoned checkout drafts
-          if (ordStatus === 'PENDING' && (payStatus === 'PENDING' || payStatus === 'FAILED')) {
-            return false;
-          }
-
           // Exclude mock, demo, or test orders
           const orderNum = String(o.orderNumber || o._id || '');
           if (/^TEST|^MOCK|^DEMO|^DEV_|^DUMMY_/i.test(orderNum)) {

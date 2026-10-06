@@ -59,11 +59,16 @@ export const Orders: React.FC = () => {
       <Container>
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#064e3b]">
-              My Orders
+            <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#064e3b] flex items-center gap-3">
+              <span>My Orders</span>
+              {totalOrders > 0 && (
+                <span className="text-sm sm:text-base font-sans font-bold bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full border border-emerald-200">
+                  {totalOrders}
+                </span>
+              )}
             </h1>
             <p className="text-xs sm:text-sm text-neutral-500 mt-1">
-              Track and manage your Kosmico Wellness shipments
+              Track and manage all your Kosmico Wellness shipments
             </p>
           </div>
           <Link to="/shop">

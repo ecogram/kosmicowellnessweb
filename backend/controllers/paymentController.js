@@ -339,20 +339,19 @@ const getMyOrders = asyncHandler(async (req, res) => {
     { userId: req.user._id },
     { userId: String(req.user._id) },
     ...(userEmail ? [{ userEmail: new RegExp(`^${userEmail}$`, 'i') }] : []),
+    ...(cleanPhone && cleanPhone.length >= 10 ? [
+      { phone: cleanPhone },
+      { phoneNumber: cleanPhone },
+      { "shippingAddress.phone": cleanPhone },
+      { "shippingAddress.phoneNumber": cleanPhone },
+      { "deliveryAddress.phone": cleanPhone },
+      { "deliveryAddress.phoneNumber": cleanPhone },
+    ] : []),
   ];
 
   const query = {
     $and: [
       { $or: userConditions },
-      {
-        // Include all placed, paid, COD, partial paid, and active/cancelled user orders
-        $or: [
-          { paymentStatus: { $regex: /^(paid|partial_paid|completed|cod_pending|refunded)/i } },
-          { orderStatus: { $regex: /^(placed|confirmed|processing|shipped|delivered|cancelled|returned|refunded)/i } },
-          { upfrontAmount: { $gt: 0 } },
-          { paymentMethod: { $regex: /cod/i } },
-        ]
-      },
       // Exclude test data & dummy orders
       {
         orderNumber: { $not: /^TEST|^MOCK|^DEMO|^DEV_|^DUMMY_/i },
