@@ -105,13 +105,15 @@ export const Checkout: React.FC = () => {
             const detectedPincode = addr.postcode ? addr.postcode.replace(/\D/g, '').slice(0, 6) : '';
             const detectedCity = addr.city || addr.town || addr.village || addr.county || addr.district || '';
             const detectedState = addr.state || '';
-            const detectedArea = [addr.suburb, addr.neighbourhood, addr.road].filter(Boolean).join(', ');
+            const detectedFlatOrRoad = [addr.house_number, addr.building, addr.road].filter(Boolean).join(', ');
+            const detectedArea = [addr.suburb, addr.neighbourhood].filter(Boolean).join(', ');
 
             setNewAddress((prev) => ({
               ...prev,
               pincode: detectedPincode || prev.pincode,
               city: detectedCity || prev.city,
               state: detectedState || prev.state,
+              flatBuilding: detectedFlatOrRoad || prev.flatBuilding,
               streetAddress: detectedArea || prev.streetAddress,
             }));
             toast.success('Location detected successfully!');
@@ -791,13 +793,29 @@ export const Checkout: React.FC = () => {
   const handleEditAddress = (addr: SavedAddress, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingAddressId(addr._id || null);
+
+    // Accurately map mandatory Flat/Building vs optional Area/Landmark
+    const rawFlat = addr.flatBuilding || (addr as any).houseNo || (addr as any).apartment || (addr as any).flat || (addr as any).building || '';
+    const rawLandmark = (addr as any).landmark || (addr as any).areaColony || (addr as any).colony || (addr as any).area || (addr as any).addressLine2 || '';
+
+    let flatVal = rawFlat;
+    let areaVal = rawLandmark;
+
+    if (!flatVal && addr.streetAddress) {
+      // If flatBuilding was empty in DB, the primary streetAddress is the flat/house details!
+      flatVal = addr.streetAddress;
+      areaVal = rawLandmark;
+    } else if (flatVal && addr.streetAddress && flatVal !== addr.streetAddress && !areaVal) {
+      areaVal = addr.streetAddress;
+    }
+
     setNewAddress({
       _id: addr._id,
       addressLabel: addr.addressLabel || 'Home',
       fullName: addr.fullName,
       phoneNumber: addr.phoneNumber || (addr as any).phone || '',
-      flatBuilding: addr.flatBuilding || (addr as any).flat || (addr as any).houseNo || (addr as any).apartment || (addr as any).building || (addr as any).addressLine1 || '',
-      streetAddress: addr.streetAddress || (addr as any).addressLine1 || (addr as any).street || '',
+      flatBuilding: flatVal,
+      streetAddress: areaVal,
       city: addr.city,
       state: addr.state || '',
       pincode: addr.pincode || (addr as any).postalCode || '',
@@ -835,11 +853,16 @@ export const Checkout: React.FC = () => {
       return;
     }
 
+    const flat = (newAddress.flatBuilding || '').trim();
+    const area = (newAddress.streetAddress || '').trim();
+
     const addressPayload = {
       addressLabel: (newAddress.addressLabel || 'Home').trim(),
       fullName: newAddress.fullName.trim(),
-      flatBuilding: (newAddress.flatBuilding || '').trim(),
-      streetAddress: (newAddress.streetAddress || '').trim() || (newAddress.flatBuilding || '').trim(),
+      flatBuilding: flat,
+      streetAddress: area || flat,
+      landmark: area,
+      areaColony: area,
       city: newAddress.city.trim(),
       state: (newAddress.state || '').trim(),
       pincode: newAddress.pincode.trim(),

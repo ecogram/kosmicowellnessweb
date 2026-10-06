@@ -28,6 +28,16 @@ const addressSchema = new mongoose.Schema(
       default: '',
       trim: true,
     },
+    landmark: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    areaColony: {
+      type: String,
+      default: '',
+      trim: true,
+    },
     city: {
       type: String,
       required: [true, 'Please provide city'],

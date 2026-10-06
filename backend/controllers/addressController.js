@@ -8,7 +8,7 @@ const getAddresses = asyncHandler(async (req, res) => {
 });
 
 const addAddress = asyncHandler(async (req, res) => {
-  const { addressLabel, fullName, flatBuilding, streetAddress, city, state, pincode, phoneNumber, isDefault } = req.body;
+  const { addressLabel, fullName, flatBuilding, streetAddress, landmark, areaColony, houseNo, apartment, city, state, pincode, phoneNumber, isDefault } = req.body;
 
   if (isDefault) {
     await Address.updateMany({ user: req.user._id }, { isDefault: false });
@@ -20,12 +20,18 @@ const addAddress = asyncHandler(async (req, res) => {
     }
   }
 
+  const finalFlatBuilding = (flatBuilding || houseNo || apartment || '').trim() || (streetAddress && !landmark && !areaColony ? streetAddress.trim() : '');
+  const finalAreaColony = (landmark || areaColony || (flatBuilding && streetAddress && flatBuilding !== streetAddress ? streetAddress : '') || '').trim();
+  const finalStreetAddress = (streetAddress || finalAreaColony || finalFlatBuilding || '').trim();
+
   const address = await Address.create({
     user: req.user._id,
     addressLabel: addressLabel || 'Home',
     fullName,
-    flatBuilding: flatBuilding || '',
-    streetAddress: streetAddress || flatBuilding || '',
+    flatBuilding: finalFlatBuilding,
+    streetAddress: finalStreetAddress,
+    landmark: finalAreaColony,
+    areaColony: finalAreaColony,
     city,
     state: state || '',
     pincode,
@@ -48,7 +54,17 @@ const updateAddress = asyncHandler(async (req, res) => {
     await Address.updateMany({ user: req.user._id }, { isDefault: false });
   }
 
-  Object.assign(address, req.body);
+  const { flatBuilding, streetAddress, landmark, areaColony, houseNo, apartment } = req.body;
+  const finalFlatBuilding = (flatBuilding || houseNo || apartment || address.flatBuilding || '').trim() || (streetAddress && !landmark && !areaColony ? streetAddress.trim() : '');
+  const finalAreaColony = (landmark || areaColony || (flatBuilding && streetAddress && flatBuilding !== streetAddress ? streetAddress : '') || '').trim();
+  const finalStreetAddress = (streetAddress || finalAreaColony || finalFlatBuilding || address.streetAddress || '').trim();
+
+  Object.assign(address, req.body, {
+    flatBuilding: finalFlatBuilding,
+    streetAddress: finalStreetAddress,
+    landmark: finalAreaColony,
+    areaColony: finalAreaColony,
+  });
   await address.save();
 
   res.status(200).json(new ApiResponse(200, address, 'Address updated successfully'));
