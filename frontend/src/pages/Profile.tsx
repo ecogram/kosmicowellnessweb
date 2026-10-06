@@ -526,14 +526,14 @@ export const Profile: React.FC = () => {
   const handleEditAddress = (addr: SavedAddress) => {
     setEditingAddressId(addr._id);
     setAddrFormName(addr.fullName);
-    setAddrFormPhone(addr.phoneNumber);
-    setAddrFormFlat(addr.flatBuilding || '');
-    setAddrFormStreet(addr.streetAddress);
+    setAddrFormPhone(addr.phoneNumber || (addr as any).phone || '');
+    setAddrFormFlat(addr.flatBuilding || (addr as any).flat || (addr as any).houseNo || (addr as any).apartment || (addr as any).building || (addr as any).addressLine1 || '');
+    setAddrFormStreet(addr.streetAddress || (addr as any).addressLine1 || (addr as any).street || '');
     setAddrFormCity(addr.city);
     setAddrFormState(addr.state || '');
-    setAddrFormPincode(addr.pincode);
-    setAddrFormLabel(addr.addressLabel);
-    setAddrFormIsDefault(addr.isDefault);
+    setAddrFormPincode(addr.pincode || (addr as any).postalCode || '');
+    setAddrFormLabel(addr.addressLabel || 'Home');
+    setAddrFormIsDefault(addr.isDefault || false);
     setIsAddingAddress(true);
   };
 
@@ -564,14 +564,14 @@ export const Profile: React.FC = () => {
 
   const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!addrFormFlat.trim() || !addrFormStreet || !addrFormPincode || !addrFormCity) return;
+    if (!addrFormStreet || !addrFormPincode || !addrFormCity) return;
 
     // API docs: POST/PUT /api/address
     // Body: { addressLabel, fullName, flatBuilding, streetAddress, city, pincode, phoneNumber, isDefault }
     const payload = {
       addressLabel: addrFormLabel,
       fullName: addrFormName,
-      flatBuilding: addrFormFlat.trim(),
+      flatBuilding: (addrFormFlat || '').trim(),
       streetAddress: addrFormStreet,
       city: addrFormCity,
       state: addrFormState,

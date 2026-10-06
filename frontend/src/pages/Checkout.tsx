@@ -746,12 +746,12 @@ export const Checkout: React.FC = () => {
       _id: addr._id,
       addressLabel: addr.addressLabel || 'Home',
       fullName: addr.fullName,
-      phoneNumber: addr.phoneNumber,
-      flatBuilding: addr.flatBuilding || '',
-      streetAddress: addr.streetAddress,
+      phoneNumber: addr.phoneNumber || (addr as any).phone || '',
+      flatBuilding: addr.flatBuilding || (addr as any).flat || (addr as any).houseNo || (addr as any).apartment || (addr as any).building || (addr as any).addressLine1 || '',
+      streetAddress: addr.streetAddress || (addr as any).addressLine1 || (addr as any).street || '',
       city: addr.city,
       state: addr.state || '',
-      pincode: addr.pincode,
+      pincode: addr.pincode || (addr as any).postalCode || '',
       isDefault: addr.isDefault || false,
     });
     setIsAddAddressFormOpen(true);
@@ -781,18 +781,21 @@ export const Checkout: React.FC = () => {
 
   const handleSaveNewAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAddress.fullName || !newAddress.phoneNumber || !newAddress.flatBuilding?.trim() || !newAddress.streetAddress || !newAddress.pincode) {
+    if (!newAddress.fullName || !newAddress.phoneNumber || !newAddress.streetAddress || !newAddress.pincode || !newAddress.city) {
+      toast.error('Please fill in all required address fields.');
       return;
     }
 
     const addressPayload = {
-      addressLabel: newAddress.addressLabel,
+      addressLabel: newAddress.addressLabel || 'Home',
       fullName: newAddress.fullName,
-      flatBuilding: newAddress.flatBuilding.trim(),
+      flatBuilding: (newAddress.flatBuilding || '').trim(),
       streetAddress: newAddress.streetAddress,
       city: newAddress.city,
+      state: newAddress.state || '',
       pincode: newAddress.pincode,
-      phoneNumber: newAddress.phoneNumber
+      phoneNumber: newAddress.phoneNumber,
+      isDefault: newAddress.isDefault,
     };
 
     try {
@@ -806,12 +809,14 @@ export const Checkout: React.FC = () => {
         if (selectedAddress?._id === editingAddressId) {
           setSelectedAddress(updated);
         }
+        toast.success('Address updated successfully');
       } else {
         // Create new address
         const res = await api.post('/address', addressPayload);
         const created = res.data?.data || { ...addressPayload, isDefault: newAddress.isDefault };
         setSavedAddresses((prev) => [created, ...prev]);
         setSelectedAddress(created);
+        toast.success('Address saved successfully');
       }
       setEditingAddressId(null);
       setIsAddAddressFormOpen(false);
@@ -1390,26 +1395,28 @@ export const Checkout: React.FC = () => {
                   {/* Flat, House no., Building, Company, Apartment */}
                   <div>
                     <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                      Flat, House no., Building, Company, Apartment <span className="text-red-500">*</span>
+                      Flat, House no., Building, Company, Apartment
                     </label>
                     <input
                       type="text"
                       value={newAddress.flatBuilding || ''}
                       onChange={(e) => setNewAddress({ ...newAddress, flatBuilding: e.target.value })}
                       className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:border-[#0a7a40]"
-                      required
+                      placeholder="e.g. Flat 101, Galaxy Tower (Optional)"
                     />
                   </div>
 
                   {/* Street Address */}
                   <div>
-                    <label className="block text-xs font-semibold text-neutral-700 mb-1">Street Address / Landmark</label>
+                    <label className="block text-xs font-semibold text-neutral-700 mb-1">
+                      Street Address / Colony / Landmark <span className="text-red-500">*</span>
+                    </label>
                     <input
                       type="text"
                       value={newAddress.streetAddress}
                       onChange={(e) => setNewAddress({ ...newAddress, streetAddress: e.target.value })}
                       className="w-full px-3.5 py-2.5 border border-neutral-300 rounded-xl text-sm focus:outline-none focus:border-[#0a7a40]"
-                      placeholder="Flat 101, Main Road"
+                      placeholder="e.g. Gangapuram, Near Temple"
                       required
                     />
                   </div>
