@@ -174,8 +174,39 @@ export const Checkout: React.FC = () => {
       const list = res.data?.data?.addresses ?? res.data?.data ?? (Array.isArray(res.data) ? res.data : []);
 
       if (Array.isArray(list) && list.length > 0) {
-        setSavedAddresses(list);
-        const def = list.find((a: any) => a.isDefault) || list[0];
+        const formatted: SavedAddress[] = list.map((a: any) => {
+          const rawFlat = a.flatBuilding || a.houseNo || a.apartment || a.flat || a.building || '';
+          const rawArea = a.landmark || a.areaColony || a.colony || a.area || '';
+          const rawStreet = a.streetAddress || a.addressLine1 || '';
+
+          let finalFlat = rawFlat;
+          let finalStreet = rawArea;
+
+          if (!finalFlat && rawStreet) {
+            finalFlat = rawStreet;
+            finalStreet = rawArea !== rawStreet ? rawArea : '';
+          } else if (finalFlat && rawStreet && finalFlat !== rawStreet && !finalStreet) {
+            finalStreet = rawStreet;
+          }
+
+          return {
+            _id: a._id || a.id || '',
+            addressLabel: a.addressLabel || 'Home',
+            fullName: a.fullName || '',
+            flatBuilding: finalFlat,
+            streetAddress: finalStreet,
+            landmark: a.landmark || a.areaColony || finalStreet,
+            areaColony: a.areaColony || a.landmark || finalStreet,
+            city: a.city || '',
+            state: a.state || '',
+            pincode: a.pincode || '',
+            phoneNumber: a.phoneNumber || a.phone || '',
+            isDefault: !!a.isDefault,
+          };
+        });
+
+        setSavedAddresses(formatted);
+        const def = formatted.find((a: any) => a.isDefault) || formatted[0];
         setSelectedAddress(def);
       } else {
         setSavedAddresses([]);
@@ -796,18 +827,15 @@ export const Checkout: React.FC = () => {
     e.stopPropagation();
     setEditingAddressId(addr._id || null);
 
-    // Flat / Building (Mandatory) vs Area / Colony / Landmark (Optional)
-    const flatVal = addr.flatBuilding || (addr as any).houseNo || (addr as any).apartment || (addr as any).flat || (addr as any).building || '';
-    const rawLandmark = addr.landmark || addr.areaColony || (addr as any).colony || (addr as any).area || '';
-    const rawStreet = addr.streetAddress && addr.streetAddress !== flatVal ? addr.streetAddress : '';
-    const areaVal = rawLandmark || rawStreet || '';
+    const flatVal = addr.flatBuilding || addr.streetAddress || '';
+    const areaVal = addr.flatBuilding && addr.streetAddress !== addr.flatBuilding ? addr.streetAddress : (addr.landmark || addr.areaColony || '');
 
     setNewAddress({
       _id: addr._id,
       addressLabel: addr.addressLabel || 'Home',
       fullName: addr.fullName,
       phoneNumber: addr.phoneNumber || (addr as any).phone || '',
-      flatBuilding: flatVal || (areaVal ? '' : addr.streetAddress || ''),
+      flatBuilding: flatVal,
       streetAddress: areaVal,
       city: addr.city,
       state: addr.state || '',

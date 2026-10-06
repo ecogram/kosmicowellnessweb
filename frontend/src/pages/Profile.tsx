@@ -249,20 +249,36 @@ export const Profile: React.FC = () => {
       const res = await api.get('/address');
       const list: any[] = res.data?.data?.addresses ?? res.data?.data ?? (Array.isArray(res.data) ? res.data : []);
       if (Array.isArray(list)) {
-        const formatted: SavedAddress[] = list.map((a: any) => ({
-          _id: a._id || a.id || '',
-          addressLabel: a.addressLabel || 'Home',
-          fullName: a.fullName || '',
-          flatBuilding: a.flatBuilding || '',
-          streetAddress: a.streetAddress || '',
-          landmark: a.landmark || a.areaColony || '',
-          areaColony: a.areaColony || a.landmark || '',
-          city: a.city || '',
-          state: a.state || '',
-          pincode: a.pincode || '',
-          phoneNumber: a.phoneNumber || '',
-          isDefault: !!a.isDefault,
-        }));
+        const formatted: SavedAddress[] = list.map((a: any) => {
+          const rawFlat = a.flatBuilding || a.houseNo || a.apartment || a.flat || a.building || '';
+          const rawArea = a.landmark || a.areaColony || a.colony || a.area || '';
+          const rawStreet = a.streetAddress || a.addressLine1 || '';
+
+          let finalFlat = rawFlat;
+          let finalStreet = rawArea;
+
+          if (!finalFlat && rawStreet) {
+            finalFlat = rawStreet;
+            finalStreet = rawArea !== rawStreet ? rawArea : '';
+          } else if (finalFlat && rawStreet && finalFlat !== rawStreet && !finalStreet) {
+            finalStreet = rawStreet;
+          }
+
+          return {
+            _id: a._id || a.id || '',
+            addressLabel: a.addressLabel || 'Home',
+            fullName: a.fullName || '',
+            flatBuilding: finalFlat,
+            streetAddress: finalStreet,
+            landmark: a.landmark || a.areaColony || finalStreet,
+            areaColony: a.areaColony || a.landmark || finalStreet,
+            city: a.city || '',
+            state: a.state || '',
+            pincode: a.pincode || '',
+            phoneNumber: a.phoneNumber || a.phone || '',
+            isDefault: !!a.isDefault,
+          };
+        });
         setAddresses(formatted);
       }
     } catch (err) {
@@ -575,15 +591,12 @@ export const Profile: React.FC = () => {
   const handleEditAddress = (addr: SavedAddress) => {
     setEditingAddressId(addr._id);
 
-    // Flat / Building (Mandatory) vs Area / Colony / Landmark (Optional)
-    const flatVal = addr.flatBuilding || (addr as any).houseNo || (addr as any).apartment || (addr as any).flat || (addr as any).building || '';
-    const rawLandmark = addr.landmark || addr.areaColony || (addr as any).colony || (addr as any).area || '';
-    const rawStreet = addr.streetAddress && addr.streetAddress !== flatVal ? addr.streetAddress : '';
-    const areaVal = rawLandmark || rawStreet || '';
+    const flatVal = addr.flatBuilding || addr.streetAddress || '';
+    const areaVal = addr.flatBuilding && addr.streetAddress !== addr.flatBuilding ? addr.streetAddress : (addr.landmark || addr.areaColony || '');
 
     setAddrFormName(addr.fullName);
     setAddrFormPhone(addr.phoneNumber || (addr as any).phone || '');
-    setAddrFormFlat(flatVal || (areaVal ? '' : addr.streetAddress || ''));
+    setAddrFormFlat(flatVal);
     setAddrFormStreet(areaVal);
     setAddrFormCity(addr.city);
     setAddrFormState(addr.state || '');
