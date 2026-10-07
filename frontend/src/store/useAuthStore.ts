@@ -22,6 +22,8 @@ export interface User {
     isActive?: boolean;
     plan?: string;
     trialRemaining?: number;
+    trialsRemaining?: number;
+    totalTrials?: number;
   };
 }
 

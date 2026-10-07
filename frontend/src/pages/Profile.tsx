@@ -12,7 +12,7 @@ import {
   Globe, Moon, HelpCircle, Info, LogOut, Edit3, X, Phone, MessageSquare, Mail,
   Plus, Trash2, Home, CheckCircle2, Camera, RefreshCw, Check, AlertCircle,
   Eye, Image as ImageIcon, User as UserIcon, Loader2, ChevronLeft, Clock, Headphones,
-  ShoppingBag, ChevronRight, Map, ArrowLeft, Pencil, Repeat
+  ShoppingBag, ChevronRight, Map, ArrowLeft, Pencil, Zap
 } from 'lucide-react';
 import { PaymentMethodsModal } from '../components/PaymentMethodsModal';
 import { PLAY_STORE_URL } from '../utils/constants';
@@ -54,6 +54,8 @@ export const Profile: React.FC = () => {
     user?.subscription?.isActive ||
     user?.subscription?.status === 'active'
   );
+  // Total 8 trials (4 features x 2 trials each). Default remaining is 6 (or from user profile)
+  const trialsRemaining = user?.subscription?.trialsRemaining ?? user?.subscription?.trialRemaining ?? user?.subscriptionTrialCount ?? 6;
 
   // Settings State
   const [searchParams, setSearchParams] = useSearchParams();
@@ -866,7 +868,7 @@ export const Profile: React.FC = () => {
               <ChevronRight className="w-4 h-4 text-neutral-400" />
             </div>
 
-            {/* 4. Subscriptions */}
+            {/* 4. Kosmico Premium (Subscriptions / Free Trials) */}
             <a
               href={PLAY_STORE_URL}
               target="_blank"
@@ -877,33 +879,40 @@ export const Profile: React.FC = () => {
             >
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="w-10 h-10 rounded-2xl bg-[#e8efe9] text-[#0e7440] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <Repeat className="w-5 h-5" />
+                  <Zap className="w-4.5 h-4.5 text-[#0e7440] fill-[#0e7440]" />
                 </div>
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold">Subscriptions</span>
-                    {isSubscriptionActive ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-900/50 dark:text-emerald-300 dark:border-emerald-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                        Active
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-700">
-                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                        Trial
-                      </span>
-                    )}
+                  <div className="text-sm font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5">
+                    <span>Kosmico Premium</span>
+                    <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                      {isSubscriptionActive ? '(Active)' : '(Free Trials)'}
+                    </span>
                   </div>
-                  <div className={`text-[11px] truncate flex items-center gap-1.5 ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                  <div className={`text-[11px] truncate mt-0.5 ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
                     {isSubscriptionActive ? (
-                      <span>Active • Manage in Mobile App</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                        Active Subscription • Unlimited Access
+                      </span>
                     ) : (
-                      <span>Trial (2 Free Trials Available) • Download App</span>
+                      <span>
+                        {trialsRemaining} free trials remaining • Upgrade ₹149/mo
+                      </span>
                     )}
                   </div>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-[#0e7440] transition-colors shrink-0" />
+              <div className="shrink-0 ml-3">
+                {isSubscriptionActive ? (
+                  <span className="px-3.5 py-1.5 bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-900/50 dark:text-emerald-300 dark:border-emerald-700 text-xs font-bold rounded-xl inline-flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                    Active
+                  </span>
+                ) : (
+                  <span className="px-3.5 py-1.5 bg-[#0e7440] hover:bg-[#0a5830] text-white text-xs font-bold rounded-xl transition-all shadow-sm inline-block">
+                    Upgrade
+                  </span>
+                )}
+              </div>
             </a>
 
             {/* 4. Payment Methods (Temporarily commented out, can be re-enabled later) */}
