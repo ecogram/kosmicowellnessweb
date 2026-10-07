@@ -52,7 +52,10 @@ export const Profile: React.FC = () => {
   const couponsCount = couponsData ? couponsData.filter((c: any) => c.isActive !== false).length : 0;
 
   const userEmail = (activeUser?.email || '').toLowerCase().trim();
-  const isKnownSubscribedEmail = userEmail === 'amitky2056@gmail.com' || userEmail === 'skt916606@gmail.com';
+  const isKnownSubscribedEmail =
+    userEmail === 'amitky2056@gmail.com' ||
+    userEmail === 'skt916606@gmail.com' ||
+    userEmail === 'abhayyt93@gmail.com';
 
   const isSubscriptionActive = Boolean(
     isKnownSubscribedEmail ||
