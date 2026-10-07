@@ -36,7 +36,7 @@ export const useOrders = (params: { page?: number; limit?: number } = {}) => {
           const isPureCod = (pm === 'COD' || o.isCOD === true || ps === 'COD_PENDING') && upfrontAmt === 0;
           const isOnlinePaid = !pm.includes('COD') && ['PAID', 'COMPLETED'].includes(ps);
 
-          if (os === 'PENDING' || ps === 'FAILED' || ps === 'CANCELLED') return false;
+          if (os === 'PENDING' || ps === 'FAILED') return false;
           return isPureCod || isUpfrontPaid || isOnlinePaid;
         });
 
