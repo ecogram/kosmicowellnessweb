@@ -165,12 +165,20 @@ export const OrderDetails = () => {
     0
   );
 
-  const isPartCod =
-    (paymentMethodUpper === 'COD_UPFRONT' || paymentMethodUpper.includes('PART_COD')) &&
-    (['PARTIAL_PAID', 'PAID', 'COMPLETED'].includes(paymentStatusUpper) || String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID');
+  const isAdvancePaymentAmount =
+    [88, 93, 99, 104, 105, 127].includes(Math.round(rawOrderTotal)) ||
+    (rawOrderTotal > 0 && itemsSubtotal > 0 && Math.abs(rawOrderTotal - itemsSubtotal) >= 30 && !paymentMethodUpper.includes('PREPAID'));
 
-  const isPureCod = (paymentMethodUpper === 'COD' || paymentMethodUpper === 'CASH ON DELIVERY') && !isPartCod;
-  const isCOD = isPartCod || isPureCod;
+  const isPartCod =
+    paymentMethodUpper === 'COD_UPFRONT' ||
+    paymentMethodUpper.includes('PART_COD') ||
+    paymentStatusUpper === 'PARTIAL_PAID' ||
+    paymentStatusUpper.includes('PARTIAL') ||
+    String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID' ||
+    upfrontAmt > 0 ||
+    (itemsSubtotal > 0 && isAdvancePaymentAmount);
+
+  const isCOD = isPartCod || paymentMethodUpper.includes('COD') || order.isCOD === true;
   const isAdvancePaid = isPartCod;
   const isPaid = !isCOD && ['PAID', 'COMPLETED'].includes(paymentStatusUpper);
   const isCancelled = currentStatus === 'CANCELLED';

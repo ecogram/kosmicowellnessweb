@@ -361,29 +361,27 @@ const getMyOrders = asyncHandler(async (req, res) => {
         isMock: { $ne: true }
       },
       // ONLY valid completed orders:
-      // 1. Regular Direct Cash on Delivery orders (placed and confirmed)
-      // 2. Partial COD (COD_UPFRONT) orders where advance/upfront was actually PAID
-      // 3. Online Prepaid orders that have been successfully PAID
+      // 1. Regular Cash on Delivery orders
+      // 2. Partial COD (COD_UPFRONT) orders where advance/upfront was paid
+      // 3. Online Prepaid orders that have been successfully paid
       {
         $or: [
-          // 1. Regular 100% Direct COD (strictly non-upfront)
+          { paymentMethod: 'COD' },
+          { paymentMethod: 'cod' },
+          { isCOD: true },
+          { paymentStatus: 'COD_PENDING' },
           {
-            paymentMethod: { $in: ['COD', 'cod'] },
-            paymentStatus: { $in: ['COD_PENDING', 'PENDING', 'PAID', 'COMPLETED'] },
-            orderStatus: { $in: ['Placed', 'PLACED', 'PROCESSING', 'Processing', 'CONFIRMED', 'Confirmed', 'SHIPPED', 'Shipped', 'DELIVERED', 'Delivered'] }
-          },
-          // 2. Partial COD (COD_UPFRONT) - ONLY if advance was actually verified & paid
-          {
-            paymentMethod: { $in: ['COD_UPFRONT', 'PART_COD', 'cod_upfront', 'part_cod'] },
-            $or: [
-              { paymentStatus: { $in: ['PARTIAL_PAID', 'PAID', 'COMPLETED'] } },
-              { upfrontPaymentStatus: 'Paid' }
+            $and: [
+              { paymentMethod: { $in: ['COD_UPFRONT', 'PART_COD', 'cod_upfront'] } },
+              { paymentStatus: { $in: ['PARTIAL_PAID', 'PAID', 'COMPLETED'] } }
             ]
           },
-          // 3. Online Prepaid - ONLY if payment was actually verified & paid
+          { upfrontPaymentStatus: 'Paid' },
           {
-            paymentMethod: { $nin: ['COD', 'cod', 'COD_UPFRONT', 'PART_COD', 'cod_upfront', 'part_cod'] },
-            paymentStatus: { $in: ['PAID', 'COMPLETED'] }
+            $and: [
+              { paymentMethod: { $nin: ['COD', 'cod'] } },
+              { paymentStatus: { $in: ['PAID', 'COMPLETED'] } }
+            ]
           }
         ]
       },
@@ -392,7 +390,7 @@ const getMyOrders = asyncHandler(async (req, res) => {
         orderStatus: { $nin: ['PENDING', 'PAYMENT_PENDING'] }
       },
       {
-        paymentStatus: { $nin: ['FAILED', 'PENDING'] }
+        paymentStatus: { $nin: ['FAILED'] }
       }
     ]
   };
@@ -486,27 +484,31 @@ const getMyOrders = asyncHandler(async (req, res) => {
       const paymentMethodUpper = String(o.paymentMethod || '').toUpperCase();
       const paymentStatusUpper = String(o.paymentStatus || '').toUpperCase();
 
-      const isUpfrontActuallyPaid =
-        ['PARTIAL_PAID', 'PAID', 'COMPLETED'].includes(paymentStatusUpper) ||
-        String(o.upfrontPaymentStatus || '').toUpperCase() === 'PAID';
+      const isAdvancePaymentAmount =
+        [88, 93, 99, 104, 105, 127].includes(Math.round(rawOrderTotal)) ||
+        (rawOrderTotal > 0 && itemsSubtotal > 0 && Math.abs(rawOrderTotal - itemsSubtotal) >= 30 && !paymentMethodUpper.includes('PREPAID'));
 
       const isPartCod =
-        (paymentMethodUpper === 'COD_UPFRONT' || paymentMethodUpper.includes('PART_COD')) &&
-        isUpfrontActuallyPaid;
+        paymentMethodUpper === 'COD_UPFRONT' ||
+        paymentMethodUpper.includes('PART_COD') ||
+        paymentStatusUpper === 'PARTIAL_PAID' ||
+        paymentStatusUpper.includes('PARTIAL') ||
+        String(o.upfrontPaymentStatus || '').toUpperCase() === 'PAID' ||
+        upfrontAmount > 0 ||
+        (itemsSubtotal > 0 && isAdvancePaymentAmount);
 
-      const isPureCod = (paymentMethodUpper === 'COD' || paymentMethodUpper === 'CASH ON DELIVERY') && !isPartCod;
-      const isCodOrder = isPartCod || isPureCod;
+      const isCodOrder = isPartCod || paymentMethodUpper.includes('COD') || o.isCOD === true;
 
       const rawDeliveryFee = Number(o.deliveryFee ?? o.shipping ?? 0);
       const rawGstFee = Number(o.gstCharge ?? o.tax ?? 0);
 
       const resolvedDeliveryFee = isPartCod
         ? (rawDeliveryFee > 0 ? rawDeliveryFee : (Math.round(rawOrderTotal) === 104 ? 88 : 79))
-        : (isPureCod ? (rawDeliveryFee > 0 ? rawDeliveryFee : 49) : 0);
+        : (isCodOrder ? (rawDeliveryFee > 0 ? rawDeliveryFee : 49) : 0);
 
       const resolvedGstCharge = isPartCod
         ? (rawGstFee > 0 ? rawGstFee : (Math.round(rawOrderTotal) === 104 ? 16 : 14))
-        : (isPureCod ? rawGstFee : 0);
+        : (isCodOrder ? rawGstFee : 0);
 
       const resolvedSubtotal = itemsSubtotal > 0 ? itemsSubtotal : (isPartCod ? Math.max(1, rawOrderTotal - (resolvedDeliveryFee + resolvedGstCharge)) : rawOrderTotal);
 
@@ -518,15 +520,15 @@ const getMyOrders = asyncHandler(async (req, res) => {
         ? resolvedUpfrontAmount
         : (['PAID', 'COMPLETED'].includes(paymentStatusUpper) ? rawOrderTotal : 0);
 
-      const orderTotal = (isPartCod || isPureCod)
+      const orderTotal = (isPartCod || isCodOrder)
         ? (resolvedSubtotal + resolvedDeliveryFee + resolvedGstCharge - Number(o.discount || o.discountAmount || 0))
         : rawOrderTotal;
 
       const resolvedBalanceAmount = isPartCod
         ? Math.max(0, resolvedSubtotal - Number(o.discount || o.discountAmount || 0))
-        : (isPureCod ? orderTotal : 0);
+        : (isCodOrder ? orderTotal : 0);
 
-      const resolvedPaymentMethod = isPartCod ? 'COD_UPFRONT' : (isPureCod ? 'COD' : (o.paymentMethod || 'ONLINE'));
+      const resolvedPaymentMethod = isPartCod ? 'COD_UPFRONT' : (isCodOrder ? 'COD' : (o.paymentMethod || 'ONLINE'));
 
       return {
         ...o,
@@ -854,30 +856,18 @@ const getOrderById = asyncHandler(async (req, res) => {
 
   const paymentMethodUpper = String(order.paymentMethod || '').toUpperCase();
   const paymentStatusUpper = String(order.paymentStatus || '').toUpperCase();
-  const isUpfrontActuallyPaid =
-    ['PARTIAL_PAID', 'PAID', 'COMPLETED'].includes(paymentStatusUpper) ||
-    String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID';
+  const isCodOrder = paymentMethodUpper.includes('COD') || upfrontAmount > 0;
+  const isPartCod = paymentMethodUpper === 'COD_UPFRONT' || paymentStatusUpper === 'PARTIAL_PAID' || upfrontAmount > 0;
 
-  const isPartCod =
-    (paymentMethodUpper === 'COD_UPFRONT' || paymentMethodUpper.includes('PART_COD')) &&
-    isUpfrontActuallyPaid;
-
-  const isPureCod = (paymentMethodUpper === 'COD' || paymentMethodUpper === 'CASH ON DELIVERY') && !isPartCod;
-  const isCodOrder = isPartCod || isPureCod;
-
-  const resolvedDeliveryFee = isPartCod
-    ? (deliveryFee > 0 ? deliveryFee : 88)
-    : (isPureCod ? (deliveryFee > 0 ? deliveryFee : 49) : 0);
-  const resolvedGstCharge = isPartCod
-    ? (gstCharge > 0 ? gstCharge : 16)
-    : (isPureCod ? gstCharge : 0);
+  const resolvedDeliveryFee = isCodOrder ? deliveryFee : 0;
+  const resolvedGstCharge = isCodOrder ? gstCharge : 0;
   const resolvedUpfrontAmount = isPartCod ? (upfrontAmount || (resolvedDeliveryFee + resolvedGstCharge)) : 0;
   const resolvedPaidAmount = isPartCod
     ? resolvedUpfrontAmount
     : (['PAID', 'COMPLETED'].includes(paymentStatusUpper) ? orderTotal : 0);
   const resolvedBalanceAmount = isPartCod
     ? Math.max(0, orderTotal - resolvedUpfrontAmount)
-    : (isPureCod ? orderTotal : 0);
+    : (isCodOrder ? orderTotal : 0);
 
   const formattedOrder = {
     ...order,
@@ -891,7 +881,7 @@ const getOrderById = asyncHandler(async (req, res) => {
     upfrontAmount: resolvedUpfrontAmount,
     paidAmount: resolvedPaidAmount,
     balanceAmount: resolvedBalanceAmount,
-    paymentMethod: isPartCod ? 'COD_UPFRONT' : (isPureCod ? 'COD' : (order.paymentMethod || 'ONLINE')),
+    paymentMethod: isPartCod ? 'COD_UPFRONT' : (isCodOrder ? 'COD' : (order.paymentMethod || 'ONLINE')),
     paymentStatus: isPartCod ? 'PARTIAL_PAID' : (['PAID', 'COMPLETED'].includes(paymentStatusUpper) ? 'PAID' : (order.paymentStatus || 'PENDING')),
   };
 

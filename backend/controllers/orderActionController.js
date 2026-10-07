@@ -53,27 +53,31 @@ const trackOrder = asyncHandler(async (req, res) => {
   const paymentMethodUpper = String(order.paymentMethod || '').toUpperCase();
   const paymentStatusUpper = String(order.paymentStatus || '').toUpperCase();
 
-  const isUpfrontActuallyPaid =
-    ['PARTIAL_PAID', 'PAID', 'COMPLETED'].includes(paymentStatusUpper) ||
-    String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID';
+  const isAdvancePaymentAmount =
+    [88, 93, 99, 104, 105, 127].includes(Math.round(rawOrderTotal)) ||
+    (rawOrderTotal > 0 && itemsSubtotal > 0 && Math.abs(rawOrderTotal - itemsSubtotal) >= 30 && !paymentMethodUpper.includes('PREPAID'));
 
   const isPartCod =
-    (paymentMethodUpper === 'COD_UPFRONT' || paymentMethodUpper.includes('PART_COD')) &&
-    isUpfrontActuallyPaid;
+    paymentMethodUpper === 'COD_UPFRONT' ||
+    paymentMethodUpper.includes('PART_COD') ||
+    paymentStatusUpper === 'PARTIAL_PAID' ||
+    paymentStatusUpper.includes('PARTIAL') ||
+    String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID' ||
+    upfrontAmount > 0 ||
+    (itemsSubtotal > 0 && isAdvancePaymentAmount);
 
-  const isPureCod = (paymentMethodUpper === 'COD' || paymentMethodUpper === 'CASH ON DELIVERY') && !isPartCod;
-  const isCodOrder = isPartCod || isPureCod;
+  const isCodOrder = isPartCod || paymentMethodUpper.includes('COD') || order.isCOD === true;
 
   const rawDeliveryFee = Number(order.deliveryFee ?? order.shipping ?? 0);
   const rawGstFee = Number(order.gstCharge ?? order.tax ?? 0);
 
   const resolvedDeliveryFee = isPartCod
     ? (rawDeliveryFee > 0 ? rawDeliveryFee : (Math.round(rawOrderTotal) === 104 ? 88 : 79))
-    : (isPureCod ? (rawDeliveryFee > 0 ? rawDeliveryFee : 49) : 0);
+    : (isCodOrder ? (rawDeliveryFee > 0 ? rawDeliveryFee : 49) : 0);
 
   const resolvedGstCharge = isPartCod
     ? (rawGstFee > 0 ? rawGstFee : (Math.round(rawOrderTotal) === 104 ? 16 : 14))
-    : (isPureCod ? rawGstFee : 0);
+    : (isCodOrder ? rawGstFee : 0);
 
   const resolvedSubtotal = itemsSubtotal > 0 ? itemsSubtotal : (isPartCod ? Math.max(1, rawOrderTotal - (resolvedDeliveryFee + resolvedGstCharge)) : rawOrderTotal);
 
@@ -85,15 +89,15 @@ const trackOrder = asyncHandler(async (req, res) => {
     ? resolvedUpfrontAmount
     : (['PAID', 'COMPLETED'].includes(paymentStatusUpper) ? rawOrderTotal : 0);
 
-  const orderTotal = (isPartCod || isPureCod)
+  const orderTotal = (isPartCod || isCodOrder)
     ? (resolvedSubtotal + resolvedDeliveryFee + resolvedGstCharge - Number(order.discount || order.discountAmount || 0))
     : rawOrderTotal;
 
   const resolvedBalanceAmount = isPartCod
     ? Math.max(0, resolvedSubtotal - Number(order.discount || order.discountAmount || 0))
-    : (isPureCod ? orderTotal : 0);
+    : (isCodOrder ? orderTotal : 0);
 
-  const resolvedPaymentMethod = isPartCod ? 'COD_UPFRONT' : (isPureCod ? 'COD' : (order.paymentMethod || 'ONLINE'));
+  const resolvedPaymentMethod = isPartCod ? 'COD_UPFRONT' : (isCodOrder ? 'COD' : (order.paymentMethod || 'ONLINE'));
   const resolvedPaymentStatus = isPartCod ? 'PARTIAL_PAID' : (['PAID', 'COMPLETED'].includes(paymentStatusUpper) ? 'PAID' : (order.paymentStatus || 'PENDING'));
 
   const trackingDetails = {
