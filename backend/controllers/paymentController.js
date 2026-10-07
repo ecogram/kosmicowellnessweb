@@ -360,28 +360,41 @@ const getMyOrders = asyncHandler(async (req, res) => {
         testOrder: { $ne: true },
         isMock: { $ne: true }
       },
-      // ONLY valid completed orders:
-      // 1. Regular Cash on Delivery orders
-      // 2. Partial COD (COD_UPFRONT) orders where advance/upfront was paid
-      // 3. Online Prepaid orders that have been successfully paid
+      // ONLY valid completed/verified orders:
+      // 1. Regular Cash on Delivery orders (where NO advance payment is required, i.e., upfrontAmount == 0/null, and order is Placed)
+      // 2. Partial COD (COD_UPFRONT) orders where advance/upfront was actually PAID (PARTIAL_PAID or upfrontPaymentStatus === 'Paid')
+      // 3. Online Prepaid orders that have been successfully PAID
       {
         $or: [
-          { paymentMethod: 'COD' },
-          { paymentMethod: 'cod' },
-          { isCOD: true },
-          { paymentStatus: 'COD_PENDING' },
+          // Standard COD (No advance needed)
           {
-            $and: [
+            paymentMethod: { $in: ['COD', 'cod'] },
+            $or: [
+              { upfrontAmount: { $in: [0, null] } },
+              { upfrontAmount: { $exists: false } }
+            ],
+            paymentStatus: { $in: ['COD_PENDING', 'COD', 'Pending', 'PENDING'] },
+            orderStatus: { $in: ['Placed', 'PLACED', 'PROCESSING', 'Processing', 'SHIPPED', 'Shipped', 'DELIVERED', 'Delivered'] }
+          },
+          // Partial COD (where advance was successfully paid)
+          {
+            $or: [
               { paymentMethod: { $in: ['COD_UPFRONT', 'PART_COD', 'cod_upfront'] } },
-              { paymentStatus: { $in: ['PARTIAL_PAID', 'PAID', 'COMPLETED'] } }
+              { upfrontAmount: { $gt: 0 } }
+            ],
+            $or: [
+              { paymentStatus: { $in: ['PARTIAL_PAID', 'PAID', 'COMPLETED'] } },
+              { upfrontPaymentStatus: { $in: ['Paid', 'PAID', 'Completed', 'COMPLETED'] } }
             ]
           },
-          { upfrontPaymentStatus: 'Paid' },
+          // Online Prepaid orders (where full payment was successfully paid)
           {
-            $and: [
-              { paymentMethod: { $nin: ['COD', 'cod'] } },
-              { paymentStatus: { $in: ['PAID', 'COMPLETED'] } }
-            ]
+            paymentMethod: { $nin: ['COD', 'cod', 'COD_UPFRONT', 'PART_COD'] },
+            $or: [
+              { upfrontAmount: { $in: [0, null] } },
+              { upfrontAmount: { $exists: false } }
+            ],
+            paymentStatus: { $in: ['PAID', 'COMPLETED', 'Paid'] }
           }
         ]
       },
@@ -488,14 +501,16 @@ const getMyOrders = asyncHandler(async (req, res) => {
         [88, 93, 99, 104, 105, 127].includes(Math.round(rawOrderTotal)) ||
         (rawOrderTotal > 0 && itemsSubtotal > 0 && Math.abs(rawOrderTotal - itemsSubtotal) >= 30 && !paymentMethodUpper.includes('PREPAID'));
 
-      const isPartCod =
-        paymentMethodUpper === 'COD_UPFRONT' ||
-        paymentMethodUpper.includes('PART_COD') ||
+      const isUpfrontPaid =
         paymentStatusUpper === 'PARTIAL_PAID' ||
         paymentStatusUpper.includes('PARTIAL') ||
-        String(o.upfrontPaymentStatus || '').toUpperCase() === 'PAID' ||
-        upfrontAmount > 0 ||
-        (itemsSubtotal > 0 && isAdvancePaymentAmount);
+        String(o.upfrontPaymentStatus || '').toUpperCase() === 'PAID';
+
+      const isPartCod =
+        (paymentMethodUpper === 'COD_UPFRONT' ||
+         paymentMethodUpper.includes('PART_COD') ||
+         upfrontAmount > 0 ||
+         (itemsSubtotal > 0 && isAdvancePaymentAmount)) && isUpfrontPaid;
 
       const isCodOrder = isPartCod || paymentMethodUpper.includes('COD') || o.isCOD === true;
 

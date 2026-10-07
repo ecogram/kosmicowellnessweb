@@ -57,14 +57,16 @@ const trackOrder = asyncHandler(async (req, res) => {
     [88, 93, 99, 104, 105, 127].includes(Math.round(rawOrderTotal)) ||
     (rawOrderTotal > 0 && itemsSubtotal > 0 && Math.abs(rawOrderTotal - itemsSubtotal) >= 30 && !paymentMethodUpper.includes('PREPAID'));
 
-  const isPartCod =
-    paymentMethodUpper === 'COD_UPFRONT' ||
-    paymentMethodUpper.includes('PART_COD') ||
+  const isUpfrontPaid =
     paymentStatusUpper === 'PARTIAL_PAID' ||
     paymentStatusUpper.includes('PARTIAL') ||
-    String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID' ||
-    upfrontAmount > 0 ||
-    (itemsSubtotal > 0 && isAdvancePaymentAmount);
+    String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID';
+
+  const isPartCod =
+    (paymentMethodUpper === 'COD_UPFRONT' ||
+     paymentMethodUpper.includes('PART_COD') ||
+     upfrontAmount > 0 ||
+     (itemsSubtotal > 0 && isAdvancePaymentAmount)) && isUpfrontPaid;
 
   const isCodOrder = isPartCod || paymentMethodUpper.includes('COD') || order.isCOD === true;
 
