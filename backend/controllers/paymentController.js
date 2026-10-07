@@ -360,50 +360,52 @@ const getMyOrders = asyncHandler(async (req, res) => {
         testOrder: { $ne: true },
         isMock: { $ne: true }
       },
-      // ONLY valid completed/verified orders:
-      // 1. Regular Cash on Delivery orders (where NO advance payment is required, i.e., upfrontAmount == 0/null, and order is Placed)
-      // 2. Partial COD (COD_UPFRONT) orders where advance/upfront was actually PAID (PARTIAL_PAID or upfrontPaymentStatus === 'Paid')
-      // 3. Online Prepaid orders that have been successfully PAID
       {
         $or: [
-          // Standard COD (No advance needed)
+          // 1. All historical orders placed on or before 6 October 2026
           {
-            paymentMethod: { $in: ['COD', 'cod'] },
-            $or: [
-              { upfrontAmount: { $in: [0, null] } },
-              { upfrontAmount: { $exists: false } }
-            ],
-            paymentStatus: { $in: ['COD_PENDING', 'COD', 'Pending', 'PENDING'] },
-            orderStatus: { $in: ['Placed', 'PLACED', 'PROCESSING', 'Processing', 'SHIPPED', 'Shipped', 'DELIVERED', 'Delivered'] }
+            createdAt: { $lte: new Date('2026-10-06T23:59:59.999Z') },
+            orderStatus: { $nin: ['PENDING', 'PAYMENT_PENDING'] }
           },
-          // Partial COD (where advance was successfully paid)
+          // 2. From 7 October onwards: Strictly verified / completed orders only
           {
+            createdAt: { $gt: new Date('2026-10-06T23:59:59.999Z') },
             $or: [
-              { paymentMethod: { $in: ['COD_UPFRONT', 'PART_COD', 'cod_upfront'] } },
-              { upfrontAmount: { $gt: 0 } }
+              // Standard COD (No advance needed)
+              {
+                paymentMethod: { $in: ['COD', 'cod'] },
+                $or: [
+                  { upfrontAmount: { $in: [0, null] } },
+                  { upfrontAmount: { $exists: false } }
+                ],
+                paymentStatus: { $in: ['COD_PENDING', 'COD', 'Pending', 'PENDING'] },
+                orderStatus: { $in: ['Placed', 'PLACED', 'PROCESSING', 'Processing', 'SHIPPED', 'Shipped', 'DELIVERED', 'Delivered', 'Cancelled', 'CANCELLED'] }
+              },
+              // Partial COD (where advance was successfully paid)
+              {
+                $or: [
+                  { paymentMethod: { $in: ['COD_UPFRONT', 'PART_COD', 'cod_upfront'] } },
+                  { upfrontAmount: { $gt: 0 } }
+                ],
+                $or: [
+                  { paymentStatus: { $in: ['PARTIAL_PAID', 'PAID', 'COMPLETED'] } },
+                  { upfrontPaymentStatus: { $in: ['Paid', 'PAID', 'Completed', 'COMPLETED'] } }
+                ]
+              },
+              // Online Prepaid orders (where full payment was successfully paid)
+              {
+                paymentMethod: { $nin: ['COD', 'cod', 'COD_UPFRONT', 'PART_COD'] },
+                $or: [
+                  { upfrontAmount: { $in: [0, null] } },
+                  { upfrontAmount: { $exists: false } }
+                ],
+                paymentStatus: { $in: ['PAID', 'COMPLETED', 'Paid'] }
+              }
             ],
-            $or: [
-              { paymentStatus: { $in: ['PARTIAL_PAID', 'PAID', 'COMPLETED'] } },
-              { upfrontPaymentStatus: { $in: ['Paid', 'PAID', 'Completed', 'COMPLETED'] } }
-            ]
-          },
-          // Online Prepaid orders (where full payment was successfully paid)
-          {
-            paymentMethod: { $nin: ['COD', 'cod', 'COD_UPFRONT', 'PART_COD'] },
-            $or: [
-              { upfrontAmount: { $in: [0, null] } },
-              { upfrontAmount: { $exists: false } }
-            ],
-            paymentStatus: { $in: ['PAID', 'COMPLETED', 'Paid'] }
+            orderStatus: { $nin: ['PENDING', 'PAYMENT_PENDING'] },
+            paymentStatus: { $nin: ['FAILED'] }
           }
         ]
-      },
-      // Exclude unconfirmed pending draft states and payment failures
-      {
-        orderStatus: { $nin: ['PENDING', 'PAYMENT_PENDING'] }
-      },
-      {
-        paymentStatus: { $nin: ['FAILED'] }
       }
     ]
   };

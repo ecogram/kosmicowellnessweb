@@ -19,12 +19,20 @@ export const Orders: React.FC = () => {
     // - Partial COD with paid advance
     // - Online orders with PAID/COMPLETED status
     // Filter out unverified / abandoned pending payment drafts
+    const cutoffTime = new Date('2026-10-06T23:59:59.999Z').getTime();
     const validOrders = rawOrders.filter((o: any) => {
       const pm = String(o.paymentMethod || '').toUpperCase();
       const ps = String(o.paymentStatus || '').toUpperCase();
       const os = String(o.orderStatus || o.status || '').toUpperCase();
       const upfrontAmt = Number(o.upfrontAmount || 0);
+      const orderTime = o.createdAt ? new Date(o.createdAt).getTime() : 0;
 
+      // Allow all historical orders on or before 6 October
+      if (orderTime > 0 && orderTime <= cutoffTime) {
+        return os !== 'PENDING';
+      }
+
+      // From 7 October onwards: Strictly verified orders only
       const isUpfrontPaid = (pm === 'COD_UPFRONT' || pm === 'PART_COD' || upfrontAmt > 0) && (ps === 'PARTIAL_PAID' || ps === 'PAID' || String(o.upfrontPaymentStatus || '').toUpperCase() === 'PAID');
       const isPureCod = (pm === 'COD' || o.isCOD === true || ps === 'COD_PENDING') && upfrontAmt === 0;
       const isOnlinePaid = !pm.includes('COD') && ['PAID', 'COMPLETED'].includes(ps);
