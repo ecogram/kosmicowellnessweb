@@ -12,7 +12,7 @@ import {
   Globe, Moon, HelpCircle, Info, LogOut, Edit3, X, Phone, MessageSquare, Mail,
   Plus, Trash2, Home, CheckCircle2, Camera, RefreshCw, Check, AlertCircle,
   Eye, Image as ImageIcon, User as UserIcon, Loader2, ChevronLeft, Clock, Headphones,
-  ShoppingBag, ChevronRight, Map, ArrowLeft, Pencil
+  ShoppingBag, ChevronRight, Map, ArrowLeft, Pencil, Repeat
 } from 'lucide-react';
 import { PaymentMethodsModal } from '../components/PaymentMethodsModal';
 
@@ -858,6 +858,25 @@ export const Profile: React.FC = () => {
               </div>
               <ChevronRight className="w-4 h-4 text-neutral-400" />
             </div>
+
+            {/* 4. Subscriptions */}
+            <Link
+              to="/subscriptions"
+              className={`flex items-center justify-between p-3.5 rounded-2xl transition-colors ${isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'}`}
+            >
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-[#e8efe9] text-[#0e7440] flex items-center justify-center shrink-0">
+                  <Repeat className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold">Subscriptions</div>
+                  <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                    Manage your recurring subscriptions
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-neutral-400" />
+            </Link>
 
             {/* 4. Payment Methods (Temporarily commented out, can be re-enabled later) */}
             {/* <div
