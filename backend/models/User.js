@@ -73,6 +73,40 @@ const userSchema = new mongoose.Schema(
         createdAt: { type: Date, default: Date.now },
       },
     ],
+    isSubscribed: {
+      type: Boolean,
+      default: false,
+    },
+    subscriptionStatus: {
+      type: String,
+      enum: ['trial', 'active', 'expired', 'none'],
+      default: 'trial',
+    },
+    subscriptionTrialCount: {
+      type: Number,
+      default: 8,
+    },
+    trialsRemaining: {
+      type: Number,
+      default: 8,
+    },
+    featureTrials: {
+      type: Object,
+      default: () => ({
+        feature1: 2,
+        feature2: 2,
+        feature3: 2,
+        feature4: 2,
+      }),
+    },
+    subscription: {
+      status: { type: String, default: 'trial' },
+      isActive: { type: Boolean, default: false },
+      plan: { type: String, default: 'free_trial' },
+      trialsRemaining: { type: Number, default: 8 },
+      totalTrials: { type: Number, default: 8 },
+      expiresAt: { type: Date },
+    },
   },
   {
     timestamps: true,

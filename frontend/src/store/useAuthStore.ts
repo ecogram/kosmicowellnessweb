@@ -24,6 +24,9 @@ export interface User {
     trialRemaining?: number;
     trialsRemaining?: number;
     totalTrials?: number;
+    expiresAt?: string | Date;
+    activatedAt?: string | Date;
+    daysRemaining?: number;
   };
 }
 

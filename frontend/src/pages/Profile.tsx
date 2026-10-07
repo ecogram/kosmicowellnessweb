@@ -12,7 +12,7 @@ import {
   Globe, Moon, HelpCircle, Info, LogOut, Edit3, X, Phone, MessageSquare, Mail,
   Plus, Trash2, Home, CheckCircle2, Camera, RefreshCw, Check, AlertCircle,
   Eye, Image as ImageIcon, User as UserIcon, Loader2, ChevronLeft, Clock, Headphones,
-  ShoppingBag, ChevronRight, Map, ArrowLeft, Pencil, Zap
+  ShoppingBag, ChevronRight, Map, ArrowLeft, Pencil, Zap, Award
 } from 'lucide-react';
 import { PaymentMethodsModal } from '../components/PaymentMethodsModal';
 import { PLAY_STORE_URL } from '../utils/constants';
@@ -52,10 +52,75 @@ export const Profile: React.FC = () => {
     user?.isSubscribed ||
     user?.subscriptionStatus === 'active' ||
     user?.subscription?.isActive ||
-    user?.subscription?.status === 'active'
+    user?.subscription?.status === 'active' ||
+    (user as any)?.premium === true ||
+    (user as any)?.isPremium === true
   );
-  // Total 8 trials (4 features x 2 trials each). Default remaining is 6 (or from user profile)
-  const trialsRemaining = user?.subscription?.trialsRemaining ?? user?.subscription?.trialRemaining ?? user?.subscriptionTrialCount ?? 6;
+
+  // Dynamically calculate remaining trials directly from real API user data
+  const trialsRemaining = (() => {
+    if (typeof user?.subscription?.trialsRemaining === 'number') {
+      return user.subscription.trialsRemaining;
+    }
+    if (typeof (user as any)?.trialsRemaining === 'number') {
+      return (user as any).trialsRemaining;
+    }
+    if (typeof (user as any)?.trialRemaining === 'number') {
+      return (user as any).trialRemaining;
+    }
+    if (typeof (user as any)?.trials_remaining === 'number') {
+      return (user as any).trials_remaining;
+    }
+    if (typeof user?.subscriptionTrialCount === 'number') {
+      return user.subscriptionTrialCount;
+    }
+    if (typeof (user as any)?.freeTrialsRemaining === 'number') {
+      return (user as any).freeTrialsRemaining;
+    }
+    if (typeof (user as any)?.trialsUsed === 'number') {
+      return Math.max(0, 8 - (user as any).trialsUsed);
+    }
+    if ((user as any)?.featureTrials && typeof (user as any).featureTrials === 'object') {
+      const sum = Object.values((user as any).featureTrials).reduce((acc: number, val: any) => acc + (typeof val === 'number' ? val : 0), 0);
+      return typeof sum === 'number' ? sum : 8;
+    }
+    return 8; // Fresh default (4 features x 2 trials = 8)
+  })();
+
+  // Dynamic subscription active countdown (30 days left -> 29 -> ...)
+  const daysLeft = (() => {
+    if (!isSubscriptionActive) return 0;
+    
+    // 1. Check direct backend expiry timestamp
+    const rawExpiry = user?.subscription?.expiresAt || (user as any)?.subscriptionExpiresAt || (user as any)?.expiresAt;
+    if (rawExpiry) {
+      const expiryTime = new Date(rawExpiry).getTime();
+      const diffMs = expiryTime - Date.now();
+      return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    }
+    
+    // 2. Check explicit daysRemaining field
+    if (typeof (user?.subscription as any)?.daysRemaining === 'number') {
+      return (user?.subscription as any).daysRemaining;
+    }
+    if (typeof (user as any)?.subscriptionDaysRemaining === 'number') {
+      return (user as any).subscriptionDaysRemaining;
+    }
+
+    // 3. Compute from subscription activation date (30-day billing cycle)
+    const rawActivated = user?.subscription?.activatedAt || (user as any)?.subscriptionActivatedAt || (user as any)?.createdAt;
+    if (rawActivated) {
+      const activatedTime = new Date(rawActivated).getTime();
+      const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+      const expiryTime = activatedTime + thirtyDaysMs;
+      const diffMs = expiryTime - Date.now();
+      const calculated = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      return Math.max(0, Math.min(30, calculated));
+    }
+
+    // 4. Default active subscription duration is 30 days
+    return 30;
+  })();
 
   // Settings State
   const [searchParams, setSearchParams] = useSearchParams();
@@ -868,7 +933,7 @@ export const Profile: React.FC = () => {
               <ChevronRight className="w-4 h-4 text-neutral-400" />
             </div>
 
-            {/* 4. Kosmico Premium (Subscriptions / Free Trials) */}
+            {/* 4. Kosmico Premium (Subscriptions / Free Trials & Active Countdown) */}
             <a
               href={PLAY_STORE_URL}
               target="_blank"
@@ -879,7 +944,11 @@ export const Profile: React.FC = () => {
             >
               <div className="flex items-center gap-3.5 min-w-0">
                 <div className="w-10 h-10 rounded-2xl bg-[#e8efe9] text-[#0e7440] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                  <Zap className="w-4.5 h-4.5 text-[#0e7440] fill-[#0e7440]" />
+                  {isSubscriptionActive ? (
+                    <Award className="w-5 h-5 text-[#0e7440]" />
+                  ) : (
+                    <Zap className="w-4.5 h-4.5 text-[#0e7440] fill-[#0e7440]" />
+                  )}
                 </div>
                 <div className="min-w-0">
                   <div className="text-sm font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5">
@@ -890,8 +959,8 @@ export const Profile: React.FC = () => {
                   </div>
                   <div className={`text-[11px] truncate mt-0.5 ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
                     {isSubscriptionActive ? (
-                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">
-                        Active Subscription • Unlimited Access
+                      <span className="text-neutral-600 dark:text-neutral-400 font-medium">
+                        Monthly subscription active • {daysLeft} {daysLeft === 1 ? 'day' : 'days'} left
                       </span>
                     ) : (
                       <span>
@@ -903,10 +972,9 @@ export const Profile: React.FC = () => {
               </div>
               <div className="shrink-0 ml-3">
                 {isSubscriptionActive ? (
-                  <span className="px-3.5 py-1.5 bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-900/50 dark:text-emerald-300 dark:border-emerald-700 text-xs font-bold rounded-xl inline-flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                    Active
-                  </span>
+                  <div className="w-6 h-6 rounded-full bg-[#16a34a] flex items-center justify-center text-white shadow-sm shrink-0">
+                    <Check className="w-3.5 h-3.5 stroke-[3]" />
+                  </div>
                 ) : (
                   <span className="px-3.5 py-1.5 bg-[#0e7440] hover:bg-[#0a5830] text-white text-xs font-bold rounded-xl transition-all shadow-sm inline-block">
                     Upgrade

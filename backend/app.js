@@ -96,6 +96,7 @@ const systemRoutes = require('./routes/systemRoutes');
 const shiprocketRoutes = require('./routes/shiprocketRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const cartRoutes = require('./routes/cartRoutes');
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
 
 // Helper to register routers on both /api and /api/v1 prefixes
 const registerRoutes = (prefix) => {
@@ -131,11 +132,15 @@ const registerRoutes = (prefix) => {
   app.use(`${prefix}/refund`, refundRoutes);
   app.use(`${prefix}/return`, returnRoutes);
 
-  // 5. Community & Emergency (Modules 7, 9 in Doc)
+  // 5. Subscription & Premium (Module for Mobile App & Web)
+  app.use(`${prefix}/subscription`, subscriptionRoutes);
+  app.use(`${prefix}/subscriptions`, subscriptionRoutes);
+
+  // 6. Community & Emergency (Modules 7, 9 in Doc)
   app.use(`${prefix}/posts`, postRoutes);
   app.use(`${prefix}/emergency`, emergencyRoutes);
 
-  // 6. Integrated Additional Modules:
+  // 7. Integrated Additional Modules:
   // GlucoRhythm Health Tracking (/api/gluco/*)
   app.use(`${prefix}/gluco`, glucoRoutes);
 
