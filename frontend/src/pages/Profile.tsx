@@ -952,7 +952,7 @@ export const Profile: React.FC = () => {
               href={PLAY_STORE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex items-center justify-between p-3.5 rounded-2xl transition-all duration-200 group ${
+              className={`flex items-center justify-between p-3.5 rounded-2xl transition-all duration-200 group no-underline ${
                 isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'
               }`}
             >
@@ -965,19 +965,19 @@ export const Profile: React.FC = () => {
                   )}
                 </div>
                 <div className="min-w-0">
-                  <div className="text-sm font-bold text-neutral-900 dark:text-neutral-100 flex items-center gap-1.5">
-                    <span>Kosmico Premium</span>
-                    <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+                  <div className="text-sm font-bold text-[#111827] flex items-center gap-1.5">
+                    <span className="font-bold text-[#111827]">Kosmico Premium</span>
+                    <span className="text-xs font-medium text-neutral-500">
                       {isSubscriptionActive ? '(Active)' : '(Free Trials)'}
                     </span>
                   </div>
                   <div className={`text-[11px] truncate mt-0.5 ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
                     {isSubscriptionActive ? (
-                      <span className="text-neutral-600 dark:text-neutral-400 font-medium">
+                      <span className="text-neutral-600 font-medium">
                         Monthly subscription active • {daysLeft} {daysLeft === 1 ? 'day' : 'days'} left
                       </span>
                     ) : (
-                      <span>
+                      <span className="text-neutral-500">
                         {trialsRemaining} free trials remaining • Upgrade ₹149/mo
                       </span>
                     )}
