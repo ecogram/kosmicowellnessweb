@@ -14,6 +14,15 @@ export interface User {
   profilePicture?: string;
   profileImage?: string;
   avatar?: string;
+  subscriptionStatus?: 'trial' | 'active' | 'expired' | string;
+  isSubscribed?: boolean;
+  subscriptionTrialCount?: number;
+  subscription?: {
+    status?: string;
+    isActive?: boolean;
+    plan?: string;
+    trialRemaining?: number;
+  };
 }
 
 interface AuthState {

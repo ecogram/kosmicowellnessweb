@@ -15,6 +15,7 @@ import {
   ShoppingBag, ChevronRight, Map, ArrowLeft, Pencil, Repeat
 } from 'lucide-react';
 import { PaymentMethodsModal } from '../components/PaymentMethodsModal';
+import { PLAY_STORE_URL } from '../utils/constants';
 
 // API docs address fields: addressLabel, fullName, streetAddress, city, pincode, phoneNumber, isDefault
 interface SavedAddress {
@@ -47,6 +48,12 @@ export const Profile: React.FC = () => {
   const ordersCount = ordersData?.orders ? ordersData.orders.length : (ordersData?.pagination?.total ?? 0);
   const wishlistCount = wishlist?.items?.length || 0;
   const couponsCount = couponsData ? couponsData.filter((c: any) => c.isActive !== false).length : 0;
+  const isSubscriptionActive = Boolean(
+    user?.isSubscribed ||
+    user?.subscriptionStatus === 'active' ||
+    user?.subscription?.isActive ||
+    user?.subscription?.status === 'active'
+  );
 
   // Settings State
   const [searchParams, setSearchParams] = useSearchParams();
@@ -860,23 +867,44 @@ export const Profile: React.FC = () => {
             </div>
 
             {/* 4. Subscriptions */}
-            <Link
-              to="/subscriptions"
-              className={`flex items-center justify-between p-3.5 rounded-2xl transition-colors ${isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'}`}
+            <a
+              href={PLAY_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex items-center justify-between p-3.5 rounded-2xl transition-all duration-200 group ${
+                isDarkMode ? 'hover:bg-neutral-700/50' : 'hover:bg-neutral-50'
+              }`}
             >
-              <div className="flex items-center gap-3.5">
-                <div className="w-10 h-10 rounded-2xl bg-[#e8efe9] text-[#0e7440] flex items-center justify-center shrink-0">
+              <div className="flex items-center gap-3.5 min-w-0">
+                <div className="w-10 h-10 rounded-2xl bg-[#e8efe9] text-[#0e7440] flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
                   <Repeat className="w-5 h-5" />
                 </div>
-                <div>
-                  <div className="text-sm font-bold">Subscriptions</div>
-                  <div className={`text-[11px] ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
-                    Manage your recurring subscriptions
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold">Subscriptions</span>
+                    {isSubscriptionActive ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-900/50 dark:text-emerald-300 dark:border-emerald-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                        Active
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-full bg-amber-100 text-amber-900 border border-amber-300 dark:bg-amber-900/50 dark:text-amber-300 dark:border-amber-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                        Trial
+                      </span>
+                    )}
+                  </div>
+                  <div className={`text-[11px] truncate flex items-center gap-1.5 ${isDarkMode ? 'text-neutral-400' : 'text-neutral-500'}`}>
+                    {isSubscriptionActive ? (
+                      <span>Active • Manage in Mobile App</span>
+                    ) : (
+                      <span>Trial (2 Free Trials Available) • Download App</span>
+                    )}
                   </div>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-neutral-400" />
-            </Link>
+              <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:text-[#0e7440] transition-colors shrink-0" />
+            </a>
 
             {/* 4. Payment Methods (Temporarily commented out, can be re-enabled later) */}
             {/* <div
