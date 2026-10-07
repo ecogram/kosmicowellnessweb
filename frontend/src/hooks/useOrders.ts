@@ -30,12 +30,25 @@ export const useOrders = (params: { page?: number; limit?: number } = {}) => {
           const pm = String(o.paymentMethod || '').toUpperCase();
           const ps = String(o.paymentStatus || '').toUpperCase();
           const os = String(o.orderStatus || o.status || '').toUpperCase();
-          const isCod = pm.includes('COD') || o.isCOD === true || ps === 'COD_PENDING';
-          const isUpfrontPaid = (pm === 'COD_UPFRONT' || pm === 'PART_COD') && (ps === 'PARTIAL_PAID' || ps === 'PAID' || String(o.upfrontPaymentStatus || '').toUpperCase() === 'PAID');
-          const isOnlinePaid = !isCod && ['PAID', 'COMPLETED'].includes(ps);
 
-          if (os === 'PENDING' || ps === 'FAILED') return false;
-          return isCod || isUpfrontPaid || isOnlinePaid;
+          if (os === 'PENDING' || os === 'PAYMENT_PENDING' || ps === 'FAILED' || ps === 'CANCELLED') {
+            return false;
+          }
+
+          const isUpfrontPaid = (pm === 'COD_UPFRONT' || pm === 'PART_COD') &&
+            (['PARTIAL_PAID', 'PAID', 'COMPLETED'].includes(ps) || String(o.upfrontPaymentStatus || '').toUpperCase() === 'PAID');
+          const isPureCod = pm === 'COD' || pm === 'CASH ON DELIVERY';
+          const isOnlinePaid = !pm.includes('COD') && ['PAID', 'COMPLETED'].includes(ps);
+
+          if (pm === 'COD_UPFRONT' || pm === 'PART_COD') {
+            return isUpfrontPaid;
+          }
+
+          if (isPureCod) {
+            return ['PLACED', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(os);
+          }
+
+          return isOnlinePaid;
         });
 
         const pagination = resData.pagination ?? {

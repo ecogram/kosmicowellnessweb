@@ -14,21 +14,34 @@ export const Orders: React.FC = () => {
 
   const rawOrders = data?.orders || [];
   const allOrders = React.useMemo(() => {
-    // Only show valid placed orders:
-    // - COD orders
-    // - Partial COD with paid advance
-    // - Online orders with PAID/COMPLETED status
+    // Only show valid completed orders:
+    // - Direct 100% COD placed orders
+    // - Partial COD with verified paid advance
+    // - Online prepaid with verified PAID/COMPLETED status
     // Filter out unverified / abandoned pending payment drafts
     const validOrders = rawOrders.filter((o: any) => {
       const pm = String(o.paymentMethod || '').toUpperCase();
       const ps = String(o.paymentStatus || '').toUpperCase();
       const os = String(o.orderStatus || o.status || '').toUpperCase();
-      const isCod = pm.includes('COD') || o.isCOD === true || ps === 'COD_PENDING';
-      const isUpfrontPaid = (pm === 'COD_UPFRONT' || pm === 'PART_COD') && (ps === 'PARTIAL_PAID' || ps === 'PAID' || String(o.upfrontPaymentStatus || '').toUpperCase() === 'PAID');
-      const isOnlinePaid = !isCod && ['PAID', 'COMPLETED'].includes(ps);
 
-      if (os === 'PENDING' || ps === 'FAILED') return false;
-      return isCod || isUpfrontPaid || isOnlinePaid;
+      if (os === 'PENDING' || os === 'PAYMENT_PENDING' || ps === 'FAILED' || ps === 'CANCELLED') {
+        return false;
+      }
+
+      const isUpfrontPaid = (pm === 'COD_UPFRONT' || pm === 'PART_COD') &&
+        (['PARTIAL_PAID', 'PAID', 'COMPLETED'].includes(ps) || String(o.upfrontPaymentStatus || '').toUpperCase() === 'PAID');
+      const isPureCod = pm === 'COD' || pm === 'CASH ON DELIVERY';
+      const isOnlinePaid = !pm.includes('COD') && ['PAID', 'COMPLETED'].includes(ps);
+
+      if (pm === 'COD_UPFRONT' || pm === 'PART_COD') {
+        return isUpfrontPaid;
+      }
+
+      if (isPureCod) {
+        return ['PLACED', 'CONFIRMED', 'PROCESSING', 'SHIPPED', 'DELIVERED'].includes(os);
+      }
+
+      return isOnlinePaid;
     });
 
     return [...validOrders].sort((a: any, b: any) => {
@@ -144,20 +157,12 @@ export const Orders: React.FC = () => {
                   0
                 );
 
-                const isAdvancePaymentAmount =
-                  [88, 93, 99, 104, 105, 127].includes(Math.round(rawOrderTotal)) ||
-                  (rawOrderTotal > 0 && itemsSubtotal > 0 && Math.abs(rawOrderTotal - itemsSubtotal) >= 30 && !paymentMethodUpper.includes('PREPAID'));
-
                 const isPartCod =
-                  paymentMethodUpper === 'COD_UPFRONT' ||
-                  paymentMethodUpper.includes('PART_COD') ||
-                  paymentStatusUpper === 'PARTIAL_PAID' ||
-                  paymentStatusUpper.includes('PARTIAL') ||
-                  String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID' ||
-                  upfrontAmt > 0 ||
-                  (itemsSubtotal > 0 && isAdvancePaymentAmount);
+                  (paymentMethodUpper === 'COD_UPFRONT' || paymentMethodUpper.includes('PART_COD')) &&
+                  (['PARTIAL_PAID', 'PAID', 'COMPLETED'].includes(paymentStatusUpper) || String(order.upfrontPaymentStatus || '').toUpperCase() === 'PAID');
 
-                const isCOD = isPartCod || paymentMethodUpper.includes('COD') || order.isCOD === true;
+                const isPureCod = (paymentMethodUpper === 'COD' || paymentMethodUpper === 'CASH ON DELIVERY') && !isPartCod;
+                const isCOD = isPartCod || isPureCod;
                 const isOnlinePaid = !isCOD && ['PAID', 'COMPLETED'].includes(paymentStatusUpper);
 
                 const rawDeliveryFee = Number(order.shipping ?? order.deliveryFee ?? 0);
