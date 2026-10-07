@@ -13,8 +13,15 @@ async function main() {
     {
       $set: {
         isSubscribed: true,
+        is_subscribed: true,
+        isPremium: true,
+        premium: true,
         subscriptionStatus: 'active',
+        subscription_status: 'active',
         subscriptionDaysLeft: 30,
+        subscription_days_left: 30,
+        subscriptionExpiresAt: expiry,
+        subscription_expires_at: expiry,
         subscription: {
           status: 'active',
           isActive: true,
@@ -28,46 +35,34 @@ async function main() {
     }
   );
 
-  console.log('MongoDB record updated for amitky2056@gmail.com');
-
-  const user = await mongoose.connection.collection('users').findOne({ email: 'amitky2056@gmail.com' });
-  console.log('DB USER:', {
-    email: user.email,
-    isSubscribed: user.isSubscribed,
-    subscriptionStatus: user.subscriptionStatus,
-    subscriptionDaysLeft: user.subscriptionDaysLeft,
-    subscription: user.subscription,
-  });
+  console.log('MongoDB updated with all fields');
 
   const token = jwt.sign(
-    { id: user._id.toString(), email: user.email },
+    { id: '6aa12a1fc5f7f953112a7a38', email: 'amitky2056@gmail.com' },
     'Kosmico_Secret_Key_123',
     { expiresIn: '7d' }
   );
 
-  const req = https.request(
-    'https://api.kosmicowellness.com/api/auth/profile',
-    {
-      headers: {
-        Authorization: 'Bearer ' + token,
-        Accept: 'application/json',
-      },
-    },
-    (res) => {
-      let body = '';
-      res.on('data', (d) => (body += d));
-      res.on('end', () => {
-        console.log('LIVE SERVER /api/auth/profile RESPONSE:');
-        console.log(body);
-        process.exit(0);
-      });
-    }
-  );
-  req.on('error', (e) => {
-    console.error(e);
-    process.exit(1);
-  });
-  req.end();
+  function get(path) {
+    return new Promise((resolve) => {
+      https.get(
+        'https://api.kosmicowellness.com' + path,
+        { headers: { Authorization: 'Bearer ' + token, Accept: 'application/json' } },
+        (r) => {
+          let b = '';
+          r.on('data', (d) => (b += d));
+          r.on('end', () => {
+            console.log(path, '->', b);
+            resolve();
+          });
+        }
+      );
+    });
+  }
+
+  await get('/api/auth/profile');
+  await get('/api/subscription/status');
+  process.exit(0);
 }
 
 main();
