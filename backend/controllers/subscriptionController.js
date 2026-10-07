@@ -1,16 +1,20 @@
 const asyncHandler = require('../utils/asyncHandler');
 const { ApiResponse, ApiError } = require('../utils/apiResponse');
 const User = require('../models/User');
-const razorpay = require('../config/razorpay');
+const Razorpay = require('razorpay');
 const crypto = require('crypto');
+
+const getRazorpayInstance = () => {
+  return new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID || 'rzp_live_TcH3s5Qdh4ngAp',
+    key_secret: process.env.RAZORPAY_KEY_SECRET || '8HiA1PomM2gcACR54tAfnagQ',
+  });
+};
 
 // 1. Create Subscription Order (POST /api/subscription/create-order)
 const createSubscriptionOrder = asyncHandler(async (req, res) => {
   const amountInPaise = 14900; // ₹149 in paise (Amount is hardcoded on server)
-
-  if (!razorpay) {
-    throw new ApiError(500, 'Razorpay instance not configured on server');
-  }
+  const razorpay = getRazorpayInstance();
 
   const receipt = `sub_${Date.now().toString().slice(-8)}_${Math.floor(100 + Math.random() * 900)}`;
 
