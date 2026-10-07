@@ -359,6 +359,38 @@ const getMyOrders = asyncHandler(async (req, res) => {
         isTest: { $ne: true },
         testOrder: { $ne: true },
         isMock: { $ne: true }
+      },
+      // ONLY valid completed orders:
+      // 1. Regular Cash on Delivery orders
+      // 2. Partial COD (COD_UPFRONT) orders where advance/upfront was paid
+      // 3. Online Prepaid orders that have been successfully paid
+      {
+        $or: [
+          { paymentMethod: 'COD' },
+          { paymentMethod: 'cod' },
+          { isCOD: true },
+          { paymentStatus: 'COD_PENDING' },
+          {
+            $and: [
+              { paymentMethod: { $in: ['COD_UPFRONT', 'PART_COD', 'cod_upfront'] } },
+              { paymentStatus: { $in: ['PARTIAL_PAID', 'PAID', 'COMPLETED'] } }
+            ]
+          },
+          { upfrontPaymentStatus: 'Paid' },
+          {
+            $and: [
+              { paymentMethod: { $nin: ['COD', 'cod'] } },
+              { paymentStatus: { $in: ['PAID', 'COMPLETED'] } }
+            ]
+          }
+        ]
+      },
+      // Exclude unconfirmed pending draft states and payment failures
+      {
+        orderStatus: { $nin: ['PENDING', 'PAYMENT_PENDING'] }
+      },
+      {
+        paymentStatus: { $nin: ['FAILED'] }
       }
     ]
   };
@@ -759,10 +791,15 @@ const cancelPendingRazorpayOrder = asyncHandler(async (req, res) => {
   const targetId = internalOrderId || orderId;
 
   if (targetId) {
+    const isObjectId = /^[0-9a-fA-F]{24}$/.test(targetId);
+    const searchCondition = isObjectId
+      ? { $or: [{ _id: targetId }, { orderNumber: targetId }] }
+      : { orderNumber: targetId };
+
     const order = await Order.findOne({
-      _id: targetId,
+      ...searchCondition,
       user: req.user._id,
-      orderStatus: 'PENDING',
+      orderStatus: { $in: ['PENDING', 'PAYMENT_PENDING'] },
     });
     if (order) {
       order.orderStatus = 'CANCELLED';

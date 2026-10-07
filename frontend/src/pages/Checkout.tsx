@@ -425,6 +425,14 @@ export const Checkout: React.FC = () => {
         ondismiss: function () {
           setIsPaymentProcessing(false);
           toast.error('Payment cancelled. Your order was not placed.');
+          const targetOrderId = order?._id || order?.internalOrderId || order?.order?._id || order?.orderNumber;
+          if (targetOrderId || rzpOrderId) {
+            api.post('/payment/razorpay/cancel-pending', {
+              internalOrderId: targetOrderId,
+              orderId: targetOrderId,
+              razorpay_order_id: rzpOrderId,
+            }).catch(() => {});
+          }
         },
       },
       handler: async function (response: any) {
@@ -499,6 +507,14 @@ export const Checkout: React.FC = () => {
       rzpInstance.on('payment.failed', function (resp: any) {
         setIsPaymentProcessing(false);
         toast.error(resp.error?.description || 'Payment failed. Your order was not placed.');
+        const targetOrderId = order?._id || order?.internalOrderId || order?.order?._id || order?.orderNumber;
+        if (targetOrderId || rzpOrderId) {
+          api.post('/payment/razorpay/cancel-pending', {
+            internalOrderId: targetOrderId,
+            orderId: targetOrderId,
+            razorpay_order_id: rzpOrderId,
+          }).catch(() => {});
+        }
       });
       rzpInstance.open();
     } catch (rzpErr: any) {

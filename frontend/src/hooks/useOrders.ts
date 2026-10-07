@@ -27,7 +27,15 @@ export const useOrders = (params: { page?: number; limit?: number } = {}) => {
             return false;
           }
 
-          return true;
+          const pm = String(o.paymentMethod || '').toUpperCase();
+          const ps = String(o.paymentStatus || '').toUpperCase();
+          const os = String(o.orderStatus || o.status || '').toUpperCase();
+          const isCod = pm.includes('COD') || o.isCOD === true || ps === 'COD_PENDING';
+          const isUpfrontPaid = (pm === 'COD_UPFRONT' || pm === 'PART_COD') && (ps === 'PARTIAL_PAID' || ps === 'PAID' || String(o.upfrontPaymentStatus || '').toUpperCase() === 'PAID');
+          const isOnlinePaid = !isCod && ['PAID', 'COMPLETED'].includes(ps);
+
+          if (os === 'PENDING' || ps === 'FAILED') return false;
+          return isCod || isUpfrontPaid || isOnlinePaid;
         });
 
         const pagination = resData.pagination ?? {

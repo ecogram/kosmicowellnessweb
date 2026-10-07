@@ -14,7 +14,24 @@ export const Orders: React.FC = () => {
 
   const rawOrders = data?.orders || [];
   const allOrders = React.useMemo(() => {
-    return [...rawOrders].sort((a: any, b: any) => {
+    // Only show valid placed orders:
+    // - COD orders
+    // - Partial COD with paid advance
+    // - Online orders with PAID/COMPLETED status
+    // Filter out unverified / abandoned pending payment drafts
+    const validOrders = rawOrders.filter((o: any) => {
+      const pm = String(o.paymentMethod || '').toUpperCase();
+      const ps = String(o.paymentStatus || '').toUpperCase();
+      const os = String(o.orderStatus || o.status || '').toUpperCase();
+      const isCod = pm.includes('COD') || o.isCOD === true || ps === 'COD_PENDING';
+      const isUpfrontPaid = (pm === 'COD_UPFRONT' || pm === 'PART_COD') && (ps === 'PARTIAL_PAID' || ps === 'PAID' || String(o.upfrontPaymentStatus || '').toUpperCase() === 'PAID');
+      const isOnlinePaid = !isCod && ['PAID', 'COMPLETED'].includes(ps);
+
+      if (os === 'PENDING' || ps === 'FAILED') return false;
+      return isCod || isUpfrontPaid || isOnlinePaid;
+    });
+
+    return [...validOrders].sort((a: any, b: any) => {
       const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       if (!isNaN(timeA) && !isNaN(timeB) && timeA !== timeB) {
@@ -186,9 +203,13 @@ export const Orders: React.FC = () => {
                         <div className="text-[11px] font-medium text-[#8b5e34] mt-1 flex items-center gap-1">
                           <span>Advance Paid: <strong className="text-neutral-900">{formatINR(paidAmount)}</strong> · Balance <strong className="text-neutral-900">{formatINR(balanceAmount)}</strong> due on delivery</span>
                         </div>
+                      ) : isCOD ? (
+                        <div className="text-[11px] font-medium text-neutral-500 mt-1">
+                          Pay {formatINR(orderTotal)} on delivery
+                        </div>
                       ) : (
                         <div className="text-[11px] font-medium text-neutral-500 mt-1">
-                          {isCOD ? `Pay ${formatINR(orderTotal)} on delivery` : 'Paid in full online'}
+                          {isOnlinePaid ? 'Paid in full online' : 'Payment pending'}
                         </div>
                       )}
                     </div>
@@ -221,8 +242,12 @@ export const Orders: React.FC = () => {
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
                           COD
                         </span>
-                      ) : (
+                      ) : isOnlinePaid ? (
                         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                          Online Paid
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
                           Online
                         </span>
                       )}
