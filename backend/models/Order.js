@@ -8,13 +8,16 @@ const orderSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      index: true,
     },
     userName: {
       type: String,
     },
     userEmail: {
       type: String,
+    },
+    shippingStatus: {
+      type: String,
+      default: 'PENDING',
       index: true,
     },
     items: {

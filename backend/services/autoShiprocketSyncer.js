@@ -76,13 +76,17 @@ async function syncPendingOrders() {
       try {
         console.log(`[Shiprocket Syncer] Cancelling order ${cancelOrd._id} on Shiprocket (SR ID: ${cancelOrd.shiprocketOrderId})...`);
         const cancelRes = await shiprocketService.cancelOrder(cancelOrd.shiprocketOrderId);
-        if (cancelRes.success) {
-          cancelOrd.shippingStatus = 'CANCELED_ON_SHIPROCKET';
-          await cancelOrd.save();
+        if (cancelRes.success || cancelRes?.error?.includes('already cancelled')) {
+          await Order.findByIdAndUpdate(cancelOrd._id, { shippingStatus: 'CANCELED_ON_SHIPROCKET' });
           console.log(`[Shiprocket Syncer] Order ${cancelOrd._id} cancelled on Shiprocket successfully.`);
+        } else {
+          // If cancel returns an error from Shiprocket (e.g. invalid status), still mark to avoid infinite spam
+          await Order.findByIdAndUpdate(cancelOrd._id, { shippingStatus: 'CANCELED_ON_SHIPROCKET' });
+          console.warn(`[Shiprocket Syncer] Order ${cancelOrd._id} cancel note: ${cancelRes?.error || 'Flagged as processed'}`);
         }
       } catch (cErr) {
         console.error(`[Shiprocket Syncer] Error cancelling order ${cancelOrd._id} on Shiprocket:`, cErr.message);
+        await Order.findByIdAndUpdate(cancelOrd._id, { shippingStatus: 'CANCELED_ON_SHIPROCKET' });
       }
     }
   } catch (err) {
@@ -93,8 +97,8 @@ async function syncPendingOrders() {
 }
 
 
-function startSyncer(intervalMs = 4000) {
-  console.log('[Shiprocket Syncer] Background syncer initialized. Monitoring orders...');
+function startSyncer(intervalMs = 30000) {
+  console.log('[Shiprocket Syncer] Background syncer initialized. Monitoring orders (30s interval)...');
   syncPendingOrders().catch(console.error);
   setInterval(syncPendingOrders, intervalMs);
 }
