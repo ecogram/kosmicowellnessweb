@@ -51,17 +51,12 @@ export const Profile: React.FC = () => {
   const wishlistCount = wishlist?.items?.length || 0;
   const couponsCount = couponsData ? couponsData.filter((c: any) => c.isActive !== false).length : 0;
 
-  const userEmail = (activeUser?.email || '').toLowerCase().trim();
-  const isKnownSubscribedEmail =
-    userEmail === 'amitky2056@gmail.com' ||
-    userEmail === 'skt916606@gmail.com' ||
-    userEmail === 'abhayyt93@gmail.com';
-
   const isSubscriptionActive = Boolean(
-    isKnownSubscribedEmail ||
     subStatus?.isSubscribed === true ||
     subStatus?.isSubscribed === 'true' ||
     subStatus?.subscriptionStatus === 'active' ||
+    subStatus?.subscription?.isActive === true ||
+    subStatus?.subscription?.status === 'active' ||
     activeUser?.isSubscribed === true ||
     activeUser?.isSubscribed === 'true' ||
     activeUser?.subscriptionStatus === 'active' ||
