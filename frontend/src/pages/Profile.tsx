@@ -41,7 +41,8 @@ export const Profile: React.FC = () => {
   const navigate = useNavigate();
 
   // Real-time profile sync
-  useProfile();
+  const { data: profileUser } = useProfile();
+  const activeUser = profileUser || user;
   const updateProfileMutation = useUpdateProfile();
   const removeProfilePictureMutation = useRemoveProfilePicture();
 
@@ -49,47 +50,48 @@ export const Profile: React.FC = () => {
   const wishlistCount = wishlist?.items?.length || 0;
   const couponsCount = couponsData ? couponsData.filter((c: any) => c.isActive !== false).length : 0;
   const isSubscriptionActive = Boolean(
-    user?.isSubscribed ||
-    user?.subscriptionStatus === 'active' ||
-    user?.subscription?.isActive ||
-    user?.subscription?.status === 'active' ||
-    (user as any)?.premium === true ||
-    (user as any)?.isPremium === true
+    activeUser?.isSubscribed === true ||
+    activeUser?.isSubscribed === 'true' ||
+    activeUser?.subscriptionStatus === 'active' ||
+    activeUser?.subscription?.isActive === true ||
+    activeUser?.subscription?.status === 'active' ||
+    (activeUser as any)?.premium === true ||
+    (activeUser as any)?.isPremium === true
   );
 
   // Dynamically calculate remaining trials directly from real API user data
   const trialsRemaining = (() => {
-    if (user?.trials && typeof user.trials === 'object') {
-      const p = typeof user.trials.plate_scan === 'number' ? user.trials.plate_scan : 2;
-      const b = typeof user.trials.bp_scan === 'number' ? user.trials.bp_scan : 2;
-      const c = typeof user.trials.community_post === 'number' ? user.trials.community_post : 2;
-      const s = typeof user.trials.smartwatch_connect === 'number' ? user.trials.smartwatch_connect : 2;
+    if (activeUser?.trials && typeof activeUser.trials === 'object') {
+      const p = typeof activeUser.trials.plate_scan === 'number' ? activeUser.trials.plate_scan : 2;
+      const b = typeof activeUser.trials.bp_scan === 'number' ? activeUser.trials.bp_scan : 2;
+      const c = typeof activeUser.trials.community_post === 'number' ? activeUser.trials.community_post : 2;
+      const s = typeof activeUser.trials.smartwatch_connect === 'number' ? activeUser.trials.smartwatch_connect : 2;
       return p + b + c + s;
     }
-    if ((user as any)?.featureTrials && typeof (user as any).featureTrials === 'object') {
-      const sum = Object.values((user as any).featureTrials).reduce((acc: number, val: any) => acc + (typeof val === 'number' ? val : 0), 0);
+    if ((activeUser as any)?.featureTrials && typeof (activeUser as any).featureTrials === 'object') {
+      const sum = Object.values((activeUser as any).featureTrials).reduce((acc: number, val: any) => acc + (typeof val === 'number' ? val : 0), 0);
       return typeof sum === 'number' ? sum : 8;
     }
-    if (typeof user?.subscription?.trialsRemaining === 'number') {
-      return user.subscription.trialsRemaining;
+    if (typeof activeUser?.subscription?.trialsRemaining === 'number') {
+      return activeUser.subscription.trialsRemaining;
     }
-    if (typeof (user as any)?.trialsRemaining === 'number') {
-      return (user as any).trialsRemaining;
+    if (typeof (activeUser as any)?.trialsRemaining === 'number') {
+      return (activeUser as any).trialsRemaining;
     }
-    if (typeof (user as any)?.trialRemaining === 'number') {
-      return (user as any).trialRemaining;
+    if (typeof (activeUser as any)?.trialRemaining === 'number') {
+      return (activeUser as any).trialRemaining;
     }
-    if (typeof (user as any)?.trials_remaining === 'number') {
-      return (user as any).trials_remaining;
+    if (typeof (activeUser as any)?.trials_remaining === 'number') {
+      return (activeUser as any).trials_remaining;
     }
-    if (typeof user?.subscriptionTrialCount === 'number') {
-      return user.subscriptionTrialCount;
+    if (typeof activeUser?.subscriptionTrialCount === 'number') {
+      return activeUser.subscriptionTrialCount;
     }
-    if (typeof (user as any)?.freeTrialsRemaining === 'number') {
-      return (user as any).freeTrialsRemaining;
+    if (typeof (activeUser as any)?.freeTrialsRemaining === 'number') {
+      return (activeUser as any).freeTrialsRemaining;
     }
-    if (typeof (user as any)?.trialsUsed === 'number') {
-      return Math.max(0, 8 - (user as any).trialsUsed);
+    if (typeof (activeUser as any)?.trialsUsed === 'number') {
+      return Math.max(0, 8 - (activeUser as any).trialsUsed);
     }
     return 8; // Fresh default (4 features x 2 trials = 8)
   })();
@@ -99,12 +101,12 @@ export const Profile: React.FC = () => {
     if (!isSubscriptionActive) return 0;
     
     // 1. Direct subscriptionDaysLeft field from backend API (GET /api/subscription/status & GET /api/auth/profile)
-    if (typeof (user as any)?.subscriptionDaysLeft === 'number' && (user as any).subscriptionDaysLeft > 0) {
-      return (user as any).subscriptionDaysLeft;
+    if (typeof (activeUser as any)?.subscriptionDaysLeft === 'number' && (activeUser as any).subscriptionDaysLeft > 0) {
+      return (activeUser as any).subscriptionDaysLeft;
     }
 
     // 2. Check direct backend expiry timestamp
-    const rawExpiry = user?.subscription?.expiresAt || (user as any)?.subscriptionExpiresAt || (user as any)?.expiresAt;
+    const rawExpiry = activeUser?.subscription?.expiresAt || (activeUser as any)?.subscriptionExpiresAt || (activeUser as any)?.expiresAt;
     if (rawExpiry) {
       const expiryTime = new Date(rawExpiry).getTime();
       const diffMs = expiryTime - Date.now();
@@ -112,15 +114,15 @@ export const Profile: React.FC = () => {
     }
     
     // 3. Check explicit daysRemaining field
-    if (typeof (user?.subscription as any)?.daysRemaining === 'number') {
-      return (user?.subscription as any).daysRemaining;
+    if (typeof (activeUser?.subscription as any)?.daysRemaining === 'number') {
+      return (activeUser?.subscription as any).daysRemaining;
     }
-    if (typeof (user as any)?.subscriptionDaysRemaining === 'number') {
-      return (user as any).subscriptionDaysRemaining;
+    if (typeof (activeUser as any)?.subscriptionDaysRemaining === 'number') {
+      return (activeUser as any).subscriptionDaysRemaining;
     }
 
     // 4. Compute from subscription activation date (30-day billing cycle)
-    const rawActivated = user?.subscription?.activatedAt || (user as any)?.subscriptionActivatedAt || (user as any)?.createdAt;
+    const rawActivated = activeUser?.subscription?.activatedAt || (activeUser as any)?.subscriptionActivatedAt || (activeUser as any)?.createdAt;
     if (rawActivated) {
       const activatedTime = new Date(rawActivated).getTime();
       const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;

@@ -51,7 +51,12 @@ export const useProfile = () => {
           currentEmail !== incomingEmail ||
           currentPic !== normalized ||
           currentPhone !== incomingPhone ||
-          JSON.stringify(currentPayments) !== JSON.stringify(incomingPayments);
+          Boolean(current?.isSubscribed) !== Boolean(user?.isSubscribed) ||
+          current?.subscriptionStatus !== user?.subscriptionStatus ||
+          current?.subscriptionDaysLeft !== user?.subscriptionDaysLeft ||
+          JSON.stringify(currentPayments) !== JSON.stringify(incomingPayments) ||
+          JSON.stringify(current?.trials) !== JSON.stringify(user?.trials) ||
+          JSON.stringify(current?.subscription) !== JSON.stringify(user?.subscription);
 
         if (hasChanged) {
           user.phoneNumber = incomingPhone;
@@ -64,9 +69,9 @@ export const useProfile = () => {
       return user;
     },
     enabled: !!accessToken,
-    staleTime: 30000,
-    refetchInterval: false,
-    refetchOnWindowFocus: false,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
     retry: false,
   });
 };
