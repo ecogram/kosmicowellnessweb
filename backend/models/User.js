@@ -82,6 +82,10 @@ const userSchema = new mongoose.Schema(
       enum: ['trial', 'active', 'expired', 'none'],
       default: 'trial',
     },
+    subscriptionDaysLeft: {
+      type: Number,
+      default: 0,
+    },
     subscriptionTrialCount: {
       type: Number,
       default: 8,
@@ -90,13 +94,19 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 8,
     },
+    trials: {
+      plate_scan: { type: Number, default: 2 },
+      bp_scan: { type: Number, default: 2 },
+      community_post: { type: Number, default: 2 },
+      smartwatch_connect: { type: Number, default: 2 },
+    },
     featureTrials: {
       type: Object,
       default: () => ({
-        feature1: 2,
-        feature2: 2,
-        feature3: 2,
-        feature4: 2,
+        plate_scan: 2,
+        bp_scan: 2,
+        community_post: 2,
+        smartwatch_connect: 2,
       }),
     },
     subscription: {
@@ -105,6 +115,7 @@ const userSchema = new mongoose.Schema(
       plan: { type: String, default: 'free_trial' },
       trialsRemaining: { type: Number, default: 8 },
       totalTrials: { type: Number, default: 8 },
+      activatedAt: { type: Date },
       expiresAt: { type: Date },
     },
   },

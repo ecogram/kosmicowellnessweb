@@ -16,7 +16,14 @@ export interface User {
   avatar?: string;
   subscriptionStatus?: 'trial' | 'active' | 'expired' | string;
   isSubscribed?: boolean;
+  subscriptionDaysLeft?: number;
   subscriptionTrialCount?: number;
+  trials?: {
+    plate_scan?: number;
+    bp_scan?: number;
+    community_post?: number;
+    smartwatch_connect?: number;
+  };
   subscription?: {
     status?: string;
     isActive?: boolean;

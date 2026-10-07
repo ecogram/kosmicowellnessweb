@@ -200,7 +200,40 @@ const getMe = asyncHandler(async (req, res) => {
     await u.save();
   }
 
+  let isSubscribed = Boolean(u.isSubscribed || u.subscriptionStatus === 'active');
+  let subscriptionDaysLeft = 0;
+
+  if (isSubscribed) {
+    const expiresAt = u.subscription?.expiresAt;
+    if (expiresAt) {
+      const diffMs = new Date(expiresAt).getTime() - Date.now();
+      if (diffMs <= 0) {
+        isSubscribed = false;
+        u.isSubscribed = false;
+        u.subscriptionStatus = 'expired';
+        u.subscriptionDaysLeft = 0;
+        if (u.subscription) {
+          u.subscription.isActive = false;
+          u.subscription.status = 'expired';
+        }
+        await u.save();
+        subscriptionDaysLeft = 0;
+      } else {
+        subscriptionDaysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        u.subscriptionDaysLeft = subscriptionDaysLeft;
+      }
+    } else {
+      subscriptionDaysLeft = u.subscriptionDaysLeft || 30;
+    }
+  }
+
   const userPhone = u.phoneNumber || u.phone || '';
+  const userTrials = u.trials || {
+    plate_scan: 2,
+    bp_scan: 2,
+    community_post: 2,
+    smartwatch_connect: 2,
+  };
 
   const user = {
     id: u._id,
@@ -218,6 +251,11 @@ const getMe = asyncHandler(async (req, res) => {
     avatarUrl: pic,
     image: pic,
     isActive: u.isActive,
+    isSubscribed,
+    subscriptionStatus: isSubscribed ? 'active' : 'trial',
+    subscriptionDaysLeft: isSubscribed ? subscriptionDaysLeft : 0,
+    trials: userTrials,
+    subscription: u.subscription,
     savedPaymentMethods: u.savedPaymentMethods || [],
     paymentMethods: u.savedPaymentMethods || [],
     createdAt: u.createdAt,

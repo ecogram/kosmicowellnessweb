@@ -59,6 +59,17 @@ export const Profile: React.FC = () => {
 
   // Dynamically calculate remaining trials directly from real API user data
   const trialsRemaining = (() => {
+    if (user?.trials && typeof user.trials === 'object') {
+      const p = typeof user.trials.plate_scan === 'number' ? user.trials.plate_scan : 2;
+      const b = typeof user.trials.bp_scan === 'number' ? user.trials.bp_scan : 2;
+      const c = typeof user.trials.community_post === 'number' ? user.trials.community_post : 2;
+      const s = typeof user.trials.smartwatch_connect === 'number' ? user.trials.smartwatch_connect : 2;
+      return p + b + c + s;
+    }
+    if ((user as any)?.featureTrials && typeof (user as any).featureTrials === 'object') {
+      const sum = Object.values((user as any).featureTrials).reduce((acc: number, val: any) => acc + (typeof val === 'number' ? val : 0), 0);
+      return typeof sum === 'number' ? sum : 8;
+    }
     if (typeof user?.subscription?.trialsRemaining === 'number') {
       return user.subscription.trialsRemaining;
     }
@@ -80,10 +91,6 @@ export const Profile: React.FC = () => {
     if (typeof (user as any)?.trialsUsed === 'number') {
       return Math.max(0, 8 - (user as any).trialsUsed);
     }
-    if ((user as any)?.featureTrials && typeof (user as any).featureTrials === 'object') {
-      const sum = Object.values((user as any).featureTrials).reduce((acc: number, val: any) => acc + (typeof val === 'number' ? val : 0), 0);
-      return typeof sum === 'number' ? sum : 8;
-    }
     return 8; // Fresh default (4 features x 2 trials = 8)
   })();
 
@@ -91,7 +98,12 @@ export const Profile: React.FC = () => {
   const daysLeft = (() => {
     if (!isSubscriptionActive) return 0;
     
-    // 1. Check direct backend expiry timestamp
+    // 1. Direct subscriptionDaysLeft field from backend API (GET /api/subscription/status & GET /api/auth/profile)
+    if (typeof (user as any)?.subscriptionDaysLeft === 'number' && (user as any).subscriptionDaysLeft > 0) {
+      return (user as any).subscriptionDaysLeft;
+    }
+
+    // 2. Check direct backend expiry timestamp
     const rawExpiry = user?.subscription?.expiresAt || (user as any)?.subscriptionExpiresAt || (user as any)?.expiresAt;
     if (rawExpiry) {
       const expiryTime = new Date(rawExpiry).getTime();
@@ -99,7 +111,7 @@ export const Profile: React.FC = () => {
       return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
     }
     
-    // 2. Check explicit daysRemaining field
+    // 3. Check explicit daysRemaining field
     if (typeof (user?.subscription as any)?.daysRemaining === 'number') {
       return (user?.subscription as any).daysRemaining;
     }
@@ -107,7 +119,7 @@ export const Profile: React.FC = () => {
       return (user as any).subscriptionDaysRemaining;
     }
 
-    // 3. Compute from subscription activation date (30-day billing cycle)
+    // 4. Compute from subscription activation date (30-day billing cycle)
     const rawActivated = user?.subscription?.activatedAt || (user as any)?.subscriptionActivatedAt || (user as any)?.createdAt;
     if (rawActivated) {
       const activatedTime = new Date(rawActivated).getTime();
@@ -118,7 +130,7 @@ export const Profile: React.FC = () => {
       return Math.max(0, Math.min(30, calculated));
     }
 
-    // 4. Default active subscription duration is 30 days
+    // 5. Default active subscription duration is 30 days
     return 30;
   })();
 

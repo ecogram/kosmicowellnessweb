@@ -207,6 +207,15 @@ class AuthService {
       avatarUrl: pic,
       image: pic,
       isActive: user.isActive,
+      isSubscribed: Boolean(user.isSubscribed || user.subscriptionStatus === 'active'),
+      subscriptionDaysLeft: user.isSubscribed ? (user.subscriptionDaysLeft || 30) : 0,
+      trials: user.trials || {
+        plate_scan: 2,
+        bp_scan: 2,
+        community_post: 2,
+        smartwatch_connect: 2,
+      },
+      subscription: user.subscription,
     };
 
     return { user: safeUser, accessToken, refreshToken: refreshTokenString };
