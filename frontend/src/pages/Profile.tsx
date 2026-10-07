@@ -5,7 +5,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useWishlist } from '../hooks/useWishlist';
 import { useOrders } from '../hooks/useOrders';
 import { useCoupons } from '../hooks/useCoupons';
-import { useProfile, useUpdateProfile, useRemoveProfilePicture, dataUrlToFile } from '../hooks/useProfile';
+import { useProfile, useSubscriptionStatus, useUpdateProfile, useRemoveProfilePicture, dataUrlToFile } from '../hooks/useProfile';
 import { normalizeImageUrl } from '../utils/imageUrl';
 import {
   Package, Heart, Ticket, MapPin, RotateCcw,
@@ -40,8 +40,9 @@ export const Profile: React.FC = () => {
   const { data: couponsData } = useCoupons();
   const navigate = useNavigate();
 
-  // Real-time profile sync
+  // Real-time profile & subscription sync
   const { data: profileUser } = useProfile();
+  const { data: subStatus } = useSubscriptionStatus();
   const activeUser = profileUser || user;
   const updateProfileMutation = useUpdateProfile();
   const removeProfilePictureMutation = useRemoveProfilePicture();
@@ -50,6 +51,9 @@ export const Profile: React.FC = () => {
   const wishlistCount = wishlist?.items?.length || 0;
   const couponsCount = couponsData ? couponsData.filter((c: any) => c.isActive !== false).length : 0;
   const isSubscriptionActive = Boolean(
+    subStatus?.isSubscribed === true ||
+    subStatus?.isSubscribed === 'true' ||
+    subStatus?.subscriptionStatus === 'active' ||
     activeUser?.isSubscribed === true ||
     activeUser?.isSubscribed === 'true' ||
     activeUser?.subscriptionStatus === 'active' ||
@@ -59,13 +63,24 @@ export const Profile: React.FC = () => {
     (activeUser as any)?.isPremium === true
   );
 
-  // Dynamically calculate remaining trials directly from real API user data
+  // Dynamically calculate remaining trials directly from real API user data (matches mobile app 1:1)
   const trialsRemaining = (() => {
-    if (activeUser?.trials && typeof activeUser.trials === 'object') {
-      const p = typeof activeUser.trials.plate_scan === 'number' ? activeUser.trials.plate_scan : 2;
-      const b = typeof activeUser.trials.bp_scan === 'number' ? activeUser.trials.bp_scan : 2;
-      const c = typeof activeUser.trials.community_post === 'number' ? activeUser.trials.community_post : 2;
-      const s = typeof activeUser.trials.smartwatch_connect === 'number' ? activeUser.trials.smartwatch_connect : 2;
+    // 1. Direct remaining trials object from dedicated /subscription/status API or user object
+    const liveTrials = subStatus?.trials || activeUser?.trials;
+    if (liveTrials && typeof liveTrials === 'object') {
+      const p = typeof liveTrials.plate_scan === 'number' ? liveTrials.plate_scan : 2;
+      const b = typeof liveTrials.bp_scan === 'number' ? liveTrials.bp_scan : 2;
+      const c = typeof liveTrials.community_post === 'number' ? liveTrials.community_post : 2;
+      const s = typeof liveTrials.smartwatch_connect === 'number' ? liveTrials.smartwatch_connect : 2;
+      return p + b + c + s;
+    }
+    // 2. Direct trialUsage object from MongoDB (calculates: 2 - used for each feature)
+    if ((activeUser as any)?.trialUsage && typeof (activeUser as any).trialUsage === 'object') {
+      const u = (activeUser as any).trialUsage;
+      const p = Math.max(0, 2 - (typeof u.plate_scan === 'number' ? u.plate_scan : 0));
+      const b = Math.max(0, 2 - (typeof u.bp_scan === 'number' ? u.bp_scan : 0));
+      const c = Math.max(0, 2 - (typeof u.community_post === 'number' ? u.community_post : 0));
+      const s = Math.max(0, 2 - (typeof u.smartwatch_connect === 'number' ? u.smartwatch_connect : 0));
       return p + b + c + s;
     }
     if ((activeUser as any)?.featureTrials && typeof (activeUser as any).featureTrials === 'object') {
@@ -101,6 +116,9 @@ export const Profile: React.FC = () => {
     if (!isSubscriptionActive) return 0;
     
     // 1. Direct subscriptionDaysLeft field from backend API (GET /api/subscription/status & GET /api/auth/profile)
+    if (typeof subStatus?.subscriptionDaysLeft === 'number' && subStatus.subscriptionDaysLeft > 0) {
+      return subStatus.subscriptionDaysLeft;
+    }
     if (typeof (activeUser as any)?.subscriptionDaysLeft === 'number' && (activeUser as any).subscriptionDaysLeft > 0) {
       return (activeUser as any).subscriptionDaysLeft;
     }

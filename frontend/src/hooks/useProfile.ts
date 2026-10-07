@@ -3,7 +3,27 @@ import { api } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 import { normalizeImageUrl } from '../utils/imageUrl';
 
-// ─── GET /api/auth/profile (fallback /api/users/profile) ──────────────────────
+// ─── GET /api/auth/profile & /api/subscription/status ───────────────────────
+export const useSubscriptionStatus = () => {
+  const { accessToken } = useAuthStore();
+  return useQuery({
+    queryKey: ['subscription-status'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/subscription/status');
+        return res.data?.data ?? res.data;
+      } catch (err) {
+        return null;
+      }
+    },
+    enabled: !!accessToken,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    retry: false,
+  });
+};
+
 export const useProfile = () => {
   const { updateUser, accessToken } = useAuthStore();
 
@@ -11,9 +31,14 @@ export const useProfile = () => {
     queryKey: ['auth-profile'],
     queryFn: async () => {
       let data: any;
+      let subData: any;
       try {
-        const res = await api.get('/auth/profile');
-        data = res.data;
+        const [profileRes, subRes] = await Promise.all([
+          api.get('/auth/profile'),
+          api.get('/subscription/status').catch(() => null),
+        ]);
+        data = profileRes?.data;
+        subData = subRes?.data?.data ?? subRes?.data;
       } catch (err: any) {
         if (err?.response?.status === 401) {
           useAuthStore.getState().logout();
@@ -22,6 +47,15 @@ export const useProfile = () => {
       }
       const user = data?.data?.user ?? data?.user ?? data?.data ?? (data?._id || data?.name ? data : null);
       if (user) {
+        // Merge real-time subscription & trials status
+        if (subData) {
+          if (subData.isSubscribed !== undefined) user.isSubscribed = subData.isSubscribed;
+          if (subData.subscriptionDaysLeft !== undefined) user.subscriptionDaysLeft = subData.subscriptionDaysLeft;
+          if (subData.trials) user.trials = subData.trials;
+          if (subData.subscription) user.subscription = subData.subscription;
+          if (subData.subscriptionStatus) user.subscriptionStatus = subData.subscriptionStatus;
+        }
+
         // Normalize image URL across all potential property names
         const rawPic =
           user.profilePicture ??
