@@ -20,6 +20,7 @@ export const useSubscriptionStatus = () => {
     staleTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
+    refetchInterval: 3000,
     retry: false,
   });
 };
@@ -106,6 +107,7 @@ export const useProfile = () => {
     staleTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
+    refetchInterval: 3000,
     retry: false,
   });
 };
