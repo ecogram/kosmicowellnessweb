@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Container } from '../../components/ui/Container';
-import { Camera, Watch, BookOpen, Users, Sparkles, ArrowRight, Smartphone, Activity, HeartPulse, ShieldCheck, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Camera, Watch, BookOpen, Users, Sparkles, ArrowRight, Smartphone, Activity, Footprints, ShieldCheck, Zap, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PlayStoreModal } from '../../components/ui/PlayStoreModal';
 
 export const SmartCareSuite: React.FC = () => {
@@ -55,17 +55,17 @@ export const SmartCareSuite: React.FC = () => {
       featureDetails: 'Requires native Bluetooth LE hardware sensors available on the Kosmico Mobile App.'
     },
     {
-      id: 'ppg',
-      title: 'Camera PPG Vital Scanner',
-      desc: 'Non-invasive camera PPG pulse estimation and blood pressure trend measurement directly on your smartphone.',
-      badge: 'CAMERA SENSOR',
-      stat: '118/76 BP',
-      statLabel: 'PPG Pulse Estimation',
-      icon: HeartPulse,
-      gradient: 'from-rose-950 via-emerald-950 to-neutral-900',
-      iconBg: 'bg-rose-600 text-white',
-      actionText: 'Get App to Scan Vitals',
-      featureDetails: 'Requires high-resolution smartphone camera hardware & flash sensor.'
+      id: 'steps',
+      title: 'Footstep Counter',
+      desc: 'Real-time step pedometer, active calorie burn tracking, smart hydration sync, and food vs burn balance.',
+      badge: 'LIVE STEPS',
+      stat: '6,420 Steps • 320 kcal',
+      statLabel: 'Live Step Pedometer',
+      icon: Footprints,
+      gradient: 'from-amber-950 via-emerald-950 to-neutral-900',
+      iconBg: 'bg-amber-500 text-neutral-950',
+      actionText: 'Get App to Track Steps',
+      featureDetails: 'Requires native smartphone pedometer sensor & motion hardware on the Kosmico Mobile App.'
     },
     {
       id: 'diary',

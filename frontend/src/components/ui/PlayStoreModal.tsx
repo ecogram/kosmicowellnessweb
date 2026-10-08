@@ -96,7 +96,7 @@ export const PlayStoreModal: React.FC<PlayStoreModalProps> = ({
             </div>
             <div className="flex items-center gap-2 p-3 rounded-2xl bg-stone-50 border border-stone-200/80">
               <ShieldCheck className="w-4 h-4 text-emerald-700 flex-shrink-0" />
-              <span className="font-bold text-[11px]">Camera PPG Vitals</span>
+              <span className="font-bold text-[11px]">Footstep Counter</span>
             </div>
           </div>
 
