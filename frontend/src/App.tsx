@@ -9,6 +9,7 @@ import { ProtectedRoute } from './components/layout/ProtectedRoute';
 import { RealtimeProvider } from './components/layout/RealtimeProvider';
 import { useAuthStore } from './store/useAuthStore';
 import { api } from './services/api';
+import { Analytics } from '@vercel/analytics/react';
 
 // Helper to automatically recover from Vite dynamic import chunk mismatch when a new version is deployed
 function lazyWithRetry<T extends React.ComponentType<any>>(
@@ -199,6 +200,7 @@ function App() {
               </Suspense>
             </RealtimeProvider>
           </AuthInit>
+          <Analytics />
         </BrowserRouter>
       </ErrorBoundary>
     </QueryClientProvider>
