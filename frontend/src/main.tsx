@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './style.css';
+import { Analytics } from '@vercel/analytics/react';
 
 // Auto-recover from Vite dynamic import chunk mismatch when a new deployment occurs
 window.addEventListener('vite:preloadError', (event: any) => {
@@ -17,5 +18,7 @@ window.addEventListener('vite:preloadError', (event: any) => {
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <App />
+    <Analytics />
   </React.StrictMode>
 );
+
