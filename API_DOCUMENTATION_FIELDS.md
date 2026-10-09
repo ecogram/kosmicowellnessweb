@@ -367,3 +367,95 @@
 - `POST /api/posts/:postId/like` &rarr; Like/Unlike post
 - `POST /api/posts/:postId/comments` &rarr; Add comment
 - `POST /api/emergency/generate-message` &rarr; Body: `{ "latitude": 28.7041, "longitude": 77.1025 }`
+
+---
+
+## 13. Subscription & Premium APIs (`/api/subscription/*`)
+*(Protected: Bearer Token required)*
+
+### A. Create Subscription Order
+App/Web mein user jab 'Upgrade to Premium' pe click kare, toh pehle yeh hit karein. (Amount dynamic database setting se uthaya jata hai).
+- **Method**: `POST`
+- **Endpoint**: `/api/subscription/create-order`
+- **Auth**: `Bearer <token>`
+- **Request Body**: `{}`
+- **Response**:
+```json
+{
+  "success": true,
+  "data": {
+    "razorpay_order_id": "order_xyz123...",
+    "amount": 14900,
+    "currency": "INR",
+    "key_id": "rzp_test_..."
+  }
+}
+```
+
+### B. Verify Subscription Payment
+- **Method**: `POST`
+- **Endpoint**: `/api/subscription/verify`
+- **Auth**: `Bearer <token>`
+- **Request Body**:
+```json
+{
+  "razorpay_order_id": "order_xyz123...",
+  "razorpay_payment_id": "pay_abc456...",
+  "razorpay_signature": "signature_hash..."
+}
+```
+
+### C. Check Subscription Status & Validity
+- **Method**: `GET`
+- **Endpoint**: `/api/subscription/status`
+- **Auth**: `Bearer <token>`
+- **Response**:
+```json
+{
+  "isSubscribed": true,
+  "subscriptionDaysLeft": 28,
+  "trials": {
+    "plate_scan": 1,
+    "bp_scan": 0,
+    "community_post": 0,
+    "smartwatch_connect": 0
+  }
+}
+```
+
+---
+
+## 14. System Settings APIs (`/api/settings/*`)
+
+### A. Get Subscription Amount (Public API - Amount Fetch Karne Ke Liye)
+Jab bhi user app khule ya subscription page par jaye, ye API call karein taaki fresh amount (eg. ₹149 ya ₹299) UI me dikha sakein. Isme Bearer token ki zaroorat nahi hai (Public API).
+- **Method**: `GET`
+- **Endpoint**: `/api/settings/subscription-amount` (Aap isse `https://api.kosmicowellness.com/api/settings/subscription-amount` ya `http://localhost:5000/api/settings/subscription-amount` test kar sakte ho)
+- **Auth**: None (Public API)
+- **Response JSON**:
+```json
+{
+  "subscriptionAmount": 149
+}
+```
+
+### B. Update Subscription Amount (Admin API - Admin Side Amount Badalne Ke Liye)
+Admin side par jab naya subscription payment amount add/update kiya jata hai (eg. ₹149 se ₹299), toh is API se update hoga. Isse Razorpay order creation aur User App/Web UI mein naya amount automatic update ho jayega.
+- **Method**: `POST` / `PUT`
+- **Endpoint**: `/api/settings/subscription-amount`
+- **Auth**: Optional / Admin Bearer Token
+- **Request Body**:
+```json
+{
+  "subscriptionAmount": 299
+}
+```
+- **Response JSON**:
+```json
+{
+  "success": true,
+  "message": "Subscription amount updated successfully",
+  "subscriptionAmount": 299
+}
+```
+

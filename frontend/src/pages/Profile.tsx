@@ -5,7 +5,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useWishlist } from '../hooks/useWishlist';
 import { useOrders } from '../hooks/useOrders';
 import { useCoupons } from '../hooks/useCoupons';
-import { useProfile, useSubscriptionStatus, useUpdateProfile, useRemoveProfilePicture, dataUrlToFile } from '../hooks/useProfile';
+import { useProfile, useSubscriptionStatus, useSubscriptionAmount, useUpdateProfile, useRemoveProfilePicture, dataUrlToFile } from '../hooks/useProfile';
 import { normalizeImageUrl } from '../utils/imageUrl';
 import {
   Package, Heart, Ticket, MapPin, RotateCcw,
@@ -43,6 +43,8 @@ export const Profile: React.FC = () => {
   // Real-time profile & subscription sync
   const { data: profileUser } = useProfile();
   const { data: subStatus } = useSubscriptionStatus();
+  const { data: subAmount } = useSubscriptionAmount();
+  const subscriptionAmount = typeof subAmount === 'number' ? subAmount : 149;
   const activeUser = profileUser || user;
   const updateProfileMutation = useUpdateProfile();
   const removeProfilePictureMutation = useRemoveProfilePicture();
@@ -999,7 +1001,7 @@ export const Profile: React.FC = () => {
                       </span>
                     ) : (
                       <span className="text-neutral-500">
-                        {trialsRemaining} free trials remaining • Upgrade ₹149/mo
+                        {trialsRemaining} free trials remaining • Upgrade ₹{subscriptionAmount}/mo
                       </span>
                     )}
                   </div>

@@ -1,6 +1,7 @@
 const asyncHandler = require('../utils/asyncHandler');
 const { ApiResponse, ApiError } = require('../utils/apiResponse');
 const User = require('../models/User');
+const Setting = require('../models/Setting');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
@@ -13,7 +14,11 @@ const getRazorpayInstance = () => {
 
 // 1. Create Subscription Order (POST /api/subscription/create-order)
 const createSubscriptionOrder = asyncHandler(async (req, res) => {
-  const amountInPaise = 14900; // ₹149 in paise (Amount is hardcoded on server)
+  // Dynamically fetch current subscription amount from database setting
+  const setting = await Setting.findOne({ key: 'subscriptionAmount' });
+  const subscriptionAmount = setting && !isNaN(Number(setting.value)) ? Number(setting.value) : 149;
+  const amountInPaise = Math.round(subscriptionAmount * 100);
+
   const razorpay = getRazorpayInstance();
 
   const receipt = `sub_${Date.now().toString().slice(-8)}_${Math.floor(100 + Math.random() * 900)}`;

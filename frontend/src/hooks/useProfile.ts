@@ -3,6 +3,25 @@ import { api } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 import { normalizeImageUrl } from '../utils/imageUrl';
 
+// ─── GET /api/settings/subscription-amount ─────────────────────────────────────
+export const useSubscriptionAmount = () => {
+  return useQuery({
+    queryKey: ['subscription-amount'],
+    queryFn: async () => {
+      try {
+        const res = await api.get('/settings/subscription-amount');
+        const amount = res.data?.subscriptionAmount ?? res.data?.amount;
+        return typeof amount === 'number' && amount > 0 ? amount : 149;
+      } catch (err) {
+        return 149;
+      }
+    },
+    staleTime: 30000,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+  });
+};
+
 // ─── GET /api/auth/profile & /api/subscription/status ───────────────────────
 export const useSubscriptionStatus = () => {
   const { accessToken } = useAuthStore();
