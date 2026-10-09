@@ -38,7 +38,7 @@ export function ProductShowcase() {
                   name: product.name,
                   slug: product.slug || product._id || product.id,
                   price: product.price,
-                  compareAtPrice: product.compareAtPrice,
+                  compareAtPrice: product.compareAtPrice || product.originalPrice || product.mrp,
                   image: product.image || (product.images?.length ? product.images[0] : '/assets/products/product-box.jpg'),
                   rating: product.rating || 5,
                   reviewsCount: product.numReviews || product.reviewsCount || 120,
