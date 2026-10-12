@@ -269,11 +269,25 @@ const getMe = asyncHandler(async (req, res) => {
     await u.save();
   }
 
-  let isSubscribed = Boolean(u.isSubscribed || u.subscriptionStatus === 'active');
+  let isSubscribed = Boolean(
+    u.isSubscribed ||
+    u.subscriptionStatus === 'active' ||
+    u.subscription?.isActive === true ||
+    u.subscription?.status === 'active'
+  );
   let subscriptionDaysLeft = 0;
 
   if (isSubscribed) {
-    const expiresAt = u.subscription?.expiresAt;
+    const expiresAt =
+      u.subscription?.expiresAt ||
+      u.subscriptionExpiresAt ||
+      (u.subscription?.activatedAt
+        ? new Date(new Date(u.subscription.activatedAt).getTime() + 30 * 24 * 60 * 60 * 1000)
+        : null) ||
+      (u.subscriptionActivatedAt
+        ? new Date(new Date(u.subscriptionActivatedAt).getTime() + 30 * 24 * 60 * 60 * 1000)
+        : null);
+
     if (expiresAt) {
       const diffMs = new Date(expiresAt).getTime() - Date.now();
       if (diffMs <= 0) {
@@ -288,8 +302,19 @@ const getMe = asyncHandler(async (req, res) => {
         await u.save();
         subscriptionDaysLeft = 0;
       } else {
-        subscriptionDaysLeft = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+        // Dynamic day countdown matching mobile floor calculation (30 -> 29 -> 28 -> ...)
+        subscriptionDaysLeft = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
         u.subscriptionDaysLeft = subscriptionDaysLeft;
+        if (!u.subscription && u.subscriptionActivatedAt) {
+          u.subscription = {
+            status: 'active',
+            isActive: true,
+            plan: 'kosmico_premium_monthly',
+            activatedAt: u.subscriptionActivatedAt,
+            expiresAt,
+          };
+        }
+        await u.save();
       }
     } else {
       subscriptionDaysLeft = u.subscriptionDaysLeft || 30;

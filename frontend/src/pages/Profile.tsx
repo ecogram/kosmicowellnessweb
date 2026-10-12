@@ -116,15 +116,15 @@ export const Profile: React.FC = () => {
     return 8; // Fresh default (4 features x 2 trials = 8)
   })();
 
-  // Dynamic subscription active countdown (30 days left -> 29 -> ...)
+  // Dynamic subscription active countdown (30 days left -> 29 -> 28 -> ...)
   const daysLeft = (() => {
     if (!isSubscriptionActive) return 0;
     
     // 1. Direct subscriptionDaysLeft field from backend API (GET /api/subscription/status & GET /api/auth/profile)
-    if (typeof subStatus?.subscriptionDaysLeft === 'number' && subStatus.subscriptionDaysLeft > 0) {
+    if (typeof subStatus?.subscriptionDaysLeft === 'number' && subStatus.subscriptionDaysLeft >= 0) {
       return subStatus.subscriptionDaysLeft;
     }
-    if (typeof (activeUser as any)?.subscriptionDaysLeft === 'number' && (activeUser as any).subscriptionDaysLeft > 0) {
+    if (typeof (activeUser as any)?.subscriptionDaysLeft === 'number' && (activeUser as any).subscriptionDaysLeft >= 0) {
       return (activeUser as any).subscriptionDaysLeft;
     }
 
@@ -133,7 +133,7 @@ export const Profile: React.FC = () => {
     if (rawExpiry) {
       const expiryTime = new Date(rawExpiry).getTime();
       const diffMs = expiryTime - Date.now();
-      return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+      return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
     }
     
     // 3. Check explicit daysRemaining field
@@ -151,7 +151,7 @@ export const Profile: React.FC = () => {
       const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
       const expiryTime = activatedTime + thirtyDaysMs;
       const diffMs = expiryTime - Date.now();
-      const calculated = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+      const calculated = Math.floor(diffMs / (1000 * 60 * 60 * 24));
       return Math.max(0, Math.min(30, calculated));
     }
 

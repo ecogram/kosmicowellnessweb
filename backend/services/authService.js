@@ -352,8 +352,36 @@ class AuthService {
       avatarUrl: pic,
       image: pic,
       isActive: user.isActive,
-      isSubscribed: Boolean(user.isSubscribed || user.subscriptionStatus === 'active'),
-      subscriptionDaysLeft: user.isSubscribed ? (user.subscriptionDaysLeft || 30) : 0,
+      isSubscribed: Boolean(
+        user.isSubscribed ||
+        user.subscriptionStatus === 'active' ||
+        user.subscription?.isActive === true ||
+        user.subscription?.status === 'active'
+      ),
+      subscriptionDaysLeft: (() => {
+        const isSub = Boolean(
+          user.isSubscribed ||
+          user.subscriptionStatus === 'active' ||
+          user.subscription?.isActive === true ||
+          user.subscription?.status === 'active'
+        );
+        if (!isSub) return 0;
+        const expiresAt =
+          user.subscription?.expiresAt ||
+          user.subscriptionExpiresAt ||
+          (user.subscription?.activatedAt
+            ? new Date(new Date(user.subscription.activatedAt).getTime() + 30 * 24 * 60 * 60 * 1000)
+            : null) ||
+          (user.subscriptionActivatedAt
+            ? new Date(new Date(user.subscriptionActivatedAt).getTime() + 30 * 24 * 60 * 60 * 1000)
+            : null);
+        if (expiresAt) {
+          const diffMs = new Date(expiresAt).getTime() - Date.now();
+          if (diffMs <= 0) return 0;
+          return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+        }
+        return user.subscriptionDaysLeft || 30;
+      })(),
       trials: user.trials || {
         plate_scan: 2,
         bp_scan: 2,
