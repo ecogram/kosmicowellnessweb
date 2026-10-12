@@ -26,13 +26,85 @@ class AuthService {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
-  async sendEmailOtp(email, type = 'auto', name = '') {
-    if (!email) {
-      throw new ApiError(400, 'Email is required');
+  normalizePhoneNumber(phone) {
+    if (!phone) return '';
+    let cleaned = phone.toString().replace(/[^\d+]/g, '');
+    if (cleaned.startsWith('+91')) {
+      cleaned = cleaned.slice(3);
+    } else if (cleaned.startsWith('91') && cleaned.length === 12) {
+      cleaned = cleaned.slice(2);
+    } else if (cleaned.startsWith('0') && cleaned.length === 11) {
+      cleaned = cleaned.slice(1);
+    }
+    return cleaned.replace(/\D/g, '').slice(-10);
+  }
+
+  async sendOtp({ email, phoneNumber, type = 'auto', name = '' }) {
+    const isMobile = Boolean(phoneNumber && phoneNumber.toString().trim().length > 0);
+    const isEmail = Boolean(email && email.toString().trim().length > 0);
+
+    if (!isMobile && !isEmail) {
+      throw new ApiError(400, 'Either email or mobile number is required');
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const otp = this.generateOtpCode();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
+    if (isMobile) {
+      const normalizedPhone = this.normalizePhoneNumber(phoneNumber);
+      if (normalizedPhone.length !== 10) {
+        throw new ApiError(400, 'Please enter a valid 10-digit mobile number');
+      }
+
+      const existingUser = await User.findOne({
+        $or: [{ phoneNumber: normalizedPhone }, { phone: normalizedPhone }],
+      });
+
+      if (type === 'register') {
+        if (existingUser) {
+          throw new ApiError(400, 'An account with this mobile number already exists. Please log in instead.');
+        }
+      } else if (type === 'login') {
+        if (!existingUser) {
+          throw new ApiError(404, 'No account found with this mobile number. Please register first.');
+        }
+        if (!existingUser.isActive) {
+          throw new ApiError(403, 'This account is disabled. Please contact support.');
+        }
+      }
+
+      // Remove any previous OTPs for this phone number
+      await Otp.deleteMany({ phoneNumber: normalizedPhone });
+
+      // Store new OTP
+      await Otp.create({
+        phoneNumber: normalizedPhone,
+        otp,
+        expiresAt,
+        purpose: type,
+        ...(name ? { name } : {}),
+      });
+
+      // Send SMS
+      const { sendOtpSms } = require('../utils/sms');
+      await sendOtpSms(normalizedPhone, otp);
+
+      let message = 'OTP sent via SMS to your mobile number. Please verify.';
+      if (type === 'login') {
+        message = 'Login OTP sent via SMS to your mobile number.';
+      } else if (type === 'resend') {
+        message = 'OTP resent successfully to your mobile number.';
+      }
+
+      return {
+        success: true,
+        phoneNumber: normalizedPhone,
+        message,
+      };
+    }
+
+    // Email Flow
+    const normalizedEmail = email.toLowerCase().trim();
     if (!isValidEmail(normalizedEmail)) {
       throw new ApiError(400, 'Please enter a valid email address');
     }
@@ -52,9 +124,6 @@ class AuthService {
       }
     }
 
-    const otp = this.generateOtpCode();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
     // Remove any previous OTPs for this email
     await Otp.deleteMany({ email: normalizedEmail });
 
@@ -63,74 +132,133 @@ class AuthService {
       email: normalizedEmail,
       otp,
       expiresAt,
+      purpose: type,
       ...(name ? { name } : {}),
     });
 
     // Send email
     await sendOtpEmail(normalizedEmail, otp);
 
-    return { success: true, message: `Verification code sent to ${normalizedEmail}` };
-  }
-
-  async verifyEmailOtp(email, otp, name, ip, type = 'auto') {
-    if (!email || !otp) {
-      throw new ApiError(400, 'Email and OTP are required');
+    let message = `Verification code sent to ${normalizedEmail}`;
+    if (type === 'login') {
+      message = 'Login OTP sent successfully';
+    } else if (type === 'resend') {
+      message = 'OTP resent successfully';
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
-    const trimmedOtp = otp.toString().trim();
+    return { success: true, email: normalizedEmail, message };
+  }
 
+  async sendEmailOtp(email, type = 'auto', name = '') {
+    return this.sendOtp({ email, type, name });
+  }
+
+  async verifyOtp({ email, phoneNumber, otp, name, ip, type = 'auto' }) {
+    const isMobile = Boolean(phoneNumber && phoneNumber.toString().trim().length > 0);
+    const isEmail = Boolean(email && email.toString().trim().length > 0);
+
+    if (!isMobile && !isEmail) {
+      throw new ApiError(400, 'Either email or mobile number is required');
+    }
+    if (!otp) {
+      throw new ApiError(400, 'OTP is required');
+    }
+
+    const trimmedOtp = otp.toString().trim();
     if (trimmedOtp.length !== 6) {
       throw new ApiError(400, 'Please enter a valid 6-digit OTP code.');
     }
 
-    // 1. Find OTP record in database
-    const otpRecord = await Otp.findOne({ email: normalizedEmail });
+    let user = null;
+    let normalizedPhone = '';
+    let normalizedEmail = '';
 
-    if (!otpRecord) {
-      throw new ApiError(400, 'No OTP request found for this email. Please request a new code.');
-    }
+    if (isMobile) {
+      normalizedPhone = this.normalizePhoneNumber(phoneNumber);
+      const otpRecord = await Otp.findOne({ phoneNumber: normalizedPhone });
 
-    // 2. Check if OTP is expired
-    if (new Date() > new Date(otpRecord.expiresAt)) {
-      await Otp.deleteMany({ email: normalizedEmail });
-      throw new ApiError(400, 'Your OTP has expired. Please click "Resend Code" to receive a new OTP.');
-    }
-
-    // 3. Check if OTP is wrong
-    if (otpRecord.otp !== trimmedOtp) {
-      throw new ApiError(400, 'Incorrect OTP code. Please enter the valid 6-digit code sent to your email.');
-    }
-
-    const savedOtpName = otpRecord.name;
-
-    // OTP is valid -> delete OTP record so it cannot be reused
-    await Otp.deleteMany({ email: normalizedEmail });
-
-    // Check user in database
-    let user = await User.findOne({ email: normalizedEmail });
-
-    if (type === 'register') {
-      if (user) {
-        throw new ApiError(400, 'An account with this email already exists. Please log in instead.');
+      if (!otpRecord) {
+        throw new ApiError(400, 'No OTP request found for this mobile number. Please request a new code.');
       }
-      const defaultName = name && name.trim().length > 0
-        ? name.trim()
-        : (savedOtpName || normalizedEmail.split('@')[0]);
 
-      user = await User.create({
-        name: defaultName,
-        email: normalizedEmail,
-        role: 'user',
-        isActive: true,
+      if (new Date() > new Date(otpRecord.expiresAt)) {
+        await Otp.deleteMany({ phoneNumber: normalizedPhone });
+        throw new ApiError(400, 'Your OTP has expired. Please click "Resend" to receive a new OTP.');
+      }
+
+      if (otpRecord.otp !== trimmedOtp) {
+        throw new ApiError(400, 'Incorrect OTP code. Please enter the valid 6-digit code sent to your mobile number.');
+      }
+
+      const savedOtpName = otpRecord.name;
+      await Otp.deleteMany({ phoneNumber: normalizedPhone });
+
+      user = await User.findOne({
+        $or: [{ phoneNumber: normalizedPhone }, { phone: normalizedPhone }],
       });
-    } else if (type === 'login') {
-      if (!user) {
-        throw new ApiError(404, 'No account found with this email. Please create an account first.');
+
+      if (type === 'register') {
+        if (user) {
+          throw new ApiError(400, 'An account with this mobile number already exists. Please log in instead.');
+        }
+        const defaultName = name && name.trim().length > 0
+          ? name.trim()
+          : (savedOtpName || `User ${normalizedPhone.slice(-4)}`);
+
+        user = await User.create({
+          name: defaultName,
+          phoneNumber: normalizedPhone,
+          phone: normalizedPhone,
+          role: 'user',
+          isActive: true,
+        });
+      } else if (type === 'login') {
+        if (!user) {
+          throw new ApiError(404, 'No account found with this mobile number. Please create an account first.');
+        }
+      } else {
+        // Auto mode
+        if (!user) {
+          const defaultName = name && name.trim().length > 0
+            ? name.trim()
+            : (savedOtpName || `User ${normalizedPhone.slice(-4)}`);
+
+          user = await User.create({
+            name: defaultName,
+            phoneNumber: normalizedPhone,
+            phone: normalizedPhone,
+            role: 'user',
+            isActive: true,
+          });
+        }
       }
     } else {
-      // Auto mode (backward compatible)
-      if (!user) {
+      // Email verification
+      normalizedEmail = email.toLowerCase().trim();
+      const otpRecord = await Otp.findOne({ email: normalizedEmail });
+
+      if (!otpRecord) {
+        throw new ApiError(400, 'No OTP request found for this email. Please request a new code.');
+      }
+
+      if (new Date() > new Date(otpRecord.expiresAt)) {
+        await Otp.deleteMany({ email: normalizedEmail });
+        throw new ApiError(400, 'Your OTP has expired. Please click "Resend Code" to receive a new OTP.');
+      }
+
+      if (otpRecord.otp !== trimmedOtp) {
+        throw new ApiError(400, 'Incorrect OTP code. Please enter the valid 6-digit code sent to your email.');
+      }
+
+      const savedOtpName = otpRecord.name;
+      await Otp.deleteMany({ email: normalizedEmail });
+
+      user = await User.findOne({ email: normalizedEmail });
+
+      if (type === 'register') {
+        if (user) {
+          throw new ApiError(400, 'An account with this email already exists. Please log in instead.');
+        }
         const defaultName = name && name.trim().length > 0
           ? name.trim()
           : (savedOtpName || normalizedEmail.split('@')[0]);
@@ -141,20 +269,37 @@ class AuthService {
           role: 'user',
           isActive: true,
         });
-      } else if (name && name.trim().length > 0 && (!user.name || user.name === user.email.split('@')[0])) {
-        user.name = name.trim();
-        await user.save();
+      } else if (type === 'login') {
+        if (!user) {
+          throw new ApiError(404, 'No account found with this email. Please create an account first.');
+        }
+      } else {
+        // Auto mode
+        if (!user) {
+          const defaultName = name && name.trim().length > 0
+            ? name.trim()
+            : (savedOtpName || normalizedEmail.split('@')[0]);
+
+          user = await User.create({
+            name: defaultName,
+            email: normalizedEmail,
+            role: 'user',
+            isActive: true,
+          });
+        } else if (name && name.trim().length > 0 && (!user.name || user.name === user.email.split('@')[0])) {
+          user.name = name.trim();
+          await user.save();
+        }
       }
     }
 
-    if (!user.isActive) {
+    if (!user || !user.isActive) {
       throw new ApiError(403, 'Account is disabled. Please contact support.');
     }
 
     const accessToken = this.generateAccessToken(user._id);
     const refreshTokenString = this.generateRefreshTokenString();
 
-    // Set expiry to 7 days
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     await RefreshToken.create({
@@ -221,7 +366,11 @@ class AuthService {
     return { user: safeUser, accessToken, refreshToken: refreshTokenString };
   }
 
-  async updateProfile(userId, { name, fullName, phoneNumber, phone, profilePicture, profileImage, avatar, removePhoto }) {
+  async verifyEmailOtp(email, otp, name, ip, type = 'auto') {
+    return this.verifyOtp({ email, otp, name, ip, type });
+  }
+
+  async updateProfile(userId, { name, fullName, phoneNumber, phone, email, profilePicture, profileImage, avatar, removePhoto }) {
     const user = await User.findById(userId);
     if (!user) {
       throw new ApiError(404, 'User not found');
@@ -232,11 +381,44 @@ class AuthService {
       user.name = updatedName.trim();
     }
 
+    if (email !== undefined) {
+      if (email === '' || email === null) {
+        user.email = undefined;
+      } else {
+        const cleanEmail = email.toLowerCase().trim();
+        if (!isValidEmail(cleanEmail)) {
+          throw new ApiError(400, 'Please enter a valid email address');
+        }
+        const existing = await User.findOne({ email: cleanEmail, _id: { $ne: userId } });
+        if (existing) {
+          throw new ApiError(400, 'This email address is already in use by another account');
+        }
+        user.email = cleanEmail;
+      }
+    }
+
     const updatedPhone = phoneNumber !== undefined ? phoneNumber : phone;
-    if (updatedPhone !== undefined && updatedPhone !== null) {
-      const cleanPhone = updatedPhone.toString().trim();
-      user.phoneNumber = cleanPhone;
-      user.phone = cleanPhone;
+    if (updatedPhone !== undefined) {
+      if (updatedPhone === '' || updatedPhone === null) {
+        user.phoneNumber = '';
+        user.phone = '';
+      } else {
+        const cleanPhone = this.normalizePhoneNumber(updatedPhone);
+        if (cleanPhone.length > 0 && cleanPhone.length !== 10) {
+          throw new ApiError(400, 'Please enter a valid 10-digit mobile number');
+        }
+        if (cleanPhone.length === 10) {
+          const existingPhone = await User.findOne({
+            $or: [{ phoneNumber: cleanPhone }, { phone: cleanPhone }],
+            _id: { $ne: userId },
+          });
+          if (existingPhone) {
+            throw new ApiError(400, 'This mobile number is already in use by another account');
+          }
+          user.phoneNumber = cleanPhone;
+          user.phone = cleanPhone;
+        }
+      }
     }
 
     const updatedPic = profilePicture || profileImage || avatar;

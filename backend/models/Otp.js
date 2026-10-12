@@ -4,8 +4,11 @@ const otpSchema = new mongoose.Schema(
   {
     email: {
       type: String,
-      required: true,
       lowercase: true,
+      trim: true,
+    },
+    phoneNumber: {
+      type: String,
       trim: true,
     },
     name: {
@@ -15,6 +18,10 @@ const otpSchema = new mongoose.Schema(
     otp: {
       type: String,
       required: true,
+    },
+    purpose: {
+      type: String,
+      default: 'login',
     },
     expiresAt: {
       type: Date,
@@ -28,5 +35,6 @@ const otpSchema = new mongoose.Schema(
 );
 
 otpSchema.index({ email: 1, otp: 1 });
+otpSchema.index({ phoneNumber: 1, otp: 1 });
 
 module.exports = mongoose.model('Otp', otpSchema);

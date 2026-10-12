@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
-import { Mail, ArrowLeft, ShieldCheck, Sparkles, Lock } from 'lucide-react';
+import { Contact, ArrowLeft, ShieldCheck, Sparkles, Lock } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -10,7 +10,9 @@ export const Login: React.FC = () => {
   const setAuth = useAuthStore((state) => state.setAuth);
 
   const [step, setStep] = useState<'email' | 'otp'>('email');
+  const [identifier, setIdentifier] = useState('');
   const [email, setEmail] = useState('');
+  const [authMethod, setAuthMethod] = useState<'email' | 'phone'>('email');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
   const [isVerifyingModal, setIsVerifyingModal] = useState(false);
@@ -39,54 +41,97 @@ export const Login: React.FC = () => {
     return `00:${s}`;
   };
 
-  const handleEmailChange = (val: string) => {
-    const lower = val.toLowerCase().replace(/\s/g, '');
-    setEmail(lower);
-    if (/[A-Z]/.test(val)) {
-      setErrorMessage('Capital letters are not allowed in email. Automatically converted to lowercase.');
-    } else if (errorMessage?.includes('Capital letters are not allowed')) {
-      setErrorMessage(null);
+  const handleIdentifierChange = (val: string) => {
+    const isPureDigitsOrPhone = /^[0-9+\s-]*$/.test(val);
+    if (isPureDigitsOrPhone) {
+      setIdentifier(val);
+      if (errorMessage) setErrorMessage(null);
+    } else {
+      const lower = val.toLowerCase().replace(/\s/g, '');
+      setIdentifier(lower);
+      if (/[A-Z]/.test(val)) {
+        setErrorMessage('Capital letters in email are automatically converted to lowercase.');
+      } else if (errorMessage?.includes('Capital letters')) {
+        setErrorMessage(null);
+      }
     }
   };
 
   // Handle Send OTP (initial)
   const handleSendOtp = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const cleanEmail = email.trim().toLowerCase();
-    const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
-    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
-      setErrorMessage('Please enter a valid lowercase email address (e.g. name@domain.com)');
+    const clean = identifier.trim();
+    const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
+    const digits = clean.replace(/[^0-9]/g, '');
+
+    if (!clean) {
+      setErrorMessage('Please enter your email or phone number');
       return;
     }
 
-    try {
-      setIsLoading(true);
-      setErrorMessage(null);
-      await api.post('/auth/login', { email: cleanEmail });
+    if (emailRegex.test(clean)) {
+      setAuthMethod('email');
+      const cleanEmail = clean.toLowerCase();
+      try {
+        setIsLoading(true);
+        setErrorMessage(null);
+        await api.post('/auth/login', { email: cleanEmail });
 
-      setStep('otp');
-      setResendTimer(30);
-      setCanResend(false);
-      setOtp(['', '', '', '', '', '']);
+        setEmail(cleanEmail);
+        setStep('otp');
+        setResendTimer(30);
+        setCanResend(false);
+        setOtp(['', '', '', '', '', '']);
 
-      setTimeout(() => {
-        otpInputRefs.current[0]?.focus();
-      }, 150);
-    } catch (error: any) {
-      const msg = error.response?.data?.message || 'Failed to send OTP. Please check your email and try again.';
-      setErrorMessage(msg);
-    } finally {
-      setIsLoading(false);
+        setTimeout(() => {
+          otpInputRefs.current[0]?.focus();
+        }, 150);
+      } catch (error: any) {
+        const msg = error.response?.data?.message || 'Failed to send OTP. Please check your email and try again.';
+        setErrorMessage(msg);
+      } finally {
+        setIsLoading(false);
+      }
+    } else if (digits.length >= 10 && digits.length <= 13) {
+      setAuthMethod('phone');
+      const cleanPhone = digits.slice(-10);
+      try {
+        setIsLoading(true);
+        setErrorMessage(null);
+        await api.post('/auth/login', { phoneNumber: cleanPhone });
+
+        setEmail(cleanPhone);
+        setStep('otp');
+        setResendTimer(30);
+        setCanResend(false);
+        setOtp(['', '', '', '', '', '']);
+
+        setTimeout(() => {
+          otpInputRefs.current[0]?.focus();
+        }, 150);
+      } catch (error: any) {
+        const msg = error.response?.data?.message || 'Failed to send SMS OTP. Please check your phone number and try again.';
+        setErrorMessage(msg);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      setErrorMessage('Please enter a valid email address (e.g. name@domain.com) or 10-digit mobile number');
     }
   };
 
   // Handle Resend OTP — uses /api/auth/resend-otp per API docs
   const handleResendOtp = async () => {
-    const cleanEmail = email.trim().toLowerCase();
     try {
       setIsLoading(true);
       setErrorMessage(null);
-      await api.post('/auth/resend-otp', { email: cleanEmail });
+      if (authMethod === 'phone') {
+        const cleanPhone = identifier.replace(/[^0-9]/g, '').slice(-10);
+        await api.post('/auth/resend-otp', { phoneNumber: cleanPhone, purpose: 'login' });
+      } else {
+        const cleanEmail = email.trim().toLowerCase();
+        await api.post('/auth/resend-otp', { email: cleanEmail, purpose: 'login' });
+      }
       setResendTimer(30);
       setCanResend(false);
     } catch (error: any) {
@@ -165,10 +210,14 @@ export const Login: React.FC = () => {
     try {
       setIsVerifyingModal(true);
       setErrorMessage(null);
-      const response = await api.post('/auth/login-verify', {
-        email: email.trim().toLowerCase(),
-        otp: otpString,
-      });
+      const payload: any = { otp: otpString };
+      if (authMethod === 'phone') {
+        payload.phoneNumber = identifier.replace(/[^0-9]/g, '').slice(-10);
+      } else {
+        payload.email = email.trim().toLowerCase();
+      }
+
+      const response = await api.post('/auth/login-verify', payload);
 
       const resData = response.data?.data || response.data || {};
       let userObj = resData?.user || resData;
@@ -235,7 +284,7 @@ export const Login: React.FC = () => {
           </span>
         </div>
 
-        {/* ================= STEP 1: EMAIL LOGIN ================= */}
+        {/* ================= STEP 1: EMAIL OR PHONE LOGIN ================= */}
         {step === 'email' && (
           <div className="flex flex-col">
             <div className="text-center mb-6">
@@ -243,7 +292,7 @@ export const Login: React.FC = () => {
                 Welcome Back
               </h2>
               <p className="text-xs sm:text-sm text-neutral-500 mt-1">
-                Enter your email address to receive a secure 6-digit OTP
+                Enter your email or phone number to receive an OTP
               </p>
             </div>
 
@@ -269,16 +318,16 @@ export const Login: React.FC = () => {
             <form onSubmit={handleSendOtp} className="w-full space-y-4">
               <div>
                 <label className="block text-xs font-bold text-neutral-700 uppercase tracking-wider mb-1.5">
-                  Email Address (Lowercase)
+                  Email or Phone Number
                 </label>
                 <div className="relative flex items-center">
-                  <Mail className="w-4 h-4 text-emerald-600 absolute left-3.5 pointer-events-none" />
+                  <Contact className="w-4 h-4 text-emerald-600 absolute left-3.5 pointer-events-none" />
                   <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => handleEmailChange(e.target.value)}
-                    placeholder="e.g. name@gmail.com"
-                    className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 text-sm text-neutral-900 placeholder:text-neutral-400 font-medium lowercase focus:bg-white focus:border-emerald-600 focus:ring-3 focus:ring-emerald-500/20 focus:outline-none transition-all shadow-inner"
+                    type="text"
+                    value={identifier}
+                    onChange={(e) => handleIdentifierChange(e.target.value)}
+                    placeholder="Email or Phone Number"
+                    className="w-full pl-10 pr-4 py-3.5 rounded-xl bg-neutral-50 border border-neutral-200 text-sm text-neutral-900 placeholder:text-neutral-400 font-medium focus:bg-white focus:border-emerald-600 focus:ring-3 focus:ring-emerald-500/20 focus:outline-none transition-all shadow-inner"
                     autoFocus
                     required
                   />
@@ -298,7 +347,7 @@ export const Login: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <span>Continue with OTP</span>
+                    <span>Login</span>
                     <span className="text-emerald-200">→</span>
                   </>
                 )}
@@ -320,9 +369,9 @@ export const Login: React.FC = () => {
 
             {/* Sign Up Link */}
             <div className="mt-5 text-center text-xs text-neutral-600">
-              New to Kosmico Wellness?{' '}
+              Don't have an account?{' '}
               <Link to="/register" className="text-emerald-600 font-bold hover:text-emerald-700 hover:underline">
-                Create Account
+                Sign Up
               </Link>
             </div>
           </div>
@@ -340,7 +389,7 @@ export const Login: React.FC = () => {
               className="text-emerald-700 hover:text-emerald-900 -ml-2 mb-3 inline-flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg hover:bg-emerald-50 transition-colors self-start"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Back to Email</span>
+              <span>Back</span>
             </button>
 
             {/* Heading & Instructions */}
@@ -352,7 +401,7 @@ export const Login: React.FC = () => {
                 Enter the 6-digit code sent to
                 <br />
                 <span className="font-bold text-neutral-900 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 inline-block mt-1">
-                  {email}
+                  {email || identifier}
                 </span>
               </p>
             </div>

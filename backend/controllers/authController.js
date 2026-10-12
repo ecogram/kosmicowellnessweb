@@ -26,7 +26,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
 
 // Document Aligned Auth Endpoints:
 const register = asyncHandler(async (req, res) => {
-  const { email, name } = req.body;
+  const { email, phoneNumber, phone, name } = req.body;
   if (!name || name.trim().length < 2) {
     throw new ApiError(400, 'Please enter your full name');
   }
@@ -34,42 +34,110 @@ const register = asyncHandler(async (req, res) => {
   if (!nameRegex.test(name.trim())) {
     throw new ApiError(400, 'Name should only contain alphabets (no numbers or special characters allowed)');
   }
-  const result = await authService.sendEmailOtp(email, 'register', name.trim());
-  res.status(200).json(new ApiResponse(200, { ...result, name: name.trim() }, 'Registration OTP sent successfully'));
+  const phoneToUse = phoneNumber || phone;
+  if (!email && !phoneToUse) {
+    throw new ApiError(400, 'Please provide an email or phone number');
+  }
+  const result = await authService.sendOtp({
+    email,
+    phoneNumber: phoneToUse,
+    type: 'register',
+    name: name.trim(),
+  });
+  res.status(200).json(new ApiResponse(200, { ...result, name: name.trim() }, result.message || 'Registration OTP sent successfully'));
 });
 
 const signupVerify = asyncHandler(async (req, res) => {
-  const { email, otp, name } = req.body;
+  const { email, phoneNumber, phone, otp, name } = req.body;
   if (name && !/^[a-zA-Z\s]+$/.test(name.trim())) {
     throw new ApiError(400, 'Name should only contain alphabets (no numbers or special characters allowed)');
   }
-  const { user, accessToken, refreshToken } = await authService.verifyEmailOtp(email, otp, name ? name.trim() : undefined, req.ip, 'register');
+  const phoneToUse = phoneNumber || phone;
+  if (!email && !phoneToUse) {
+    throw new ApiError(400, 'Please provide an email or phone number');
+  }
+  const { user, accessToken, refreshToken } = await authService.verifyOtp({
+    email,
+    phoneNumber: phoneToUse,
+    otp,
+    name: name ? name.trim() : undefined,
+    ip: req.ip,
+    type: 'register',
+  });
 
   res.cookie('jwt', refreshToken, cookieOptions);
-  res.status(200).json(new ApiResponse(200, { user, token: accessToken, accessToken }, 'User registered successfully'));
+
+  const responsePayload = {
+    _id: user._id || user.id,
+    name: user.name,
+    email: user.email || '',
+    phoneNumber: user.phoneNumber || user.phone || '',
+    profilePicture: user.profilePicture || '',
+    message: 'Account created successfully! Please login.',
+    token: accessToken,
+    accessToken,
+    user,
+  };
+
+  res.status(201).json(new ApiResponse(201, responsePayload, 'Account created successfully! Please login.'));
 });
 
 const login = asyncHandler(async (req, res) => {
-  const { email } = req.body;
-  const result = await authService.sendEmailOtp(email, 'login');
-  res.status(200).json(new ApiResponse(200, result, 'Login OTP sent successfully'));
+  const { email, phoneNumber, phone } = req.body;
+  const phoneToUse = phoneNumber || phone;
+  if (!email && !phoneToUse) {
+    throw new ApiError(400, 'Please provide an email or phone number');
+  }
+  const result = await authService.sendOtp({
+    email,
+    phoneNumber: phoneToUse,
+    type: 'login',
+  });
+  res.status(200).json(new ApiResponse(200, result, result.message || 'Login OTP sent successfully'));
 });
 
 const loginVerify = asyncHandler(async (req, res) => {
-  const { email, otp } = req.body;
-  const { user, accessToken, refreshToken } = await authService.verifyEmailOtp(email, otp, undefined, req.ip, 'login');
+  const { email, phoneNumber, phone, otp } = req.body;
+  const phoneToUse = phoneNumber || phone;
+  if (!email && !phoneToUse) {
+    throw new ApiError(400, 'Please provide an email or phone number');
+  }
+  const { user, accessToken, refreshToken } = await authService.verifyOtp({
+    email,
+    phoneNumber: phoneToUse,
+    otp,
+    ip: req.ip,
+    type: 'login',
+  });
 
   res.cookie('jwt', refreshToken, cookieOptions);
-  res.status(200).json(new ApiResponse(200, { user, token: accessToken, accessToken }, 'Logged in successfully'));
+
+  const responsePayload = {
+    _id: user._id || user.id,
+    name: user.name,
+    email: user.email || '',
+    phoneNumber: user.phoneNumber || user.phone || '',
+    token: accessToken,
+    accessToken,
+    message: 'Login successful!',
+    user,
+  };
+
+  res.status(200).json(new ApiResponse(200, responsePayload, 'Login successful!'));
 });
 
 const resendOtp = asyncHandler(async (req, res) => {
-  const { email, type, purpose } = req.body;
-  if (!email) {
-    throw new ApiError(400, 'Email is required');
+  const { email, phoneNumber, phone, type, purpose } = req.body;
+  const phoneToUse = phoneNumber || phone;
+  if (!email && !phoneToUse) {
+    throw new ApiError(400, 'Email or phone number is required');
   }
-  const result = await authService.sendEmailOtp(email, purpose || type || 'auto');
-  res.status(200).json(new ApiResponse(200, result, 'OTP resent successfully'));
+  const result = await authService.sendOtp({
+    email,
+    phoneNumber: phoneToUse,
+    type: purpose || type || 'resend',
+  });
+  res.status(200).json(new ApiResponse(200, result, result.message || 'OTP resent successfully'));
 });
 
 const { saveProfileImage } = require('../utils/profileStorage');
@@ -95,7 +163,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     profilePicture = await saveProfileImage(rawPic, req.user._id, req);
   }
 
-  const { name, fullName, phoneNumber, phone, removePhoto } = req.body;
+  const { name, fullName, phoneNumber, phone, email, removePhoto } = req.body;
   const isRemove = removePhoto === true || removePhoto === 'true';
 
   const user = await authService.updateProfile(req.user._id, {
@@ -103,6 +171,7 @@ const updateProfile = asyncHandler(async (req, res) => {
     fullName,
     phoneNumber,
     phone,
+    email,
     ...(profilePicture !== undefined ? { profilePicture, profileImage: profilePicture, avatar: profilePicture } : {}),
     removePhoto: isRemove,
   });

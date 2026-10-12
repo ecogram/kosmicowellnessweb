@@ -10,7 +10,8 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: [true, 'Please add an email'],
+      required: false,
+      sparse: true,
       unique: true,
       trim: true,
       match: [
@@ -125,9 +126,19 @@ const userSchema = new mongoose.Schema(
 );
 
 
-// Encrypt password using bcrypt
+// Sanitize email and sync phone numbers
 userSchema.pre('save', async function () {
-  if (!this.isModified('passwordHash')) {
+  if (this.email === '' || (this.email && this.email.trim() === '')) {
+    this.email = undefined;
+  }
+  if (!this.phone && this.phoneNumber) {
+    this.phone = this.phoneNumber;
+  }
+  if (!this.phoneNumber && this.phone) {
+    this.phoneNumber = this.phone;
+  }
+
+  if (!this.isModified('passwordHash') || !this.passwordHash) {
     return;
   }
   

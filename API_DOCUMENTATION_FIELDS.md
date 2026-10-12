@@ -12,72 +12,197 @@
 - **Method**: `POST`
 - **Endpoint**: `/api/auth/register`
 - **Auth**: None (Public)
-- **Request Body**:
+- **Headers**: `Content-Type: application/json`
+- **Request Body (Mobile OTP)**:
 ```json
 {
-  "name": "Shubham Tiwari",
-  "email": "shubham@example.com"
+  "phoneNumber": "9876543210",
+  "name": "User Full Name"
+}
+```
+*(Note: `phoneNumber` me 10-digit number ya `+91` ke saath bhi bhej sakte hain).*
+
+- **Request Body (Email OTP)**:
+```json
+{
+  "email": "user@gmail.com",
+  "name": "User Full Name"
 }
 ```
 
-### B. Verify Signup OTP
+- **Response (200 OK)**:
+```json
+{
+  "success": true,
+  "message": "OTP sent via SMS to your mobile number. Please verify."
+}
+```
+*(Email response: `"Verification code sent to your email"`).*
+
+---
+
+### B. Verify Signup OTP & Create Account
 - **Method**: `POST`
 - **Endpoint**: `/api/auth/signup-verify`
 - **Auth**: None (Public)
-- **Request Body**:
+- **Headers**: `Content-Type: application/json`
+- **Request Body (Mobile OTP)**:
 ```json
 {
-  "email": "shubham@example.com",
+  "phoneNumber": "9876543210",
   "otp": "123456"
 }
 ```
+
+- **Request Body (Email OTP)**:
+```json
+{
+  "email": "user@gmail.com",
+  "otp": "123456"
+}
+```
+
+- **Response (201 Created)**:
+```json
+{
+  "_id": "6a...",
+  "name": "User Full Name",
+  "email": "",
+  "phoneNumber": "9876543210",
+  "profilePicture": "",
+  "token": "eyJhbGciOi...",
+  "message": "Account created successfully! Please login."
+}
+```
+
+---
 
 ### C. Login User (Request OTP)
 - **Method**: `POST`
 - **Endpoint**: `/api/auth/login`
 - **Auth**: None (Public)
-- **Request Body**:
+- **Headers**: `Content-Type: application/json`
+- **Request Body (Mobile OTP)**:
 ```json
 {
-  "email": "shubham@example.com"
+  "phoneNumber": "9876543210"
 }
 ```
 
-### D. Verify Login OTP
+- **Request Body (Email OTP)**:
+```json
+{
+  "email": "user@gmail.com"
+}
+```
+
+- **Response (200 OK)**:
+```json
+{
+  "success": true,
+  "message": "Login OTP sent via SMS to your mobile number."
+}
+```
+*(Email response: `"Login OTP sent successfully"`).*
+
+---
+
+### D. Verify Login OTP & Get Token
 - **Method**: `POST`
 - **Endpoint**: `/api/auth/login-verify`
 - **Auth**: None (Public)
-- **Request Body**:
+- **Headers**: `Content-Type: application/json`
+- **Request Body (Mobile OTP)**:
 ```json
 {
-  "email": "shubham@example.com",
+  "phoneNumber": "9876543210",
   "otp": "123456"
 }
 ```
+
+- **Request Body (Email OTP)**:
+```json
+{
+  "email": "user@gmail.com",
+  "otp": "123456"
+}
+```
+
+- **Response (200 OK)**:
+```json
+{
+  "_id": "6a...",
+  "name": "User Full Name",
+  "email": "user@gmail.com",
+  "phoneNumber": "9876543210",
+  "token": "eyJhbGciOi...",
+  "message": "Login successful!"
+}
+```
+
+---
 
 ### E. Resend OTP
 - **Method**: `POST`
 - **Endpoint**: `/api/auth/resend-otp`
 - **Auth**: None (Public)
-- **Request Body**:
+- **Headers**: `Content-Type: application/json`
+- **Request Body (Mobile)**:
 ```json
 {
-  "email": "shubham@example.com",
+  "phoneNumber": "9876543210",
+  "purpose": "login"
+}
+```
+*(Note: `purpose` me `"login"` ya `"register"` pass kar sakte hain).*
+
+- **Request Body (Email)**:
+```json
+{
+  "email": "user@gmail.com",
   "purpose": "login"
 }
 ```
 
+- **Response (200 OK)**:
+```json
+{
+  "success": true,
+  "message": "OTP resent successfully to your mobile number."
+}
+```
+
+---
+
 ### F. Get Logged-in User Profile
 - **Method**: `GET`
-- **Endpoint**: `/api/users/profile` (or `/api/auth/profile`)
-- **Auth**: Bearer Token required
+- **Endpoint**: `/api/auth/profile` (or `/api/users/profile`)
+- **Auth**: Bearer Token required (`Authorization: Bearer <JWT_TOKEN>`)
 
-### G. Update Profile Details
+---
+
+### G. Update Profile Details (Email / Phone Edit & Remove)
 - **Method**: `PUT`
-- **Endpoint**: `/api/users/profile` (or `/api/auth/profile`)
-- **Auth**: Bearer Token required
+- **Endpoint**: `/api/auth/profile` (or `/api/users/profile`)
+- **Auth**: Bearer Token required (`Authorization: Bearer <JWT_TOKEN>`)
 - **Content-Type**: `multipart/form-data` or `application/json`
-- **Request Fields**: `name`, `phoneNumber`, `profilePicture` (file)
+- **Request Fields**: `name`, `phoneNumber`, `email`, `profilePicture` (file), `removePhoto` (boolean)
+- **Response (200 OK)**:
+```json
+{
+  "success": true,
+  "message": "Profile updated successfully",
+  "data": {
+    "_id": "6a...",
+    "name": "User Full Name",
+    "email": "user@gmail.com",
+    "phoneNumber": "9876543210",
+    "profilePicture": "https://..."
+  }
+}
+```
+
+---
 
 ---
 
