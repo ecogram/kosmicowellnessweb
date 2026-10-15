@@ -22,9 +22,7 @@ export function FinalCta() {
               Shop Now
             </Button>
           </Link>
-          <p className="mt-6 text-sm text-white/60">
-            100% satisfaction guarantee.
-          </p>
+
         </div>
       </Container>
     </section>
