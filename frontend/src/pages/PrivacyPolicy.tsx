@@ -1,14 +1,8 @@
 import { Container } from '../components/ui/Container';
-import { SEO } from '../components/SEO';
 
 export function PrivacyPolicy() {
   return (
     <Container className="py-24 max-w-4xl mx-auto">
-      <SEO
-        title="Privacy Policy | Kosmico Wellness"
-        description="Read the official Privacy Policy of Kosmico Wellness Pvt. Ltd. Learn how we protect, handle, and secure your personal and health data."
-        canonicalUrl="https://www.kosmicowellness.com/privacy-policy"
-      />
       <h1 className="text-4xl font-serif font-bold text-primary mb-2 text-center">
         Privacy Policy
       </h1>

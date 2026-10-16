@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Container } from '../components/ui/Container';
 import { Send, Bot, User, Sparkles, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { SEO } from '../components/SEO';
 
 interface Message {
   id: string;
@@ -48,7 +47,7 @@ export const AiConsultantPage: React.FC = () => {
   const handleLanguageChange = (lang: 'hinglish' | 'english') => {
     if (lang === language) return;
     setLanguage(lang);
-    
+
     const newGreeting = lang === 'hinglish'
       ? 'Namaste! 🙏 Main Kosmico AI Consultant hoon. Main aapki health & wellness journey mein kaise madad kar sakta hoon?'
       : 'Hello! 👋 I am your Kosmico AI Health Consultant. How can I assist you with your wellness journey today?';
@@ -99,7 +98,7 @@ export const AiConsultantPage: React.FC = () => {
       let replyText = language === 'english'
         ? 'Thank you for asking! Kosmico Wellness products are 100% natural with zero glycemic index. For specific medical advice, please consult your physician.'
         : 'Poochhne ke liye dhanyawad! Kosmico Wellness products 100% natural hain zero glycemic index ke saath. Specific medical advice ke liye physician se consult karein.';
-      
+
       const lower = text.toLowerCase();
       if (lower.includes('hair')) {
         replyText = language === 'english'
@@ -137,14 +136,8 @@ export const AiConsultantPage: React.FC = () => {
 
   return (
     <div className="py-6 md:py-10 bg-background min-h-screen flex flex-col">
-      <SEO
-        title="Free AI Wellness & Nutrition Consultant | Kosmico Wellness"
-        description="Chat with Kosmico AI Consultant for instant answers on diabetes care, diet plans, natural sweetening, digestion, and daily wellness habits."
-        keywords="AI health consultant, nutrition advice online, free wellness AI assistant, Kosmico AI, diabetes chatbot India"
-        canonicalUrl="https://www.kosmicowellness.com/ai-consultant"
-      />
       <Container className="flex-1 flex flex-col max-w-4xl mx-auto">
-        
+
         {/* Top Title Bar */}
         <div className="flex items-center justify-between pb-4 mb-4 border-b border-border">
           <div className="flex items-center gap-3">
@@ -169,22 +162,20 @@ export const AiConsultantPage: React.FC = () => {
             <button
               type="button"
               onClick={() => handleLanguageChange('hinglish')}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                language === 'hinglish'
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${language === 'hinglish'
                   ? 'bg-emerald-800 text-white font-bold shadow-xs'
                   : 'text-neutral-600 hover:text-neutral-900'
-              }`}
+                }`}
             >
               🇮🇳 Hinglish
             </button>
             <button
               type="button"
               onClick={() => handleLanguageChange('english')}
-              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                language === 'english'
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${language === 'english'
                   ? 'bg-emerald-800 text-white font-bold shadow-xs'
                   : 'text-neutral-600 hover:text-neutral-900'
-              }`}
+                }`}
             >
               🇬🇧 English
             </button>
@@ -205,17 +196,15 @@ export const AiConsultantPage: React.FC = () => {
               )}
 
               <div
-                className={`max-w-md p-4 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-xs ${
-                  msg.sender === 'user'
+                className={`max-w-md p-4 rounded-2xl text-xs sm:text-sm leading-relaxed shadow-xs ${msg.sender === 'user'
                     ? 'bg-emerald-800 text-white rounded-tr-none'
                     : 'bg-background text-neutral-900 border border-border rounded-tl-none'
-                }`}
+                  }`}
               >
                 <p>{msg.text}</p>
                 <div
-                  className={`text-[9px] mt-1.5 font-semibold text-right ${
-                    msg.sender === 'user' ? 'text-emerald-200' : 'text-neutral-400'
-                  }`}
+                  className={`text-[9px] mt-1.5 font-semibold text-right ${msg.sender === 'user' ? 'text-emerald-200' : 'text-neutral-400'
+                    }`}
                 >
                   {msg.timestamp}
                 </div>
