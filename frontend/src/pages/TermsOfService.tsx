@@ -1,9 +1,15 @@
 import { Container } from '../components/ui/Container';
 import { Link } from 'react-router-dom';
+import { SEO } from '../components/SEO';
 
 export function TermsOfService() {
   return (
     <Container className="py-24 max-w-4xl mx-auto">
+      <SEO
+        title="Terms of Service | Kosmico Wellness"
+        description="Review the Terms of Service for using Kosmico Wellness website, purchasing Sweet Monk products, and accessing digital wellness services."
+        canonicalUrl="https://www.kosmicowellness.com/terms-of-service"
+      />
       <h1 className="text-4xl font-serif font-bold text-primary mb-2 text-center">
         Terms of Service
       </h1>

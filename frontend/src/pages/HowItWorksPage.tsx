@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Lifestyle } from '../features/home/Lifestyle';
 import { FinalCta } from '../features/home/FinalCta';
+import { SEO } from '../components/SEO';
 import { 
   COA_DROPS_PDF_URL,
   LABEL_DROPS_PDF_URL,
@@ -39,6 +40,12 @@ export function HowItWorksPage() {
 
   return (
     <div className="flex flex-col w-full bg-[#f8faf8] pt-24 pb-16 font-sans">
+      <SEO
+        title="How It Works & Lab Test Reports — Sweet Monk | Kosmico Wellness"
+        description="Learn how to use Sweet Monk monk fruit drops for tea, coffee, cooking, and baking. View verified lab test certificates (COA) and certified pure nutrition facts."
+        keywords="how to use monk fruit drops, sweet monk dosage, monk fruit sweetener usage, COA lab test sweetener, sweet monk certificates India"
+        canonicalUrl="https://www.kosmicowellness.com/how-it-works"
+      />
       
       {/* 1. Header Hero Banner */}
       <section className="relative py-10 md:py-14 overflow-hidden">

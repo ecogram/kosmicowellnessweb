@@ -1,8 +1,14 @@
 import { Container } from '../components/ui/Container';
+import { SEO } from '../components/SEO';
 
 export function RefundPolicy() {
   return (
     <Container className="py-24 max-w-4xl mx-auto">
+      <SEO
+        title="Refund & Return Policy | Kosmico Wellness"
+        description="Learn about Kosmico Wellness refund, return, and cancellation policies. Simple and transparent process for customer satisfaction."
+        canonicalUrl="https://www.kosmicowellness.com/refund-policy"
+      />
       <h1 className="text-4xl font-serif font-bold text-primary mb-2 text-center">
         Refund & Return Policy
       </h1>

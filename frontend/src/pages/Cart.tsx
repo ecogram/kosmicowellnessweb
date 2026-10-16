@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Trash2, ArrowRight } from 'lucide-react';
 import { formatINR } from '../utils/currency';
 import { showStockToast } from '../utils/stockToast';
+import { SEO } from '../components/SEO';
 
 export const Cart = () => {
   const { data: cart, isLoading } = useCart();
@@ -31,6 +32,10 @@ export const Cart = () => {
 
   return (
     <div className="bg-background min-h-screen py-12">
+      <SEO
+        title="Your Cart | Kosmico Wellness"
+        noindex={true}
+      />
       <Container>
         <h1 className="font-serif text-4xl font-bold text-primary mb-8">Your Cart</h1>
 

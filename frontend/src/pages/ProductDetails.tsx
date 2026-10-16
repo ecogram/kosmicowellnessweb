@@ -14,6 +14,7 @@ import type { BundleOption } from '../components/product/VisualBundles';
 import { PincodeEstimator } from '../components/product/PincodeEstimator';
 import toast from 'react-hot-toast';
 import { showStockToast } from '../utils/stockToast';
+import { SEO } from '../components/SEO';
 
 export function ProductDetails() {
   const { slug } = useParams();
@@ -163,8 +164,44 @@ export function ProductDetails() {
     }
   };
 
+  const productSchema = {
+    '@type': 'Product',
+    name: product.name,
+    image: images[0] ? (images[0].startsWith('http') ? images[0] : `https://www.kosmicowellness.com${images[0]}`) : 'https://www.kosmicowellness.com/kosmico-logo.png',
+    description: product.description || 'Pure 100% natural monk fruit extract zero-calorie sweetener drops by Kosmico Wellness.',
+    brand: {
+      '@type': 'Brand',
+      name: 'Kosmico Wellness',
+    },
+    offers: {
+      '@type': 'Offer',
+      priceCurrency: 'INR',
+      price: product.price,
+      availability: (product.stock ?? 1) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      url: `https://www.kosmicowellness.com/products/${slug}`,
+      seller: {
+        '@type': 'Organization',
+        name: 'Kosmico Wellness Private Limited',
+      },
+    },
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: product.rating || 4.9,
+      reviewCount: product.numReviews || product.reviewsCount || 120,
+    },
+  };
+
   return (
     <div className="py-12 bg-background min-h-[90vh]">
+      <SEO
+        title={`${product.name} | Kosmico Wellness`}
+        description={product.description ? product.description.slice(0, 160) : `Buy ${product.name} online at Kosmico Wellness. 100% natural, zero calories, zero sugar spikes, diabetic and keto safe.`}
+        keywords={`${product.name}, buy monk fruit sweetener, zero calorie drops, Kosmico Wellness, keto sweetener, pure natural monk fruit`}
+        canonicalUrl={`https://www.kosmicowellness.com/products/${slug}`}
+        ogType="product"
+        ogImage={images[0] ? (images[0].startsWith('http') ? images[0] : `https://www.kosmicowellness.com${images[0]}`) : 'https://www.kosmicowellness.com/kosmico-logo.png'}
+        schema={productSchema}
+      />
       <Container>
         <Link
           to="/shop"

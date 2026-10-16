@@ -27,6 +27,7 @@ import { useVerifyPayment, useCreateRazorpayOrder, useSavedPaymentMethods, type 
 import { PaymentMethodsModal } from '../components/PaymentMethodsModal';
 import { useAuthStore } from '../store/useAuthStore';
 import { formatINR } from '../utils/currency';
+import { SEO } from '../components/SEO';
 
 import { api } from '../services/api';
 
@@ -1002,6 +1003,10 @@ export const Checkout: React.FC = () => {
 
   return (
     <div className="bg-[#f6f9f6] min-h-screen pb-32 pt-4 md:py-8 font-sans">
+      <SEO
+        title="Secure Checkout | Kosmico Wellness"
+        noindex={true}
+      />
       <Container className="max-w-xl mx-auto px-4">
         {/* Top Header Bar */}
         <div className="flex items-center justify-between mb-4">

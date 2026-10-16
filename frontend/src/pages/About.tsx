@@ -1,10 +1,30 @@
 import React from 'react';
 import { Container } from '../components/ui/Container';
 import { ShieldCheck, Award, Globe, Code, Sparkles, Building2, Layers } from 'lucide-react';
+import { SEO } from '../components/SEO';
+
+const aboutSchema = {
+  '@type': 'AboutPage',
+  name: 'About Kosmico Wellness Private Limited',
+  description: 'Kosmico Wellness is a leading Indian contract manufacturer specializing in premium Ayurvedic and herbal wellness products.',
+  mainEntity: {
+    '@type': 'Organization',
+    name: 'Kosmico Wellness Private Limited',
+    url: 'https://www.kosmicowellness.com',
+    logo: 'https://www.kosmicowellness.com/kosmico-logo.png',
+  },
+};
 
 export const About: React.FC = () => {
   return (
     <div className="py-12 md:py-20 bg-background min-h-screen">
+      <SEO
+        title="About Us — Kosmico Wellness Private Limited | Ayurvedic & Herbal Manufacturer"
+        description="Learn about Kosmico Wellness Private Limited — a premier Indian Ayurvedic and herbal contract manufacturer partnering with 100+ brands and producing 500+ natural formulations."
+        keywords="about Kosmico Wellness, Kosmico Wellness Pvt Ltd, Ayurvedic contract manufacturer India, herbal wellness brand, natural health products"
+        canonicalUrl="https://www.kosmicowellness.com/about"
+        schema={aboutSchema}
+      />
       <Container className="max-w-4xl mx-auto">
         
         {/* Top Header Card matching Video */}

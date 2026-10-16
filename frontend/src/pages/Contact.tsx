@@ -1,5 +1,19 @@
 import { Container } from '../components/ui/Container';
 import { Mail, Phone, MapPin, Clock, Building, Headphones } from 'lucide-react';
+import { SEO } from '../components/SEO';
+
+const contactSchema = {
+  '@type': 'ContactPage',
+  name: 'Contact Kosmico Wellness',
+  description: 'Customer support, order tracking, and partnership inquiries for Kosmico Wellness Private Limited.',
+  mainEntity: {
+    '@type': 'Organization',
+    name: 'Kosmico Wellness Private Limited',
+    telephone: '+91-9793170555',
+    email: 'support@kosmicowellness.com',
+    url: 'https://www.kosmicowellness.com',
+  },
+};
 
 export function Contact() {
   const handleCallClick = () => {
@@ -16,6 +30,13 @@ export function Contact() {
 
   return (
     <div className="py-16 md:py-24 bg-background">
+      <SEO
+        title="Contact Kosmico Wellness — Customer Support & WhatsApp Inquiries"
+        description="Connect with Kosmico Wellness Private Limited. WhatsApp & Phone support: +91-9793170555, Email: support@kosmicowellness.com. Fast response for orders and queries."
+        keywords="contact Kosmico Wellness, Kosmico customer care, Kosmico phone number, Kosmico email support, Kosmico WhatsApp"
+        canonicalUrl="https://www.kosmicowellness.com/contact"
+        schema={contactSchema}
+      />
       <Container className="max-w-5xl mx-auto space-y-12">
 
         {/* Page Title Header */}

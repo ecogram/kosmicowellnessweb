@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { PlayStoreModal } from '../components/ui/PlayStoreModal';
 import { PLAY_STORE_URL } from '../utils/constants';
+import { SEO } from '../components/SEO';
 
 export const CarePage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -67,6 +68,12 @@ export const CarePage: React.FC = () => {
 
   return (
     <div className="py-8 md:py-14 bg-gradient-to-b from-[#eef9f2] via-stone-50 to-[#eef9f2] min-h-screen relative">
+      <SEO
+        title="Kosmico Care Suite — Smart Diabetes Care & Vital Health Monitoring"
+        description="Monitor blood glucose trends, hydration, stress, and lifestyle routines with Kosmico Care Suite. Personalized health tracking designed for diabetic wellness."
+        keywords="diabetes care plan, smart health suite, blood sugar tracking, Kosmico Care, gluco health tracker, diabetes management India"
+        canonicalUrl="https://www.kosmicowellness.com/care"
+      />
       <Container className="max-w-4xl">
         
         {/* Top App Update / Mobile App Banner Notice */}

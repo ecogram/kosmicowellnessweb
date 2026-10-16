@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Container } from '../components/ui/Container';
 import { Send, Bot, User, Sparkles, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { SEO } from '../components/SEO';
 
 interface Message {
   id: string;
@@ -136,6 +137,12 @@ export const AiConsultantPage: React.FC = () => {
 
   return (
     <div className="py-6 md:py-10 bg-background min-h-screen flex flex-col">
+      <SEO
+        title="Free AI Wellness & Nutrition Consultant | Kosmico Wellness"
+        description="Chat with Kosmico AI Consultant for instant answers on diabetes care, diet plans, natural sweetening, digestion, and daily wellness habits."
+        keywords="AI health consultant, nutrition advice online, free wellness AI assistant, Kosmico AI, diabetes chatbot India"
+        canonicalUrl="https://www.kosmicowellness.com/ai-consultant"
+      />
       <Container className="flex-1 flex flex-col max-w-4xl mx-auto">
         
         {/* Top Title Bar */}

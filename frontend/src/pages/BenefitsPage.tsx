@@ -4,10 +4,17 @@ import { Comparison } from '../features/home/Comparison';
 import { Lifestyle } from '../features/home/Lifestyle';
 import { FinalCta } from '../features/home/FinalCta';
 import { ShieldCheck, Heart, Sparkles, Award } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 export function BenefitsPage() {
   return (
     <div className="flex flex-col w-full pt-16 md:pt-20">
+      <SEO
+        title="Health Benefits of Sweet Monk Drops | Zero Calories & Diabetic Friendly"
+        description="Explore the health benefits of Sweet Monk 100% natural monk fruit sweetener drops: zero glycemic index, zero calorie, zero sugar spikes, and keto friendly."
+        keywords="monk fruit benefits, zero glycemic sweetener, sugar free benefits, diabetic safe sweetener, keto sweetener benefits, natural sweetening drops"
+        canonicalUrl="https://www.kosmicowellness.com/benefits"
+      />
       {/* Hero Header */}
       <section className="bg-primary/5 py-14 md:py-20 border-b border-border">
         <Container>

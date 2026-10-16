@@ -4,6 +4,19 @@ import { ProductCard } from '../components/ui/ProductCard';
 import { useProducts, useCategories } from '../hooks/useProducts';
 import { Button } from '../components/ui/Button';
 import { X } from 'lucide-react';
+import { SEO } from '../components/SEO';
+
+const shopSchema = {
+  '@type': 'CollectionPage',
+  name: 'Shop 100% Natural Sweet Monk Sweetener Drops | Kosmico Wellness',
+  description: 'Explore and buy 100% natural, zero-calorie monk fruit extract sweetener drops. Free shipping and secure payment across India.',
+  url: 'https://www.kosmicowellness.com/shop',
+  provider: {
+    '@type': 'Organization',
+    name: 'Kosmico Wellness Private Limited',
+    url: 'https://www.kosmicowellness.com',
+  },
+};
 
 export const Shop = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -47,6 +60,13 @@ export const Shop = () => {
 
   return (
     <div className="bg-surface py-12">
+      <SEO
+        title={search ? `Search: ${search} | Kosmico Wellness Shop` : 'Shop 100% Natural Sweet Monk Sweetener Drops | Kosmico Wellness'}
+        description="Buy 100% natural Sweet Monk fruit liquid sweetener drops online. Zero calories, zero carbs, zero glycemic index. Best prices, fast delivery across India."
+        keywords="buy sweet monk drops, buy monk fruit sweetener online, natural sugar substitute price, diabetic sugar drops, keto sweetener India, Kosmico store"
+        canonicalUrl="https://www.kosmicowellness.com/shop"
+        schema={shopSchema}
+      />
       <Container>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <h1 className="font-serif text-4xl font-bold text-primary">All Products</h1>

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuthStore } from '../store/useAuthStore';
 import { Contact, User, ArrowLeft, ShieldCheck, Sparkles, Lock } from 'lucide-react';
+import { SEO } from '../components/SEO';
 
 export const Register: React.FC = () => {
   const navigate = useNavigate();
@@ -275,6 +276,10 @@ export const Register: React.FC = () => {
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center p-4 sm:p-6 bg-gradient-to-b from-[#e8f7ee] via-[#f2faf5] to-[#e4f6eb] relative overflow-hidden">
+      <SEO
+        title="Create Account | Kosmico Wellness"
+        noindex={true}
+      />
       <div className="absolute top-12 right-1/4 w-72 h-72 bg-emerald-300/20 rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="absolute bottom-12 left-1/4 w-80 h-80 bg-teal-400/15 rounded-full blur-3xl pointer-events-none -z-10" />
 
