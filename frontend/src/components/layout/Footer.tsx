@@ -64,6 +64,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/blog" className="hover:text-white transition-colors text-amber-300 font-semibold">
+                  Wellness Blog 📝
+                </Link>
+              </li>
+              <li>
                 <Link to="/care" className="hover:text-white transition-colors">
                   Care Hub 🩺
                 </Link>

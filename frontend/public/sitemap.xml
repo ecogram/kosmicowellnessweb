@@ -16,6 +16,32 @@
     <priority>0.9</priority>
   </url>
 
+  <!-- Wellness Blog & Health Guides Hub -->
+  <url>
+    <loc>https://www.kosmicowellness.com/blog</loc>
+    <lastmod>2026-10-16</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.kosmicowellness.com/blog/monk-fruit-vs-stevia-vs-sugar</loc>
+    <lastmod>2026-10-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.kosmicowellness.com/blog/7-habits-reduce-blood-sugar-naturally</loc>
+    <lastmod>2026-10-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://www.kosmicowellness.com/blog/is-monk-fruit-keto-friendly</loc>
+    <lastmod>2026-10-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
   <!-- Key Marketing & Product Discovery Pages -->
   <url>
     <loc>https://www.kosmicowellness.com/benefits</loc>

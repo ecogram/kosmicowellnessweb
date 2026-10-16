@@ -68,6 +68,8 @@ const PrivacyPolicy = lazyWithRetry(() => import('./pages/PrivacyPolicy').then(m
 const RefundPolicy = lazyWithRetry(() => import('./pages/RefundPolicy').then(m => ({ default: m.RefundPolicy })));
 const TermsOfService = lazyWithRetry(() => import('./pages/TermsOfService').then(m => ({ default: m.TermsOfService })));
 const ReturnsRefunds = lazyWithRetry(() => import('./pages/ReturnsRefunds').then(m => ({ default: m.ReturnsRefunds })));
+const BlogListPage = lazyWithRetry(() => import('./pages/BlogListPage').then(m => ({ default: m.BlogListPage })));
+const BlogPostPage = lazyWithRetry(() => import('./pages/BlogPostPage').then(m => ({ default: m.BlogPostPage })));
 
 // Global Loading Fallback
 const PageLoadingFallback = () => (
@@ -164,6 +166,8 @@ function App() {
                     <Route path="/register" element={<Register />} />
 
                     {/* Marketing & Info Pages */}
+                    <Route path="/blog" element={<BlogListPage />} />
+                    <Route path="/blog/:slug" element={<BlogPostPage />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/benefits" element={<BenefitsPage />} />
                     <Route path="/ingredients" element={<IngredientsPage />} />

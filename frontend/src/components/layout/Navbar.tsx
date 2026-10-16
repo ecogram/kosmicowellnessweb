@@ -93,6 +93,7 @@ export function Navbar() {
     { name: 'Home', path: '/' },
     { name: 'Shop', path: '/shop' },
     { name: 'Care Hub 🩺', path: '/care' },
+    { name: 'Blog 📝', path: '/blog' },
     { name: 'About', path: '/about' },
     { name: 'How It Works', path: '/how-it-works' },
   ];
