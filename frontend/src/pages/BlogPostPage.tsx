@@ -25,13 +25,17 @@ export function BlogPostPage() {
     return BLOG_POSTS.filter((p) => p.id !== post.id).slice(0, 2);
   }, [post.id]);
 
+  const resolvedImage = post.coverImage.startsWith('http')
+    ? post.coverImage
+    : `https://www.kosmicowellness.com${post.coverImage}`;
+
   // Structured Data (Article Schema + FAQ Schema if available)
   const articleSchema = {
     '@type': 'BlogPosting',
     '@id': `https://www.kosmicowellness.com/blog/${post.slug}#article`,
     headline: post.title,
     description: post.metaDescription,
-    image: post.coverImage,
+    image: resolvedImage,
     datePublished: '2026-10-15T08:00:00+05:30',
     dateModified: '2026-10-16T10:00:00+05:30',
     mainEntityOfPage: `https://www.kosmicowellness.com/blog/${post.slug}`,
@@ -77,7 +81,7 @@ export function BlogPostPage() {
         keywords={post.keywords}
         canonicalUrl={`https://www.kosmicowellness.com/blog/${post.slug}`}
         ogType="article"
-        ogImage={post.coverImage}
+        ogImage={resolvedImage}
         schema={articleSchema}
       />
 
@@ -227,6 +231,22 @@ export function BlogPostPage() {
                     </tbody>
                   </table>
                 </div>
+              )}
+              {/* Section Image */}
+              {section.image && (
+                <figure className="my-6 rounded-3xl overflow-hidden border border-border shadow-xs bg-white">
+                  <img
+                    src={section.image.src}
+                    alt={section.image.alt}
+                    className="w-full max-h-[420px] object-cover"
+                    loading="lazy"
+                  />
+                  {section.image.caption && (
+                    <figcaption className="p-3.5 text-xs text-neutral-600 bg-neutral-50 border-t border-border font-medium text-center">
+                      💡 {section.image.caption}
+                    </figcaption>
+                  )}
+                </figure>
               )}
             </section>
           ))}
