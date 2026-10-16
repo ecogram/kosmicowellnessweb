@@ -56,7 +56,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: {
       name: 'Kosmico Clinical Team',
       role: 'Endocrinology & Natural Wellness Board',
-      avatar: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=120&auto=format&fit=crop&q=80',
+      avatar: '/assets/blogs/author-clinical-team.jpg',
     },
     coverImage: '/assets/blogs/blog-sweetmonk-chai.jpg',
     tags: ['Monk Fruit', 'Diabetes Care', 'Stevia vs Monk Fruit', 'Zero Calorie', 'Blood Sugar Spikes', 'Masala Chai'],
@@ -166,7 +166,7 @@ export const BLOG_POSTS: BlogPost[] = [
     author: {
       name: 'Dr. Anita Deshmukh',
       role: 'Ayurvedic Wellness & Endocrinology Consultant',
-      avatar: 'https://images.unsplash.com/photo-1594824813637-27b233a75d5e?w=120&auto=format&fit=crop&q=80',
+      avatar: '/assets/blogs/author-anita-deshmukh.jpg',
     },
     coverImage: '/assets/blogs/blog-sweetmonk-habits.jpg',
     tags: ['Blood Sugar', 'HbA1c', 'Healthy Habits', 'Natural Health', 'Diabetes Routine', 'Kosmico Care'],
@@ -262,9 +262,9 @@ export const BLOG_POSTS: BlogPost[] = [
     readingTime: '5 min read',
     category: 'Keto & Weight Loss',
     author: {
-      name: 'Rohan Verma',
+      name: 'Ritu Verma',
       role: 'Ketogenic Nutritionist & Sports Dietitian',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
+      avatar: '/assets/blogs/author-ritu-verma.jpg',
     },
     coverImage: '/assets/blogs/blog-sweetmonk-keto.jpg',
     tags: ['Keto', 'Weight Loss', 'Monk Fruit', 'Intermittent Fasting', 'Zero Carb', 'Fitness'],
