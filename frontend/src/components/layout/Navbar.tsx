@@ -92,8 +92,8 @@ export function Navbar() {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Shop', path: '/shop' },
-    { name: 'Care Hub', path: '/care', badge: 'Live' },
-    { name: 'Blog', path: '/blog', badge: 'Guides' },
+    { name: 'Care Hub', path: '/care' },
+    { name: 'Blog', path: '/blog' },
     { name: 'About', path: '/about' },
     { name: 'How It Works', path: '/how-it-works' },
   ];
@@ -132,8 +132,6 @@ export function Navbar() {
               const isActive = link.path === '/'
                 ? location.pathname === '/'
                 : location.pathname.startsWith(link.path);
-              const isBlog = link.path === '/blog';
-
               return (
                 <Link
                   key={link.name}
@@ -141,25 +139,10 @@ export function Navbar() {
                   className={`text-xs lg:text-sm font-semibold px-2.5 lg:px-3 py-1.5 rounded-xl transition-all duration-200 flex items-center gap-1.5 ${
                     isActive
                       ? 'bg-emerald-900 text-white shadow-xs'
-                      : isBlog
-                      ? 'text-emerald-950 hover:text-emerald-800 hover:bg-emerald-50/80 font-bold'
                       : 'text-text-main hover:text-primary hover:bg-emerald-50/60'
                   }`}
                 >
                   <span>{link.name}</span>
-                  {link.badge && (
-                    <span
-                      className={`text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full transition-colors ${
-                        isActive
-                          ? 'bg-amber-400 text-neutral-950'
-                          : isBlog
-                          ? 'bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs'
-                          : 'bg-emerald-100/90 text-[#0a7a40] border border-emerald-200'
-                      }`}
-                    >
-                      {link.badge}
-                    </span>
-                  )}
                 </Link>
               );
             })}
@@ -346,8 +329,6 @@ export function Navbar() {
                 const isActive = link.path === '/'
                   ? location.pathname === '/'
                   : location.pathname.startsWith(link.path);
-                const isBlog = link.path === '/blog';
-
                 return (
                   <Link
                     key={link.name}
@@ -355,26 +336,11 @@ export function Navbar() {
                     className={`px-4 py-3 rounded-2xl font-bold text-base border transition-all active:scale-98 flex items-center justify-between ${
                       isActive
                         ? 'bg-emerald-900 text-white border-emerald-900 shadow-xs'
-                        : isBlog
-                        ? 'bg-emerald-50/70 hover:bg-emerald-100 text-emerald-950 border-emerald-200'
                         : 'bg-neutral-50 hover:bg-emerald-50 text-neutral-900 border-neutral-200'
                     }`}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <span>{link.name}</span>
-                    {link.badge && (
-                      <span
-                        className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                          isActive
-                            ? 'bg-amber-400 text-neutral-950'
-                            : isBlog
-                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
-                            : 'bg-emerald-100 text-[#0a7a40]'
-                        }`}
-                      >
-                        {link.badge}
-                      </span>
-                    )}
                   </Link>
                 );
               })}

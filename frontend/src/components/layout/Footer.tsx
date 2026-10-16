@@ -64,9 +64,8 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/blog" className="hover:text-white transition-colors text-amber-300 font-semibold flex items-center gap-1.5">
-                  <span>Kosmico Blog</span>
-                  <span className="text-[9px] bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded-full border border-amber-400/30 font-bold uppercase">Guides</span>
+                <Link to="/blog" className="hover:text-white transition-colors">
+                  Blog
                 </Link>
               </li>
               <li>
