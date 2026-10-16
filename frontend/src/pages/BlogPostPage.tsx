@@ -55,6 +55,23 @@ export function BlogPostPage() {
     },
   };
 
+  const pageSchemas: any[] = [articleSchema];
+
+  if (post.content.faqs && post.content.faqs.length > 0) {
+    pageSchemas.push({
+      '@type': 'FAQPage',
+      '@id': `https://www.kosmicowellness.com/blog/${post.slug}#faq`,
+      mainEntity: post.content.faqs.map((faq) => ({
+        '@type': 'Question',
+        name: faq.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: faq.answer,
+        },
+      })),
+    });
+  }
+
   const handleShare = async () => {
     const url = window.location.href;
     if (navigator.share) {
@@ -82,7 +99,7 @@ export function BlogPostPage() {
         canonicalUrl={`https://www.kosmicowellness.com/blog/${post.slug}`}
         ogType="article"
         ogImage={resolvedImage}
-        schema={articleSchema}
+        schema={pageSchemas}
       />
 
       <Container className="max-w-4xl mx-auto px-4 sm:px-6">

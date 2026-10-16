@@ -66,7 +66,7 @@ export function BlogListPage() {
           </p>
 
           {/* Search Input */}
-          <div className="max-w-md mx-auto pt-2">
+          <div className="max-w-md mx-auto pt-2 space-y-2">
             <input
               type="text"
               placeholder="Search topics (e.g. Stevia, Blood Sugar, Keto)..."
@@ -74,6 +74,19 @@ export function BlogListPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-5 py-3 rounded-2xl bg-white border border-border shadow-xs text-sm focus:outline-none focus:ring-2 focus:ring-[#0a7a40]/30 focus:border-[#0a7a40] transition-all"
             />
+            <div className="flex items-center justify-center gap-1.5 flex-wrap text-xs text-neutral-500">
+              <span className="font-semibold text-neutral-400 text-[11px]">Popular Searches:</span>
+              {['Masala Chai', 'HbA1c', 'Keto Sweetener', 'Stevia'].map((term) => (
+                <button
+                  key={term}
+                  type="button"
+                  onClick={() => setSearchQuery(term)}
+                  className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-[#0a7a40] hover:bg-emerald-100 transition-colors font-medium text-[11px] cursor-pointer"
+                >
+                  #{term}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
