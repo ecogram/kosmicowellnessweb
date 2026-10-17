@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Container } from '../ui/Container';
 import { useCategories } from '../../hooks/useProducts';
-import { MapPin, Phone, Mail, Clock, Smartphone, Users } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Smartphone } from 'lucide-react';
 import { PLAY_STORE_URL, YOUTUBE_URL, INSTAGRAM_URL, FACEBOOK_URL } from '../../utils/constants';
 
 export function Footer() {
@@ -21,8 +21,8 @@ export function Footer() {
               Ancient Wisdom, Modern Living
             </div>
             
-            {/* Direct Play Store & Community Links in Footer */}
-            <div className="pt-2 flex flex-col gap-2">
+            {/* Direct Play Store Link in Footer */}
+            <div className="pt-2">
               <a
                 href={PLAY_STORE_URL}
                 target="_blank"
@@ -32,14 +32,6 @@ export function Footer() {
                 <Smartphone className="w-4 h-4 text-amber-400" />
                 <span>Get App on Google Play 📱</span>
               </a>
-
-              <Link
-                to="/community"
-                className="inline-flex items-center gap-2.5 px-4 py-2.5 bg-emerald-900/80 hover:bg-emerald-800 border border-emerald-700/60 hover:border-amber-400/60 rounded-xl text-xs font-bold text-emerald-100 hover:text-white transition-all shadow-xs"
-              >
-                <Users className="w-4 h-4 text-amber-400" />
-                <span>Join Community & Upload Posts 🌿</span>
-              </Link>
             </div>
           </div>
 
@@ -67,11 +59,8 @@ export function Footer() {
             <h4 className="font-bold text-sm uppercase tracking-wider text-amber-300 mb-4">Information</h4>
             <ul className="space-y-2.5 text-xs text-emerald-100/80">
               <li>
-                <Link to="/community" className="hover:text-white transition-colors flex items-center gap-1.5 font-bold text-amber-300">
-                  <span>Community</span>
-                  <span className="px-1.5 py-0.2 text-[9px] font-bold rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40">
-                    New
-                  </span>
+                <Link to="/community" className="hover:text-white transition-colors">
+                  Community
                 </Link>
               </li>
               <li>
