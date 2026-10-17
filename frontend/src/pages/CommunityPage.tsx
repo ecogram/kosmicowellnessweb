@@ -9,7 +9,7 @@ import {
   Users, Image as ImageIcon, Video, Heart, MessageCircle, Share2,
   Send, Plus, X, Sparkles, CheckCircle2, AlertCircle,
   Loader2, Flame, ShieldCheck, Tag, MapPin, Globe,
-  ArrowRight, Check
+  ArrowRight, Check, MoreVertical, Edit3, Trash2
 } from 'lucide-react';
 
 interface Comment {
@@ -43,73 +43,6 @@ interface CommunityPost {
   isVideo?: boolean;
 }
 
-// Initial curated community inspiration for instant rich experience
-const INITIAL_COMMUNITY_POSTS: CommunityPost[] = [
-  {
-    _id: 'sample-post-1',
-    user: {
-      name: 'Pooja Sharma',
-      profilePicture: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=250&q=80',
-    },
-    content: 'Morning ritual with Sweet Monk! Replaced white refined sugar in my traditional Masala Chai completely. Zero bitter aftertaste, zero sugar spike on my continuous glucose monitor! ☕🌿 #SweetMonk #SugarFree #ChaiLover',
-    mediaUrl: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=1200&q=80',
-    tags: ['#SweetMonk', '#SugarFree', '#HealthyRecipe'],
-    location: 'New Delhi, India',
-    likes: ['user-1', 'user-2', 'user-3', 'user-4'],
-    comments: [
-      {
-        user: { name: 'Dr. Rajesh Verma' },
-        text: 'Excellent choice Pooja! Monk fruit mogrosides have an effective 0 Glycemic Index.',
-        createdAt: '2 hours ago',
-      },
-    ],
-    createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    isVideo: false,
-  },
-  {
-    _id: 'sample-post-2',
-    user: {
-      name: 'Rohan Mehra',
-      profilePicture: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
-    },
-    content: 'Watch this quick 20-second recipe: Guilt-Free Sugar-Free Chia Pudding sweetened with just 3 drops of Sweet Monk liquid extract! Perfect for evening keto cravings 🥣🍓 #Recipe #Keto #Transformation',
-    mediaUrl: 'https://assets.mixkit.co/videos/preview/mixkit-healthy-bowl-with-fresh-fruits-and-berries-42636-large.mp4',
-    tags: ['#Recipe', '#Keto', '#SweetMonk'],
-    location: 'Mumbai, India',
-    likes: ['user-5', 'user-6', 'user-7', 'user-8', 'user-9'],
-    comments: [
-      {
-        user: { name: 'Sneha Patel' },
-        text: 'Looks mouthwatering! Going to try this dessert recipe today.',
-        createdAt: '4 hours ago',
-      },
-    ],
-    createdAt: new Date(Date.now() - 5 * 3600 * 1000).toISOString(),
-    isVideo: true,
-  },
-  {
-    _id: 'sample-post-3',
-    user: {
-      name: 'Ananya Deshmukh',
-      profilePicture: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-    },
-    content: '30 Days Sugar-Free Milestone reached today! Lost 3.2 kgs, skin feels so much clearer, and energy levels throughout the afternoon are steady. Big thanks to the Kosmico community for keeping me motivated! 💪✨ #Transformation #HealthyLiving #NoSugarChallenge',
-    mediaUrl: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&w=1200&q=80',
-    tags: ['#Transformation', '#HealthyLiving', '#SugarFree'],
-    location: 'Bengaluru, India',
-    likes: ['user-10', 'user-11', 'user-12', 'user-13', 'user-14', 'user-15'],
-    comments: [
-      {
-        user: { name: 'Karan Joshi' },
-        text: 'So inspiring Ananya! Way to go!',
-        createdAt: '1 day ago',
-      },
-    ],
-    createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-    isVideo: false,
-  },
-];
-
 const PRESET_TAGS = [
   '#SweetMonk',
   '#SugarFree',
@@ -124,13 +57,16 @@ export const CommunityPage: React.FC = () => {
   const { user, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
 
-  // Feed State
-  const [posts, setPosts] = useState<CommunityPost[]>(INITIAL_COMMUNITY_POSTS);
+  // Feed State (Clean empty feed — only user uploaded posts will appear)
+  const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [activeFilter, setActiveFilter] = useState<'all' | 'recipes' | 'transformations' | 'videos'>('all');
   const [isLoadingFeed, setIsLoadingFeed] = useState(false);
 
-  // Post Upload Modal & Form State
+  // Post Upload & Edit Modal State
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<CommunityPost | null>(null);
+  const [activeMenuPostId, setActiveMenuPostId] = useState<string | null>(null);
+
   const [postContent, setPostContent] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>(['#SweetMonk']);
   const [postLocation, setPostLocation] = useState('');
@@ -148,15 +84,44 @@ export const CommunityPage: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Open Edit Modal with existing post data
+  const handleOpenEditPost = (post: CommunityPost) => {
+    setEditingPost(post);
+    setPostContent(post.content);
+    setSelectedTags(post.tags && post.tags.length > 0 ? post.tags : ['#SweetMonk']);
+    setPostLocation(post.location || '');
+    setMediaPreview(post.mediaUrl || null);
+    setMediaType(post.isVideo ? 'video' : post.mediaUrl ? 'image' : null);
+    setMediaFile(null);
+    setSubmitError(null);
+    setActiveMenuPostId(null);
+    setIsCreateModalOpen(true);
+  };
+
+  // Delete Post
+  const handleDeletePost = async (postId: string) => {
+    setActiveMenuPostId(null);
+    const confirmed = window.confirm('Are you sure you want to delete this post?');
+    if (!confirmed) return;
+
+    setPosts((prev) => prev.filter((p) => p._id !== postId));
+
+    if (isAuthenticated) {
+      try {
+        await api.delete(`/posts/${postId}`);
+      } catch (err) {
+        console.warn('Backend delete post notice:', err);
+      }
+    }
+  };
+
   // Fetch live feed from backend if user is authenticated
   const fetchLiveFeed = async () => {
-    if (!isAuthenticated) return;
     setIsLoadingFeed(true);
     try {
       const res = await api.get('/posts/feed');
       const livePosts = res.data?.data?.posts || res.data?.posts || [];
-      if (Array.isArray(livePosts) && livePosts.length > 0) {
-        // Merge live posts with curated samples so the feed stays rich
+      if (Array.isArray(livePosts)) {
         const formattedLive = livePosts.map((p: any) => ({
           _id: p._id || p.id,
           user: {
@@ -179,10 +144,11 @@ export const CommunityPage: React.FC = () => {
             (p.mediaUrls && p.mediaUrls.some((m: string) => m.endsWith('.mp4') || m.endsWith('.webm') || m.includes('video')))
           ),
         }));
-        setPosts([...formattedLive, ...INITIAL_COMMUNITY_POSTS]);
+        setPosts(formattedLive);
       }
     } catch (err) {
       console.warn('Community live feed notice:', err);
+      setPosts([]);
     } finally {
       setIsLoadingFeed(false);
     }
@@ -241,7 +207,7 @@ export const CommunityPage: React.FC = () => {
     }
   };
 
-  // Handle Create Post Submit
+  // Handle Create or Edit Post Submit
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAuthenticated) {
@@ -257,6 +223,63 @@ export const CommunityPage: React.FC = () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
+    // EDIT EXISTING POST MODE
+    if (editingPost) {
+      try {
+        const formData = new FormData();
+        formData.append('content', postContent.trim());
+        formData.append('privacyLevel', 'public');
+        if (postLocation.trim()) {
+          formData.append('location', postLocation.trim());
+        }
+        selectedTags.forEach((t) => formData.append('tags', t));
+
+        if (mediaFile) {
+          formData.append('media', mediaFile);
+        } else if (mediaPreview) {
+          formData.append('mediaUrl', mediaPreview);
+        }
+
+        try {
+          await api.put(`/posts/${editingPost._id}`, formData);
+        } catch (apiErr: any) {
+          console.warn('Backend edit post warning:', apiErr);
+        }
+
+        setPosts((prevPosts) =>
+          prevPosts.map((p) => {
+            if (p._id !== editingPost._id) return p;
+            return {
+              ...p,
+              content: postContent.trim(),
+              location: postLocation.trim(),
+              tags: selectedTags,
+              mediaUrl: mediaPreview || '',
+              mediaUrls: mediaPreview ? [mediaPreview] : [],
+              isVideo: mediaType === 'video',
+            };
+          })
+        );
+
+        setSubmitSuccess(true);
+
+        setTimeout(() => {
+          setIsCreateModalOpen(false);
+          setEditingPost(null);
+          setPostContent('');
+          setPostLocation('');
+          removeSelectedMedia();
+          setSubmitSuccess(false);
+        }, 700);
+      } catch (err: any) {
+        setSubmitError(err?.message || 'Failed to update post. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
+    // CREATE NEW POST MODE
     try {
       const formData = new FormData();
       formData.append('content', postContent.trim());
@@ -302,11 +325,12 @@ export const CommunityPage: React.FC = () => {
 
       setTimeout(() => {
         setIsCreateModalOpen(false);
+        setEditingPost(null);
         setPostContent('');
         setPostLocation('');
         removeSelectedMedia();
         setSubmitSuccess(false);
-      }, 800);
+      }, 700);
     } catch (err: any) {
       setSubmitError(err?.message || 'Failed to publish post. Please try again.');
     } finally {
@@ -458,7 +482,7 @@ export const CommunityPage: React.FC = () => {
 
               <div className="flex items-center gap-2 text-xs text-emerald-200/80 bg-emerald-900/50 px-4 py-2.5 rounded-2xl border border-emerald-800/60">
                 <Users className="w-4 h-4 text-amber-400" />
-                <span>12.5k+ Members Active</span>
+                <span>{posts.length} {posts.length === 1 ? 'Post' : 'Posts'} Live</span>
               </div>
             </div>
           </div>
@@ -582,11 +606,45 @@ export const CommunityPage: React.FC = () => {
               </div>
             )}
 
+            {/* EMPTY STATE (WHEN NO POSTS UPLOADED YET) */}
+            {!isLoadingFeed && filteredPosts.length === 0 && (
+              <div className="bg-white rounded-3xl p-8 sm:p-14 text-center border border-neutral-200/80 shadow-xs space-y-4">
+                <div className="w-16 h-16 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center mx-auto ring-8 ring-emerald-50/50">
+                  <Users className="w-8 h-8" />
+                </div>
+                <div className="max-w-md mx-auto space-y-2">
+                  <h3 className="font-serif font-bold text-lg sm:text-xl text-neutral-900">
+                    No community posts yet
+                  </h3>
+                  <p className="text-xs sm:text-sm text-neutral-500 font-normal leading-relaxed">
+                    Be the first to share your healthy sugar-free recipe, photo, or short video with the Kosmico community!
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    if (!isAuthenticated) {
+                      navigate('/login?redirect=/community');
+                    } else {
+                      setIsCreateModalOpen(true);
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-[#0a7a40] hover:bg-[#086333] text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Upload First Post 📸</span>
+                </button>
+              </div>
+            )}
+
             <div className="space-y-6">
               {filteredPosts.map((post) => {
-                const currentUserId = user?._id || user?.id || 'guest-user';
+                const currentUserId = user?._id || user?.id || '';
                 const isLiked = (post.likes || []).includes(currentUserId);
                 const isCommentBoxOpen = activeCommentPostId === post._id;
+                const isMyPost = Boolean(
+                  (currentUserId && post.user?._id && (currentUserId === post.user._id || currentUserId === (post.user as any)?.id)) ||
+                  (user?.name && post.user?.name === user.name)
+                );
 
                 return (
                   <article
@@ -630,9 +688,43 @@ export const CommunityPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1 text-emerald-800 bg-emerald-50/80 px-2.5 py-1 rounded-full text-[11px] font-semibold border border-emerald-200/60">
-                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                        <span>Verified Community</span>
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1 text-emerald-800 bg-emerald-50/80 px-2.5 py-1 rounded-full text-[11px] font-semibold border border-emerald-200/60">
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                          <span className="hidden sm:inline">Verified Community</span>
+                        </div>
+
+                        {/* Owner Options: Edit & Delete (3-Dots Menu) */}
+                        {isMyPost && (
+                          <div className="relative">
+                            <button
+                              onClick={() => setActiveMenuPostId(activeMenuPostId === post._id ? null : post._id)}
+                              className="p-1.5 rounded-full hover:bg-neutral-100 text-neutral-500 hover:text-neutral-800 transition-colors cursor-pointer"
+                              title="Post options"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </button>
+
+                            {activeMenuPostId === post._id && (
+                              <div className="absolute right-0 top-8 z-20 w-36 bg-white rounded-2xl shadow-xl border border-neutral-100 py-1.5 animate-in fade-in zoom-in-95 duration-100">
+                                <button
+                                  onClick={() => handleOpenEditPost(post)}
+                                  className="w-full px-3.5 py-2 text-left text-xs font-semibold text-neutral-700 hover:bg-emerald-50 hover:text-emerald-800 flex items-center gap-2 transition-colors cursor-pointer"
+                                >
+                                  <Edit3 className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>Edit Post</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePost(post._id)}
+                                  className="w-full px-3.5 py-2 text-left text-xs font-semibold text-rose-600 hover:bg-rose-50 flex items-center gap-2 transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                                  <span>Delete Post</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -872,17 +964,24 @@ export const CommunityPage: React.FC = () => {
             <div className="flex justify-between items-center pb-2 border-b border-neutral-100">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-emerald-50 text-emerald-800 rounded-xl">
-                  <Users className="w-5 h-5 text-emerald-700" />
+                  {editingPost ? <Edit3 className="w-5 h-5 text-emerald-700" /> : <Users className="w-5 h-5 text-emerald-700" />}
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg text-neutral-900 leading-tight">Create Community Post</h3>
-                  <p className="text-xs text-neutral-500 font-normal">Share recipe, photo, or short video</p>
+                  <h3 className="font-bold text-lg text-neutral-900 leading-tight">
+                    {editingPost ? 'Edit Community Post' : 'Create Community Post'}
+                  </h3>
+                  <p className="text-xs text-neutral-500 font-normal">
+                    {editingPost ? 'Update your recipe, content, or media' : 'Share recipe, photo, or short video'}
+                  </p>
                 </div>
               </div>
 
               <button
                 onClick={() => {
                   setIsCreateModalOpen(false);
+                  setEditingPost(null);
+                  setPostContent('');
+                  setPostLocation('');
                   removeSelectedMedia();
                   setSubmitError(null);
                 }}
@@ -1048,11 +1147,11 @@ export const CommunityPage: React.FC = () => {
               {submitSuccess && (
                 <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-xl flex items-center gap-2 justify-center">
                   <CheckCircle2 className="w-4 h-4 text-emerald-700" />
-                  <span>Post published successfully!</span>
+                  <span>{editingPost ? 'Post updated successfully!' : 'Post published successfully!'}</span>
                 </div>
               )}
 
-              {/* Publish Button */}
+              {/* Publish / Save Button */}
               <button
                 type="submit"
                 disabled={isSubmitting || !postContent.trim()}
@@ -1061,12 +1160,12 @@ export const CommunityPage: React.FC = () => {
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Publishing to Community...</span>
+                    <span>{editingPost ? 'Saving Changes...' : 'Publishing to Community...'}</span>
                   </>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />
-                    <span>Publish Post</span>
+                    <span>{editingPost ? 'Save Changes' : 'Publish Post'}</span>
                   </>
                 )}
               </button>
