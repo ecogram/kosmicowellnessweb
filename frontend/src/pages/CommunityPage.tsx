@@ -9,7 +9,8 @@ import {
   Users, Image as ImageIcon, Video, Heart, MessageCircle, Share2,
   Send, Plus, X, Sparkles, CheckCircle2, AlertCircle,
   Loader2, Flame, ShieldCheck, Tag, MapPin, Globe,
-  ArrowRight, Check, MoreVertical, Edit3, Trash2, Maximize2
+  ArrowRight, Check, MoreVertical, Edit3, Trash2, Maximize2,
+  ChevronDown, ChevronUp
 } from 'lucide-react';
 
 interface Comment {
@@ -81,6 +82,14 @@ export const CommunityPage: React.FC = () => {
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const [copiedPostId, setCopiedPostId] = useState<string | null>(null);
+  const [expandedPosts, setExpandedPosts] = useState<Record<string, boolean>>({});
+
+  const toggleExpandPost = (postId: string) => {
+    setExpandedPosts((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
+  };
 
   // Fullscreen Image Lightbox Viewer State
   const [selectedViewerMedia, setSelectedViewerMedia] = useState<{
@@ -769,9 +778,48 @@ export const CommunityPage: React.FC = () => {
 
                     {/* POST CONTENT */}
                     <div className="px-4 sm:px-5 pb-3">
-                      <p className="text-sm sm:text-base text-neutral-800 leading-relaxed font-normal whitespace-pre-line">
-                        {post.content}
-                      </p>
+                      {(() => {
+                        const isExpanded = !!expandedPosts[post._id];
+                        const linesCount = post.content.split('\n').length;
+                        const isLongContent = post.content.trim().length > 150 || linesCount > 3;
+
+                        return (
+                          <>
+                            <p
+                              onClick={() => {
+                                if (!isExpanded && isLongContent) toggleExpandPost(post._id);
+                              }}
+                              className={`text-sm sm:text-base text-neutral-800 leading-relaxed font-normal whitespace-pre-line transition-all ${
+                                !isExpanded && isLongContent
+                                  ? 'line-clamp-3 cursor-pointer hover:text-neutral-900'
+                                  : ''
+                              }`}
+                            >
+                              {post.content}
+                            </p>
+
+                            {isLongContent && (
+                              <button
+                                type="button"
+                                onClick={() => toggleExpandPost(post._id)}
+                                className="mt-1.5 text-xs sm:text-sm font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer transition-colors"
+                              >
+                                {isExpanded ? (
+                                  <>
+                                    <span>Show less</span>
+                                    <ChevronUp className="w-3.5 h-3.5" />
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>... Read more</span>
+                                    <ChevronDown className="w-3.5 h-3.5" />
+                                  </>
+                                )}
+                              </button>
+                            )}
+                          </>
+                        );
+                      })()}
 
                       {/* TAGS */}
                       {post.tags && post.tags.length > 0 && (
