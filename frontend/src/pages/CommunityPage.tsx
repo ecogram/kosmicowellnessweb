@@ -115,6 +115,13 @@ export const CommunityPage: React.FC = () => {
     }
   };
 
+  // Helper to detect video format
+  const isVideoUrl = (url?: string): boolean => {
+    if (!url) return false;
+    const lower = url.toLowerCase();
+    return lower.endsWith('.mp4') || lower.endsWith('.webm') || lower.endsWith('.mov') || lower.includes('/video/');
+  };
+
   // Fetch live feed from backend if user is authenticated
   const fetchLiveFeed = async () => {
     setIsLoadingFeed(true);
@@ -122,28 +129,36 @@ export const CommunityPage: React.FC = () => {
       const res = await api.get('/posts/feed');
       const livePosts = res.data?.data?.posts || res.data?.posts || [];
       if (Array.isArray(livePosts)) {
-        const formattedLive = livePosts.map((p: any) => ({
-          _id: p._id || p.id,
-          user: {
-            _id: p.user?._id || p.user?.id,
-            name: p.user?.name || 'Community Member',
-            profilePicture: p.user?.profilePicture ? normalizeImageUrl(p.user.profilePicture) : '',
-            email: p.user?.email,
-          },
-          content: p.content,
-          mediaUrl: p.mediaUrl || (p.mediaUrls && p.mediaUrls[0]) || '',
-          mediaUrls: p.mediaUrls || (p.mediaUrl ? [p.mediaUrl] : []),
-          tags: p.tags || [],
-          location: p.location || '',
-          privacyLevel: p.privacyLevel || 'public',
-          likes: p.likes || [],
-          comments: p.comments || [],
-          createdAt: p.createdAt || new Date().toISOString(),
-          isVideo: Boolean(
-            (p.mediaUrl && (p.mediaUrl.endsWith('.mp4') || p.mediaUrl.endsWith('.webm') || p.mediaUrl.includes('video'))) ||
-            (p.mediaUrls && p.mediaUrls.some((m: string) => m.endsWith('.mp4') || m.endsWith('.webm') || m.includes('video')))
-          ),
-        }));
+        const formattedLive = livePosts.map((p: any) => {
+          const rawMedia =
+            (Array.isArray(p.mediaUrls) && p.mediaUrls.length > 0 && p.mediaUrls[0]) ||
+            p.mediaUrl ||
+            '';
+          const cleanMedia = normalizeImageUrl(rawMedia);
+          const cleanMediaUrls = (p.mediaUrls && Array.isArray(p.mediaUrls) ? p.mediaUrls : [p.mediaUrl])
+            .filter(Boolean)
+            .map((m: string) => normalizeImageUrl(m));
+
+          return {
+            _id: p._id || p.id,
+            user: {
+              _id: p.user?._id || p.user?.id,
+              name: p.user?.name || 'Community Member',
+              profilePicture: p.user?.profilePicture ? normalizeImageUrl(p.user.profilePicture) : '',
+              email: p.user?.email,
+            },
+            content: p.content,
+            mediaUrl: cleanMedia,
+            mediaUrls: cleanMediaUrls,
+            tags: p.tags || [],
+            location: p.location || '',
+            privacyLevel: p.privacyLevel || 'public',
+            likes: p.likes || [],
+            comments: p.comments || [],
+            createdAt: p.createdAt || new Date().toISOString(),
+            isVideo: isVideoUrl(cleanMedia),
+          };
+        });
         setPosts(formattedLive);
       }
     } catch (err) {
@@ -757,15 +772,19 @@ export const CommunityPage: React.FC = () => {
                             controls
                             playsInline
                             preload="metadata"
-                            src={post.mediaUrl}
+                            src={normalizeImageUrl(post.mediaUrl)}
                             className="w-full max-h-[500px] object-contain bg-black"
                           />
                         ) : (
                           <img
-                            src={post.mediaUrl}
+                            src={normalizeImageUrl(post.mediaUrl)}
                             alt="Community media post"
                             className="w-full h-auto max-h-[500px] object-cover"
                             loading="lazy"
+                            onError={(e) => {
+                              const container = e.currentTarget.parentElement;
+                              if (container) container.style.display = 'none';
+                            }}
                           />
                         )}
                       </div>
