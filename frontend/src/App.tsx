@@ -70,6 +70,7 @@ const TermsOfService = lazyWithRetry(() => import('./pages/TermsOfService').then
 const ReturnsRefunds = lazyWithRetry(() => import('./pages/ReturnsRefunds').then(m => ({ default: m.ReturnsRefunds })));
 const BlogListPage = lazyWithRetry(() => import('./pages/BlogListPage').then(m => ({ default: m.BlogListPage })));
 const BlogPostPage = lazyWithRetry(() => import('./pages/BlogPostPage').then(m => ({ default: m.BlogPostPage })));
+const CommunityPage = lazyWithRetry(() => import('./pages/CommunityPage').then(m => ({ default: m.CommunityPage })));
 
 // Global Loading Fallback
 const PageLoadingFallback = () => (
@@ -166,6 +167,7 @@ function App() {
                     <Route path="/register" element={<Register />} />
 
                     {/* Marketing & Info Pages */}
+                    <Route path="/community" element={<CommunityPage />} />
                     <Route path="/blog" element={<BlogListPage />} />
                     <Route path="/blog/:slug" element={<BlogPostPage />} />
                     <Route path="/about" element={<About />} />
