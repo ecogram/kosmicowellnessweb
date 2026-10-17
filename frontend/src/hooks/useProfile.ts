@@ -140,11 +140,13 @@ export const useUpdateProfile = () => {
     mutationFn: async ({
       name,
       phoneNumber,
+      email,
       profilePictureFile,
       profilePicture,
     }: {
       name?: string;
       phoneNumber?: string;
+      email?: string;
       profilePictureFile?: File;
       profilePicture?: string;
     }) => {
@@ -157,6 +159,9 @@ export const useUpdateProfile = () => {
         }
         if (phoneNumber) {
           formData.append('phoneNumber', phoneNumber);
+        }
+        if (email !== undefined) {
+          formData.append('email', email);
         }
         // STRICTLY use 'profilePicture' field as required by backend Multer upload.single('profilePicture')
         formData.append('profilePicture', profilePictureFile);
@@ -175,6 +180,9 @@ export const useUpdateProfile = () => {
         }
         if (phoneNumber !== undefined) {
           payload.phoneNumber = phoneNumber;
+        }
+        if (email !== undefined) {
+          payload.email = email;
         }
         if (profilePicture !== undefined) {
           payload.profilePicture = profilePicture;
@@ -203,6 +211,9 @@ export const useUpdateProfile = () => {
         const finalName = updatedUser.name || (updatedUser as any)?.fullName || '';
         updatedUser.name = finalName;
         updatedUser.fullName = finalName;
+        if (updatedUser.email !== undefined) {
+          updatedUser.email = updatedUser.email;
+        }
         updateUser(updatedUser);
       }
       queryClient.invalidateQueries({ queryKey: ['auth-profile'] });

@@ -195,6 +195,7 @@ export const Profile: React.FC = () => {
   const [profilePicture, setProfilePicture] = useState(normalizeImageUrl(initialPic));
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isProfileSaved, setIsProfileSaved] = useState(false);
+  const [profileErrorMsg, setProfileErrorMsg] = useState('');
   const [imageLoadError, setImageLoadError] = useState(false);
 
   // Photo Selection & Preview State
@@ -580,6 +581,7 @@ export const Profile: React.FC = () => {
       const updatedUser = await updateProfileMutation.mutateAsync({
         name: fullName.trim() || user?.name,
         phoneNumber: phone.trim() || user?.phoneNumber,
+        email: email.trim() || user?.email || '',
         profilePictureFile: photoFile,
         profilePicture: previewDataUrl,
       });
@@ -624,6 +626,7 @@ export const Profile: React.FC = () => {
       const updatedUser = await updateProfileMutation.mutateAsync({
         name: fullName.trim() || user?.name,
         phoneNumber: phone.trim() || user?.phoneNumber,
+        email: email.trim() || user?.email || '',
         profilePictureFile: uploadFile,
         profilePicture: compressedDataUrl,
       });
@@ -658,32 +661,41 @@ export const Profile: React.FC = () => {
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    setProfileErrorMsg('');
     const cleanName = fullName.trim();
     const cleanPhone = phone.trim();
+    const cleanEmail = email.trim();
+
+    // Client-side quick email validation if entered (email is optional)
+    if (cleanEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setProfileErrorMsg('Please enter a valid email address or leave it blank');
+      return;
+    }
 
     try {
-      // API docs: PUT /api/auth/profile → multipart/form-data
-      // Fields: name (String), phoneNumber (String), profilePicture (File binary)
+      // API docs: PUT /api/auth/profile → multipart/form-data / JSON
+      // Fields: name (String), phoneNumber (String), email (String, optional)
       const updatedUser = await updateProfileMutation.mutateAsync({
         name: cleanName,
         phoneNumber: cleanPhone,
+        email: cleanEmail,
       });
       if (updatedUser?.name) setFullName(updatedUser.name);
       if (updatedUser?.phoneNumber || updatedUser?.phone) {
         setPhone(updatedUser.phoneNumber || updatedUser.phone);
+      }
+      if (updatedUser?.email !== undefined) {
+        setEmail(updatedUser.email || '');
       }
       setIsProfileSaved(true);
       setTimeout(() => {
         setIsProfileSaved(false);
         setIsEditProfileOpen(false);
       }, 700);
-    } catch (err) {
+    } catch (err: any) {
       console.warn('Backend update profile notice:', err);
-      setIsProfileSaved(true);
-      setTimeout(() => {
-        setIsProfileSaved(false);
-        setIsEditProfileOpen(false);
-      }, 700);
+      const msg = err?.response?.data?.message || err?.message || 'Failed to update profile. Please try again.';
+      setProfileErrorMsg(msg);
     }
   };
 
@@ -861,6 +873,7 @@ export const Profile: React.FC = () => {
               setFullName(user?.name || (user as any)?.fullName || fullName || '');
               setEmail(user?.email || email || '');
               setPhone(user?.phoneNumber || (user as any)?.phone || (user as any)?.mobile || phone || '');
+              setProfileErrorMsg('');
               const editPic = profilePicture || user?.profilePicture || user?.profileImage || user?.avatar || '';
               setProfilePicture(normalizeImageUrl(editPic));
               setIsEditProfileOpen(true);
@@ -1146,7 +1159,10 @@ export const Profile: React.FC = () => {
             <div className="flex justify-between items-center pb-2">
               <h3 className="font-bold text-lg text-neutral-900">Edit Profile</h3>
               <button
-                onClick={() => setIsEditProfileOpen(false)}
+                onClick={() => {
+                  setIsEditProfileOpen(false);
+                  setProfileErrorMsg('');
+                }}
                 className="p-1 rounded-full text-neutral-400 hover:text-neutral-700 cursor-pointer transition-colors"
               >
                 <X className="w-5 h-5" />
@@ -1170,17 +1186,23 @@ export const Profile: React.FC = () => {
                 </div>
               </div>
 
-              {/* Email Address Field with Mail Icon (Read-only) */}
+              {/* Email Address Field with Mail Icon (Editable & Optional) */}
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-neutral-600 block">Email Address</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-neutral-600 block">Email Address</label>
+                  <span className="text-[11px] font-normal text-neutral-400">Optional</span>
+                </div>
                 <div className="relative flex items-center">
                   <Mail className="w-4 h-4 text-neutral-400 absolute left-3.5 pointer-events-none" />
                   <input
                     type="email"
-                    value={user?.email || email}
-                    disabled
-                    readOnly
-                    className="w-full pl-10 pr-4 py-3 bg-neutral-100/80 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-600 cursor-not-allowed select-none"
+                    placeholder="name@example.com (optional)"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (profileErrorMsg) setProfileErrorMsg('');
+                    }}
+                    className="w-full pl-10 pr-4 py-3 bg-neutral-50/70 border border-neutral-200 rounded-xl text-sm font-medium text-neutral-900 focus:outline-none focus:border-emerald-700 focus:bg-white transition-all"
                   />
                 </div>
               </div>
@@ -1199,6 +1221,13 @@ export const Profile: React.FC = () => {
                   />
                 </div>
               </div>
+
+              {profileErrorMsg && (
+                <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-medium rounded-xl text-center flex items-center justify-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+                  <span>{profileErrorMsg}</span>
+                </div>
+              )}
 
               {isProfileSaved && (
                 <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold rounded-xl text-center flex items-center justify-center gap-2">
