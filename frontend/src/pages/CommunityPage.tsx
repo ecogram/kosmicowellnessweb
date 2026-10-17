@@ -9,7 +9,7 @@ import {
   Users, Image as ImageIcon, Video, Heart, MessageCircle, Share2,
   Send, Plus, X, Sparkles, CheckCircle2, AlertCircle,
   Loader2, Flame, ShieldCheck, Tag, MapPin, Globe,
-  ArrowRight, Check, MoreVertical, Edit3, Trash2
+  ArrowRight, Check, MoreVertical, Edit3, Trash2, Maximize2
 } from 'lucide-react';
 
 interface Comment {
@@ -81,6 +81,30 @@ export const CommunityPage: React.FC = () => {
   const [activeCommentPostId, setActiveCommentPostId] = useState<string | null>(null);
   const [commentText, setCommentText] = useState('');
   const [copiedPostId, setCopiedPostId] = useState<string | null>(null);
+
+  // Fullscreen Image Lightbox Viewer State
+  const [selectedViewerMedia, setSelectedViewerMedia] = useState<{
+    url: string;
+    author?: string;
+    content?: string;
+  } | null>(null);
+
+  // Close Lightbox on Esc key and lock background scroll
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedViewerMedia(null);
+      }
+    };
+    if (selectedViewerMedia) {
+      window.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedViewerMedia]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -776,16 +800,38 @@ export const CommunityPage: React.FC = () => {
                             className="w-full max-h-[500px] object-contain bg-black"
                           />
                         ) : (
-                          <img
-                            src={normalizeImageUrl(post.mediaUrl)}
-                            alt="Community media post"
-                            className="w-full h-auto max-h-[500px] object-cover"
-                            loading="lazy"
-                            onError={(e) => {
-                              const container = e.currentTarget.parentElement;
-                              if (container) container.style.display = 'none';
-                            }}
-                          />
+                          <div className="relative w-full group cursor-zoom-in flex items-center justify-center">
+                            <img
+                              src={normalizeImageUrl(post.mediaUrl)}
+                              alt="Community media post"
+                              className="w-full h-auto max-h-[500px] object-cover group-hover:brightness-95 transition-all"
+                              loading="lazy"
+                              onClick={() =>
+                                setSelectedViewerMedia({
+                                  url: normalizeImageUrl(post.mediaUrl),
+                                  author: post.user?.name,
+                                  content: post.content,
+                                })
+                              }
+                              onError={(e) => {
+                                const container = e.currentTarget.parentElement?.parentElement;
+                                if (container) container.style.display = 'none';
+                              }}
+                            />
+                            <div
+                              onClick={() =>
+                                setSelectedViewerMedia({
+                                  url: normalizeImageUrl(post.mediaUrl),
+                                  author: post.user?.name,
+                                  content: post.content,
+                                })
+                              }
+                              className="absolute bottom-3 right-3 p-2 rounded-xl bg-black/60 hover:bg-black/80 text-white backdrop-blur-xs flex items-center gap-1.5 text-xs font-semibold opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer shadow-md"
+                            >
+                              <Maximize2 className="w-3.5 h-3.5" />
+                              <span className="text-[11px]">View Full</span>
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}
@@ -1190,6 +1236,71 @@ export const CommunityPage: React.FC = () => {
               </button>
             </form>
           </div>
+        </div>
+      )}
+      {/* FULLSCREEN IMAGE LIGHTBOX VIEWER */}
+      {selectedViewerMedia && (
+        <div
+          className="fixed inset-0 z-60 bg-black/95 backdrop-blur-md flex flex-col items-center justify-between p-3 sm:p-6 animate-in fade-in duration-200"
+          onClick={() => setSelectedViewerMedia(null)}
+        >
+          {/* Top Bar with Author Info and Close button */}
+          <div
+            className="w-full max-w-5xl flex items-center justify-between pb-3 text-white px-2 shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm sm:text-base text-white">
+                {selectedViewerMedia.author || 'Community Member'}
+              </span>
+              <span className="inline-block w-1 h-1 rounded-full bg-neutral-500"></span>
+              <span className="text-xs text-neutral-400 font-normal">Full Photo View</span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <a
+                href={selectedViewerMedia.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                title="Open original image in new tab"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Maximize2 className="w-4 h-4" />
+              </a>
+              <button
+                onClick={() => setSelectedViewerMedia(null)}
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                title="Close viewer (Esc)"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Centered Image Container */}
+          <div
+            className="relative flex-1 w-full max-w-5xl flex items-center justify-center p-2 overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={selectedViewerMedia.url}
+              alt="Community post full preview"
+              className="max-w-full max-h-[78vh] object-contain rounded-2xl shadow-2xl select-none animate-in zoom-in-95 duration-200"
+            />
+          </div>
+
+          {/* Caption Overlay */}
+          {selectedViewerMedia.content && (
+            <div
+              className="w-full max-w-3xl pt-3 px-3 text-center pb-2 shrink-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <p className="text-xs sm:text-sm text-neutral-300 max-w-2xl mx-auto line-clamp-2 font-normal leading-relaxed">
+                {selectedViewerMedia.content}
+              </p>
+            </div>
+          )}
         </div>
       )}
     </div>
