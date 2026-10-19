@@ -12,7 +12,17 @@
     <meta name="description" content="Kosmico Wellness - Sweet Monk 100% Natural Zero-Calorie Sweetener Drops. Pure monk fruit extract with zero sugar, zero carbs, and zero glycemic index. Ideal for keto and healthy living." />
     <meta name="keywords" content="Kosmico Wellness, Sweet Monk, monk fruit sweetener, zero calorie drops, natural sugar substitute, keto sweetener, diabetes friendly sweetener, liquid sweetener" />
     <meta name="robots" content="index, follow" />
-    <link rel="canonical" id="canonical-url" href="https://www.kosmicowellness.com/" />
+    <!-- Canonical URL (Dynamic self-referencing to prevent subpages from falsely claiming to be homepage) -->
+    <script>
+      (function () {
+        var canonical = document.createElement('link');
+        canonical.rel = 'canonical';
+        canonical.id = 'canonical-url';
+        var path = window.location.pathname.replace(/\/$/, '') || '';
+        canonical.href = 'https://www.kosmicowellness.com' + (path ? path : '/');
+        document.head.appendChild(canonical);
+      })();
+    </script>
     
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website" />
