@@ -6,7 +6,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import { api } from '../services/api';
 import { normalizeImageUrl } from '../utils/imageUrl';
 import {
-  Users, Image as ImageIcon, Video, Heart, MessageCircle, Share2,
+  Users, Image as ImageIcon, Heart, MessageCircle, Share2,
   Send, Plus, X, Sparkles, CheckCircle2, AlertCircle,
   Loader2, Flame, ShieldCheck, Tag, MapPin, Globe,
   ArrowRight, Check, MoreVertical, Edit3, Trash2, Maximize2,
@@ -60,7 +60,7 @@ export const CommunityPage: React.FC = () => {
 
   // Feed State (Clean empty feed — only user uploaded posts will appear)
   const [posts, setPosts] = useState<CommunityPost[]>([]);
-  const [activeFilter, setActiveFilter] = useState<'all' | 'recipes' | 'transformations' | 'videos'>('all');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'recipes' | 'transformations'>('all');
   const [isLoadingFeed, setIsLoadingFeed] = useState(false);
 
   // Post Upload & Edit Modal State
@@ -206,29 +206,27 @@ export const CommunityPage: React.FC = () => {
     fetchLiveFeed();
   }, [isAuthenticated]);
 
-  // Handle Media File Selection (Photo or Video)
+  // Handle Media File Selection (Photos only)
   const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size (max 25MB for videos, 10MB for photos)
-    const isVid = file.type.startsWith('video/');
     const isImg = file.type.startsWith('image/');
 
-    if (!isVid && !isImg) {
-      setSubmitError('Please select a valid image (JPG, PNG) or video (MP4, WEBM) file.');
+    if (!isImg) {
+      setSubmitError('Please select a valid image file (JPG, PNG, WEBP). Video uploads are disabled.');
       return;
     }
 
-    const maxSize = isVid ? 25 * 1024 * 1024 : 10 * 1024 * 1024;
+    const maxSize = 10 * 1024 * 1024; // 10MB
     if (file.size > maxSize) {
-      setSubmitError(`File is too large. Maximum size for ${isVid ? 'videos is 25MB' : 'images is 10MB'}.`);
+      setSubmitError('Image file is too large. Maximum size is 10MB.');
       return;
     }
 
     setSubmitError(null);
     setMediaFile(file);
-    setMediaType(isVid ? 'video' : 'image');
+    setMediaType('image');
 
     const previewUrl = URL.createObjectURL(file);
     setMediaPreview(previewUrl);
@@ -485,9 +483,11 @@ export const CommunityPage: React.FC = () => {
         post.content.toLowerCase().includes('lost')
       );
     }
-    if (activeFilter === 'videos') {
+    /* Video filter disabled:
+    if ((activeFilter as any) === 'videos') {
       return post.isVideo === true;
     }
+    */
     return true;
   });
 
@@ -516,7 +516,7 @@ export const CommunityPage: React.FC = () => {
 
             <p className="text-sm sm:text-base text-emerald-100/90 leading-relaxed max-w-2xl font-normal">
               Connect with thousands of health enthusiasts, diabetic-conscious families, and home chefs.
-              Post your delicious Sweet Monk recipes, photos, and videos!
+              Post your delicious Sweet Monk recipes, photos, and stories!
             </p>
 
             <div className="pt-2 flex flex-wrap items-center gap-3">
@@ -572,7 +572,7 @@ export const CommunityPage: React.FC = () => {
                 }}
                 className="flex-1 text-left px-4 py-3 bg-neutral-100/80 hover:bg-neutral-100 text-neutral-500 text-sm rounded-xl transition-colors cursor-pointer"
               >
-                Share a recipe, photo, or video with the community...
+                Share a recipe or photo with the community...
               </button>
 
               <div className="hidden sm:flex items-center gap-1.5 shrink-0">
@@ -590,6 +590,7 @@ export const CommunityPage: React.FC = () => {
                   <ImageIcon className="w-4 h-4 text-emerald-600" />
                   <span>Photo</span>
                 </button>
+                {/* Video upload option commented out:
                 <button
                   onClick={() => {
                     if (!isAuthenticated) {
@@ -604,6 +605,7 @@ export const CommunityPage: React.FC = () => {
                   <Video className="w-4 h-4 text-amber-600" />
                   <span>Video</span>
                 </button>
+                */}
               </div>
             </div>
 
@@ -639,6 +641,7 @@ export const CommunityPage: React.FC = () => {
               >
                 <span>Transformations 💪</span>
               </button>
+              {/* Video Clips filter commented out:
               <button
                 onClick={() => setActiveFilter('videos')}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
@@ -650,6 +653,7 @@ export const CommunityPage: React.FC = () => {
                 <Video className="w-3.5 h-3.5 text-amber-500" />
                 <span>Video Clips 🎥</span>
               </button>
+              */}
             </div>
 
             {/* FEED LIST */}
@@ -1067,7 +1071,7 @@ export const CommunityPage: React.FC = () => {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-emerald-600 font-bold mt-0.5">•</span>
-                  <span><strong>Photo & Video Clarity:</strong> Ensure uploaded photos and videos are health & recipe focused.</span>
+                  <span><strong>Photo Clarity:</strong> Ensure uploaded photos are health & recipe focused.</span>
                 </li>
               </ul>
             </div>
@@ -1075,7 +1079,7 @@ export const CommunityPage: React.FC = () => {
         </div>
       </Container>
 
-      {/* MODAL: CREATE / UPLOAD POST (PHOTO & VIDEO) */}
+      {/* MODAL: CREATE / UPLOAD POST (PHOTO ONLY) */}
       {isCreateModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="w-full max-w-xl bg-white rounded-t-3xl sm:rounded-3xl p-6 space-y-5 shadow-2xl border border-neutral-100 max-h-[92vh] overflow-y-auto">
@@ -1090,7 +1094,7 @@ export const CommunityPage: React.FC = () => {
                     {editingPost ? 'Edit Community Post' : 'Create Community Post'}
                   </h3>
                   <p className="text-xs text-neutral-500 font-normal">
-                    {editingPost ? 'Update your recipe, content, or media' : 'Share recipe, photo, or short video'}
+                    {editingPost ? 'Update your recipe, content, or photo' : 'Share recipe or photo'}
                   </p>
                 </div>
               </div>
@@ -1149,10 +1153,10 @@ export const CommunityPage: React.FC = () => {
                 />
               </div>
 
-              {/* Media File Upload Area & Preview */}
+              {/* Media File Upload Area & Preview (Photo Only) */}
               <div className="space-y-2">
                 <label className="text-xs font-bold text-neutral-700 block">
-                  Add Photo or Video (Optional)
+                  Add Photo (Optional)
                 </label>
 
                 {mediaPreview ? (
@@ -1181,17 +1185,18 @@ export const CommunityPage: React.FC = () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-2 gap-3">
+                  <div>
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="p-4 border-2 border-dashed border-emerald-600/30 hover:border-emerald-600 bg-emerald-50/30 hover:bg-emerald-50/60 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all group"
+                      className="w-full p-4 border-2 border-dashed border-emerald-600/30 hover:border-emerald-600 bg-emerald-50/30 hover:bg-emerald-50/60 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all group"
                     >
                       <ImageIcon className="w-6 h-6 text-emerald-600 group-hover:scale-110 transition-transform" />
                       <span className="text-xs font-bold text-emerald-800">Upload Photo</span>
-                      <span className="text-[10px] text-neutral-500">JPG, PNG, WEBP</span>
+                      <span className="text-[10px] text-neutral-500">JPG, PNG, WEBP (Max 10MB)</span>
                     </button>
 
+                    {/* Video Upload Disabled:
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
@@ -1201,14 +1206,15 @@ export const CommunityPage: React.FC = () => {
                       <span className="text-xs font-bold text-amber-900">Upload Video</span>
                       <span className="text-[10px] text-neutral-500">MP4, WEBM (Max 25MB)</span>
                     </button>
+                    */}
                   </div>
                 )}
 
-                {/* Hidden File Input */}
+                {/* Hidden File Input (Images Only) */}
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*,video/*"
+                  accept="image/*"
                   onChange={handleMediaSelect}
                   className="hidden"
                 />
