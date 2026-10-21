@@ -28,6 +28,8 @@ export const normalizeImageUrl = (url?: string | null): string => {
     normalized = `https://api.kosmicowellness.com/uploads/${normalized}`;
   } else if (normalized.startsWith('/api/uploads/')) {
     normalized = `https://api.kosmicowellness.com${normalized.replace('/api', '')}`;
+  } else if (normalized.startsWith('/assets/') || normalized.startsWith('assets/')) {
+    return normalized.startsWith('/') ? normalized : `/${normalized}`;
   } else if (!normalized.startsWith('http://') && !normalized.startsWith('https://')) {
     // Plain filename or relative path (e.g. profilePicture-1727...jpg)
     normalized = `https://api.kosmicowellness.com/uploads/${normalized.replace(/^\//, '')}`;

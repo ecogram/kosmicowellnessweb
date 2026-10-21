@@ -235,9 +235,6 @@ export const CommunityPage: React.FC = () => {
   };
 
   const removeSelectedMedia = () => {
-    if (mediaPreview) {
-      URL.revokeObjectURL(mediaPreview);
-    }
     setMediaFile(null);
     setMediaPreview(null);
     setMediaType(null);
@@ -349,6 +346,15 @@ export const CommunityPage: React.FC = () => {
         console.warn('Backend post creation warning, applying seamless local upload:', apiErr);
       }
 
+      const resolvedServerMedia =
+        newPostData?.mediaUrl ||
+        (Array.isArray(newPostData?.mediaUrls) && newPostData.mediaUrls[0]) ||
+        '';
+
+      const finalMediaUrl = resolvedServerMedia
+        ? normalizeImageUrl(resolvedServerMedia)
+        : (mediaPreview || '');
+
       // Optimistic instant UI update so user sees their post immediately
       const createdPost: CommunityPost = {
         _id: newPostData?._id || `user-post-${Date.now()}`,
@@ -358,8 +364,8 @@ export const CommunityPage: React.FC = () => {
           profilePicture: user?.profilePicture ? normalizeImageUrl(user.profilePicture) : '',
         },
         content: postContent.trim(),
-        mediaUrl: mediaPreview || '',
-        mediaUrls: mediaPreview ? [mediaPreview] : [],
+        mediaUrl: finalMediaUrl,
+        mediaUrls: finalMediaUrl ? [finalMediaUrl] : [],
         tags: selectedTags,
         location: postLocation.trim(),
         likes: [],
