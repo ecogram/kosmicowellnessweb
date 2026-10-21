@@ -96,8 +96,8 @@ export const BLOG_POSTS: BlogPost[] = [
             'The result? An exact Glycemic Index of 0.0. Absolutely zero rise in blood glucose, zero insulin secretion, zero dental cavities, and zero bitter aftertaste.'
           ],
           image: {
-            src: '/assets/products/sweetmonk-lifestyle-drop.png',
-            alt: 'Kosmico Sweet Monk Liquid Sweetener Drop',
+            src: '/assets/products/product-box.jpg',
+            alt: 'Kosmico Sweet Monk Liquid Sweetener Drops & Packaging',
             caption: 'Just 1 to 2 drops of Kosmico Sweet Monk provide clean, authentic sweetness without any bitter aftertaste or chemicals.'
           },
           bulletPoints: [
@@ -213,9 +213,9 @@ export const BLOG_POSTS: BlogPost[] = [
             'By replacing cane sugar and jaggery with Kosmico Sweet Monk drops, you instantly eliminate 100% of these beverage spikes while enjoying authentic sweetness.'
           ],
           image: {
-            src: '/assets/dishes/kheer-lifestyle.jpg',
-            alt: 'Sugar-free traditional Indian Kheer prepared with Sweet Monk drops',
-            caption: 'You can enjoy traditional delicacies like kheer, halwa, and sweet tea completely guilt-free with zero blood sugar spikes.'
+            src: '/assets/dishes/rasmalai.jpg',
+            alt: 'Sugar-free traditional Indian Rasmalai prepared with Sweet Monk drops',
+            caption: 'You can enjoy traditional delicacies like rasmalai, kheer, and halwa completely guilt-free with zero blood sugar spikes.'
           }
         },
         {
@@ -315,7 +315,7 @@ export const BLOG_POSTS: BlogPost[] = [
             'Furthermore, monk fruit is heat-stable up to 200°C (392°F), making it ideal for keto brownies, almond flour cakes, and sugar-free festive Indian sweets.'
           ],
           image: {
-            src: '/assets/dishes/gulab-jamun-lifestyle.jpg',
+            src: '/assets/dishes/gulab-jamun.jpg',
             alt: 'Keto-friendly sugar-free Indian sweets made with natural monk fruit extract',
             caption: 'Craft delicious low-carb Indian desserts and keto treats with pure monk fruit sweetness.'
           },
@@ -367,7 +367,7 @@ export const BLOG_POSTS: BlogPost[] = [
       role: 'Traditional Indian Culinary & Diabetic Nutrition Specialists',
       avatar: '/assets/blogs/author-clinical-team.jpg',
     },
-    coverImage: '/assets/dishes/kheer-lifestyle.jpg',
+    coverImage: '/assets/dishes/kheer.jpg',
     tags: ['Healthy Recipes', 'Sugar-Free Sweets', 'Diabetic Recipes', 'Monk Fruit Cooking', 'Gajar Halwa', 'Kheer Recipe', 'Zero Calorie Mithai'],
     metaTitle: 'How to Make Sugar-Free Indian Sweets with Sweet Monk Drops | Zero Calorie Mithai Recipe',
     metaDescription: 'Learn how to make authentic Indian sweets like Shahi Kheer, Gajar Halwa, and Gulab Jamun with zero sugar using Kosmico Sweet Monk drops. Heat-stable up to 200°C with no bitter aftertaste.',
@@ -393,7 +393,7 @@ export const BLOG_POSTS: BlogPost[] = [
             'In contrast, Kosmico Sweet Monk drops use high-potency Mogroside V monk fruit extract in purified liquid form. It is heat-stable up to 200°C (392°F), dissolves instantly into simmering milk and ghee, never curdles dairy, and leaves behind zero bitter aftertaste.'
           ],
           image: {
-            src: '/assets/products/sweetmonk-lifestyle-drop.png',
+            src: '/assets/products/product-box.jpg',
             alt: 'Kosmico Sweet Monk Liquid Drops for Cooking',
             caption: 'Kosmico Sweet Monk drops blend instantly into simmering milk, desi ghee, and boiling liquids without curdling or bitter aftertaste.'
           },
@@ -416,7 +416,7 @@ export const BLOG_POSTS: BlogPost[] = [
             '• 6 to 8 drops of Kosmico Sweet Monk Liquid Sweetener'
           ],
           image: {
-            src: '/assets/dishes/kheer-lifestyle.jpg',
+            src: '/assets/dishes/kheer.jpg',
             alt: 'Sugar-Free Shahi Kheer prepared with Kosmico Sweet Monk',
             caption: 'Creamy, saffron-infused Shahi Kheer made 100% sugar-free with pure monk fruit sweetness.'
           },
@@ -441,7 +441,7 @@ export const BLOG_POSTS: BlogPost[] = [
             '• 8 to 10 drops of Kosmico Sweet Monk Liquid Sweetener'
           ],
           image: {
-            src: '/assets/dishes/gajar-halwa-lifestyle.jpg',
+            src: '/assets/dishes/gajar-halwa.jpg',
             alt: 'Sugar-Free Gajar Ka Halwa prepared with Sweet Monk drops',
             caption: 'Rich, ghee-roasted Gajar Ka Halwa sweetened to perfection without a single grain of cane sugar.'
           },
