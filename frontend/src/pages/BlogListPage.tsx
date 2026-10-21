@@ -22,7 +22,7 @@ export function BlogListPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
-  const categories = ['All', 'Natural Sweeteners', 'Diabetes Care', 'Keto & Weight Loss'];
+  const categories = ['All', 'Healthy Recipes', 'Natural Sweeteners', 'Diabetes Care', 'Keto & Weight Loss'];
 
   const filteredPosts = useMemo(() => {
     return BLOG_POSTS.filter((post) => {
