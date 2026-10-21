@@ -367,7 +367,7 @@ export const BLOG_POSTS: BlogPost[] = [
       role: 'Traditional Indian Culinary & Diabetic Nutrition Specialists',
       avatar: '/assets/blogs/author-clinical-team.jpg',
     },
-    coverImage: '/assets/dishes/kheer.jpg',
+    coverImage: '/assets/blogs/blog-sweetmonk-mithai-festive.jpg',
     tags: ['Healthy Recipes', 'Sugar-Free Sweets', 'Diabetic Recipes', 'Monk Fruit Cooking', 'Gajar Halwa', 'Kheer Recipe', 'Zero Calorie Mithai'],
     metaTitle: 'How to Make Sugar-Free Indian Sweets with Sweet Monk Drops | Zero Calorie Mithai Recipe',
     metaDescription: 'Learn how to make authentic Indian sweets like Shahi Kheer, Gajar Halwa, and Gulab Jamun with zero sugar using Kosmico Sweet Monk drops. Heat-stable up to 200°C with no bitter aftertaste.',
@@ -416,9 +416,9 @@ export const BLOG_POSTS: BlogPost[] = [
             '• 6 to 8 drops of Kosmico Sweet Monk Liquid Sweetener'
           ],
           image: {
-            src: '/assets/dishes/kheer.jpg',
-            alt: 'Sugar-Free Shahi Kheer prepared with Kosmico Sweet Monk',
-            caption: 'Creamy, saffron-infused Shahi Kheer made 100% sugar-free with pure monk fruit sweetness.'
+            src: '/assets/blogs/blog-sweetmonk-kheer.jpg',
+            alt: 'Sugar-Free Shahi Kheer prepared with Kosmico Sweet Monk drops',
+            caption: 'Creamy, saffron-infused Shahi Kheer made 100% sugar-free with pure Kosmico Sweet Monk drops.'
           },
           bulletPoints: [
             'Step 1 (Simmer): Bring 1 liter of milk to a gentle boil in a heavy-bottomed kadai. Lower heat and let it simmer for 15-20 minutes until reduced by one-third.',
@@ -441,9 +441,9 @@ export const BLOG_POSTS: BlogPost[] = [
             '• 8 to 10 drops of Kosmico Sweet Monk Liquid Sweetener'
           ],
           image: {
-            src: '/assets/dishes/gajar-halwa.jpg',
+            src: '/assets/blogs/blog-sweetmonk-halwa.jpg',
             alt: 'Sugar-Free Gajar Ka Halwa prepared with Sweet Monk drops',
-            caption: 'Rich, ghee-roasted Gajar Ka Halwa sweetened to perfection without a single grain of cane sugar.'
+            caption: 'Rich, ghee-roasted Gajar Ka Halwa sweetened to perfection with Kosmico Sweet Monk drops without a single grain of cane sugar.'
           },
           bulletPoints: [
             'Step 1 (Ghee Roast): Heat desi ghee in a heavy pan. Add grated carrots and sauté on medium heat for 5-7 minutes until vibrant and fragrant.',
