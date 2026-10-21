@@ -87,6 +87,30 @@ export const useMarkAsRead = () => {
   });
 };
 
+// PUT /api/notifications/read-all
+export const useMarkAllAsRead = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      try {
+        await api.put('/notifications/read-all');
+      } catch (err) {
+        // Fallback: fetch and mark each
+        const res = await api.get('/notifications', { params: { page: 1, limit: 100 } });
+        const resData = res.data?.data ?? res.data ?? {};
+        const list: any[] = resData.notifications ?? (Array.isArray(resData) ? resData : []);
+        const unread = list.filter((n) => !n.isRead && !n.read).map((n) => n._id || n.id);
+        if (unread.length > 0) {
+          await Promise.all(unread.map((id) => api.put(`/notifications/${id}/read`)));
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+};
+
 // DELETE /api/notifications/{notificationId}
 export const useDeleteNotification = () => {
   const queryClient = useQueryClient();
@@ -100,24 +124,40 @@ export const useDeleteNotification = () => {
   });
 };
 
-// DELETE clear all notifications (reliably deletes notifications via /api/notifications/:id)
+// DELETE clear all notifications (calls atomic /notifications delete endpoints)
 export const useClearAllNotifications = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (ids?: string[]) => {
-      let targetIds = ids;
-      if (!targetIds || targetIds.length === 0) {
-        const res = await api.get('/notifications', { params: { page: 1, limit: 100 } });
-        const resData = res.data?.data ?? res.data ?? {};
-        const list: any[] = resData.notifications ?? (Array.isArray(resData) ? resData : []);
-        targetIds = list.map((n: any) => n._id || n.id).filter(Boolean);
-      }
-
-      if (targetIds && targetIds.length > 0) {
-        await Promise.all(targetIds.map((id) => api.delete(`/notifications/${id}`)));
+      try {
+        await api.delete('/notifications');
+      } catch (err) {
+        try {
+          await api.delete('/notifications/clear-all');
+        } catch (_) {
+          try {
+            await api.delete('/notifications/clear');
+          } catch (__) {
+            let targetIds = ids;
+            if (!targetIds || targetIds.length === 0) {
+              const res = await api.get('/notifications', { params: { page: 1, limit: 100 } });
+              const resData = res.data?.data ?? res.data ?? {};
+              const list: any[] = resData.notifications ?? (Array.isArray(resData) ? resData : []);
+              targetIds = list.map((n: any) => n._id || n.id).filter(Boolean);
+            }
+            if (targetIds && targetIds.length > 0) {
+              await Promise.all(targetIds.map((id) => api.delete(`/notifications/${id}`)));
+            }
+          }
+        }
       }
     },
     onSuccess: () => {
+      // Optimistically wipe cache immediately
+      queryClient.setQueriesData({ queryKey: ['notifications'] }, (old: any) => {
+        if (!old) return { notifications: [], meta: { total: 0, pages: 1 } };
+        return { ...old, notifications: [], meta: { ...old.meta, total: 0, pages: 1 } };
+      });
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });

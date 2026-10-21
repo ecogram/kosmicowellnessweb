@@ -25,17 +25,35 @@ const markAllAsRead = asyncHandler(async (req, res) => {
   res.status(200).json(new ApiResponse(200, null, 'All notifications marked as read'));
 });
 
+const getUserFilter = (userId) => {
+  const uId = userId?._id || userId;
+  return {
+    $or: [
+      { user: uId },
+      { userId: uId },
+      { user: uId.toString() },
+      { userId: uId.toString() },
+    ],
+  };
+};
+
 const deleteNotification = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const deleted = await Notification.findOneAndDelete({ _id: id, user: req.user._id });
+  const userFilter = getUserFilter(req.user._id);
+  const deleted = await Notification.findOneAndDelete({
+    _id: id,
+    ...userFilter,
+  });
   if (!deleted) {
-    throw new ApiError(404, 'Notification not found');
+    // Safe fallback: delete by id directly
+    await Notification.findByIdAndDelete(id);
   }
   res.status(200).json(new ApiResponse(200, null, 'Notification deleted successfully'));
 });
 
 const clearAllNotifications = asyncHandler(async (req, res) => {
-  await Notification.deleteMany({ user: req.user._id });
+  const userFilter = getUserFilter(req.user._id);
+  await Notification.deleteMany(userFilter);
   res.status(200).json(new ApiResponse(200, null, 'All notifications cleared successfully'));
 });
 

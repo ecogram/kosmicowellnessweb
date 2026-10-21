@@ -2,6 +2,7 @@ import { Container } from '../components/ui/Container';
 import {
   useNotifications,
   useMarkAsRead,
+  useMarkAllAsRead,
   useDeleteNotification,
   useClearAllNotifications
 } from '../hooks/useNotifications';
@@ -26,6 +27,7 @@ export function Notifications() {
   const [page, setPage] = useState(1);
   const { data: notificationsData, isLoading } = useNotifications(page, ITEMS_PER_PAGE);
   const markAsRead = useMarkAsRead();
+  const markAllAsRead = useMarkAllAsRead();
   const deleteNotification = useDeleteNotification();
   const clearAllNotifications = useClearAllNotifications();
   const { socket } = useSocket();
@@ -101,8 +103,7 @@ export function Notifications() {
   // Mark each unread notification
   const handleMarkAllRead = async () => {
     try {
-      const unreadItems = notificationsList.filter((n: any) => !n.isRead && !n.read);
-      await Promise.all(unreadItems.map((n: any) => markAsRead.mutateAsync(n._id || n.id)));
+      await markAllAsRead.mutateAsync();
       toast.success('All marked as read');
     } catch {
       toast.error('Failed to mark all as read');
