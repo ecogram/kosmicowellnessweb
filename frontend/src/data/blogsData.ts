@@ -302,7 +302,7 @@ export const BLOG_POSTS: BlogPost[] = [
           tagHinglish: 'Founder ki Kahaani'
         },
         {
-          src: '/assets/blogs/kosmico-lab-team.jpg',
+          src: '/assets/blogs/kosmico-lab-testing.jpg',
           alt: 'Kosmico Lab Team performing HPLC purity test on monk fruit extract',
           caption: 'Pharmaceutical & Food Science team verifying 100% Mogroside V purity and zero-carb formulation.',
           captionHinglish: 'Hamari food science aur clinical team Mogroside V extract ki purity test karte hue.',
