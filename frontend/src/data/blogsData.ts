@@ -302,12 +302,12 @@ export const BLOG_POSTS: BlogPost[] = [
           tagHinglish: 'Founder ki Kahaani'
         },
         {
-          src: '/assets/blogs/kosmico-lab-testing.jpg',
-          alt: 'Kosmico Lab Team performing HPLC purity test on monk fruit extract',
-          caption: 'Pharmaceutical & Food Science team verifying 100% Mogroside V purity and zero-carb formulation.',
-          captionHinglish: 'Hamari food science aur clinical team Mogroside V extract ki purity test karte hue.',
-          tag: 'NABL Certified Lab',
-          tagHinglish: 'NABL Lab Testing'
+          src: '/assets/products/sweetmonk-lifestyle-drop.png',
+          alt: 'Kosmico Sweet Monk Pure Dropper in Action',
+          caption: '100% Pure Mogroside V liquid extract — 1 to 2 drops give authentic cane sugar sweetness with zero calories.',
+          captionHinglish: '100% Pure Mogroside V liquid extract — sirf 1-2 boondein deti hain bina calorie wali asli meethas.',
+          tag: 'Pure Mogroside Drops',
+          tagHinglish: 'Pure Liquid Drops'
         },
         {
           src: '/assets/products/product-box.jpg',
