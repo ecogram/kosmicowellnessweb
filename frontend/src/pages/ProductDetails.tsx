@@ -196,7 +196,7 @@ export function ProductDetails() {
       <SEO
         title={`${product.name} | Kosmico Wellness`}
         description={product.description ? product.description.slice(0, 160) : `Buy ${product.name} online at Kosmico Wellness. 100% natural, zero calories, zero sugar spikes, diabetic and keto safe.`}
-        keywords={`${product.name}, buy monk fruit sweetener, zero calorie drops, Kosmico Wellness, keto sweetener, pure natural monk fruit`}
+        keywords={`${product.name}, sweet monk, sweet monk fruit, sweet monk sweetener, sweet monk drops, buy sweet monk online, sweet monk price in india, buy monk fruit sweetener, zero calorie drops, Kosmico Wellness, keto sweetener, pure natural monk fruit`}
         canonicalUrl={`https://www.kosmicowellness.com/products/${slug}`}
         ogType="product"
         ogImage={images[0] ? (images[0].startsWith('http') ? images[0] : `https://www.kosmicowellness.com${images[0]}`) : 'https://www.kosmicowellness.com/kosmico-logo.png'}

@@ -12,11 +12,11 @@ export interface SEOProps {
   schema?: Record<string, any> | Array<Record<string, any>>;
 }
 
-const DEFAULT_TITLE = 'Kosmico Wellness — Sweet Monk (100% Natural Zero-Calorie Sweetener)';
+const DEFAULT_TITLE = 'Sweet Monk — 100% Natural Monk Fruit Sweetener Drops | Kosmico Wellness';
 const DEFAULT_DESCRIPTION =
-  'Kosmico Wellness - Sweet Monk 100% Natural Zero-Calorie Sweetener Drops. Pure monk fruit extract with zero sugar, zero carbs, and zero glycemic index. Ideal for keto and healthy living.';
+  'Sweet Monk by Kosmico Wellness: 100% Natural Zero-Calorie Monk Fruit Sweetener Drops. Pure monk fruit extract with zero sugar, zero carbs, and zero glycemic index. Ideal for diabetes care, keto, and healthy living.';
 const DEFAULT_KEYWORDS =
-  'Kosmico Wellness, Sweet Monk, monk fruit sweetener, zero calorie drops, natural sugar substitute, keto sweetener, diabetes friendly sweetener, liquid sweetener India';
+  'Sweet Monk, sweet monk fruit, sweet monk sweetener, sweet monk drops, buy sweet monk online, sweet monk price in india, Kosmico Wellness, monk fruit sweetener, zero calorie drops, natural sugar substitute, keto sweetener, diabetes friendly sweetener, liquid sweetener India';
 const DEFAULT_IMAGE = 'https://www.kosmicowellness.com/kosmico-logo.png';
 const BASE_URL = 'https://www.kosmicowellness.com';
 

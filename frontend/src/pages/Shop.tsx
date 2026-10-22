@@ -61,9 +61,9 @@ export const Shop = () => {
   return (
     <div className="bg-surface py-12">
       <SEO
-        title={search ? `Search: ${search} | Kosmico Wellness Shop` : 'Shop 100% Natural Sweet Monk Sweetener Drops | Kosmico Wellness'}
+        title={search ? `Search: ${search} | Sweet Monk Shop` : 'Buy Sweet Monk — 100% Natural Monk Fruit Sweetener Drops Online'}
         description="Buy 100% natural Sweet Monk fruit liquid sweetener drops online. Zero calories, zero carbs, zero glycemic index. Best prices, fast delivery across India."
-        keywords="buy sweet monk drops, buy monk fruit sweetener online, natural sugar substitute price, diabetic sugar drops, keto sweetener India, Kosmico store"
+        keywords="sweet monk, sweet monk fruit, sweet monk sweetener, sweet monk drops, buy sweet monk drops, buy monk fruit sweetener online, sweet monk price in india, natural sugar substitute price, diabetic sugar drops, keto sweetener India, Kosmico store"
         canonicalUrl="https://www.kosmicowellness.com/shop"
         schema={shopSchema}
       />

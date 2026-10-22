@@ -48,9 +48,9 @@ export function Home() {
   return (
     <div className="flex flex-col w-full">
       <SEO
-        title="Kosmico Wellness — Sweet Monk (100% Natural Zero-Calorie Sweetener)"
+        title="Sweet Monk — 100% Natural Monk Fruit Sweetener Drops | Kosmico Wellness"
         description="Experience 100% natural Sweet Monk fruit liquid sweetener drops by Kosmico Wellness. Zero calories, zero glycemic index, zero aftertaste. Perfect for diabetics & keto."
-        keywords="Kosmico Wellness, Sweet Monk, monk fruit sweetener drops, zero calorie sugar alternative, diabetes friendly sweetener, keto sugar substitute, natural monk fruit India"
+        keywords="Sweet Monk, sweet monk fruit, sweet monk sweetener, sweet monk drops, buy sweet monk online, sweet monk price in india, Kosmico Wellness, monk fruit sweetener drops, zero calorie sugar alternative, diabetes friendly sweetener, keto sugar substitute, natural monk fruit India"
         schema={homeProductSchema}
       />
       <Hero />
