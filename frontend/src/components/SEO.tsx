@@ -16,7 +16,7 @@ const DEFAULT_TITLE = 'Sweet Monk — 100% Natural Monk Fruit Sweetener Drops | 
 const DEFAULT_DESCRIPTION =
   'Sweet Monk by Kosmico Wellness: 100% Natural Zero-Calorie Monk Fruit Sweetener Drops. Pure monk fruit extract with zero sugar, zero carbs, and zero glycemic index. Ideal for diabetes care, keto, and healthy living.';
 const DEFAULT_KEYWORDS =
-  'Sweet Monk, sweet monk fruit, sweet monk sweetener, sweet monk drops, buy sweet monk online, sweet monk price in india, Kosmico Wellness, monk fruit sweetener, zero calorie drops, natural sugar substitute, keto sweetener, diabetes friendly sweetener, liquid sweetener India';
+  'Sweet Monk, sweet monk fruit, sweet monk sweetener, sweet monk drops, buy sweet monk online, sweet monk price in india, monk fruits, monk fruits sweetener, Kosmico Wellness, monk fruit sweetener, zero calorie drops, natural sugar substitute, keto sweetener, diabetes friendly sweetener, liquid sweetener India';
 const DEFAULT_IMAGE = 'https://www.kosmicowellness.com/kosmico-logo.png';
 const BASE_URL = 'https://www.kosmicowellness.com';
 
