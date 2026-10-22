@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { SEO } from '../components/SEO';
 import { BLOG_POSTS } from '../data/blogsData';
-import { Clock, Calendar, ArrowRight, Sparkles, Bot, ShoppingBag } from 'lucide-react';
+import { Clock, Calendar, ArrowRight, Sparkles, Bot, ShoppingBag, Languages } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const blogListSchema = {
   '@type': 'Blog',
@@ -22,19 +23,39 @@ export function BlogListPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // Language state: 'en' or 'hinglish'
+  const [language, setLanguage] = useState<'en' | 'hinglish'>(() => {
+    return (localStorage.getItem('kosmico_blog_lang') as 'en' | 'hinglish') || 'en';
+  });
+
+  const isHinglish = language === 'hinglish';
+
+  const handleLanguageChange = (lang: 'en' | 'hinglish') => {
+    setLanguage(lang);
+    localStorage.setItem('kosmico_blog_lang', lang);
+    toast.success(
+      lang === 'hinglish'
+        ? 'Blogs ab Hinglish mein switch ho gaye!'
+        : 'Switched to English blogs!'
+    );
+  };
+
   const categories = ['All', 'Healthy Recipes', 'Natural Sweeteners', 'Diabetes Care', 'Keto & Weight Loss'];
 
   const filteredPosts = useMemo(() => {
     return BLOG_POSTS.filter((post) => {
+      const titleToMatch = isHinglish && post.titleHinglish ? `${post.title} ${post.titleHinglish}` : post.title;
+      const excerptToMatch = isHinglish && post.excerptHinglish ? `${post.excerpt} ${post.excerptHinglish}` : post.excerpt;
+
       const matchesCategory = selectedCategory === 'All' || post.category === selectedCategory;
       const matchesSearch =
         !searchQuery ||
-        post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        post.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        titleToMatch.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        excerptToMatch.toLowerCase().includes(searchQuery.toLowerCase()) ||
         post.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
       return matchesCategory && matchesSearch;
     });
-  }, [selectedCategory, searchQuery]);
+  }, [selectedCategory, searchQuery, isHinglish]);
 
   const featuredPost = BLOG_POSTS[0];
 
@@ -51,31 +72,72 @@ export function BlogListPage() {
       <Container className="max-w-6xl mx-auto px-4 sm:px-6">
         
         {/* Top Header Banner */}
-        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-16 space-y-4">
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12 space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 text-[#0a7a40] text-xs font-bold uppercase tracking-wider border border-emerald-200">
             <Sparkles className="w-3.5 h-3.5" />
             <span>Kosmico Health &amp; Research Editorial</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-serif font-black text-neutral-900 tracking-tight leading-tight">
-            Science-Backed Guides for a Sweeter, Healthier Life
+            {isHinglish ? 'Sehatmand Zindagi ke Liye Doctor-Approved Guides' : 'Science-Backed Guides for a Sweeter, Healthier Life'}
           </h1>
 
           <p className="text-neutral-600 text-base md:text-lg leading-relaxed">
-            Clinical insights on monk fruit, zero-sugar living, diabetic glycemic control, and clean nutrition without compromising taste.
+            {isHinglish
+              ? 'Monk fruit, zero-sugar living, diabetes control aur clean nutrition par authentic clinical research—ab aasan Hinglish mein bhi!'
+              : 'Clinical insights on monk fruit, zero-sugar living, diabetic glycemic control, and clean nutrition without compromising taste.'}
           </p>
+
+          {/* Language Toggle Pill in Banner */}
+          <div className="pt-2 flex items-center justify-center gap-2">
+            <div className="inline-flex items-center p-1 bg-white rounded-2xl border border-border shadow-xs">
+              <div className="pl-3 pr-2 text-xs font-bold text-neutral-600 flex items-center gap-1.5">
+                <Languages className="w-3.5 h-3.5 text-[#0a7a40]" />
+                <span>Language:</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleLanguageChange('en')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  !isHinglish
+                    ? 'bg-neutral-900 text-white shadow-xs'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                <span>🇬🇧</span>
+                <span>English</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleLanguageChange('hinglish')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  isHinglish
+                    ? 'bg-[#0a7a40] text-white shadow-xs'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                <span>🇮🇳</span>
+                <span>Hinglish</span>
+                <span className={`text-[9px] px-1.5 py-0.2 rounded-full font-black ${
+                  isHinglish ? 'bg-amber-400 text-neutral-900' : 'bg-emerald-100 text-[#0a7a40]'
+                }`}>
+                  NEW
+                </span>
+              </button>
+            </div>
+          </div>
 
           {/* Search Input */}
           <div className="max-w-md mx-auto pt-2 space-y-2">
             <input
               type="text"
-              placeholder="Search topics (e.g. Stevia, Blood Sugar, Keto)..."
+              placeholder={isHinglish ? "Topics search karein (jaise Chai, Stevia, Blood Sugar)..." : "Search topics (e.g. Stevia, Blood Sugar, Keto)..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-5 py-3 rounded-2xl bg-white border border-border shadow-xs text-sm focus:outline-none focus:ring-2 focus:ring-[#0a7a40]/30 focus:border-[#0a7a40] transition-all"
             />
             <div className="flex items-center justify-center gap-1.5 flex-wrap text-xs text-neutral-500">
-              <span className="font-semibold text-neutral-400 text-[11px]">Popular Searches:</span>
+              <span className="font-semibold text-neutral-400 text-[11px]">{isHinglish ? 'Popular Topics:' : 'Popular Searches:'}</span>
               {['Masala Chai', 'HbA1c', 'Keto Sweetener', 'Stevia'].map((term) => (
                 <button
                   key={term}
@@ -114,11 +176,11 @@ export function BlogListPage() {
               <div className="lg:col-span-7 h-64 sm:h-80 lg:h-auto overflow-hidden relative">
                 <img
                   src={featuredPost.coverImage}
-                  alt={featuredPost.title}
+                  alt={isHinglish && featuredPost.titleHinglish ? featuredPost.titleHinglish : featuredPost.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                 />
                 <span className="absolute top-4 left-4 bg-[#0a7a40] text-white text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
-                  ⭐ Featured Guide
+                  ⭐ {isHinglish ? 'Khaas Guide' : 'Featured Guide'}
                 </span>
               </div>
 
@@ -140,12 +202,12 @@ export function BlogListPage() {
 
                   <h2 className="text-xl sm:text-2xl font-serif font-black text-neutral-900 leading-snug group-hover:text-[#0a7a40] transition-colors">
                     <Link to={`/blog/${featuredPost.slug}`}>
-                      {featuredPost.title}
+                      {isHinglish && featuredPost.titleHinglish ? featuredPost.titleHinglish : featuredPost.title}
                     </Link>
                   </h2>
 
                   <p className="text-neutral-600 text-sm leading-relaxed line-clamp-3">
-                    {featuredPost.excerpt}
+                    {isHinglish && featuredPost.excerptHinglish ? featuredPost.excerptHinglish : featuredPost.excerpt}
                   </p>
                 </div>
 
@@ -166,7 +228,7 @@ export function BlogListPage() {
                     to={`/blog/${featuredPost.slug}`}
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0a7a40] group-hover:translate-x-1 transition-transform"
                   >
-                    <span>Read Article</span>
+                    <span>{isHinglish ? 'Article Padhein' : 'Read Article'}</span>
                     <ArrowRight className="w-4 h-4" />
                   </Link>
                 </div>
@@ -186,7 +248,7 @@ export function BlogListPage() {
               <Link to={`/blog/${post.slug}`} className="block h-48 overflow-hidden relative">
                 <img
                   src={post.coverImage}
-                  alt={post.title}
+                  alt={isHinglish && post.titleHinglish ? post.titleHinglish : post.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   loading="lazy"
                 />
@@ -212,12 +274,12 @@ export function BlogListPage() {
 
                   <h3 className="font-serif font-black text-lg text-neutral-900 group-hover:text-[#0a7a40] transition-colors leading-snug line-clamp-2">
                     <Link to={`/blog/${post.slug}`}>
-                      {post.title}
+                      {isHinglish && post.titleHinglish ? post.titleHinglish : post.title}
                     </Link>
                   </h3>
 
                   <p className="text-neutral-600 text-xs sm:text-sm leading-relaxed line-clamp-3">
-                    {post.excerpt}
+                    {isHinglish && post.excerptHinglish ? post.excerptHinglish : post.excerpt}
                   </p>
                 </div>
 
@@ -238,7 +300,7 @@ export function BlogListPage() {
                     to={`/blog/${post.slug}`}
                     className="text-xs font-bold text-[#0a7a40] flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
                   >
-                    <span>Read</span>
+                    <span>{isHinglish ? 'Padhein' : 'Read'}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
@@ -255,10 +317,12 @@ export function BlogListPage() {
               <span>Ask Personal Health Questions</span>
             </div>
             <h3 className="text-2xl sm:text-3xl font-serif font-bold text-white">
-              Have Specific Questions About Your Diet or Blood Sugar?
+              {isHinglish ? 'Apni Diet ya Blood Sugar par koi sawal hai?' : 'Have Specific Questions About Your Diet or Blood Sugar?'}
             </h3>
             <p className="text-emerald-100/80 text-sm max-w-xl">
-              Chat for free with our AI Health &amp; Nutrition Consultant or explore how Sweet Monk drops can fit into your daily meal routine.
+              {isHinglish
+                ? 'Hamare free AI Health & Nutrition Consultant se chat karein ya janein Sweet Monk drops aapki daily diet mein kaise fit hoti hain.'
+                : 'Chat for free with our AI Health & Nutrition Consultant or explore how Sweet Monk drops can fit into your daily meal routine.'}
             </p>
           </div>
 
@@ -268,14 +332,14 @@ export function BlogListPage() {
               className="px-5 py-3 rounded-2xl bg-white text-[#0a7a40] font-bold text-xs uppercase tracking-wider hover:bg-emerald-50 transition-all text-center shadow-md flex items-center justify-center gap-2"
             >
               <Bot className="w-4 h-4" />
-              <span>Talk to AI Assistant</span>
+              <span>{isHinglish ? 'AI Consultant se Baat Karein' : 'Talk to AI Assistant'}</span>
             </Link>
             <Link
               to="/shop"
               className="px-5 py-3 rounded-2xl bg-amber-400 hover:bg-amber-300 text-neutral-900 font-bold text-xs uppercase tracking-wider transition-all text-center shadow-md flex items-center justify-center gap-2"
             >
               <ShoppingBag className="w-4 h-4" />
-              <span>Shop Sweet Monk</span>
+              <span>{isHinglish ? 'Sweet Monk Khareedein' : 'Shop Sweet Monk'}</span>
             </Link>
           </div>
         </div>
