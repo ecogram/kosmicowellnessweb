@@ -1,3 +1,20 @@
+export interface BlogGalleryImage {
+  src: string;
+  alt: string;
+  caption?: string;
+  captionHinglish?: string;
+  tag?: string;
+  tagHinglish?: string;
+}
+
+export interface BlogGallery {
+  title: string;
+  titleHinglish?: string;
+  subtitle?: string;
+  subtitleHinglish?: string;
+  images: BlogGalleryImage[];
+}
+
 export interface BlogSection {
   heading: string;
   subheading?: string;
@@ -9,6 +26,7 @@ export interface BlogSection {
     alt: string;
     caption?: string;
   };
+  gallery?: BlogGallery;
   table?: {
     headers: string[];
     rows: string[][];
@@ -47,6 +65,7 @@ export interface BlogPost {
   keywords: string;
   content: BlogContent;
   contentHinglish?: BlogContent;
+  gallery?: BlogGallery;
 }
 
 export const BLOG_POSTS: BlogPost[] = [
@@ -267,6 +286,46 @@ export const BLOG_POSTS: BlogPost[] = [
         }
       ],
       conclusion: 'Apni sehat bachane ke liye aapko subah ki pyari meethi chai chhodne ki zaroorat nahi hai. Table sugar aur stevia ki jagah pure Kosmico Sweet Monk drops chunein—paayein zero blood sugar spike aur wahi pyara meetha swad jo aapko pasand hai.'
+    },
+    gallery: {
+      title: 'Inside Kosmico: Behind The Scenes & Purity Standards',
+      titleHinglish: 'Kosmico ke Peeche: Hamari Team, Lab Testing aur Founder ki Kahaani',
+      subtitle: 'See how our founder, clinical experts, and certified lab team ensure every drop of Sweet Monk is 100% pure, natural, and potent.',
+      subtitleHinglish: 'Dekhein kaise hamare founder aur NABL lab team har ek batch ko NABL standards par test karke aap tak pure aur natural Sweet Monk pahunchate hain.',
+      images: [
+        {
+          src: '/assets/blogs/kosmico-founder-studio.jpg',
+          alt: 'Kosmico Wellness Founder with Sweet Monk product',
+          caption: 'Kosmico Founder showcasing the flagship Sweet Monk zero-glycemic liquid drops at the brand studio.',
+          captionHinglish: 'Kosmico ke Founder brand studio mein Sweet Monk zero-glycemic drops ke sath.',
+          tag: 'Founder & Mission',
+          tagHinglish: 'Founder ki Kahaani'
+        },
+        {
+          src: '/assets/blogs/kosmico-lab-team.jpg',
+          alt: 'Kosmico Lab Team performing HPLC purity test on monk fruit extract',
+          caption: 'Pharmaceutical & Food Science team verifying 100% Mogroside V purity and zero-carb formulation.',
+          captionHinglish: 'Hamari food science aur clinical team Mogroside V extract ki purity test karte hue.',
+          tag: 'NABL Certified Lab',
+          tagHinglish: 'NABL Lab Testing'
+        },
+        {
+          src: '/assets/products/product-box.jpg',
+          alt: 'Kosmico Sweet Monk Packaging and Quality Standards',
+          caption: 'Tamper-evident, medical-grade dropper bottle packaging ensuring zero microbial contamination.',
+          captionHinglish: 'Tamper-proof medical-grade dropper packaging jo har boond ko taaza aur safe rakhti hai.',
+          tag: 'Packaging & Quality',
+          tagHinglish: 'Quality Packaging'
+        },
+        {
+          src: '/assets/blogs/blog-sweetmonk-chai.jpg',
+          alt: 'Sweet Monk Drops in Morning Indian Masala Chai',
+          caption: 'Real everyday testing: Sweet Monk dissolving effortlessly in piping hot ginger cardamom tea.',
+          captionHinglish: 'Daily use test: Garam adrak-elaichi chai mein Sweet Monk drops bina swad kharab kiye ghulte hue.',
+          tag: 'Real Daily Use',
+          tagHinglish: 'Asli Chai Test'
+        }
+      ]
     }
   },
   {
@@ -1546,6 +1605,46 @@ export const BLOG_POSTS: BlogPost[] = [
         }
       ],
       conclusion: 'Tyohar ka asli matlab sabka ek saath muskuraana hai. Diabetes ya parhez ki wajah se kisi ko kheer ya ladoo se door na karein. Kosmico Sweet Monk ke sath sabhi tyohar khushi aur poori sehat ke sath manayein.'
+    },
+    gallery: {
+      title: 'Festival Moments & Authentic Healthy Mithai Showcase',
+      titleHinglish: 'Tyohar ki Yaadein: Parivar ke Sath Healthy Mithai Moments',
+      subtitle: 'See how families across India celebrate Diwali and festivals together with delicious sugar-free mithai.',
+      subtitleHinglish: 'Dekhein kaise hamara parivar aur customers bina kisi sugar spike ke poore tyohar ka anand lete hain.',
+      images: [
+        {
+          src: '/assets/blogs/blog-sweetmonk-festive-family.jpg',
+          alt: 'Indian family enjoying Diwali mithai with Kosmico Sweet Monk',
+          caption: 'Grandmother and daughter-in-law serving zero-sugar Besan Ladoos to the entire family.',
+          captionHinglish: 'Dadi ji aur parivar ke sabhi sadasya Sweet Monk se bani Besan Ladoo enjoy karte hue.',
+          tag: 'Family Celebration',
+          tagHinglish: 'Parivar ki Khushiyan'
+        },
+        {
+          src: '/assets/blogs/kosmico-founder-studio.jpg',
+          alt: 'Founder testing healthy festive recipes at Kosmico kitchen',
+          caption: 'Kosmico Founder tasting the festive recipe batch for authentic halwai-grade sweetness.',
+          captionHinglish: 'Kosmico ke Founder festive mithai recipes ka swad verify karte hue.',
+          tag: 'Founder Kitchen Test',
+          tagHinglish: 'Founder Test'
+        },
+        {
+          src: '/assets/blogs/blog-sweetmonk-halwa.jpg',
+          alt: 'Gajar Ka Halwa prepared with Sweet Monk drops',
+          caption: 'Rich Desi Ghee Gajar Ka Halwa prepared with zero grams of added cane sugar.',
+          captionHinglish: 'Bina ek daana cheeni ke desi ghee mein bana lazeez Gajar Ka Halwa.',
+          tag: 'Desi Ghee Recipe',
+          tagHinglish: 'Halwai Recipe'
+        },
+        {
+          src: '/assets/blogs/blog-sweetmonk-kheer.jpg',
+          alt: 'Royal Shahi Badam Kheer with saffron',
+          caption: 'Creamy Shahi Badam Kheer sweetened naturally with 8 drops of Kosmico Sweet Monk.',
+          captionHinglish: 'Kesar aur badam se bhari royal kheer, 100% diabetic-friendly.',
+          tag: 'Royal Kheer',
+          tagHinglish: 'Shahi Kheer'
+        }
+      ]
     }
   }
 ];

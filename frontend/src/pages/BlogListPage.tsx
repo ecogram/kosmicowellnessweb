@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { SEO } from '../components/SEO';
 import { BLOG_POSTS } from '../data/blogsData';
-import { Clock, Calendar, ArrowRight, Sparkles, Bot, ShoppingBag, Languages } from 'lucide-react';
+import { Clock, Calendar, ArrowRight, Sparkles, Bot, ShoppingBag, Languages, Images } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const blogListSchema = {
@@ -182,6 +182,12 @@ export function BlogListPage() {
                 <span className="absolute top-4 left-4 bg-[#0a7a40] text-white text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-md">
                   ⭐ {isHinglish ? 'Khaas Guide' : 'Featured Guide'}
                 </span>
+                {featuredPost.gallery && (
+                  <span className="absolute top-4 right-4 bg-neutral-900/80 backdrop-blur-md text-amber-300 text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-md border border-amber-300/30">
+                    <Images className="w-3.5 h-3.5" />
+                    <span>{featuredPost.gallery.images.length} {isHinglish ? 'Photos' : 'Photos'}</span>
+                  </span>
+                )}
               </div>
 
               <div className="lg:col-span-5 p-6 sm:p-8 lg:p-10 flex flex-col justify-between">
@@ -255,6 +261,12 @@ export function BlogListPage() {
                 <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-xs text-[#0a7a40] text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-xs">
                   {post.category}
                 </span>
+                {post.gallery && (
+                  <span className="absolute top-3 right-3 bg-neutral-900/80 backdrop-blur-md text-amber-300 text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-xs border border-amber-300/30">
+                    <Images className="w-3 h-3" />
+                    <span>{post.gallery.images.length} {isHinglish ? 'Photos' : 'Photos'}</span>
+                  </span>
+                )}
               </Link>
 
               {/* Card Body */}

@@ -1,15 +1,298 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import { Container } from '../components/ui/Container';
 import { SEO } from '../components/SEO';
-import { BLOG_POSTS } from '../data/blogsData';
+import { BLOG_POSTS, type BlogGallery } from '../data/blogsData';
 import { 
   Clock, Calendar, ArrowLeft, Share2, 
   Sparkles, CheckCircle2, ShoppingBag, 
-  ChevronRight, HelpCircle, Languages,
-  BookOpen
+  ChevronRight, ChevronLeft, HelpCircle, Languages,
+  BookOpen, Images, LayoutGrid, Maximize2, X, Camera
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+
+function BlogPhotoGallery({ gallery, isHinglish }: { gallery: BlogGallery; isHinglish: boolean }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [viewMode, setViewMode] = useState<'carousel' | 'grid'>('carousel');
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+
+  const images = gallery.images || [];
+  const currentImg = images[currentIndex] || images[0];
+
+  const handlePrev = useCallback(() => {
+    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  }, [images.length]);
+
+  const handleNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  }, [images.length]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isLightboxOpen) {
+        if (e.key === 'Escape') setIsLightboxOpen(false);
+        if (e.key === 'ArrowLeft') handlePrev();
+        if (e.key === 'ArrowRight') handleNext();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLightboxOpen, handlePrev, handleNext]);
+
+  if (!images || images.length === 0) return null;
+
+  const currentTitle = isHinglish && gallery.titleHinglish ? gallery.titleHinglish : gallery.title;
+  const currentSubtitle = isHinglish && gallery.subtitleHinglish ? gallery.subtitleHinglish : gallery.subtitle;
+
+  return (
+    <div className="my-10 p-5 sm:p-7 rounded-3xl bg-white border border-emerald-100 shadow-sm space-y-6">
+      {/* Gallery Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-100 pb-4">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 text-[#0a7a40] text-xs font-bold uppercase tracking-wider mb-2">
+            <Camera className="w-3.5 h-3.5" />
+            <span>{isHinglish ? 'Photo Gallery & Behind the Scenes' : 'Official Photo Gallery'}</span>
+          </div>
+          <h3 className="text-xl sm:text-2xl font-serif font-black text-neutral-900">
+            {currentTitle}
+          </h3>
+          {currentSubtitle && (
+            <p className="text-xs sm:text-sm text-neutral-600 mt-1 max-w-xl">
+              {currentSubtitle}
+            </p>
+          )}
+        </div>
+
+        {/* View Mode Toggle: Carousel vs Grid */}
+        <div className="inline-flex items-center p-1 bg-neutral-100 rounded-2xl border border-neutral-200 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => setViewMode('carousel')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              viewMode === 'carousel'
+                ? 'bg-white text-[#0a7a40] shadow-xs'
+                : 'text-neutral-600 hover:text-neutral-900'
+            }`}
+          >
+            <Images className="w-3.5 h-3.5" />
+            <span>{isHinglish ? 'Slider' : 'Carousel'}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('grid')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              viewMode === 'grid'
+                ? 'bg-[#0a7a40] text-white shadow-xs'
+                : 'text-neutral-600 hover:text-neutral-900'
+            }`}
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span>{isHinglish ? 'Sabhi Photos' : 'Grid'}</span>
+            <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-[#0a7a40] font-black">
+              {images.length}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* CAROUSEL VIEW */}
+      {viewMode === 'carousel' && (
+        <div className="space-y-4">
+          <div className="relative group rounded-2xl overflow-hidden bg-neutral-900 shadow-md">
+            <img
+              src={currentImg.src}
+              alt={currentImg.alt}
+              className="w-full h-72 sm:h-96 md:h-[450px] object-cover transition-opacity duration-300"
+            />
+
+            {/* Tag Badge */}
+            {(currentImg.tag || currentImg.tagHinglish) && (
+              <div className="absolute top-4 left-4 z-10">
+                <span className="px-3 py-1 rounded-full bg-neutral-900/85 backdrop-blur-md text-amber-300 border border-amber-300/30 text-xs font-bold tracking-wide shadow-sm">
+                  ★ {isHinglish && currentImg.tagHinglish ? currentImg.tagHinglish : currentImg.tag}
+                </span>
+              </div>
+            )}
+
+            {/* Fullscreen Button */}
+            <button
+              type="button"
+              onClick={() => setIsLightboxOpen(true)}
+              className="absolute top-4 right-4 z-10 p-2.5 rounded-full bg-neutral-900/80 backdrop-blur-md text-white hover:bg-[#0a7a40] transition-colors shadow-md cursor-pointer"
+              title="View full screen"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </button>
+
+            {/* Navigation Arrows */}
+            {images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-white/90 hover:bg-white text-neutral-900 shadow-lg transition-transform hover:scale-105 cursor-pointer z-10"
+                  aria-label="Previous photo"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-white/90 hover:bg-white text-neutral-900 shadow-lg transition-transform hover:scale-105 cursor-pointer z-10"
+                  aria-label="Next photo"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </>
+            )}
+
+            {/* Bottom Caption Overlay */}
+            <div className="absolute bottom-0 inset-x-0 p-4 sm:p-5 bg-gradient-to-t from-black/90 via-black/55 to-transparent text-white flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="text-xs sm:text-sm font-medium leading-relaxed max-w-xl">
+                {isHinglish && currentImg.captionHinglish ? currentImg.captionHinglish : currentImg.caption}
+              </div>
+              <div className="text-[11px] font-bold text-amber-300 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md self-start sm:self-auto shrink-0">
+                {currentIndex + 1} / {images.length}
+              </div>
+            </div>
+          </div>
+
+          {/* Thumbnail Strip */}
+          {images.length > 1 && (
+            <div className="flex items-center gap-2.5 overflow-x-auto pb-2 pt-1">
+              {images.map((img, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setCurrentIndex(idx)}
+                  className={`relative rounded-xl overflow-hidden shrink-0 w-20 h-16 sm:w-24 sm:h-18 border-2 transition-all cursor-pointer ${
+                    currentIndex === idx
+                      ? 'border-[#0a7a40] ring-2 ring-[#0a7a40]/30 scale-102'
+                      : 'border-transparent opacity-60 hover:opacity-100'
+                  }`}
+                >
+                  <img src={img.src} alt={img.alt} className="w-full h-full object-cover" />
+                  {currentIndex === idx && (
+                    <div className="absolute inset-0 bg-[#0a7a40]/10" />
+                  )}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* GRID VIEW */}
+      {viewMode === 'grid' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {images.map((img, idx) => (
+            <div
+              key={idx}
+              onClick={() => {
+                setCurrentIndex(idx);
+                setIsLightboxOpen(true);
+              }}
+              className="group relative rounded-2xl overflow-hidden border border-neutral-200 bg-neutral-900 cursor-pointer shadow-xs hover:shadow-md transition-all"
+            >
+              <img
+                src={img.src}
+                alt={img.alt}
+                className="w-full h-56 sm:h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent opacity-90 group-hover:opacity-100 transition-opacity" />
+
+              {(img.tag || img.tagHinglish) && (
+                <div className="absolute top-3 left-3 z-10">
+                  <span className="px-2.5 py-0.5 rounded-full bg-neutral-900/85 backdrop-blur-md text-amber-300 border border-amber-300/30 text-[11px] font-bold">
+                    {isHinglish && img.tagHinglish ? img.tagHinglish : img.tag}
+                  </span>
+                </div>
+              )}
+
+              <div className="absolute bottom-3 inset-x-3 text-white text-xs leading-snug">
+                <p className="font-semibold line-clamp-2">
+                  {isHinglish && img.captionHinglish ? img.captionHinglish : img.caption}
+                </p>
+                <div className="flex items-center gap-1 text-[11px] text-amber-300 mt-1 font-bold">
+                  <Maximize2 className="w-3 h-3" />
+                  <span>{isHinglish ? 'Bada karke dekhein' : 'Click to enlarge'}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* LIGHTBOX FULLSCREEN MODAL */}
+      {isLightboxOpen && (
+        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col justify-between p-4 sm:p-6 text-white animate-in fade-in duration-200">
+          <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-3">
+            <div className="flex items-center gap-2">
+              <Camera className="w-4 h-4 text-emerald-400" />
+              <span className="text-xs sm:text-sm font-bold text-neutral-200 truncate max-w-xs sm:max-w-md">
+                {currentTitle}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-amber-300 bg-white/10 px-2.5 py-1 rounded-full">
+                {currentIndex + 1} / {images.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsLightboxOpen(false)}
+                className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                title="Close (Esc)"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="relative flex-1 flex items-center justify-center p-2 sm:p-6 overflow-hidden">
+            <img
+              src={currentImg.src}
+              alt={currentImg.alt}
+              className="max-h-[75vh] max-w-full rounded-2xl object-contain shadow-2xl"
+            />
+
+            {images.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  className="absolute left-2 sm:left-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 transition-all hover:scale-105 cursor-pointer"
+                  title="Previous (Left Arrow)"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="absolute right-2 sm:right-6 top-1/2 -translate-y-1/2 p-3 rounded-full bg-black/60 hover:bg-black/90 text-white border border-white/20 transition-all hover:scale-105 cursor-pointer"
+                  title="Next (Right Arrow)"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+          </div>
+
+          <div className="max-w-2xl mx-auto text-center py-2 px-4 space-y-1">
+            {(currentImg.tag || currentImg.tagHinglish) && (
+              <span className="inline-block text-[11px] font-bold text-amber-300 uppercase tracking-wider mb-1">
+                ★ {isHinglish && currentImg.tagHinglish ? currentImg.tagHinglish : currentImg.tag}
+              </span>
+            )}
+            <p className="text-xs sm:text-sm text-neutral-300">
+              {isHinglish && currentImg.captionHinglish ? currentImg.captionHinglish : currentImg.caption}
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function BlogPostPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -348,8 +631,18 @@ export function BlogPostPage() {
                   )}
                 </figure>
               )}
+
+              {/* Section Multiple Photos Gallery (If available) */}
+              {section.gallery && (
+                <BlogPhotoGallery gallery={section.gallery} isHinglish={isHinglish} />
+              )}
             </section>
           ))}
+
+          {/* Post-Level Photo Gallery (Founder, Team & Lab Moments) */}
+          {post.gallery && (
+            <BlogPhotoGallery gallery={post.gallery} isHinglish={isHinglish} />
+          )}
 
           {/* In-Article Sweet Monk Product CTA Card */}
           <div className="my-10 bg-gradient-to-r from-emerald-900 to-emerald-950 text-white rounded-3xl p-6 sm:p-8 shadow-lg border border-emerald-700/60 flex flex-col sm:flex-row items-center justify-between gap-6">
