@@ -312,7 +312,7 @@ export const useCreateRazorpayOrder = () => {
         ...resData,
         orderId: rzpId,
         providerOrderId: rzpId,
-        keyId: resData?.keyId || resData?.key || 'rzp_live_TcH3s5Qdh4ngAp',
+        keyId: resData?.keyId || resData?.key || (import.meta.env.VITE_RAZORPAY_KEY_ID as string) || '',
       };
     },
   });

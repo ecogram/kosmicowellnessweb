@@ -360,7 +360,7 @@ export const Checkout: React.FC = () => {
       order.keyId ||
       order.key ||
       import.meta.env.VITE_RAZORPAY_KEY_ID ||
-      'rzp_live_TcH3s5Qdh4ngAp';
+      '';
 
     const calculatedPaise = Math.max(
       100,
@@ -584,7 +584,7 @@ export const Checkout: React.FC = () => {
         upfrontData?.keyId ||
         upfrontData?.key ||
         import.meta.env.VITE_RAZORPAY_KEY_ID ||
-        'rzp_live_TcH3s5Qdh4ngAp';
+        '';
 
       const calculatedPaise = Math.max(100, Math.round(advanceAmount * 100));
 

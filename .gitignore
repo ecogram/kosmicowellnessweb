@@ -79,3 +79,8 @@ docx_text.txt
 *.tar.gz
 *.tgz
 
+# ── Internal Scripts & Test Utilities ────────────
+docs/verification-scripts/
+backend/scripts/
+backend/tests/
+

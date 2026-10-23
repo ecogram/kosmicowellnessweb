@@ -24,7 +24,7 @@ services:
       - .env
     environment:
       - NODE_ENV=development
-      - MONGO_URI=mongodb+srv://KosmicoWellness:KosmicoWellness@cluster0.67auck3.mongodb.net/kosmico
+      - MONGO_URI=${MONGO_URI}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:
@@ -43,7 +43,7 @@ services:
       - .env
     environment:
       - NODE_ENV=development
-      - MONGO_URI=mongodb+srv://KosmicoWellness:KosmicoWellness@cluster0.67auck3.mongodb.net/kosmico
+      - MONGO_URI=${MONGO_URI}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
     depends_on:

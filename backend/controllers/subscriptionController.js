@@ -7,8 +7,8 @@ const crypto = require('crypto');
 
 const getRazorpayInstance = () => {
   return new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID || 'rzp_live_TcH3s5Qdh4ngAp',
-    key_secret: process.env.RAZORPAY_KEY_SECRET || '8HiA1PomM2gcACR54tAfnagQ',
+    key_id: process.env.RAZORPAY_KEY_ID || '',
+    key_secret: process.env.RAZORPAY_KEY_SECRET || '',
   });
 };
 
