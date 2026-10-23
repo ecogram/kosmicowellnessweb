@@ -51,7 +51,7 @@ export const Profile: React.FC = () => {
 
   const ordersCount = ordersData?.orders ? ordersData.orders.length : (ordersData?.pagination?.total ?? 0);
   const wishlistCount = wishlist?.items?.length || 0;
-  const couponsCount = couponsData ? couponsData.filter((c: any) => c.isActive !== false).length : 0;
+  const couponsCount = Array.isArray(couponsData) ? couponsData.filter((c: any) => c.isActive !== false).length : 0;
 
   const isSubscriptionActive = Boolean(
     subStatus?.isSubscribed === true ||
@@ -830,7 +830,7 @@ export const Profile: React.FC = () => {
                 />
               ) : (
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-emerald-800 text-amber-300 font-serif font-black text-lg sm:text-xl flex items-center justify-center border-2 border-emerald-600 shadow-md uppercase group-hover:opacity-90 transition-opacity">
-                  {((user?.name || fullName || 'U').split(' ').filter(Boolean).map((n: string) => n[0]).join('') || 'U').slice(0, 2)}
+                  {(String(user?.name || fullName || 'U').split(' ').filter(Boolean).map((n: string) => n[0]).join('') || 'U').slice(0, 2)}
                 </div>
               )}
 
@@ -1873,7 +1873,7 @@ export const Profile: React.FC = () => {
                 />
               ) : (
                 <div className="w-64 h-64 sm:w-80 sm:h-80 rounded-2xl bg-emerald-800 text-amber-300 font-serif font-black text-6xl flex items-center justify-center border border-emerald-600 shadow-2xl uppercase">
-                  {((user?.name || fullName || 'U').split(' ').filter(Boolean).map((n: string) => n[0]).join('') || 'U').slice(0, 2)}
+                  {(String(user?.name || fullName || 'U').split(' ').filter(Boolean).map((n: string) => n[0]).join('') || 'U').slice(0, 2)}
                 </div>
               )}
             </div>

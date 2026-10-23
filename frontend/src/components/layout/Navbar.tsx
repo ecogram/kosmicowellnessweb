@@ -220,7 +220,7 @@ export function Navbar() {
                       />
                     );
                   })()}
-                  <span>{(user?.name || (user as any)?.fullName || 'User').split(' ')[0]}</span>
+                  <span>{String(user?.name || (user as any)?.fullName || 'User').trim().split(' ')[0] || 'User'}</span>
                 </Link>
               </div>
             ) : (
@@ -402,7 +402,7 @@ export function Navbar() {
                         }
                         return <span>👤</span>;
                       })()}
-                      <span>Profile ({user?.name})</span>
+                      <span>Profile ({String(user?.name || (user as any)?.fullName || 'User')})</span>
                     </Link>
                     <button
                       onClick={() => {
