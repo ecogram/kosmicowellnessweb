@@ -68,7 +68,10 @@ export interface BlogPost {
   gallery?: BlogGallery;
 }
 
+import { NEW_BLOGS_OCT_24 } from './newBlogsOct24';
+
 export const BLOG_POSTS: BlogPost[] = [
+  ...NEW_BLOGS_OCT_24,
   {
     id: '1',
     slug: 'monk-fruit-vs-stevia-vs-sugar',
