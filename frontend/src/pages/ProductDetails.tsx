@@ -15,6 +15,7 @@ import { PincodeEstimator } from '../components/product/PincodeEstimator';
 import toast from 'react-hot-toast';
 import { showStockToast } from '../utils/stockToast';
 import { SEO } from '../components/SEO';
+import { ProductImageGallery } from '../components/product/ProductImageGallery';
 
 export function ProductDetails() {
   const { slug } = useParams();
@@ -98,7 +99,7 @@ export function ProductDetails() {
       variant: variantStr,
       price: finalPrice,
       name: product.name,
-      image: images[0],
+      image: activeImage || images[0],
       stock: stock,
     });
   };
@@ -129,7 +130,7 @@ export function ProductDetails() {
       variant: variantStr,
       price: finalPrice,
       name: product.name,
-      image: images[0],
+      image: activeImage || images[0],
       stock: stock,
     });
     navigate('/checkout');
@@ -151,7 +152,7 @@ export function ProductDetails() {
         slug: product.slug,
         price: product.price,
         compareAtPrice: product.compareAtPrice || 499,
-        image: product.image || (product.images?.length ? product.images[0] : '/assets/products/product-box.jpg'),
+        image: activeImage || product.image || (product.images?.length ? product.images[0] : '/assets/products/product-box.jpg'),
       });
 
       if (res?.action === 'added') {
@@ -248,29 +249,15 @@ export function ProductDetails() {
         </Link>
 
         <div className="flex flex-col md:flex-row gap-10 lg:gap-14 mb-16 items-start">
-          {/* Gallery */}
+          {/* Gallery with Manual Scrolling, Both Side Buttons, and Multiple Image Upload */}
           <div className="w-full md:w-1/2 md:sticky md:top-28">
-            <div className="aspect-square bg-surface rounded-3xl border border-border p-8 mb-4 flex items-center justify-center overflow-hidden shadow-xs">
-              <img
-                src={activeImage}
-                alt={product.name}
-                className="w-full h-full object-contain mix-blend-multiply hover:scale-105 transition-transform duration-500"
-              />
-            </div>
-            {images.length > 1 && (
-              <div className="grid grid-cols-4 gap-3">
-                {images.map((img: string, idx: number) => (
-                  <button
-                    key={idx}
-                    onClick={() => setActiveImage(img)}
-                    className={`aspect-square rounded-2xl border-2 p-2 bg-surface overflow-hidden transition-all cursor-pointer ${activeImage === img ? 'border-primary shadow-xs ring-2 ring-primary/20' : 'border-border hover:border-text-muted'
-                      }`}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-contain mix-blend-multiply" />
-                  </button>
-                ))}
-              </div>
-            )}
+            <ProductImageGallery
+              productId={product._id || product.id}
+              slug={product.slug || slug}
+              productName={product.name}
+              initialImages={images}
+              onActiveImageChange={(img) => setActiveImage(img)}
+            />
 
             {/* Erythritol Free Trust Box */}
             <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-2xl flex items-start gap-3">

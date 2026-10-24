@@ -1,11 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Container } from '../../components/ui/Container';
-import { Sparkles, ArrowRight, ShieldCheck, Star, Zap, Leaf, Smartphone, HeartPulse } from 'lucide-react';
+import { Sparkles, ArrowRight, ShieldCheck, Star, Zap, Leaf, Smartphone, HeartPulse, ChevronLeft, ChevronRight } from 'lucide-react';
 import { PlayStoreModal } from '../../components/ui/PlayStoreModal';
 
 export function Hero() {
   const [isPlayStoreModalOpen, setIsPlayStoreModalOpen] = useState(false);
+  const [heroImages, setHeroImages] = useState<string[]>([
+    '/assets/products/product-box.jpg',
+    '/assets/products/product-front-back.jpg',
+    '/assets/products/lifestyle-tea.jpg',
+    '/assets/products/sweetmonk-lifestyle-drop.png'
+  ]);
+  const [activeHeroImgIdx, setActiveHeroImgIdx] = useState(0);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('kosmico_gallery_sweet-monk');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setHeroImages(parsed);
+        }
+      }
+    } catch (_) {}
+  }, []);
+
+  const handlePrevHeroImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveHeroImgIdx((prev) => (prev - 1 + heroImages.length) % heroImages.length);
+  };
+
+  const handleNextHeroImage = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setActiveHeroImgIdx((prev) => (prev + 1) % heroImages.length);
+  };
 
   return (
     <section className="relative bg-gradient-to-b from-emerald-50/80 via-stone-50/50 to-background py-14 sm:py-20 lg:py-24 overflow-hidden">
@@ -115,13 +146,56 @@ export function Hero() {
                     </div>
                   </div>
 
-                  {/* Perfectly Adjusted Product Image (Single Uniform Background Color) */}
-                  <div className="relative w-full flex-1 flex items-center justify-center p-1 my-auto">
+                  {/* Perfectly Adjusted Product Image with Both Side Buttons (Manual Scrolling) */}
+                  <div className="relative w-full flex-1 flex items-center justify-center p-1 my-auto group/heroimg">
+                    {/* Left Side Button */}
+                    {heroImages.length > 1 && (
+                      <button
+                        type="button"
+                        aria-label="Previous Image"
+                        onClick={handlePrevHeroImage}
+                        className="absolute left-1 z-30 w-8 h-8 rounded-full bg-white/95 hover:bg-emerald-800 text-neutral-800 hover:text-white border border-neutral-200/90 shadow-md flex items-center justify-center transition-all active:scale-95 cursor-pointer opacity-85 hover:opacity-100"
+                      >
+                        <ChevronLeft className="w-4 h-4 -translate-x-0.5" />
+                      </button>
+                    )}
+
                     <img
-                      src="/assets/products/product-box.jpg"
+                      src={heroImages[activeHeroImgIdx] || '/assets/products/product-box.jpg'}
                       alt="Kosmico Sweet Monk Fruit Sweetener"
-                      className="max-h-[360px] sm:max-h-[400px] w-auto object-contain mix-blend-multiply drop-shadow-xl transition-transform duration-700 transform group-hover:scale-105 relative z-10"
+                      className="max-h-[340px] sm:max-h-[380px] w-auto object-contain mix-blend-multiply drop-shadow-xl transition-all duration-500 transform group-hover:scale-105 relative z-10"
                     />
+
+                    {/* Right Side Button */}
+                    {heroImages.length > 1 && (
+                      <button
+                        type="button"
+                        aria-label="Next Image"
+                        onClick={handleNextHeroImage}
+                        className="absolute right-1 z-30 w-8 h-8 rounded-full bg-white/95 hover:bg-emerald-800 text-neutral-800 hover:text-white border border-neutral-200/90 shadow-md flex items-center justify-center transition-all active:scale-95 cursor-pointer opacity-85 hover:opacity-100"
+                      >
+                        <ChevronRight className="w-4 h-4 translate-x-0.5" />
+                      </button>
+                    )}
+
+                    {/* Image indicator dots */}
+                    {heroImages.length > 1 && (
+                      <div className="absolute bottom-1 z-20 flex items-center gap-1 bg-white/80 backdrop-blur-xs px-2 py-0.5 rounded-full border border-neutral-200/60 shadow-2xs">
+                        {heroImages.map((_, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              setActiveHeroImgIdx(i);
+                            }}
+                            className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                              activeHeroImgIdx === i ? 'w-4 bg-emerald-800' : 'w-1.5 bg-neutral-300 hover:bg-neutral-400'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Bottom App Product Tag inside Screen */}
