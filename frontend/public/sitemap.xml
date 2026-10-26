@@ -172,20 +172,20 @@
 
   <!-- Legal Policies -->
   <url>
-    <loc>https://www.kosmicowellness.com/privacy-policy</loc>
-    <lastmod>2026-10-16</lastmod>
+    <loc>https://www.kosmicowellness.com/privacy</loc>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>https://www.kosmicowellness.com/terms-of-service</loc>
-    <lastmod>2026-10-16</lastmod>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://www.kosmicowellness.com/refund-policy</loc>
-    <lastmod>2026-10-16</lastmod>
+    <loc>https://www.kosmicowellness.com/refunds</loc>
+    <lastmod>2026-10-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
   </url>
