@@ -26,6 +26,73 @@ class PaymentService {
   }
 
   /**
+   * Create a Razorpay Order directly without requiring a pre-existing DB Order.
+   */
+  async createRazorpayGatewayOrder(amountInRupees, receipt) {
+    const amountInSmallestUnit = Math.max(100, Math.round(Number(amountInRupees) * 100));
+    const currency = 'INR';
+
+    let rzpOrder;
+    try {
+      rzpOrder = await this.razorpay.orders.create({
+        amount: amountInSmallestUnit,
+        currency,
+        receipt: receipt || `rcpt_${Date.now()}`,
+      });
+    } catch (err) {
+      console.warn('Razorpay API order creation warning:', err.message || err);
+      if (process.env.NODE_ENV === 'production') {
+        throw new ApiError(500, 'Unable to initialize Razorpay payment. Please verify credentials.');
+      }
+      rzpOrder = {
+        id: `order_dev_${Date.now()}_${Math.floor(100 + Math.random() * 900)}`,
+        amount: amountInSmallestUnit,
+        currency,
+      };
+    }
+
+    return {
+      id: rzpOrder.id,
+      amount: rzpOrder.amount,
+      currency: rzpOrder.currency,
+      keyId: process.env.RAZORPAY_KEY_ID || '',
+    };
+  }
+
+  /**
+   * Directly verify HMAC signature for Razorpay
+   */
+  verifySignatureOnly({ razorpay_order_id, razorpay_payment_id, razorpay_signature }) {
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return false;
+    }
+    const secret = process.env.RAZORPAY_KEY_SECRET || '';
+    if (!secret) return false;
+    try {
+      const generatedSignature = crypto
+        .createHmac('sha256', secret)
+        .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+        .digest('hex');
+      return generatedSignature === razorpay_signature;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /**
+   * Directly check payment status with Razorpay API as fallback
+   */
+  async verifyWithRazorpayApi(razorpay_payment_id) {
+    if (!razorpay_payment_id || razorpay_payment_id.startsWith('pay_dev_')) return false;
+    try {
+      const rzpPayment = await this.razorpay.payments.fetch(razorpay_payment_id);
+      return Boolean(rzpPayment && (rzpPayment.status === 'captured' || rzpPayment.status === 'authorized'));
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /**
    * Create a Razorpay Order and initialize our internal Payment record.
    */
   async createPayment(orderId, userId, customAmount) {

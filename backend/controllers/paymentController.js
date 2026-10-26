@@ -2,6 +2,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const { ApiResponse, ApiError } = require('../utils/apiResponse');
 const paymentService = require('../services/paymentService');
 const Order = require('../models/Order');
+const DraftOrder = require('../models/DraftOrder');
 const Product = require('../models/Product');
 const Address = require('../models/Address');
 const { sendOrderConfirmationEmail } = require('../utils/email');
@@ -681,47 +682,50 @@ const createCodUpfrontOrder = asyncHandler(async (req, res) => {
   const finalTotal = Number(req.body.total) || amount || Math.max(0, calculatedSubtotal - Number(discountAmount) + Number(deliveryFee) + Number(gstCharge));
   const payableUpfront = Math.min(Number(upfrontAmount) || 104, finalTotal);
 
-  const order = await Order.create({
-    orderNumber: generateOrderNumber(),
-    user: req.user._id,
-    userName: req.user.name || (addressData && addressData.fullName) || 'Customer',
-    userEmail: req.user.email ? req.user.email.toLowerCase().trim() : '',
-    items: formattedItems,
-    subtotal: calculatedSubtotal || finalTotal,
-    discount: Number(discountAmount) || 0,
-    shipping: Number(deliveryFee) || 88,
-    deliveryFee: Number(deliveryFee) || 88,
-    tax: Number(gstCharge) || 16,
-    gstCharge: Number(gstCharge) || 16,
-    total: finalTotal,
-    amount: finalTotal,
-    upfrontAmount: payableUpfront,
-    shippingAddress: addressData,
-    deliveryAddress: addressData,
-    billingAddress: addressData,
-    orderStatus: 'PENDING',
-    paymentStatus: 'PENDING',
-    paymentMethod: 'COD_UPFRONT',
-  });
+  // Initialize Razorpay Order directly WITHOUT saving to Order collection
+  const rzpGateway = await paymentService.createRazorpayGatewayOrder(payableUpfront, `rcpt_upfront_${Date.now()}`);
 
-  const paymentData = await paymentService.createPayment(order._id, req.user._id, payableUpfront);
+  // Save temporary DraftOrder (auto-expires in 24 hours if unpaid)
+  const draft = await DraftOrder.create({
+    user: req.user._id,
+    providerOrderId: rzpGateway.id,
+    orderPayload: {
+      userName: req.user.name || (addressData && addressData.fullName) || 'Customer',
+      userEmail: req.user.email ? req.user.email.toLowerCase().trim() : '',
+      items: formattedItems,
+      subtotal: calculatedSubtotal || finalTotal,
+      discount: Number(discountAmount) || 0,
+      discountAmount: Number(discountAmount) || 0,
+      shipping: Number(deliveryFee) || 88,
+      deliveryFee: Number(deliveryFee) || 88,
+      tax: Number(gstCharge) || 16,
+      gstCharge: Number(gstCharge) || 16,
+      total: finalTotal,
+      amount: finalTotal,
+      upfrontAmount: payableUpfront,
+      shippingAddress: addressData,
+      deliveryAddress: addressData,
+      billingAddress: addressData,
+    },
+    status: 'PENDING',
+  });
 
   res.status(200).json(
     new ApiResponse(
       200,
       {
-        orderId: paymentData.providerOrderId || paymentData.razorpayOrderId,
-        providerOrderId: paymentData.providerOrderId,
-        internalOrderId: order._id,
-        orderNumber: order.orderNumber,
+        orderId: rzpGateway.id,
+        providerOrderId: rzpGateway.id,
+        internalOrderId: draft._id,
+        orderNumber: 'DRAFT-' + draft._id.toString().slice(-6),
         upfrontAmount: payableUpfront,
         paidAmount: payableUpfront,
         remainingCodAmount: Math.max(0, finalTotal - payableUpfront),
         balanceAmount: Math.max(0, finalTotal - payableUpfront),
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        keyId: paymentData.keyId,
-        key: paymentData.keyId,
+        amount: rzpGateway.amount,
+        currency: rzpGateway.currency,
+        keyId: rzpGateway.keyId,
+        key: rzpGateway.keyId,
       },
       'COD Upfront payment initialized successfully'
     )
@@ -747,39 +751,106 @@ const verifyCodUpfrontPayment = asyncHandler(async (req, res) => {
   if (!razorpay_payment_id) {
     throw new ApiError(400, 'Missing payment verification payloads (razorpay_payment_id is required)');
   }
-  const payment = await paymentService.verifyPaymentSignature(req.user._id, {
+
+  // 1. Verify Signature
+  const isSignatureValid = paymentService.verifySignatureOnly({
     razorpay_order_id,
     razorpay_payment_id,
     razorpay_signature,
   });
+  const isApiVerified = !isSignatureValid ? await paymentService.verifyWithRazorpayApi(razorpay_payment_id) : false;
 
-  let updatedOrder = null;
-  if (payment.order) {
-    const existingOrder = await Order.findById(payment.order);
-    const resolvedUpfront = Number(existingOrder?.upfrontAmount || 104);
-    const orderTotal = Number(existingOrder?.total || existingOrder?.amount || 0);
+  if (!isSignatureValid && !isApiVerified) {
+    throw new ApiError(400, 'Invalid payment signature or unconfirmed payment');
+  }
 
-    updatedOrder = await Order.findByIdAndUpdate(
-      payment.order,
-      {
-        paymentMethod: 'COD_UPFRONT',
-        paymentStatus: 'PARTIAL_PAID',
-        upfrontPaymentStatus: 'Paid',
-        orderStatus: 'Placed',
-        upfrontAmount: resolvedUpfront,
-        deliveryFee: Number(existingOrder?.deliveryFee || 88),
-        shipping: Number(existingOrder?.shipping || 88),
-        gstCharge: Number(existingOrder?.gstCharge || 16),
-        tax: Number(existingOrder?.tax || 16),
-        paymentReference: razorpay_payment_id,
-        trackingNumber: 'TRK-' + Math.floor(10000000 + Math.random() * 90000000),
-      },
-      { new: true }
-    );
+  // 2. Check DraftOrder first (only create real Order if payment is verified)
+  const draft = await DraftOrder.findOne({
+    providerOrderId: razorpay_order_id,
+    user: req.user._id,
+  });
 
+  let createdOrUpdatedOrder = null;
+  let paymentRecord = null;
+
+  if (draft) {
+    const payload = draft.orderPayload || {};
+    createdOrUpdatedOrder = await Order.create({
+      orderNumber: generateOrderNumber(),
+      user: req.user._id,
+      userName: payload.userName || 'Customer',
+      userEmail: payload.userEmail || req.user.email || '',
+      items: payload.items || [],
+      subtotal: payload.subtotal,
+      discount: payload.discount || 0,
+      discountAmount: payload.discountAmount || 0,
+      deliveryFee: payload.deliveryFee || 88,
+      shipping: payload.shipping || 88,
+      tax: payload.tax || 16,
+      gstCharge: payload.gstCharge || 16,
+      total: payload.total,
+      amount: payload.amount || payload.total,
+      upfrontAmount: payload.upfrontAmount || 104,
+      shippingAddress: payload.shippingAddress,
+      deliveryAddress: payload.deliveryAddress,
+      billingAddress: payload.billingAddress,
+      orderStatus: 'Placed',
+      paymentStatus: 'PARTIAL_PAID',
+      upfrontPaymentStatus: 'Paid',
+      paymentMethod: 'COD_UPFRONT',
+      paymentReference: razorpay_payment_id,
+      trackingNumber: 'TRK-' + Math.floor(10000000 + Math.random() * 90000000),
+    });
+
+    draft.status = 'COMPLETED';
+    await draft.save();
+
+    const Payment = require('../models/Payment');
+    paymentRecord = await Payment.create({
+      order: createdOrUpdatedOrder._id,
+      user: req.user._id,
+      provider: 'razorpay',
+      providerOrderId: razorpay_order_id,
+      providerPaymentId: razorpay_payment_id,
+      amount: Math.round(Number(createdOrUpdatedOrder.upfrontAmount || 104) * 100),
+      currency: 'INR',
+      status: 'PAID',
+    });
+  } else {
+    // Fallback for legacy existing orders
+    const payment = await paymentService.verifyPaymentSignature(req.user._id, {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    });
+    paymentRecord = payment;
+    if (payment && payment.order) {
+      const existingOrder = await Order.findById(payment.order);
+      const resolvedUpfront = Number(existingOrder?.upfrontAmount || 104);
+      createdOrUpdatedOrder = await Order.findByIdAndUpdate(
+        payment.order,
+        {
+          paymentMethod: 'COD_UPFRONT',
+          paymentStatus: 'PARTIAL_PAID',
+          upfrontPaymentStatus: 'Paid',
+          orderStatus: 'Placed',
+          upfrontAmount: resolvedUpfront,
+          deliveryFee: Number(existingOrder?.deliveryFee || 88),
+          shipping: Number(existingOrder?.shipping || 88),
+          gstCharge: Number(existingOrder?.gstCharge || 16),
+          tax: Number(existingOrder?.tax || 16),
+          paymentReference: razorpay_payment_id,
+          trackingNumber: 'TRK-' + Math.floor(10000000 + Math.random() * 90000000),
+        },
+        { new: true }
+      );
+    }
+  }
+
+  if (createdOrUpdatedOrder) {
     try {
-      if (updatedOrder && (updatedOrder.userEmail || req.user.email)) {
-        await sendOrderConfirmationEmail(updatedOrder, updatedOrder.userEmail || req.user.email);
+      if (createdOrUpdatedOrder.userEmail || req.user.email) {
+        await sendOrderConfirmationEmail(createdOrUpdatedOrder, createdOrUpdatedOrder.userEmail || req.user.email);
       }
     } catch (err) {
       console.error('COD Upfront confirmation email error:', err);
@@ -787,19 +858,19 @@ const verifyCodUpfrontPayment = asyncHandler(async (req, res) => {
 
     // Auto-sync upfront COD order with Shiprocket immediately
     try {
-      await shiprocketService.createOrder(updatedOrder);
+      await shiprocketService.createOrder(createdOrUpdatedOrder);
     } catch (err) {
       console.error('[Shiprocket] Auto-sync failed for COD Upfront order:', err.message || err);
     }
   }
 
-  const resOrder = updatedOrder ? {
-    ...(updatedOrder.toObject ? updatedOrder.toObject() : updatedOrder),
-    paidAmount: Number(updatedOrder.upfrontAmount || 104),
-    balanceAmount: Math.max(0, Number(updatedOrder.total || updatedOrder.amount || 0) - Number(updatedOrder.upfrontAmount || 104)),
+  const resOrder = createdOrUpdatedOrder ? {
+    ...(createdOrUpdatedOrder.toObject ? createdOrUpdatedOrder.toObject() : createdOrUpdatedOrder),
+    paidAmount: Number(createdOrUpdatedOrder.upfrontAmount || 104),
+    balanceAmount: Math.max(0, Number(createdOrUpdatedOrder.total || createdOrUpdatedOrder.amount || 0) - Number(createdOrUpdatedOrder.upfrontAmount || 104)),
   } : null;
 
-  res.status(200).json(new ApiResponse(200, { payment, order: resOrder }, 'COD Upfront payment verified successfully'));
+  res.status(200).json(new ApiResponse(200, { payment: paymentRecord, order: resOrder }, 'COD Upfront payment verified successfully'));
 });
 
 // 7. Cancel Pending Razorpay Order (POST /api/payment/razorpay/cancel-pending)
@@ -827,6 +898,10 @@ const cancelPendingRazorpayOrder = asyncHandler(async (req, res) => {
 
   const provId = razorpay_order_id || orderId;
   if (provId) {
+    await DraftOrder.findOneAndUpdate(
+      { providerOrderId: provId, user: req.user._id },
+      { status: 'CANCELLED' }
+    );
     const Payment = require('../models/Payment');
     await Payment.findOneAndUpdate(
       { providerOrderId: provId, user: req.user._id, status: { $in: ['CREATED', 'PENDING'] } },
