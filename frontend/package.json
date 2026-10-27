@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && node -e \"const fs=require('fs'); try { fs.copyFileSync('dist/index.html', 'dist/404.html'); fs.cpSync('dist', '../dist', {recursive: true}); fs.copyFileSync('../dist/index.html', '../dist/404.html'); } catch(e){}\"",
-    "postbuild": "node -e \"const fs=require('fs'); try { fs.copyFileSync('dist/index.html', 'dist/404.html'); fs.cpSync('dist', '../dist', {recursive: true}); fs.copyFileSync('../dist/index.html', '../dist/404.html'); } catch(e){}\"",
+    "build": "tsc && vite build && node scripts/prerender-seo.js",
+    "postbuild": "node scripts/prerender-seo.js",
     "preview": "vite preview"
   },
   "devDependencies": {
