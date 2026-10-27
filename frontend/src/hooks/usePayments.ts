@@ -338,51 +338,11 @@ export const useVerifyPayment = () => {
   });
 };
 
-// POST /api/order/place/cod (fallback /api/payment/cod)
+// Direct COD (/order/place/cod) is deprecated and removed. All COD orders must use useCreateCodUpfront.
 export const usePlaceCodOrder = () => {
-  const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (payload: {
-      amount: number;
-      deliveryAddressId: string;
-      items: Array<{ productId?: string; product?: string; quantity?: number; qty?: number; price: number }>;
-      couponCode?: string;
-      discountAmount?: number;
-      deliveryFee?: number;
-      gstCharge?: number;
-    }) => {
-      const formattedItems = (payload.items || []).map((it: any) => ({
-        product: it.productId || it.product || it._id,
-        productId: it.productId || it.product || it._id,
-        qty: it.quantity || it.qty || 1,
-        quantity: it.quantity || it.qty || 1,
-        price: it.price || it.priceSnapshot || 0,
-      }));
-
-      const body = {
-        amount: payload.amount,
-        deliveryAddressId: payload.deliveryAddressId,
-        items: formattedItems,
-        couponCode: payload.couponCode,
-        discountAmount: payload.discountAmount,
-        deliveryFee: payload.deliveryFee,
-        gstCharge: payload.gstCharge,
-      };
-
-      let resData: any;
-      try {
-        const { data } = await api.post('/order/place/cod', body);
-        resData = data?.data ?? data;
-      } catch (err) {
-        const { data } = await api.post('/payment/cod', body);
-        resData = data?.data ?? data;
-      }
-      return resData;
-    },
-    onSuccess: () => {
-      localStorage.removeItem('kosmico_cart_v1');
-      queryClient.setQueryData(['cart'], { items: [], subtotal: 0, total: 0 });
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    mutationFn: async () => {
+      throw new Error('Direct COD is disabled. All COD orders must use COD with upfront payment (/payment/cod-upfront/create).');
     },
   });
 };

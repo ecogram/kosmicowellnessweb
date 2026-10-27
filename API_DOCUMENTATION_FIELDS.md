@@ -286,11 +286,9 @@
 }
 ```
 
-### C. Place 100% Cash on Delivery (COD) Order
-- **Method**: `POST`
-- **Endpoint**: `/api/payment/cod`
-- **Auth**: Bearer Token required
-- **Request Body**: Same item/address structure as Razorpay order.
+### C. Cash on Delivery (COD) Policy
+> **Note**: Direct 100% COD (`/api/payment/cod` and `/api/order/place/cod`) has been **removed/disabled**.
+> All COD orders must be processed using **COD Upfront Payment** (Section D & E below).
 
 ### D. Create COD Upfront Payment (Advance Delivery Fee + GST)
 - **Method**: `POST`

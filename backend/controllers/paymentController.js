@@ -15,16 +15,13 @@ const generateOrderNumber = () => {
 
 // 1. Place COD Order (POST /api/payment/cod)
 const placeCodOrder = asyncHandler(async (req, res) => {
-  const {
-    amount,
-    deliveryAddressId,
-    shippingAddress: directAddress,
-    items,
-    couponCode,
-    discountAmount = 0,
-    deliveryFee = 49,
-    gstCharge = 0,
-  } = req.body;
+  throw new ApiError(
+    400,
+    'Direct COD without advance payment is disabled. All COD orders must use COD Upfront payment (/api/payment/cod-upfront/create).'
+  );
+});
+
+const _deprecatedPlaceCodOrder = asyncHandler(async (req, res) => {
 
   let addressData = directAddress;
   if (!addressData && deliveryAddressId) {

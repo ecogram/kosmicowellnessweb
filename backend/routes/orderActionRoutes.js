@@ -11,8 +11,7 @@ router.post('/place/razorpay', protect, paymentController.createRazorpayOrder);
 router.post('/razorpay/verify', protect, paymentController.verifyPayment);
 router.post('/verify', protect, paymentController.verifyPayment);
 
-// 3. Cash on Delivery (COD) Order: POST /api/order/place/cod
-router.post('/place/cod', protect, paymentController.placeCodOrder);
+// 3. Cash on Delivery (COD) Order: Direct /place/cod is removed. All COD orders must use COD Upfront (/api/payment/cod-upfront/create).
 
 // 4. Fetch User's Orders ("My Orders"): GET /api/order/myorders
 router.get('/myorders', protect, paymentController.getMyOrders);

@@ -225,28 +225,11 @@ export const useOrderTracking = (orderId: string) => {
   });
 };
 
-// POST /api/payment/cod — place COD order
+// Direct COD (/payment/cod) is deprecated and removed. All COD orders use COD Upfront.
 export const useCreateOrder = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: async (data: {
-      amount: number;
-      deliveryAddressId: string;
-      items: Array<{ productId: string; quantity: number; price: number }>;
-      couponCode?: string;
-      discountAmount?: number;
-      deliveryFee?: number;
-      gstCharge?: number;
-    }) => {
-      const response = await api.post('/payment/cod', data);
-      const resData = response.data?.data ?? response.data ?? {};
-      return resData.order ?? resData;
-    },
-    onSuccess: () => {
-      localStorage.removeItem('kosmico_cart_v1');
-      queryClient.setQueryData(['cart'], { items: [], subtotal: 0, total: 0 });
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    mutationFn: async () => {
+      throw new Error('Direct COD is disabled. Please use COD with upfront payment via useCreateCodUpfront.');
     },
   });
 };

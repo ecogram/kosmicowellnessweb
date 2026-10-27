@@ -11,8 +11,7 @@ router.post('/save-method', protect, paymentController.savePaymentMethod);
 router.put('/save-method/:methodId', protect, paymentController.updateSavedPaymentMethod);
 router.delete('/save-method/:methodId', protect, paymentController.deleteSavedPaymentMethod);
 
-// 2. COD Orders
-router.post('/cod', protect, paymentController.placeCodOrder);
+
 
 // 3. COD Upfront Payment (Partial COD via Razorpay)
 router.post('/cod-upfront/create', protect, paymentController.createCodUpfrontOrder);
@@ -28,7 +27,7 @@ router.post('/verify', protect, paymentController.verifyPayment);
 // 5. User Orders & Webhook
 router.get('/myorders', protect, paymentController.getMyOrders);
 router.get('/', protect, paymentController.getMyOrders);
-router.post('/', protect, paymentController.placeCodOrder);
+
 router.get('/:orderId', protect, paymentController.getOrderById);
 const orderActionController = require('../controllers/orderActionController');
 router.post('/cancel/:orderId', protect, orderActionController.cancelOrder);
