@@ -536,34 +536,18 @@ export const Checkout: React.FC = () => {
 
     try {
       // 1. Create COD upfront order on backend via POST /api/payment/cod-upfront/create
-      let upfrontData: any = null;
-      try {
-        const upfrontRes = await api.post('/payment/cod-upfront/create', {
-          ...orderPayload,
-          amount: total,
-          upfrontAmount: advanceAmount,
-          total: total,
-          subtotal: subtotal,
-          deliveryFee,
-          gstCharge: gst,
-          paymentMethod: 'COD_UPFRONT',
-          isCOD: true,
-        });
-        upfrontData = upfrontRes.data?.data || upfrontRes.data;
-      } catch (createErr) {
-        const fallbackRes = await api.post('/order/place/razorpay', {
-          ...orderPayload,
-          amount: total,
-          upfrontAmount: advanceAmount,
-          total: total,
-          subtotal: subtotal,
-          deliveryFee,
-          gstCharge: gst,
-          paymentMethod: 'COD_UPFRONT',
-          isCOD: true,
-        });
-        upfrontData = fallbackRes.data?.data || fallbackRes.data;
-      }
+      const upfrontRes = await api.post('/payment/cod-upfront/create', {
+        ...orderPayload,
+        amount: total,
+        upfrontAmount: advanceAmount,
+        total: total,
+        subtotal: subtotal,
+        deliveryFee,
+        gstCharge: gst,
+        paymentMethod: 'COD_UPFRONT',
+        isCOD: true,
+      });
+      const upfrontData = upfrontRes.data?.data || upfrontRes.data;
 
       const rzpOrderId =
         upfrontData?.orderId ||
