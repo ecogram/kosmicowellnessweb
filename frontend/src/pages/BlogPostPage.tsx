@@ -8,7 +8,7 @@ import {
   Sparkles, CheckCircle2, ShoppingBag, 
   ChevronRight, ChevronLeft, HelpCircle, Languages,
   BookOpen, Images, LayoutGrid, Maximize2, X, Camera,
-  Smartphone
+  Smartphone, ExternalLink
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PLAY_STORE_URL } from '../utils/constants';
@@ -512,6 +512,34 @@ export function BlogPostPage() {
             {isHinglish ? 'Switch to English' : 'Hinglish mein padhein'} &rarr;
           </button>
         </div>
+
+        {/* Top Play Store Quick CTA Bar */}
+        {post.appPromo && (
+          <div className="mb-8 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-950 via-emerald-900 to-[#053d20] text-white shadow-md border border-emerald-700/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm animate-in fade-in duration-200">
+            <div className="flex items-center gap-2.5 text-center sm:text-left">
+              <span className="p-1.5 rounded-xl bg-amber-400 text-neutral-950 font-bold shrink-0">
+                <Smartphone className="w-4 h-4 text-neutral-950" />
+              </span>
+              <span className="font-medium text-emerald-100">
+                <strong className="text-white font-bold">
+                  {isHinglish && post.appPromo.topBarTextHinglish
+                    ? post.appPromo.topBarTextHinglish
+                    : (post.appPromo.topBarText || 'Track our Wellness journey kosmico app ke sath')}
+                </strong>
+                <span className="hidden md:inline text-emerald-200/80 ml-1.5">— Daily Sugar Tracker & Free Recipes</span>
+              </span>
+            </div>
+            <a
+              href={post.appPromo.url || PLAY_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-extrabold text-xs tracking-wide transition-all shadow-xs shrink-0 cursor-pointer"
+            >
+              <span>Download on Google Play</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+        )}
 
         {/* Article Header */}
         <header className="space-y-4 mb-8">

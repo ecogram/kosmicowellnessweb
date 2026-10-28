@@ -44,6 +44,8 @@ export interface BlogAppCta {
   url?: string;
   badge?: string;
   badgeHinglish?: string;
+  topBarText?: string;
+  topBarTextHinglish?: string;
 }
 
 export interface BlogContent {

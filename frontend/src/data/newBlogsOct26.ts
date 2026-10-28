@@ -30,7 +30,9 @@ export const NEW_BLOGS_OCT_26: BlogPost[] = [
       badgeHinglish: '🎁 Special App Offer',
       buttonText: 'GET IT ON Google Play',
       buttonTextHinglish: 'Google Play Se Download Karein',
-      url: 'https://play.google.com/store/apps/details?id=com.kosmico.wellness'
+      url: 'https://play.google.com/store/apps/details?id=com.kosmico.wellness',
+      topBarText: 'Track your Wellness journey with Kosmico App',
+      topBarTextHinglish: 'Track your Wellness journey Kosmico app ke sath',
     },
     content: {
       intro: 'Every morning, millions of Indians resolve to quit refined sugar, only to surrender by the afternoon tea break or post-dinner sweet craving. The problem is not your willpower—it is the strategy. Quitting sugar does not mean living a tasteless life; it simply means replacing harmful cane sugar with zero-glycemic, 100% natural sweetness. Here is your actionable 5-step roadmap to go sugar-free easily and sustainably.',
