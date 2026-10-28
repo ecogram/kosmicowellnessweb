@@ -513,33 +513,31 @@ export function BlogPostPage() {
           </button>
         </div>
 
-        {/* Top Play Store Quick CTA Bar */}
-        {post.appPromo && (
-          <div className="mb-8 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-950 via-emerald-900 to-[#053d20] text-white shadow-md border border-emerald-700/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm animate-in fade-in duration-200">
-            <div className="flex items-center gap-2.5 text-center sm:text-left">
-              <span className="p-1.5 rounded-xl bg-amber-400 text-neutral-950 font-bold shrink-0">
-                <Smartphone className="w-4 h-4 text-neutral-950" />
-              </span>
-              <span className="font-medium text-emerald-100">
-                <strong className="text-white font-bold">
-                  {isHinglish && post.appPromo.topBarTextHinglish
-                    ? post.appPromo.topBarTextHinglish
-                    : (post.appPromo.topBarText || 'Track our Wellness journey kosmico app ke sath')}
-                </strong>
-                <span className="hidden md:inline text-emerald-200/80 ml-1.5">— Daily Sugar Tracker & Free Recipes</span>
-              </span>
-            </div>
-            <a
-              href={post.appPromo.url || PLAY_STORE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-extrabold text-xs tracking-wide transition-all shadow-xs shrink-0 cursor-pointer"
-            >
-              <span>Download on Google Play</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </a>
+        {/* TOP PLAY STORE QUICK CTA BAR (IN EVERY BLOG) */}
+        <div className="mb-8 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-950 via-emerald-900 to-[#053d20] text-white shadow-md border border-emerald-700/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm animate-in fade-in duration-200">
+          <div className="flex items-center gap-2.5 text-center sm:text-left">
+            <span className="p-1.5 rounded-xl bg-amber-400 text-neutral-950 font-bold shrink-0">
+              <Smartphone className="w-4 h-4 text-neutral-950" />
+            </span>
+            <span className="font-medium text-emerald-100">
+              <strong className="text-white font-bold">
+                {isHinglish && post.appPromo?.topBarTextHinglish
+                  ? post.appPromo.topBarTextHinglish
+                  : (post.appPromo?.topBarText || (isHinglish ? 'Track your Wellness journey Kosmico app ke sath' : 'Track your Wellness journey with Kosmico App'))}
+              </strong>
+              <span className="hidden md:inline text-emerald-200/80 ml-1.5">— Daily Sugar Tracker & Free Recipes</span>
+            </span>
           </div>
-        )}
+          <a
+            href={post.appPromo?.url || PLAY_STORE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-neutral-950 font-extrabold text-xs tracking-wide transition-all shadow-xs shrink-0 cursor-pointer"
+          >
+            <span>Download on Google Play</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
+        </div>
 
         {/* Article Header */}
         <header className="space-y-4 mb-8">
@@ -607,131 +605,140 @@ export function BlogPostPage() {
           </p>
 
           {/* Article Sections */}
-          {currentContent.sections.map((section, idx) => (
-            <section key={idx} className="space-y-4 pt-4">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-serif font-black text-neutral-900 leading-snug">
-                {section.heading}
-              </h2>
+          {(() => {
+            const midSectionIndex = Math.max(0, Math.floor(currentContent.sections.length / 2) - 1);
+            return currentContent.sections.map((section, idx) => (
+              <section key={idx} className="space-y-4 pt-4">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-serif font-black text-neutral-900 leading-snug">
+                  {section.heading}
+                </h2>
 
-              {section.paragraphs.map((p, pIdx) => (
-                <p key={pIdx} className="text-neutral-700 leading-relaxed">
-                  {p}
-                </p>
-              ))}
+                {section.paragraphs.map((p, pIdx) => (
+                  <p key={pIdx} className="text-neutral-700 leading-relaxed">
+                    {p}
+                  </p>
+                ))}
 
-              {/* Callout Highlight Box */}
-              {section.callout && (
-                <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-sm md:text-base font-semibold flex items-start gap-3 my-4">
-                  <Sparkles className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                  <div>{section.callout}</div>
-                </div>
-              )}
+                {/* Callout Highlight Box */}
+                {section.callout && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-sm md:text-base font-semibold flex items-start gap-3 my-4">
+                    <Sparkles className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                    <div>{section.callout}</div>
+                  </div>
+                )}
 
-              {/* Bullet Points */}
-              {section.bulletPoints && section.bulletPoints.length > 0 && (
-                <ul className="space-y-2.5 my-4">
-                  {section.bulletPoints.map((bp, bpIdx) => (
-                    <li key={bpIdx} className="flex items-start gap-2.5 text-sm md:text-base text-neutral-700">
-                      <CheckCircle2 className="w-4 h-4 text-[#0a7a40] shrink-0 mt-1" />
-                      <span>{bp}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                {/* Bullet Points */}
+                {section.bulletPoints && section.bulletPoints.length > 0 && (
+                  <ul className="space-y-2.5 my-4">
+                    {section.bulletPoints.map((bp, bpIdx) => (
+                      <li key={bpIdx} className="flex items-start gap-2.5 text-sm md:text-base text-neutral-700">
+                        <CheckCircle2 className="w-4 h-4 text-[#0a7a40] shrink-0 mt-1" />
+                        <span>{bp}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
 
-              {/* Comparison Table (If provided) */}
-              {section.table && (
-                <div className="overflow-x-auto my-6 rounded-2xl border border-border shadow-xs bg-white">
-                  <table className="w-full text-left text-xs sm:text-sm">
-                    <thead className="bg-emerald-950 text-white uppercase text-[11px] font-bold tracking-wider">
-                      <tr>
-                        {section.table.headers.map((th, thIdx) => (
-                          <th key={thIdx} className="p-3.5 sm:p-4">
-                            {th}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {section.table.rows.map((row, rIdx) => (
-                        <tr key={rIdx} className={rIdx % 2 === 0 ? 'bg-white' : 'bg-[#f7faf8]'}>
-                          {row.map((cell, cIdx) => (
-                            <td key={cIdx} className={`p-3.5 sm:p-4 font-medium ${cIdx === 3 ? 'text-[#0a7a40] font-bold' : 'text-neutral-700'}`}>
-                              {cell}
-                            </td>
+                {/* Comparison Table (If provided) */}
+                {section.table && (
+                  <div className="overflow-x-auto my-6 rounded-2xl border border-border shadow-xs bg-white">
+                    <table className="w-full text-left text-xs sm:text-sm">
+                      <thead className="bg-emerald-950 text-white uppercase text-[11px] font-bold tracking-wider">
+                        <tr>
+                          {section.table.headers.map((th, thIdx) => (
+                            <th key={thIdx} className="p-3.5 sm:p-4">
+                              {th}
+                            </th>
                           ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Section Image */}
-              {section.image && (
-                <figure className="my-6 rounded-3xl overflow-hidden border border-border shadow-xs bg-white">
-                  <img
-                    src={section.image.src}
-                    alt={section.image.alt}
-                    className="w-full max-h-[420px] object-cover"
-                    loading="lazy"
-                  />
-                  {section.image.caption && (
-                    <figcaption className="p-3.5 text-xs text-neutral-600 bg-neutral-50 border-t border-border font-medium text-center">
-                      💡 {section.image.caption}
-                    </figcaption>
-                  )}
-                </figure>
-              )}
-
-              {/* Section Multiple Photos Gallery (If available) */}
-              {section.gallery && (
-                <BlogPhotoGallery gallery={section.gallery} isHinglish={isHinglish} />
-              )}
-
-              {/* Section Google Play App CTA (If specified) */}
-              {section.appCta && (
-                <div className="my-8 p-6 sm:p-7 rounded-3xl bg-linear-to-br from-emerald-950 via-emerald-900 to-[#053d20] text-white shadow-xl border border-emerald-800/50 flex flex-col sm:flex-row items-center justify-between gap-6">
-                  <div className="space-y-2 text-center sm:text-left">
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-400/20 text-emerald-300 text-xs font-bold uppercase tracking-wider">
-                      <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
-                      <span>{isHinglish ? (section.appCta.badgeHinglish || 'Kosmico Mobile App') : (section.appCta.badge || 'Official Mobile App')}</span>
-                    </div>
-                    <h3 className="text-xl sm:text-2xl font-serif font-black text-white">
-                      {isHinglish && section.appCta.titleHinglish ? section.appCta.titleHinglish : section.appCta.title}
-                    </h3>
-                    <p className="text-xs sm:text-sm text-emerald-100/85 max-w-lg leading-relaxed">
-                      {isHinglish && section.appCta.subtitleHinglish ? section.appCta.subtitleHinglish : section.appCta.subtitle}
-                    </p>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {section.table.rows.map((row, rIdx) => (
+                          <tr key={rIdx} className={rIdx % 2 === 0 ? 'bg-white' : 'bg-[#f7faf8]'}>
+                            {row.map((cell, cIdx) => (
+                              <td key={cIdx} className={`p-3.5 sm:p-4 font-medium ${cIdx === 3 ? 'text-[#0a7a40] font-bold' : 'text-neutral-700'}`}>
+                                {cell}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                  <GooglePlayBadge url={section.appCta.url} isHinglish={isHinglish} />
-                </div>
-              )}
-            </section>
-          ))}
+                )}
+
+                {/* Section Image */}
+                {section.image && (
+                  <figure className="my-6 rounded-3xl overflow-hidden border border-border shadow-xs bg-white">
+                    <img
+                      src={section.image.src}
+                      alt={section.image.alt}
+                      className="w-full max-h-[420px] object-cover"
+                      loading="lazy"
+                    />
+                    {section.image.caption && (
+                      <figcaption className="p-3.5 text-xs text-neutral-600 bg-neutral-50 border-t border-border font-medium text-center">
+                        💡 {section.image.caption}
+                      </figcaption>
+                    )}
+                  </figure>
+                )}
+
+                {/* Section Multiple Photos Gallery (If available) */}
+                {section.gallery && (
+                  <BlogPhotoGallery gallery={section.gallery} isHinglish={isHinglish} />
+                )}
+
+                {/* MIDDLE PLAY STORE CTA (IN EVERY BLOG) */}
+                {(section.appCta || idx === midSectionIndex) && (
+                  <div className="my-8 p-6 sm:p-7 rounded-3xl bg-linear-to-br from-emerald-950 via-emerald-900 to-[#053d20] text-white shadow-xl border border-emerald-800/50 flex flex-col sm:flex-row items-center justify-between gap-6">
+                    <div className="space-y-2 text-center sm:text-left">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-400/20 text-emerald-300 text-xs font-bold uppercase tracking-wider">
+                        <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>{isHinglish ? (section.appCta?.badgeHinglish || 'Kosmico Mobile App') : (section.appCta?.badge || 'Official Mobile App')}</span>
+                      </div>
+                      <h3 className="text-xl sm:text-2xl font-serif font-black text-white">
+                        {isHinglish
+                          ? (section.appCta?.titleHinglish || 'Apni Sugar-Free Journey Ko Track Karein Kosmico App Par! 📱')
+                          : (section.appCta?.title || 'Track Your Sugar-Free Habits with Kosmico Wellness App')}
+                      </h3>
+                      <p className="text-xs sm:text-sm text-emerald-100/85 max-w-lg leading-relaxed">
+                        {isHinglish
+                          ? (section.appCta?.subtitleHinglish || 'Free Daily Sugar Intake Tracker, 100+ Chef-Curated Sweet Monk Recipes, aur Daily Health Reminders.')
+                          : (section.appCta?.subtitle || 'Free Daily Sugar Intake Tracker, 100+ Chef-Curated Sweet Monk Recipes, and Instant Water & Health Reminders.')}
+                      </p>
+                    </div>
+                    <GooglePlayBadge url={section.appCta?.url || PLAY_STORE_URL} isHinglish={isHinglish} />
+                  </div>
+                )}
+              </section>
+            ));
+          })()}
 
           {/* Post-Level Photo Gallery (Founder, Team & Lab Moments) */}
           {post.gallery && (
             <BlogPhotoGallery gallery={post.gallery} isHinglish={isHinglish} />
           )}
 
-          {/* Post Google Play App Promo Banner (If post defines appPromo) */}
-          {post.appPromo && (
-            <div className="my-10 p-6 sm:p-8 rounded-3xl bg-linear-to-r from-emerald-950 via-neutral-900 to-emerald-950 text-white shadow-xl border border-amber-400/40 flex flex-col sm:flex-row items-center justify-between gap-6">
-              <div className="space-y-2 text-center sm:text-left">
-                <span className="bg-amber-400 text-neutral-950 text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full inline-block">
-                  {isHinglish ? (post.appPromo.badgeHinglish || '🎁 App Welcome Offer') : (post.appPromo.badge || '🎁 App Exclusive Offer')}
-                </span>
-                <h3 className="text-xl sm:text-2xl font-serif font-black text-white">
-                  {isHinglish && post.appPromo.titleHinglish ? post.appPromo.titleHinglish : post.appPromo.title}
-                </h3>
-                <p className="text-xs sm:text-sm text-emerald-100/90 max-w-lg leading-relaxed">
-                  {isHinglish && post.appPromo.subtitleHinglish ? post.appPromo.subtitleHinglish : post.appPromo.subtitle}
-                </p>
-              </div>
-              <GooglePlayBadge url={post.appPromo.url} isHinglish={isHinglish} />
+          {/* BOTTOM PLAY STORE WELCOME OFFER BANNER (IN EVERY BLOG) */}
+          <div className="my-10 p-6 sm:p-8 rounded-3xl bg-linear-to-r from-emerald-950 via-neutral-900 to-emerald-950 text-white shadow-xl border border-amber-400/40 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="space-y-2 text-center sm:text-left">
+              <span className="bg-amber-400 text-neutral-950 text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full inline-block">
+                {isHinglish ? (post.appPromo?.badgeHinglish || '🎁 App Welcome Offer') : (post.appPromo?.badge || '🎁 App Exclusive Offer')}
+              </span>
+              <h3 className="text-xl sm:text-2xl font-serif font-black text-white">
+                {isHinglish
+                  ? (post.appPromo?.titleHinglish || 'Kosmico App Download Karein Aur Paayein Special Welcome Offer! 🎁')
+                  : (post.appPromo?.title || 'Download Kosmico App & Get Special Welcome Gift!')}
+              </h3>
+              <p className="text-xs sm:text-sm text-emerald-100/90 max-w-lg leading-relaxed">
+                {isHinglish
+                  ? (post.appPromo?.subtitleHinglish || 'Apna daily sugar score track karein, 100+ healthy recipes paayein aur apne pehle Sweet Monk bottle order par paayein Flat ₹50 OFF / 100 Bonus Coins!')
+                  : (post.appPromo?.subtitle || 'Track your daily sugar savings, access 100+ monk fruit recipes, and get Flat ₹50 OFF / 100 Bonus Coins on your first Sweet Monk order.')}
+              </p>
             </div>
-          )}
+            <GooglePlayBadge url={post.appPromo?.url || PLAY_STORE_URL} isHinglish={isHinglish} />
+          </div>
 
           {/* In-Article Sweet Monk Product CTA Card */}
           <div className="my-10 bg-gradient-to-r from-emerald-900 to-emerald-950 text-white rounded-3xl p-6 sm:p-8 shadow-lg border border-emerald-700/60 flex flex-col sm:flex-row items-center justify-between gap-6">
