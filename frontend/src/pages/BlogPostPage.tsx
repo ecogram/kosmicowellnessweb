@@ -7,9 +7,33 @@ import {
   Clock, Calendar, ArrowLeft, Share2, 
   Sparkles, CheckCircle2, ShoppingBag, 
   ChevronRight, ChevronLeft, HelpCircle, Languages,
-  BookOpen, Images, LayoutGrid, Maximize2, X, Camera
+  BookOpen, Images, LayoutGrid, Maximize2, X, Camera,
+  Smartphone
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { PLAY_STORE_URL } from '../utils/constants';
+
+function GooglePlayBadge({ url, isHinglish }: { url?: string; isHinglish?: boolean }) {
+  const targetUrl = url || PLAY_STORE_URL;
+  return (
+    <a
+      href={targetUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-3 px-5 py-3 rounded-2xl bg-neutral-950 hover:bg-black text-white border border-neutral-700/80 shadow-md hover:shadow-xl transition-all group shrink-0"
+    >
+      <svg className="w-6 h-6 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M3.609 1.814L13.792 12 3.61 22.186a2.03 2.03 0 0 1-.61-.926V2.74c0-.348.225-.68.609-.926zm11.238 11.24L17.5 15.71l-11.83 6.77 9.177-9.426zm0-2.108L5.67 1.52 17.5 8.29l-2.653 2.656zm1.464 1.054l3.167-1.812a1.47 1.47 0 0 1 0 2.548l-3.167-1.812-.001.076.001-.076z" fill="#00E676" />
+      </svg>
+      <div className="text-left">
+        <div className="text-[10px] uppercase font-bold tracking-wider text-neutral-400 leading-none">
+          {isHinglish ? 'Abhi Download Karein' : 'GET IT ON'}
+        </div>
+        <div className="text-sm font-extrabold text-white leading-tight">Google Play</div>
+      </div>
+    </a>
+  );
+}
 
 function BlogPhotoGallery({ gallery, isHinglish }: { gallery: BlogGallery; isHinglish: boolean }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -636,12 +660,49 @@ export function BlogPostPage() {
               {section.gallery && (
                 <BlogPhotoGallery gallery={section.gallery} isHinglish={isHinglish} />
               )}
+
+              {/* Section Google Play App CTA (If specified) */}
+              {section.appCta && (
+                <div className="my-8 p-6 sm:p-7 rounded-3xl bg-linear-to-br from-emerald-950 via-emerald-900 to-[#053d20] text-white shadow-xl border border-emerald-800/50 flex flex-col sm:flex-row items-center justify-between gap-6">
+                  <div className="space-y-2 text-center sm:text-left">
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-400/20 text-emerald-300 text-xs font-bold uppercase tracking-wider">
+                      <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>{isHinglish ? (section.appCta.badgeHinglish || 'Kosmico Mobile App') : (section.appCta.badge || 'Official Mobile App')}</span>
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-serif font-black text-white">
+                      {isHinglish && section.appCta.titleHinglish ? section.appCta.titleHinglish : section.appCta.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-emerald-100/85 max-w-lg leading-relaxed">
+                      {isHinglish && section.appCta.subtitleHinglish ? section.appCta.subtitleHinglish : section.appCta.subtitle}
+                    </p>
+                  </div>
+                  <GooglePlayBadge url={section.appCta.url} isHinglish={isHinglish} />
+                </div>
+              )}
             </section>
           ))}
 
           {/* Post-Level Photo Gallery (Founder, Team & Lab Moments) */}
           {post.gallery && (
             <BlogPhotoGallery gallery={post.gallery} isHinglish={isHinglish} />
+          )}
+
+          {/* Post Google Play App Promo Banner (If post defines appPromo) */}
+          {post.appPromo && (
+            <div className="my-10 p-6 sm:p-8 rounded-3xl bg-linear-to-r from-emerald-950 via-neutral-900 to-emerald-950 text-white shadow-xl border border-amber-400/40 flex flex-col sm:flex-row items-center justify-between gap-6">
+              <div className="space-y-2 text-center sm:text-left">
+                <span className="bg-amber-400 text-neutral-950 text-[10px] font-extrabold uppercase tracking-wider px-3 py-1 rounded-full inline-block">
+                  {isHinglish ? (post.appPromo.badgeHinglish || '🎁 App Welcome Offer') : (post.appPromo.badge || '🎁 App Exclusive Offer')}
+                </span>
+                <h3 className="text-xl sm:text-2xl font-serif font-black text-white">
+                  {isHinglish && post.appPromo.titleHinglish ? post.appPromo.titleHinglish : post.appPromo.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-emerald-100/90 max-w-lg leading-relaxed">
+                  {isHinglish && post.appPromo.subtitleHinglish ? post.appPromo.subtitleHinglish : post.appPromo.subtitle}
+                </p>
+              </div>
+              <GooglePlayBadge url={post.appPromo.url} isHinglish={isHinglish} />
+            </div>
           )}
 
           {/* In-Article Sweet Monk Product CTA Card */}

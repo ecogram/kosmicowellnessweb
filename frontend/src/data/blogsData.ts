@@ -31,6 +31,19 @@ export interface BlogSection {
     headers: string[];
     rows: string[][];
   };
+  appCta?: BlogAppCta;
+}
+
+export interface BlogAppCta {
+  title: string;
+  titleHinglish?: string;
+  subtitle: string;
+  subtitleHinglish?: string;
+  buttonText?: string;
+  buttonTextHinglish?: string;
+  url?: string;
+  badge?: string;
+  badgeHinglish?: string;
 }
 
 export interface BlogContent {
@@ -66,6 +79,7 @@ export interface BlogPost {
   content: BlogContent;
   contentHinglish?: BlogContent;
   gallery?: BlogGallery;
+  appPromo?: BlogAppCta;
 }
 
 import { NEW_BLOGS_OCT_26 } from './newBlogsOct26';
