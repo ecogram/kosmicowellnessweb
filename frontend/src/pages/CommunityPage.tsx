@@ -54,25 +54,6 @@ const PRESET_TAGS = [
   '#Detox',
 ];
 
-const SWEET_MONK_TEMPLATES = [
-  {
-    id: 'chai-tea',
-    title: 'Post 1: Chai & Coffee Lovers',
-    subtitle: 'Morning Tea / Sugar-Free Routine',
-    image: '/assets/community/sweetmonk-post-chai.jpg',
-    tags: ['#SweetMonk', '#SugarFree', '#HealthyRecipe', '#DiabeticFriendly'],
-    content: `☕ Chai me cheeni chhod di par maza chala gaya? Ab aur compromise nahi! 🌿\n\nSubah ki garam chai ho ya evening black coffee—ab meethas ka lutf uthaiye bina kisi guilt ke!\n\nPresenting Kosmico Sweet Monk Drops – 100% Natural Monk Fruit Sweetener!\n\n✨ Kyun hai Sweet Monk sabse alag?\n• 💧 1 Drop = 1 Chammach Cheeni ki meethas\n• 🔥 ZERO Calories & ZERO Sugar\n• 🚫 No Bitter Aftertaste (No stevia bitterness!)\n• 🩺 Diabetic Friendly & Keto Approved\n\nApni har cup ko banaiye naturally sweet aur healthy!\n👉 Order at: kosmicowellness.com 🌿`,
-  },
-  {
-    id: 'fitness-dessert',
-    title: 'Post 2: Fitness & Healthy Desserts',
-    subtitle: 'Zero Calories, Guilt-Free Sweetness',
-    image: '/assets/community/sweetmonk-post-fitness.jpg',
-    tags: ['#SweetMonk', '#SugarFree', '#Keto', '#Transformation'],
-    content: `🥗 Meetha bhi, Fitness bhi! Swad wahi, Calories ZERO! 💚\n\nWeight loss journey par ho ya sweet cravings ko control karna mushkil lag raha hai? Ab aapke favorite smoothies, oats bowl aur healthy desserts me lijiye natural meethas ka swad Kosmico Sweet Monk Drops ke saath!\n\n🌿 100% Natural Monk Fruit Extract:\n• 🎯 Zero Glycemic Index: Blood sugar spike ka koi tension nahi\n• 🏋️‍♂️ Fitness Friendly: Zero added carbs, Zero fat, Zero calories\n• 💧 Easy Dropper Bottle: Kahi bhi carry karein\n\nCheeni ko bolo Bye-Bye, aur naturally switch karo Sweet Monk par! 💚\n👉 Order at: kosmicowellness.com`,
-  },
-];
-
 export const CommunityPage: React.FC = () => {
   const { user, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
@@ -353,8 +334,6 @@ export const CommunityPage: React.FC = () => {
 
       if (mediaFile) {
         formData.append('media', mediaFile);
-      } else if (mediaPreview) {
-        formData.append('mediaUrl', mediaPreview);
       }
 
       let newPostData: any;
@@ -1213,49 +1192,21 @@ export const CommunityPage: React.FC = () => {
                       className="w-full p-4 border-2 border-dashed border-emerald-600/30 hover:border-emerald-600 bg-emerald-50/30 hover:bg-emerald-50/60 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all group"
                     >
                       <ImageIcon className="w-6 h-6 text-emerald-600 group-hover:scale-110 transition-transform" />
-                      <span className="text-xs font-bold text-emerald-800">Upload Photo from Computer</span>
+                      <span className="text-xs font-bold text-emerald-800">Upload Photo</span>
                       <span className="text-[10px] text-neutral-500">JPG, PNG, WEBP (Max 10MB)</span>
                     </button>
 
-                    {/* Official Sweet Monk Creatives 1-Click Pick */}
-                    <div className="mt-3 pt-3 border-t border-neutral-100">
-                      <p className="text-[11px] font-bold text-neutral-700 mb-2 flex items-center justify-between">
-                        <span>✨ Or Choose Official Sweet Monk Creative:</span>
-                        <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">1-Click Auto Fill</span>
-                      </p>
-                      <div className="grid grid-cols-2 gap-2.5">
-                        {SWEET_MONK_TEMPLATES.map((tmpl) => (
-                          <div
-                            key={tmpl.id}
-                            onClick={() => {
-                              setMediaPreview(tmpl.image);
-                              setMediaType('image');
-                              setMediaFile(null);
-                              if (!postContent.trim()) {
-                                setPostContent(tmpl.content);
-                              }
-                              setSelectedTags((prev) => Array.from(new Set([...prev, ...tmpl.tags])));
-                            }}
-                            className="group relative p-2 border border-neutral-200 hover:border-emerald-500 rounded-xl bg-white hover:bg-emerald-50/30 cursor-pointer transition-all flex flex-col gap-1.5 shadow-2xs hover:shadow-sm"
-                          >
-                            <div className="w-full h-24 rounded-lg overflow-hidden bg-neutral-100">
-                              <img
-                                src={tmpl.image}
-                                alt={tmpl.title}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                              />
-                            </div>
-                            <div>
-                              <p className="text-xs font-bold text-neutral-900 line-clamp-1">{tmpl.title}</p>
-                              <p className="text-[10px] text-neutral-500 line-clamp-1">{tmpl.subtitle}</p>
-                            </div>
-                            <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-100/70 rounded-md py-1 px-1.5 text-center group-hover:bg-emerald-700 group-hover:text-white transition-colors">
-                              Use This Post
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    {/* Video Upload Disabled:
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="p-4 border-2 border-dashed border-amber-500/30 hover:border-amber-500 bg-amber-50/30 hover:bg-amber-50/60 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all group"
+                    >
+                      <Video className="w-6 h-6 text-amber-600 group-hover:scale-110 transition-transform" />
+                      <span className="text-xs font-bold text-amber-900">Upload Video</span>
+                      <span className="text-[10px] text-neutral-500">MP4, WEBM (Max 25MB)</span>
+                    </button>
+                    */}
                   </div>
                 )}
 
