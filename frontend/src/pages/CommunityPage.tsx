@@ -58,26 +58,18 @@ const SWEET_MONK_TEMPLATES = [
   {
     id: 'chai-tea',
     title: 'Post 1: Chai & Coffee Lovers',
-    subtitle: '1 Drop = 1 Teaspoon Sugar',
-    image: '/assets/community/sweetmonk_chai_creative.jpg',
-    tags: ['#SweetMonk', '#SugarFree', '#ChaiLovers', '#HealthyRoutine'],
-    content: `☕ Chai me cheeni chhod di thi par maza chala gaya? Ab compromise bilkul nahi! 🌿\n\nSubah ki garam chai ho ya evening black coffee—ab meethas ka lutf uthaiye bina kisi guilt ya sugar spike ke!\n\nPresenting Kosmico Sweet Monk Drops – 100% Natural Monk Fruit Sweetener!\n\n✨ Kyun hai Sweet Monk sabse alag?\n• 💧 1 Drop = 1 Chammach Cheeni ki meethas\n• 🌿 100% Plant Based & Natural Monk Fruit\n• 🔥 ZERO Calories & ZERO Added Sugar\n• 🚫 No Bitter Aftertaste (No stevia bitterness!)\n• 🩺 Diabetic Friendly & Keto Approved\n\nApni har cup ko banaiye naturally sweet aur healthy!\n👉 Order at: kosmicowellness.com 🌿`,
+    subtitle: 'Morning Tea / Sugar-Free Routine',
+    image: '/assets/community/sweetmonk-post-chai.jpg',
+    tags: ['#SweetMonk', '#SugarFree', '#HealthyRecipe', '#DiabeticFriendly'],
+    content: `☕ Chai me cheeni chhod di par maza chala gaya? Ab aur compromise nahi! 🌿\n\nSubah ki garam chai ho ya evening black coffee—ab meethas ka lutf uthaiye bina kisi guilt ke!\n\nPresenting Kosmico Sweet Monk Drops – 100% Natural Monk Fruit Sweetener!\n\n✨ Kyun hai Sweet Monk sabse alag?\n• 💧 1 Drop = 1 Chammach Cheeni ki meethas\n• 🔥 ZERO Calories & ZERO Sugar\n• 🚫 No Bitter Aftertaste (No stevia bitterness!)\n• 🩺 Diabetic Friendly & Keto Approved\n\nApni har cup ko banaiye naturally sweet aur healthy!\n👉 Order at: kosmicowellness.com 🌿`,
   },
   {
-    id: 'diabetic-dessert',
-    title: 'Post 2: Diabetic Friendly Sweets',
-    subtitle: 'Zero Glycemic Index, 0 Sugar Spikes',
-    image: '/assets/community/sweetmonk_diabetic_dessert.jpg',
-    tags: ['#DiabetesFriendly', '#SugarFreeIndia', '#SweetMonk', '#HealthyFamily'],
-    content: `🩺 Ghar me kisi ko diabetes hai aur meetha chhoot gaya hai? Unke chehre par wapas muskaan laiye! 💚\n\nBlood sugar spike ki tension ko bolo bye-bye. Kosmico Sweet Monk drops se banaiye 100% diabetic-safe kheer, halwa, nimbu paani aur detox tea!\n\n🌿 Kyun hai Sweet Monk har ghar ke liye must-have?\n• 🎯 Zero Glycemic Index: Blood sugar level bilkul spike nahi hota\n• 🍃 100% Pure Monk Fruit Extract: Koi artificial sweetener nahi\n• 💧 Easy Dropper Bottle: Bas 1-2 drops aur shandaar meethas\n• 👨‍👩‍👧‍👦 Family & Elder Friendly: Sabhi age groups ke liye safe\n\nHealthy raho, khulkar meetha khao bina darr ke! ✨\n👉 Order at: kosmicowellness.com`,
-  },
-  {
-    id: 'fitness-smoothie',
-    title: 'Post 3: Fitness & Weight Loss',
-    subtitle: '0 Calories, Guilt-Free Smoothies',
-    image: '/assets/community/sweetmonk_fitness_smoothie.jpg',
-    tags: ['#KetoIndia', '#WeightLossJourney', '#SweetMonk', '#FitnessMotivation'],
-    content: `🥗 Weight Loss Journey par ho ya Sweet Cravings satati hain? Swad wahi, Calories ZERO! 🏋️‍♂️💪\n\nCalorie-deficit diet me sweet cravings sabse bada obstacle banti hain. Apne morning smoothies, oats bowl aur healthy desserts me lijiye natural meethas Sweet Monk ke saath!\n\n🌿 100% Natural Monk Fruit Extract:\n• 0️⃣ 0 Calories, 0 Carbs, 0 Fat\n• ⚡ Keto & Intermittent Fasting Friendly\n• 🥞 Oats, smoothies, yogurt ya bakery desserts me instant mix\n• 💧 Sirf 1-2 drops aur cravings satisfy bina fat gain ke!\n\nFitness me sweet sacrifices mat karo, smart switch karo! 🥑\n👉 Order at: kosmicowellness.com`,
+    id: 'fitness-dessert',
+    title: 'Post 2: Fitness & Healthy Desserts',
+    subtitle: 'Zero Calories, Guilt-Free Sweetness',
+    image: '/assets/community/sweetmonk-post-fitness.jpg',
+    tags: ['#SweetMonk', '#SugarFree', '#Keto', '#Transformation'],
+    content: `🥗 Meetha bhi, Fitness bhi! Swad wahi, Calories ZERO! 💚\n\nWeight loss journey par ho ya sweet cravings ko control karna mushkil lag raha hai? Ab aapke favorite smoothies, oats bowl aur healthy desserts me lijiye natural meethas ka swad Kosmico Sweet Monk Drops ke saath!\n\n🌿 100% Natural Monk Fruit Extract:\n• 🎯 Zero Glycemic Index: Blood sugar spike ka koi tension nahi\n• 🏋️‍♂️ Fitness Friendly: Zero added carbs, Zero fat, Zero calories\n• 💧 Easy Dropper Bottle: Kahi bhi carry karein\n\nCheeni ko bolo Bye-Bye, aur naturally switch karo Sweet Monk par! 💚\n👉 Order at: kosmicowellness.com`,
   },
 ];
 
@@ -1231,7 +1223,7 @@ export const CommunityPage: React.FC = () => {
                         <span>✨ Or Choose Official Sweet Monk Creative:</span>
                         <span className="text-[10px] text-emerald-700 font-semibold bg-emerald-50 px-2 py-0.5 rounded-full">1-Click Auto Fill</span>
                       </p>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <div className="grid grid-cols-2 gap-2.5">
                         {SWEET_MONK_TEMPLATES.map((tmpl) => (
                           <div
                             key={tmpl.id}
