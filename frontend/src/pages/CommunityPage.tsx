@@ -10,8 +10,9 @@ import {
   Send, Plus, X, Sparkles, CheckCircle2, AlertCircle,
   Loader2, Flame, ShieldCheck, Tag, MapPin, Globe,
   ArrowRight, Check, MoreVertical, Edit3, Trash2, Maximize2,
-  ChevronDown, ChevronUp
+  ChevronDown, ChevronUp, Smartphone, ExternalLink
 } from 'lucide-react';
+import { PLAY_STORE_URL } from '../utils/constants';
 
 interface Comment {
   _id?: string;
@@ -534,6 +535,17 @@ export const CommunityPage: React.FC = () => {
                 <span>Upload New Post 📸</span>
               </button>
 
+              <a
+                href={PLAY_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-5 py-3.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs rounded-2xl border border-white/20 transition-all cursor-pointer backdrop-blur-xs"
+              >
+                <Smartphone className="w-4 h-4 text-amber-400" />
+                <span>Get App on Google Play</span>
+                <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+              </a>
+
               <div className="flex items-center gap-2 text-xs text-emerald-200/80 bg-emerald-900/50 px-4 py-2.5 rounded-2xl border border-emerald-800/60">
                 <Users className="w-4 h-4 text-amber-400" />
                 <span>{posts.length} {posts.length === 1 ? 'Post' : 'Posts'} Live</span>
@@ -654,6 +666,33 @@ export const CommunityPage: React.FC = () => {
                 <span>Video Clips 🎥</span>
               </button>
               */}
+            </div>
+
+            {/* IN-FEED PLAY STORE BANNER */}
+            <div className="bg-gradient-to-r from-emerald-950 via-emerald-900 to-[#053d20] text-white rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-sm border border-emerald-800/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5 text-center sm:text-left">
+                <div className="w-10 h-10 rounded-2xl bg-amber-400/20 border border-amber-400/30 flex items-center justify-center shrink-0">
+                  <Smartphone className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-xs sm:text-sm text-white">
+                    Track your Wellness journey Kosmico app ke sath!
+                  </h4>
+                  <p className="text-[11px] text-emerald-200/80 font-normal">
+                    Daily Sugar Tracker, 100+ Free Recipes aur Community Posts apne phone par paayein.
+                  </p>
+                </div>
+              </div>
+
+              <a
+                href={PLAY_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-400 hover:bg-amber-300 text-neutral-950 font-extrabold text-xs rounded-xl shadow-xs transition-all shrink-0 cursor-pointer"
+              >
+                <span>Download on Google Play</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
             </div>
 
             {/* FEED LIST */}
@@ -1009,6 +1048,35 @@ export const CommunityPage: React.FC = () => {
 
           {/* SIDEBAR COLUMN (4 COLS) */}
           <div className="lg:col-span-4 space-y-6">
+
+            {/* GOOGLE PLAY MOBILE APP SIDEBAR CARD */}
+            <div className="bg-linear-to-br from-neutral-900 via-emerald-950 to-neutral-900 text-white rounded-3xl p-6 shadow-md border border-amber-400/30 space-y-4">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 text-amber-300 text-xs font-bold">
+                <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+                <span>Kosmico Mobile App</span>
+              </div>
+              <h3 className="text-xl font-serif font-bold text-white leading-snug">
+                Track your Wellness journey Kosmico app ke sath!
+              </h3>
+              <p className="text-xs text-neutral-300 leading-relaxed font-normal">
+                Daily Sugar Tracker, 100+ Sweet Monk Recipes, aur Community Posts apne phone par paayein.
+              </p>
+              
+              <a
+                href={PLAY_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 px-4 py-2.5 rounded-xl bg-black hover:bg-neutral-800 text-white border border-neutral-700 transition-all shadow-md w-full justify-center group cursor-pointer"
+              >
+                <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3.609 1.814L13.792 12 3.61 22.186a2.03 2.03 0 0 1-.61-.926V2.74c0-.348.225-.68.609-.926zm11.238 11.24L17.5 15.71l-11.83 6.77 9.177-9.426zm0-2.108L5.67 1.52 17.5 8.29l-2.653 2.656zm1.464 1.054l3.167-1.812a1.47 1.47 0 0 1 0 2.548l-3.167-1.812-.001.076.001-.076z" fill="#00E676" />
+                </svg>
+                <div className="text-left">
+                  <div className="text-[9px] uppercase font-bold tracking-wider text-neutral-400 leading-none">Abhi Download Karein</div>
+                  <div className="text-xs font-extrabold text-white leading-tight">Google Play</div>
+                </div>
+              </a>
+            </div>
 
             {/* CALL TO ACTION CARD */}
             <div className="bg-linear-to-br from-emerald-900 to-[#07532a] text-white rounded-3xl p-6 shadow-md border border-emerald-700/50 space-y-4">
