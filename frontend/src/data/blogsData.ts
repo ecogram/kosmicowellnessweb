@@ -86,8 +86,10 @@ export interface BlogPost {
 
 import { NEW_BLOGS_OCT_26 } from './newBlogsOct26';
 import { NEW_BLOGS_OCT_24 } from './newBlogsOct24';
+import { NEW_BLOGS_OCT_29 } from './newBlogsOct29';
 
 export const BLOG_POSTS: BlogPost[] = [
+  ...NEW_BLOGS_OCT_29,
   ...NEW_BLOGS_OCT_26,
   ...NEW_BLOGS_OCT_24,
   {
