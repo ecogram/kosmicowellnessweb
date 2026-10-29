@@ -14,9 +14,9 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
     author: {
       name: 'Chef Neha Sharma',
       role: 'Nutritionist & Recipe Developer',
-      avatar: '/assets/blogs/chef-neha-sharma.jpg',
+      avatar: '/assets/blogs/author-ritu-verma.jpg',
     },
-    coverImage: '/assets/blogs/blog-daily-uses-hero.jpg',
+    coverImage: '/assets/blogs/blog-sweetmonk-chai.jpg',
     tags: ['Sweet Monk Uses', 'Sugar Free Chai', 'Zero Calorie Coffee', 'Healthy Desserts', 'Natural Sweetener', 'Indian Kitchen'],
     metaTitle: 'Sweet Monk Drops Daily Uses | Chai, Coffee & Desserts Guide',
     metaDescription: 'Learn 7 practical ways to use Sweet Monk drops in daily life. Replace sugar in chai, coffee, desserts, and more without compromising taste. Zero calories, 100% natural.',
@@ -28,15 +28,15 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
       subtitleHinglish: 'Asli photos jo batati hain ki Sweet Monk drops ko daily Indian meals aur beverages mein kaise use karein.',
       images: [
         {
-          src: '/assets/blogs/blog-daily-uses-sweet-monk-product.jpg',
-          alt: 'Sweet Monk Monk Fruit Sweetener Drops Bottle and Box',
+          src: '/assets/blogs/blog-sweetmonk-drops-chai.jpg',
+          alt: 'Sweet Monk Monk Fruit Sweetener Drops',
           caption: 'Sweet Monk drops: Just 1 drop equals 1 teaspoon of sugar sweetness.',
           captionHinglish: 'Sweet Monk drops: Sirf 1 drop = 1 chammach cheeni ki meethas.',
           tag: 'Product Spotlight',
           tagHinglish: 'Product Highlight'
         },
         {
-          src: '/assets/blogs/blog-daily-uses-chai.jpg',
+          src: '/assets/blogs/blog-masala-chai-healthy.jpg',
           alt: 'Masala Chai Sweetened with Sweet Monk Drops',
           caption: 'Traditional masala chai with Sweet Monk drops - same taste, zero calories.',
           captionHinglish: 'Traditional masala chai Sweet Monk drops ke sath - wahi swad, zero calories.',
@@ -44,15 +44,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
           tagHinglish: 'Subah Ki Ritual'
         },
         {
-          src: '/assets/blogs/blog-daily-uses-coffee.jpg',
-          alt: 'Filter Coffee with Sweet Monk Drops',
-          caption: 'South Indian filter coffee gets sweeter without sugar spikes.',
-          captionHinglish: 'South Indian filter coffee bina sugar spike ke aur meethi banati hai.',
-          tag: 'South Indian Favorite',
-          tagHinglish: 'South Indian Pasand'
-        },
-        {
-          src: '/assets/blogs/blog-daily-uses-smoothie.jpg',
+          src: '/assets/blogs/blog-sugar-free-tracker-smoothie.jpg',
           alt: 'Green Smoothie with Sweet Monk Drops',
           caption: 'Healthy smoothies naturally sweetened with Sweet Monk drops.',
           captionHinglish: 'Healthy smoothies Sweet Monk drops se natural sweetness ke sath.',
@@ -60,7 +52,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
           tagHinglish: 'Healthy Drink'
         },
         {
-          src: '/assets/blogs/blog-daily-uses-dessert.jpg',
+          src: '/assets/blogs/blog-sweetmonk-kheer.jpg',
           alt: 'Sugar-Free Kheer Sweetened with Sweet Monk',
           caption: 'Traditional Indian kheer made diabetes-friendly with Sweet Monk drops.',
           captionHinglish: 'Traditional Indian kheer Sweet Monk drops se diabetes-friendly banayi gayi.',
@@ -68,10 +60,10 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
           tagHinglish: 'Tyohar Special'
         },
         {
-          src: '/assets/blogs/blog-daily-uses-pancake.jpg',
-          alt: 'Pancakes with Sweet Monk Drops',
-          caption: 'Fluffy pancakes topped with Sweet Monk-sweetened syrup.',
-          captionHinglish: 'Fluffy pancakes Sweet Monk se bani meethi syrup ke sath.',
+          src: '/assets/blogs/blog-sugar-free-baking-cake.jpg',
+          alt: 'Desserts with Sweet Monk Drops',
+          caption: 'Fluffy desserts sweetened with Sweet Monk drops.',
+          captionHinglish: 'Fluffy desserts Sweet Monk se bani meethi syrup ke sath.',
           tag: 'Breakfast Treat',
           tagHinglish: 'Nashta Special'
         }
@@ -88,7 +80,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
           ],
           callout: 'Pro Tip: Start with 1 drop and adjust to taste. Because Sweet Monk is intensely concentrated, a little goes a long way.',
           image: {
-            src: '/assets/blogs/blog-daily-uses-sweet-monk-product.jpg',
+            src: '/assets/blogs/blog-sweetmonk-drops-chai.jpg',
             alt: 'Sweet Monk Monk Fruit Sweetener Drops Bottle',
             caption: 'Sweet Monk drops - your daily companion for guilt-free sweetness.'
           }
@@ -171,7 +163,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
           ],
           callout: 'Pro Tip: 1 drop se shuru karein aur taste ke hisab se adjust karein. Sweet Monk bahut concentrated hai, thoda bahut kaafi hai.',
           image: {
-            src: '/assets/blogs/blog-daily-uses-sweet-monk-product.jpg',
+            src: '/assets/blogs/blog-sweetmonk-drops-chai.jpg',
             alt: 'Sweet Monk Monk Fruit Sweetener Drops Bottle',
             caption: 'Sweet Monk drops - aapke daily guilt-free sweetness ke liye.'
           }
@@ -259,7 +251,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
       role: 'Endocrinologist & Diabetic Wellness Specialist',
       avatar: '/assets/blogs/dr-anita-deshmukh.jpg',
     },
-    coverImage: '/assets/blogs/blog-diabetes-care-hero.jpg',
+    coverImage: '/assets/blogs/blog-sweetmonk-diabetes-reversal.jpg',
     tags: ['Diabetes Care', 'Blood Sugar Control', 'HbA1c', 'Monk Fruit Diabetes', 'Natural Sweetener', 'Diabetic Diet India'],
     metaTitle: 'Diabetes Care with Sweet Monk | Blood Sugar & HbA1c Control Guide',
     metaDescription: 'Doctor-backed guide on using Sweet Monk drops for diabetes management. Zero GI, zero calories, clinically proven to stabilize blood glucose and reduce HbA1c naturally.',
@@ -271,7 +263,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
       subtitleHinglish: 'Research-backed information aur real patient stories Sweet Monk se blood sugar management par.',
       images: [
         {
-          src: '/assets/blogs/blog-daily-uses-sweet-monk-product.jpg',
+          src: '/assets/blogs/blog-sweetmonk-drops-chai.jpg',
           alt: 'Sweet Monk Monk Fruit Sweetener Drops',
           caption: 'Sweet Monk drops: Glycemic Index 0.0, 100% safe for diabetics.',
           captionHinglish: 'Sweet Monk drops: Glycemic Index 0.0, diabetics ke liye 100% safe.',
@@ -279,23 +271,23 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
           tagHinglish: 'GI 0.0'
         },
         {
-          src: '/assets/blogs/blog-diabetes-glucose-chart.jpg',
-          alt: 'Blood Glucose Chart Comparison',
+          src: '/assets/blogs/blog-sweetmonk-diabetes-reversal.jpg',
+          alt: 'Blood Sugar Control with Sweet Monk',
           caption: 'Blood sugar spikes with sugar vs. stable levels with Sweet Monk.',
           captionHinglish: 'Sugar se blood sugar spikes vs. Sweet Monk se stable levels.',
           tag: 'Clinical Data',
           tagHinglish: 'Clinical Data'
         },
         {
-          src: '/assets/blogs/blog-diabetes-hba1c.jpg',
-          alt: 'HbA1c Improvement Graph',
+          src: '/assets/blogs/blog-sweetmonk-habits.jpg',
+          alt: 'HbA1c Improvement with Sweet Monk',
           caption: '3-month HbA1c improvement with sugar-free diet using Sweet Monk.',
           captionHinglish: 'Sweet Monk se sugar-free diet ke sath 3-month HbA1c improvement.',
           tag: 'Real Results',
           tagHinglish: 'Real Results'
         },
         {
-          src: '/assets/blogs/blog-diabetes-meal.jpg',
+          src: '/assets/blogs/blog-sugar-free-mithai.jpg',
           alt: 'Diabetic-Friendly Meal with Sweet Monk',
           caption: 'Complete diabetic-friendly meal featuring Sweet Monk-sweetened beverages.',
           captionHinglish: 'Complete diabetic-friendly meal Sweet Monk-sweetened beverages ke sath.',
@@ -315,7 +307,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
           ],
           callout: 'Critical Fact: Sweet Monk has 0.0 GI and 0 calories. It is completely safe for all diabetic types, including gestational diabetes.',
           image: {
-            src: '/assets/blogs/blog-daily-uses-sweet-monk-product.jpg',
+            src: '/assets/blogs/blog-sweetmonk-drops-chai.jpg',
             alt: 'Sweet Monk Monk Fruit Sweetener Drops',
             caption: 'Sweet Monk: The only zero-GI natural sweetener approved for diabetic diets.'
           }
@@ -412,7 +404,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
           ],
           callout: 'Critical Fact: Sweet Monk ka 0.0 GI aur 0 calories hai. Ye sab diabetic types ke liye completely safe hai, including gestational diabetes.',
           image: {
-            src: '/assets/blogs/blog-daily-uses-sweet-monk-product.jpg',
+            src: '/assets/blogs/blog-sweetmonk-drops-chai.jpg',
             alt: 'Sweet Monk Monk Fruit Sweetener Drops',
             caption: 'Sweet Monk: Sirf zero-GI natural sweetener jo diabetic diets ke liye approved hai.'
           }
@@ -512,9 +504,9 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
     author: {
       name: 'Dr. Vikram Patel',
       role: 'Nutritionist & Weight Loss Specialist',
-      avatar: '/assets/blogs/dr-vikram-patel.jpg',
+      avatar: '/assets/blogs/author-amit-kumar.jpg',
     },
-    coverImage: '/assets/blogs/blog-keto-weight-loss-hero.jpg',
+    coverImage: '/assets/blogs/blog-sweetmonk-keto.jpg',
     tags: ['Keto Diet', 'Weight Loss', 'Zero Calorie Sweetener', 'Ketosis', 'Fat Burning', 'Low Carb Diet India'],
     metaTitle: 'Keto Weight Loss with Sweet Monk | Zero-Calorie Sweetener Guide',
     metaDescription: 'Complete guide to using Sweet Monk drops on keto diet. Zero calories, zero carbs, perfect for ketosis. Learn recipes, tips, and how Sweet Monk accelerates fat burning.',
@@ -526,7 +518,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
       subtitleHinglish: 'Keto-friendly recipes Sweet Monk drops ke sath, weight loss tips aur success stories ke sath.',
       images: [
         {
-          src: '/assets/blogs/blog-daily-uses-sweet-monk-product.jpg',
+          src: '/assets/blogs/blog-sweetmonk-drops-chai.jpg',
           alt: 'Sweet Monk Monk Fruit Sweetener Drops',
           caption: 'Sweet Monk drops: 0 calories, 0 carbs, 100% keto-friendly.',
           captionHinglish: 'Sweet Monk drops: 0 calories, 0 carbs, 100% keto-friendly.',
@@ -534,7 +526,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
           tagHinglish: 'Keto-Approved'
         },
         {
-          src: '/assets/blogs/blog-keto-smoothie.jpg',
+          src: '/assets/blogs/blog-sugar-free-tracker-smoothie.jpg',
           alt: 'Keto Green Smoothie with Sweet Monk',
           caption: 'Fat-burning keto smoothie sweetened with Sweet Monk drops.',
           captionHinglish: 'Fat-burning keto smoothie Sweet Monk drops se sweetened.',
@@ -542,15 +534,15 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
           tagHinglish: 'Keto Recipe'
         },
         {
-          src: '/assets/blogs/blog-keto-dessert.jpg',
-          alt: 'Keto Cheesecake with Sweet Monk',
-          caption: 'Decadent keto cheesecake made with Sweet Monk.',
-          captionHinglish: 'Decadent keto cheesecake Sweet Monk se bana.',
+          src: '/assets/blogs/blog-sugar-free-baking-cake.jpg',
+          alt: 'Keto Dessert with Sweet Monk',
+          caption: 'Decadent keto dessert made with Sweet Monk.',
+          captionHinglish: 'Decadent keto dessert Sweet Monk se bana.',
           tag: 'Keto Dessert',
           tagHinglish: 'Keto Dessert'
         },
         {
-          src: '/assets/blogs/blog-keto-meal.jpg',
+          src: '/assets/blogs/blog-sweetmonk-halwa.jpg',
           alt: 'Complete Keto Meal with Sweet Monk',
           caption: 'Full keto meal plan featuring Sweet Monk beverages.',
           captionHinglish: 'Full keto meal plan Sweet Monk beverages ke sath.',
@@ -558,7 +550,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
           tagHinglish: 'Keto Meal Plan'
         },
         {
-          src: '/assets/blogs/blog-keto-chai.jpg',
+          src: '/assets/blogs/blog-masala-chai-healthy.jpg',
           alt: 'Keto Masala Chai with Sweet Monk',
           caption: 'Traditional keto chai made sugar-free with Sweet Monk.',
           captionHinglish: 'Traditional keto chai Sweet Monk se sugar-free bana.',
@@ -579,7 +571,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
           ],
           callout: 'Keto Fact: Sweet Monk has 0.0 calories, 0.0 carbs, and 0.0 GI. It is the only sweetener that is 100% natural, 100% keto-safe, and 100% insulin-neutral.',
           image: {
-            src: '/assets/blogs/blog-daily-uses-sweet-monk-product.jpg',
+            src: '/assets/blogs/blog-sweetmonk-drops-chai.jpg',
             alt: 'Sweet Monk Monk Fruit Sweetener Drops',
             caption: 'Sweet Monk: The keto-approved sweetener that never breaks ketosis.'
           }
@@ -630,7 +622,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
             'This plan keeps you in ketosis while enjoying Indian flavors.'
           ],
           image: {
-            src: '/assets/blogs/blog-keto-meal.jpg',
+            src: '/assets/blogs/blog-sweetmonk-halwa.jpg',
             alt: 'Complete Keto Meal with Sweet Monk',
             caption: 'Full day keto meal plan featuring Sweet Monk in beverages and desserts.'
           }
@@ -695,7 +687,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
           ],
           callout: 'Keto Fact: Sweet Monk ka 0.0 calories, 0.0 carbs aur 0.0 GI hai. Ye sirf sweetener hai jo 100% natural, 100% keto-safe aur 100% insulin-neutral hai.',
           image: {
-            src: '/assets/blogs/blog-daily-uses-sweet-monk-product.jpg',
+            src: '/assets/blogs/blog-sweetmonk-drops-chai.jpg',
             alt: 'Sweet Monk Monk Fruit Sweetener Drops',
             caption: 'Sweet Monk: Keto-approved sweetener jo kabhi ketosis break nahi karta.'
           }
@@ -746,7 +738,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
             'Ye plan aapko ketosis mein rakhta hai Indian flavors enjoy karte hue.'
           ],
           image: {
-            src: '/assets/blogs/blog-keto-meal.jpg',
+            src: '/assets/blogs/blog-sweetmonk-halwa.jpg',
             alt: 'Complete Keto Meal with Sweet Monk',
             caption: 'Full day keto meal plan Sweet Monk beverages aur desserts mein featuring.'
           }
@@ -777,7 +769,6 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
             'Mistake 3: Taste deprivation ki wajah se keto chhodna. Sweet Monk aapko traditional Indian flavors enjoy karne deta hai, keto ko long-term sustainable banata.'
           ],
           callout: 'Keto Sustainability: 73% Sweet Monk users keto pe 6+ months tak rehte hain, artificial sweeteners use karne walo mein 42% ke comparison mein.'
-          }
         }
       ],
       faqs: [
