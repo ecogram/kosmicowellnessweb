@@ -153,9 +153,10 @@ function generateStaticPages() {
 
   const baseHtml = fs.readFileSync(indexHtmlPath, 'utf8');
 
-  // Load all blogs from the 3 blog data files
+  // Load all blogs from the 4 blog data files
   const dataDir = path.resolve(__dirname, '../src/data');
   const allBlogs = [
+    ...extractBlogsFromFile(path.join(dataDir, 'newBlogsOct29.ts')),
     ...extractBlogsFromFile(path.join(dataDir, 'newBlogsOct26.ts')),
     ...extractBlogsFromFile(path.join(dataDir, 'newBlogsOct24.ts')),
     ...extractBlogsFromFile(path.join(dataDir, 'blogsData.ts')),
