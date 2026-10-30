@@ -799,7 +799,7 @@ export const NEW_BLOGS_OCT_29: BlogPost[] = [
     titleHinglish: 'Zero-Sugar Daily Routine: Chai, Coffee Aur Desserts Ke Liye Sweet Monk Swaps',
     excerpt: 'From your first chai to evening desserts, discover practical ways to replace sugar without losing taste, comfort, or the joy of everyday eating.',
     excerptHinglish: 'Subah ki chai se lekar sham ke desserts tak, jaaniye kaise aap sugar ko replace kar sakte hain bina taste aur comfort khoye.',
-    date: 'October 29, 2026',
+    date: 'October 30, 2026',
     readingTime: '6 min read',
     category: 'Healthy Recipes',
     author: {

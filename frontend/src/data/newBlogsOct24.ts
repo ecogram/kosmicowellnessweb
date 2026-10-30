@@ -547,7 +547,7 @@ export const NEW_BLOGS_OCT_24: BlogPost[] = [
     titleHinglish: 'Festive Sweets Without Sugar Spike: Smart Celebration Ke Liye Sweet Monk',
     excerpt: 'Celebrations do not need to come with a sugar crash. Learn how to keep your festive sweets delicious and lighter with natural monk fruit sweetness.',
     excerptHinglish: 'Tyohar ka maza bina sugar crash ke bhi ho sakta hai. Natural monk fruit sweetness ke sath festive sweets ko healthy aur delicious banane ka tareeqa jaaniye.',
-    date: 'October 24, 2026',
+    date: 'October 30, 2026',
     readingTime: '5 min read',
     category: 'Healthy Recipes',
     author: {

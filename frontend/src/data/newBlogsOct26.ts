@@ -793,7 +793,7 @@ export const NEW_BLOGS_OCT_26: BlogPost[] = [
     titleHinglish: '7-Day Sugar-Free Wellness Reset: Energy Aur Cravings Control Ke Liye Soft Start',
     excerpt: 'Feeling tired, foggy, and always craving sweets? Use this 7-day reset to cut sugar, improve energy, and enjoy better habits with Sweet Monk.',
     excerptHinglish: 'Agar aap thakawat, brain fog aur sweets ki craving mein stuck hain, toh ye 7-day reset aapko sugar ko reduce karne aur better energy paane mein help karega.',
-    date: 'October 26, 2026',
+    date: 'October 30, 2026',
     readingTime: '5 min read',
     category: 'Diabetes Care',
     author: {
