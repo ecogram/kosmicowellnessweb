@@ -337,12 +337,10 @@ export const CommunityPage: React.FC = () => {
         formData.append('media', mediaFile);
       }
 
-      let newPostData: any;
-      try {
-        const res = await api.post('/posts', formData);
-        newPostData = res.data?.data?.post || res.data?.post;
-      } catch (apiErr: any) {
-        console.warn('Backend post creation warning, applying seamless local upload:', apiErr);
+      const res = await api.post('/posts', formData);
+      const newPostData = res.data?.data?.post || res.data?.post;
+      if (!newPostData?._id) {
+        throw new Error('The server did not confirm that your post was saved. Please try again.');
       }
 
       const resolvedServerMedia =
@@ -350,30 +348,36 @@ export const CommunityPage: React.FC = () => {
         (Array.isArray(newPostData?.mediaUrls) && newPostData.mediaUrls[0]) ||
         '';
 
-      const finalMediaUrl = resolvedServerMedia
-        ? normalizeImageUrl(resolvedServerMedia)
-        : (mediaPreview || '');
+      const finalMediaUrl = resolvedServerMedia ? normalizeImageUrl(resolvedServerMedia) : '';
 
-      // Optimistic instant UI update so user sees their post immediately
       const createdPost: CommunityPost = {
-        _id: newPostData?._id || `user-post-${Date.now()}`,
+        _id: newPostData._id,
         user: {
-          _id: user?._id || user?.id,
-          name: user?.name || (user as any)?.fullName || 'You',
-          profilePicture: user?.profilePicture ? normalizeImageUrl(user.profilePicture) : '',
+          _id: newPostData.user?._id || user?._id || user?.id,
+          name: newPostData.user?.name || user?.name || (user as any)?.fullName || 'You',
+          profilePicture: newPostData.user?.profilePicture
+            ? normalizeImageUrl(newPostData.user.profilePicture)
+            : user?.profilePicture
+              ? normalizeImageUrl(user.profilePicture)
+              : '',
         },
-        content: postContent.trim(),
+        content: newPostData.content || postContent.trim(),
         mediaUrl: finalMediaUrl,
-        mediaUrls: finalMediaUrl ? [finalMediaUrl] : [],
-        tags: selectedTags,
-        location: postLocation.trim(),
-        likes: [],
-        comments: [],
-        createdAt: new Date().toISOString(),
-        isVideo: mediaType === 'video',
+        mediaUrls: Array.isArray(newPostData.mediaUrls)
+          ? newPostData.mediaUrls.map((url: string) => normalizeImageUrl(url))
+          : finalMediaUrl
+            ? [finalMediaUrl]
+            : [],
+        tags: newPostData.tags || selectedTags,
+        location: newPostData.location || postLocation.trim(),
+        privacyLevel: newPostData.privacyLevel || 'public',
+        likes: newPostData.likes || [],
+        comments: newPostData.comments || [],
+        createdAt: newPostData.createdAt || new Date().toISOString(),
+        isVideo: isVideoUrl(finalMediaUrl),
       };
 
-      setPosts([createdPost, ...posts]);
+      setPosts((prevPosts) => [createdPost, ...prevPosts]);
       setSubmitSuccess(true);
 
       setTimeout(() => {
@@ -385,7 +389,11 @@ export const CommunityPage: React.FC = () => {
         setSubmitSuccess(false);
       }, 700);
     } catch (err: any) {
-      setSubmitError(err?.message || 'Failed to publish post. Please try again.');
+      setSubmitError(
+        err?.response?.data?.message ||
+          err?.message ||
+          'Failed to publish post. Please try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
