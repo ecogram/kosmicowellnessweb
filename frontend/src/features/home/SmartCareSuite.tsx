@@ -29,7 +29,7 @@ const FEATURES: FeatureItem[] = [
     id: 'gluco',
     side: 'left',
     slot: 0,
-    title: 'GlucoRhythm\nGlucose Tracker',
+    title: 'GlucoRhythm Glucose Tracker',
     badge: 'APP EXCLUSIVE',
     badgeIcon: '⚡',
     desc: 'Continuous Glucose Monitoring (CGM) with real-time trends.',
@@ -57,7 +57,7 @@ const FEATURES: FeatureItem[] = [
     id: 'diary',
     side: 'left',
     slot: 2,
-    title: 'Health Diary &\nWater Log',
+    title: 'Health Diary & Water Log',
     badge: 'DAILY TRACKER',
     badgeIcon: '⚡',
     desc: 'Track daily water intake, workout logs, energy levels, and supplement reminders.',
@@ -73,7 +73,7 @@ const FEATURES: FeatureItem[] = [
     id: 'scan',
     side: 'right',
     slot: 0,
-    title: 'Plate AI\nMeal Scanner',
+    title: 'Plate AI Meal Scanner',
     badge: 'AI VISION SCAN',
     badgeIcon: '⚡',
     desc: 'AI Vision meal scanner estimating calories, net carbs, and Glycemic Index (GI).',
@@ -87,7 +87,7 @@ const FEATURES: FeatureItem[] = [
     id: 'ble',
     side: 'right',
     slot: 1,
-    title: 'Smartwatch\nBLE Sync',
+    title: 'Smartwatch BLE Sync',
     badge: 'LIVE BIOMETRICS',
     badgeIcon: '⚡',
     desc: 'Sync fitness bands to monitor heart rate, SpO2, and real-time biometrics.',
@@ -101,7 +101,7 @@ const FEATURES: FeatureItem[] = [
     id: 'community',
     side: 'right',
     slot: 2,
-    title: 'Care Community\n& SOS',
+    title: 'Care Community & SOS',
     badge: 'CARE NETWORK',
     badgeIcon: '⚡',
     desc: 'Connect with peer health groups, doctor SOS support, and share keto/diabetes recipes.',
@@ -209,7 +209,7 @@ export const SmartCareSuite: React.FC = () => {
   const { user, isAuthenticated } = useAuthStore();
   const rawName = user?.name || user?.fullName || '';
   const firstName = rawName.trim().split(' ')[0];
-  const greetingName = isAuthenticated && firstName ? firstName : 'Amit';
+  const greetingName = isAuthenticated && firstName ? firstName : 'Abhay';
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
@@ -250,7 +250,7 @@ export const SmartCareSuite: React.FC = () => {
       let sy = 0;
 
       // Vertical offsets on the phone's left/right border to spread lines
-      const phoneVerticalOffsets = [0.28, 0.50, 0.72];
+      const phoneVerticalOffsets = [0.26, 0.50, 0.74];
       const slotRatio = phoneVerticalOffsets[feature.slot] ?? 0.5;
 
       if (feature.side === 'left') {
@@ -265,23 +265,24 @@ export const SmartCareSuite: React.FC = () => {
         sy = phoneRect.top + phoneRect.height * slotRatio - containerRect.top;
       }
 
-      // Smooth curved S / cubic bezier curve
+      // Smooth long sweeping S-curve
       const dx = cx - sx;
-      const cp1x = sx + dx * 0.45;
+      const bend = Math.abs(dx) * 0.55;
+      const cp1x = sx + (feature.side === 'left' ? -bend : bend);
       const cp1y = sy;
-      const cp2x = sx + dx * 0.55;
+      const cp2x = cx + (feature.side === 'left' ? bend : -bend);
       const cp2y = cy;
 
       const d = `M ${sx.toFixed(1)} ${sy.toFixed(1)} C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${cx.toFixed(1)} ${cy.toFixed(1)}`;
 
-      let length = 200;
+      let length = 280;
       try {
         const tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         tempPath.setAttribute('d', d);
-        length = tempPath.getTotalLength() || 200;
+        length = tempPath.getTotalLength() || 280;
       } catch {
         const dist = Math.hypot(cx - sx, cy - sy);
-        length = dist * 1.15;
+        length = dist * 1.25;
       }
 
       computed.push({
@@ -327,8 +328,8 @@ export const SmartCareSuite: React.FC = () => {
     let startTime: number | null = null;
     let currentIdx = 0;
 
-    const TRAVEL_DURATION = 1300;
-    const GLOW_HOLD_DURATION = 650;
+    const TRAVEL_DURATION = 1400; // slightly longer for longer chains
+    const GLOW_HOLD_DURATION = 700;
     const PAUSE_DURATION = 200;
 
     const step = (timestamp: number) => {
@@ -427,14 +428,16 @@ export const SmartCareSuite: React.FC = () => {
         </div>
 
         {/* ════════════════════════════════════════════════════════════
-            EXACT 3-COLUMN ECOSYSTEM MATCHING REFERENCE IMAGE
+            SQUARE CARDS & LONGER CHAIN ECOSYSTEM
+            Cards are square-proportioned, allowing wide spacing and
+            dramatic, longer sweeping curved connector chains!
         ═══════════════════════════════════════════════════════════ */}
         <div ref={hubContainerRef} className="relative py-2 sm:py-6 select-none w-full">
-          {/* SVG Overlay: Curved Connectors & Travelling Light Particle */}
+          {/* SVG Overlay: Longer Sweeping Curved Connectors & Travelling Light Particle */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible">
             <defs>
               <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
-                <feGaussianBlur stdDeviation="2.5" result="blur" />
+                <feGaussianBlur stdDeviation="3" result="blur" />
                 <feMerge>
                   <feMergeNode in="blur" />
                   <feMergeNode in="SourceGraphic" />
@@ -442,7 +445,7 @@ export const SmartCareSuite: React.FC = () => {
               </filter>
 
               <filter id="particle-bloom" x="-50%" y="-50%" width="200%" height="200%">
-                <feGaussianBlur stdDeviation="4" result="bloom" />
+                <feGaussianBlur stdDeviation="4.5" result="bloom" />
                 <feMerge>
                   <feMergeNode in="bloom" />
                   <feMergeNode in="SourceGraphic" />
@@ -465,8 +468,8 @@ export const SmartCareSuite: React.FC = () => {
                   <path
                     d={p.d}
                     fill="none"
-                    stroke={isActive ? 'rgba(34, 197, 94, 0.65)' : 'rgba(34, 197, 94, 0.25)'}
-                    strokeWidth={isActive ? 4 : 2.2}
+                    stroke={isActive ? 'rgba(34, 197, 94, 0.75)' : 'rgba(34, 197, 94, 0.28)'}
+                    strokeWidth={isActive ? 4.5 : 2.4}
                     filter="url(#neon-glow)"
                     className="transition-all duration-300"
                   />
@@ -477,15 +480,15 @@ export const SmartCareSuite: React.FC = () => {
                     d={p.d}
                     fill="none"
                     stroke={isActive ? '#22c55e' : '#16a34a'}
-                    strokeWidth={isActive ? 2.2 : 1.5}
-                    strokeDasharray={isActive ? 'none' : '5 3'}
-                    opacity={isActive ? 0.95 : 0.7}
+                    strokeWidth={isActive ? 2.4 : 1.6}
+                    strokeDasharray={isActive ? 'none' : '5 4'}
+                    opacity={isActive ? 0.95 : 0.75}
                     className="transition-all duration-300"
                   />
                   <circle
                     cx={p.phoneAnchor.x}
                     cy={p.phoneAnchor.y}
-                    r={isActive ? 4.5 : 3.2}
+                    r={isActive ? 5 : 3.5}
                     fill="#22c55e"
                     stroke="#ffffff"
                     strokeWidth="1.2"
@@ -494,7 +497,7 @@ export const SmartCareSuite: React.FC = () => {
                   <circle
                     cx={p.cardAnchor.x}
                     cy={p.cardAnchor.y}
-                    r={isActive ? 5 : 3.2}
+                    r={isActive ? 5.5 : 3.5}
                     fill={isActive ? '#4ade80' : '#16a34a'}
                     stroke="#ffffff"
                     strokeWidth="1.2"
@@ -507,20 +510,20 @@ export const SmartCareSuite: React.FC = () => {
             {/* Travelling Light Particle */}
             {particlePos && (
               <g filter="url(#particle-bloom)">
-                <circle cx={particlePos.x} cy={particlePos.y} r={10} fill="url(#particle-halo)" />
-                <circle cx={particlePos.x} cy={particlePos.y} r={5} fill="#4ade80" />
-                <circle cx={particlePos.x} cy={particlePos.y} r={2} fill="#ffffff" />
+                <circle cx={particlePos.x} cy={particlePos.y} r={12} fill="url(#particle-halo)" />
+                <circle cx={particlePos.x} cy={particlePos.y} r={5.5} fill="#4ade80" />
+                <circle cx={particlePos.x} cy={particlePos.y} r={2.5} fill="#ffffff" />
               </g>
             )}
           </svg>
 
-          {/* 3-Column Ecosystem Layout: Responsive across all devices */}
-          <div className="grid grid-cols-[1fr_minmax(105px,140px)_1fr] sm:grid-cols-[1fr_minmax(160px,210px)_1fr] lg:grid-cols-[380px_1fr_380px] xl:grid-cols-[430px_1fr_430px] gap-2.5 sm:gap-4 md:gap-7 items-center w-full">
+          {/* 3-Column Ecosystem Layout: Square Cards with Wider Gaps for LONGER CHAINS */}
+          <div className="grid grid-cols-[1fr_minmax(105px,140px)_1fr] sm:grid-cols-[1fr_minmax(160px,210px)_1fr] lg:grid-cols-[280px_1fr_280px] xl:grid-cols-[300px_1fr_300px] gap-3 sm:gap-6 md:gap-10 lg:gap-14 xl:gap-20 items-center w-full">
             
             {/* ══════════════════════════════════════════════════════════
-                LEFT COLUMN (3 Cards: GlucoRhythm, Steps, Diary)
+                LEFT COLUMN: 3 SQUARE CARDS
             ═══════════════════════════════════════════════════════════ */}
-            <div className="flex flex-col gap-3 sm:gap-5 md:gap-7 min-w-0">
+            <div className="flex flex-col gap-3.5 sm:gap-6 md:gap-8 min-w-0">
               {FEATURES.filter((f) => f.side === 'left').map((feature) => {
                 const globalIdx = FEATURES.findIndex((f) => f.id === feature.id);
                 const isGlow = activeGlowCard === globalIdx;
@@ -529,16 +532,16 @@ export const SmartCareSuite: React.FC = () => {
                 return (
                   <div key={feature.id} className="relative group">
                     {/* Golden Ambient Flare Underglow */}
-                    <div className="absolute -bottom-1.5 left-6 right-6 h-1.5 bg-gradient-to-r from-transparent via-amber-400/50 to-transparent blur-sm pointer-events-none animate-golden-flare" />
+                    <div className="absolute -bottom-1.5 left-4 right-4 h-1.5 bg-gradient-to-r from-transparent via-amber-400/50 to-transparent blur-sm pointer-events-none animate-golden-flare" />
 
                     <div
                       ref={(el) => {
                         cardRefs.current[globalIdx] = el;
                       }}
-                      onClick={() => openAppModal(feature.title.replace('\n', ' '), feature.featureDetails)}
-                      className={`relative rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 md:p-5 bg-white/95 backdrop-blur-md cursor-pointer transition-all duration-500 transform hover:-translate-y-0.5 md:hover:-translate-y-1 hover:shadow-2xl border ${
+                      onClick={() => openAppModal(feature.title, feature.featureDetails)}
+                      className={`relative rounded-2xl sm:rounded-3xl p-3 sm:p-4.5 md:p-5 bg-white/95 backdrop-blur-md cursor-pointer transition-all duration-500 transform hover:-translate-y-1 hover:shadow-2xl border flex flex-col justify-between ${
                         isGlow
-                          ? 'border-emerald-500 shadow-[0_0_24px_rgba(34,197,94,0.7),inset_0_0_12px_rgba(34,197,94,0.22)] scale-[1.018]'
+                          ? 'border-emerald-500 shadow-[0_0_24px_rgba(34,197,94,0.7),inset_0_0_12px_rgba(34,197,94,0.22)] scale-[1.02]'
                           : 'border-emerald-950/10 shadow-[0_10px_25px_rgba(0,0,0,0.05)] hover:border-emerald-500/40'
                       }`}
                     >
@@ -552,126 +555,118 @@ export const SmartCareSuite: React.FC = () => {
                         }}
                       />
 
-                      {/* Card Content: Split Layout (Left: Title + Desc | Right: Badge + Widget) */}
-                      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 sm:gap-3 items-center">
-                        
-                        {/* Left Side: Icon + Title + Description */}
-                        <div className="min-w-0">
-                          <div className="flex items-start gap-2 sm:gap-3 mb-1 sm:mb-2">
-                            <div
-                              className={`w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl ${feature.iconBg} ${feature.iconColor} flex items-center justify-center shrink-0 shadow-sm transition-transform duration-300 ${
-                                isGlow ? 'scale-110' : ''
-                              }`}
-                            >
-                              <IconComponent className="w-4 h-4 sm:w-6 sm:h-6" />
+                      {/* Square Card Header: Icon + Badge Pill */}
+                      <div className="flex items-center justify-between gap-1.5 mb-2 sm:mb-2.5">
+                        <div
+                          className={`w-8 h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-xl sm:rounded-2xl ${feature.iconBg} ${feature.iconColor} flex items-center justify-center shrink-0 shadow-sm transition-transform duration-300 ${
+                            isGlow ? 'scale-110' : ''
+                          }`}
+                        >
+                          <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 md:w-5.5 md:h-5.5" />
+                        </div>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[7.5px] sm:text-[8.5px] font-black tracking-wider uppercase bg-[#0f4a2d] text-amber-300 border border-emerald-700/60 shadow-2xs">
+                          <span className="text-amber-400">{feature.badgeIcon}</span>
+                          <span className="truncate max-w-[80px] sm:max-w-none">{feature.badge}</span>
+                        </span>
+                      </div>
+
+                      {/* Square Card Title & Description */}
+                      <div className="mb-2 sm:mb-3">
+                        <h3 className="text-[11px] sm:text-xs md:text-sm font-serif font-black text-neutral-900 leading-snug tracking-tight mb-1">
+                          {feature.title}
+                        </h3>
+                        <p className="hidden md:block text-[11px] text-neutral-500 leading-relaxed line-clamp-2">
+                          {feature.desc}
+                        </p>
+                      </div>
+
+                      {/* ══ Square Card Bottom: Visual Feature Widget ══ */}
+                      {feature.widgetType === 'gluco' && (
+                        <div className="w-full rounded-xl sm:rounded-2xl p-2 bg-gradient-to-r from-emerald-50/80 to-stone-50/80 border border-emerald-200/80 shadow-inner">
+                          <div className="flex items-center justify-between mb-1 px-1">
+                            <div className="flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                              <span className="text-[10px] sm:text-xs font-black text-neutral-900">112 mg/dL</span>
                             </div>
-                            <div>
-                              <h3 className="text-[11px] sm:text-xs md:text-[15px] font-serif font-black text-neutral-900 leading-tight tracking-tight whitespace-pre-line">
-                                {feature.title}
-                              </h3>
+                            <span className="text-[8px] font-bold text-neutral-400 uppercase">Steady</span>
+                          </div>
+                          <div className="w-full h-7 relative overflow-hidden flex items-center">
+                            <div className="flex w-[200%] animate-cgm-flow absolute left-0">
+                              <svg viewBox="0 0 160 30" className="w-1/2 h-7 shrink-0 overflow-visible">
+                                <path
+                                  d="M 0 18 Q 20 6, 40 18 T 80 16 T 105 8 T 125 22 T 160 14"
+                                  fill="none"
+                                  stroke="#16a34a"
+                                  strokeWidth="2.4"
+                                  strokeLinecap="round"
+                                />
+                                <circle cx="160" cy="14" r="3" fill="#16a34a" />
+                              </svg>
+                              <svg viewBox="0 0 160 30" className="w-1/2 h-7 shrink-0 overflow-visible">
+                                <path
+                                  d="M 0 18 Q 20 6, 40 18 T 80 16 T 105 8 T 125 22 T 160 14"
+                                  fill="none"
+                                  stroke="#16a34a"
+                                  strokeWidth="2.4"
+                                  strokeLinecap="round"
+                                />
+                                <circle cx="160" cy="14" r="3" fill="#16a34a" />
+                              </svg>
                             </div>
                           </div>
-                          <p className="hidden md:block text-[11px] text-neutral-500 leading-relaxed max-w-[210px]">
-                            {feature.desc}
-                          </p>
                         </div>
+                      )}
 
-                        {/* Right Side: Badge at Top-Right + Visual Widget Below */}
-                        <div className="flex flex-col items-end gap-1.5 sm:gap-2 shrink-0">
-                          {/* Badge Pill */}
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[7.5px] sm:text-[9px] font-black tracking-wider uppercase bg-[#0f4a2d] text-amber-300 border border-emerald-700/60 shadow-2xs">
-                            <span className="text-amber-400">{feature.badgeIcon}</span>
-                            <span>{feature.badge}</span>
-                          </span>
-
-                          {/* ══ 1. GlucoRhythm Visual Widget ══ */}
-                          {feature.widgetType === 'gluco' && (
-                            <div className="w-full sm:w-36 md:w-40 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 bg-gradient-to-r from-emerald-50/80 to-stone-50/80 border border-emerald-200/80 shadow-inner">
-                              <div className="flex items-center gap-1.5 mb-1 px-1">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                <span className="text-[10px] sm:text-xs font-black text-neutral-900">112 mg/dL</span>
-                              </div>
-                              <div className="w-full h-7 relative overflow-hidden flex items-center">
-                                <div className="flex w-[200%] animate-cgm-flow absolute left-0">
-                                  <svg viewBox="0 0 160 30" className="w-1/2 h-7 shrink-0 overflow-visible">
-                                    <path
-                                      d="M 0 18 Q 20 6, 40 18 T 80 16 T 105 8 T 125 22 T 160 14"
-                                      fill="none"
-                                      stroke="#16a34a"
-                                      strokeWidth="2.4"
-                                      strokeLinecap="round"
-                                    />
-                                    <circle cx="160" cy="14" r="3" fill="#16a34a" />
-                                  </svg>
-                                  <svg viewBox="0 0 160 30" className="w-1/2 h-7 shrink-0 overflow-visible">
-                                    <path
-                                      d="M 0 18 Q 20 6, 40 18 T 80 16 T 105 8 T 125 22 T 160 14"
-                                      fill="none"
-                                      stroke="#16a34a"
-                                      strokeWidth="2.4"
-                                      strokeLinecap="round"
-                                    />
-                                    <circle cx="160" cy="14" r="3" fill="#16a34a" />
-                                  </svg>
-                                </div>
-                              </div>
+                      {feature.widgetType === 'steps' && (
+                        <div className="w-full rounded-xl sm:rounded-2xl p-2 bg-gradient-to-r from-amber-50/60 to-stone-50/80 border border-stone-200/90 shadow-inner flex items-center justify-between">
+                          <div className="relative w-10 h-9 sm:w-11 sm:h-10 flex items-center justify-center shrink-0">
+                            <svg viewBox="0 0 50 36" className="w-full h-full">
+                              <path
+                                d="M 6 30 A 19 19 0 0 1 44 30"
+                                fill="none"
+                                stroke="#e5e7eb"
+                                strokeWidth="4"
+                                strokeLinecap="round"
+                              />
+                              <path
+                                d="M 6 30 A 19 19 0 0 1 38 17"
+                                fill="none"
+                                stroke="#16a34a"
+                                strokeWidth="4.5"
+                                strokeLinecap="round"
+                              />
+                            </svg>
+                            <div className="absolute bottom-1 animate-footstep-walk">
+                              <Footprints className="w-3.5 h-3.5 text-emerald-800" />
                             </div>
-                          )}
+                          </div>
 
-                          {/* ══ 2. Footstep Counter Visual Widget ══ */}
-                          {feature.widgetType === 'steps' && (
-                            <div className="w-full sm:w-36 md:w-40 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 bg-gradient-to-r from-amber-50/60 to-stone-50/80 border border-stone-200/90 shadow-inner flex items-center justify-between">
-                              <div className="relative w-10 h-9 sm:w-12 sm:h-11 flex items-center justify-center shrink-0">
-                                <svg viewBox="0 0 50 36" className="w-full h-full">
-                                  <path
-                                    d="M 6 30 A 19 19 0 0 1 44 30"
-                                    fill="none"
-                                    stroke="#e5e7eb"
-                                    strokeWidth="4"
-                                    strokeLinecap="round"
-                                  />
-                                  <path
-                                    d="M 6 30 A 19 19 0 0 1 38 17"
-                                    fill="none"
-                                    stroke="#16a34a"
-                                    strokeWidth="4.5"
-                                    strokeLinecap="round"
-                                  />
-                                </svg>
-                                <div className="absolute bottom-1 animate-footstep-walk">
-                                  <Footprints className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-800" />
-                                </div>
-                              </div>
-
-                              <div className="text-right">
-                                <div className="text-[10px] sm:text-xs font-black text-neutral-900 leading-tight">
-                                  6,420 Steps
-                                </div>
-                                <div className="text-[8.5px] sm:text-[10px] font-bold text-neutral-500">
-                                  320 kcal
-                                </div>
-                              </div>
+                          <div className="text-right">
+                            <div className="text-[10px] sm:text-xs font-black text-neutral-900 leading-tight">
+                              6,420 Steps
                             </div>
-                          )}
-
-                          {/* ══ 3. Health Diary Visual Widget ══ */}
-                          {feature.widgetType === 'diary' && (
-                            <div className="w-full sm:w-36 md:w-40 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 bg-gradient-to-r from-emerald-50/80 to-stone-50/80 border border-emerald-200/80 shadow-inner flex items-center justify-between">
-                              <div className="flex items-center gap-1">
-                                <span className="text-sm">💧</span>
-                                <span className="text-[10px] sm:text-xs font-black text-neutral-900">+250 ml</span>
-                              </div>
-                              <div className="flex items-end gap-1 h-6 px-1">
-                                <div className="w-2 bg-emerald-400 rounded-xs animate-fluid-1" />
-                                <div className="w-2 bg-emerald-500 rounded-xs animate-fluid-2" />
-                                <div className="w-2 bg-emerald-600 rounded-xs animate-fluid-3" />
-                                <div className="w-2 bg-emerald-500 rounded-xs animate-fluid-4" />
-                              </div>
+                            <div className="text-[8.5px] sm:text-[10px] font-bold text-neutral-500">
+                              320 kcal
                             </div>
-                          )}
-
+                          </div>
                         </div>
-                      </div>
+                      )}
+
+                      {feature.widgetType === 'diary' && (
+                        <div className="w-full rounded-xl sm:rounded-2xl p-2 bg-gradient-to-r from-emerald-50/80 to-stone-50/80 border border-emerald-200/80 shadow-inner flex items-center justify-between">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm">💧</span>
+                            <span className="text-[10px] sm:text-xs font-black text-neutral-900">+250 ml</span>
+                          </div>
+                          <div className="flex items-end gap-1.5 h-6 px-1">
+                            <div className="w-2 bg-emerald-400 rounded-xs animate-fluid-1" />
+                            <div className="w-2 bg-emerald-500 rounded-xs animate-fluid-2" />
+                            <div className="w-2 bg-emerald-600 rounded-xs animate-fluid-3" />
+                            <div className="w-2 bg-emerald-500 rounded-xs animate-fluid-4" />
+                          </div>
+                        </div>
+                      )}
+
                     </div>
                   </div>
                 );
@@ -807,9 +802,9 @@ export const SmartCareSuite: React.FC = () => {
             </div>
 
             {/* ══════════════════════════════════════════════════════════
-                RIGHT COLUMN (3 Cards: Plate AI, Smartwatch, Care)
+                RIGHT COLUMN: 3 SQUARE CARDS
             ═══════════════════════════════════════════════════════════ */}
-            <div className="flex flex-col gap-3 sm:gap-5 md:gap-7 min-w-0">
+            <div className="flex flex-col gap-3.5 sm:gap-6 md:gap-8 min-w-0">
               {FEATURES.filter((f) => f.side === 'right').map((feature) => {
                 const globalIdx = FEATURES.findIndex((f) => f.id === feature.id);
                 const isGlow = activeGlowCard === globalIdx;
@@ -818,16 +813,16 @@ export const SmartCareSuite: React.FC = () => {
                 return (
                   <div key={feature.id} className="relative group">
                     {/* Golden Ambient Flare Underglow */}
-                    <div className="absolute -bottom-1.5 left-6 right-6 h-1.5 bg-gradient-to-r from-transparent via-amber-400/50 to-transparent blur-sm pointer-events-none animate-golden-flare" />
+                    <div className="absolute -bottom-1.5 left-4 right-4 h-1.5 bg-gradient-to-r from-transparent via-amber-400/50 to-transparent blur-sm pointer-events-none animate-golden-flare" />
 
                     <div
                       ref={(el) => {
                         cardRefs.current[globalIdx] = el;
                       }}
-                      onClick={() => openAppModal(feature.title.replace('\n', ' '), feature.featureDetails)}
-                      className={`relative rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 md:p-5 bg-white/95 backdrop-blur-md cursor-pointer transition-all duration-500 transform hover:-translate-y-0.5 md:hover:-translate-y-1 hover:shadow-2xl border ${
+                      onClick={() => openAppModal(feature.title, feature.featureDetails)}
+                      className={`relative rounded-2xl sm:rounded-3xl p-3 sm:p-4.5 md:p-5 bg-white/95 backdrop-blur-md cursor-pointer transition-all duration-500 transform hover:-translate-y-1 hover:shadow-2xl border flex flex-col justify-between ${
                         isGlow
-                          ? 'border-emerald-500 shadow-[0_0_24px_rgba(34,197,94,0.7),inset_0_0_12px_rgba(34,197,94,0.22)] scale-[1.018]'
+                          ? 'border-emerald-500 shadow-[0_0_24px_rgba(34,197,94,0.7),inset_0_0_12px_rgba(34,197,94,0.22)] scale-[1.02]'
                           : 'border-emerald-950/10 shadow-[0_10px_25px_rgba(0,0,0,0.05)] hover:border-emerald-500/40'
                       }`}
                     >
@@ -841,159 +836,136 @@ export const SmartCareSuite: React.FC = () => {
                         }}
                       />
 
-                      {/* Card Content: Split Layout (Left: Title + Desc | Right: Badge + Widget) */}
-                      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 sm:gap-3 items-center">
-                        
-                        {/* Left Side: Icon + Title + Description */}
-                        <div className="min-w-0">
-                          <div className="flex items-start gap-2 sm:gap-3 mb-1 sm:mb-2">
-                            <div
-                              className={`w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl ${feature.iconBg} ${feature.iconColor} flex items-center justify-center shrink-0 shadow-sm transition-transform duration-300 ${
-                                isGlow ? 'scale-110' : ''
-                              }`}
-                            >
-                              <IconComponent className="w-4 h-4 sm:w-6 sm:h-6" />
+                      {/* Square Card Header: Icon + Badge Pill */}
+                      <div className="flex items-center justify-between gap-1.5 mb-2 sm:mb-2.5">
+                        <div
+                          className={`w-8 h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 rounded-xl sm:rounded-2xl ${feature.iconBg} ${feature.iconColor} flex items-center justify-center shrink-0 shadow-sm transition-transform duration-300 ${
+                            isGlow ? 'scale-110' : ''
+                          }`}
+                        >
+                          <IconComponent className="w-4 h-4 sm:w-5 sm:h-5 md:w-5.5 md:h-5.5" />
+                        </div>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[7.5px] sm:text-[8.5px] font-black tracking-wider uppercase bg-[#0f4a2d] text-amber-300 border border-emerald-700/60 shadow-2xs">
+                          <span className="text-amber-400">{feature.badgeIcon}</span>
+                          <span className="truncate max-w-[80px] sm:max-w-none">{feature.badge}</span>
+                        </span>
+                      </div>
+
+                      {/* Square Card Title & Description */}
+                      <div className="mb-2 sm:mb-3">
+                        <h3 className="text-[11px] sm:text-xs md:text-sm font-serif font-black text-neutral-900 leading-snug tracking-tight mb-1">
+                          {feature.title}
+                        </h3>
+                        <p className="hidden md:block text-[11px] text-neutral-500 leading-relaxed line-clamp-2">
+                          {feature.desc}
+                        </p>
+                      </div>
+
+                      {/* ══ Square Card Bottom: Visual Feature Widget ══ */}
+                      {feature.widgetType === 'scan' && (
+                        <div className="w-full rounded-xl sm:rounded-2xl p-2 bg-gradient-to-r from-emerald-50/80 to-stone-50/80 border border-emerald-200/80 shadow-inner flex items-center gap-2">
+                          {/* Salad Bowl Photo with Reticle Viewfinder Brackets */}
+                          <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-xl overflow-hidden shadow-xs border border-emerald-600/30 shrink-0 bg-stone-100">
+                            <svg viewBox="0 0 60 60" className="w-full h-full object-cover">
+                              <defs>
+                                <radialGradient id="salad-bowl-bg-square" cx="50%" cy="50%" r="50%">
+                                  <stop offset="0%" stopColor="#86efac" />
+                                  <stop offset="60%" stopColor="#22c55e" />
+                                  <stop offset="100%" stopColor="#15803d" />
+                                </radialGradient>
+                              </defs>
+                              <circle cx="30" cy="30" r="28" fill="#fef08a" stroke="#ca8a04" strokeWidth="1.5" />
+                              <circle cx="30" cy="30" r="24" fill="url(#salad-bowl-bg-square)" />
+                              <circle cx="24" cy="22" r="5" fill="#ef4444" />
+                              <circle cx="36" cy="25" r="4.5" fill="#ef4444" />
+                              <circle cx="30" cy="34" r="5.5" fill="#f97316" />
+                              <ellipse cx="22" cy="32" rx="6" ry="3" fill="#15803d" transform="rotate(-20 22 32)" />
+                              <ellipse cx="38" cy="33" rx="5" ry="3" fill="#16a34a" transform="rotate(30 38 33)" />
+                              <circle cx="28" cy="27" r="3" fill="#ffffff" opacity="0.8" />
+                              <circle cx="33" cy="21" r="2" fill="#ca8a04" />
+                            </svg>
+                            <div className="absolute top-0.5 left-0.5 w-1.5 h-1.5 border-t-2 border-l-2 border-emerald-800" />
+                            <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 border-t-2 border-r-2 border-emerald-800" />
+                            <div className="absolute bottom-0.5 left-0.5 w-1.5 h-1.5 border-b-2 border-l-2 border-emerald-800" />
+                            <div className="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 border-b-2 border-r-2 border-emerald-800" />
+                            <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500/0 via-emerald-400 to-emerald-500/0 shadow-[0_0_6px_#22c55e] animate-laser-sweep" />
+                          </div>
+
+                          <div className="space-y-0.5 text-[8px] sm:text-[9px] leading-tight">
+                            <div className="font-bold text-neutral-600 whitespace-nowrap">
+                              <span className="text-emerald-700 font-black mr-0.5">●</span>Cal: <span className="font-black text-neutral-900">420 kcal</span>
                             </div>
-                            <div>
-                              <h3 className="text-[11px] sm:text-xs md:text-[15px] font-serif font-black text-neutral-900 leading-tight tracking-tight whitespace-pre-line">
-                                {feature.title}
-                              </h3>
+                            <div className="font-bold text-neutral-600 whitespace-nowrap">
+                              <span className="text-amber-600 font-black mr-0.5">●</span>Carbs: <span className="font-black text-neutral-900">38 g</span>
+                            </div>
+                            <div className="font-bold text-neutral-600 whitespace-nowrap">
+                              <span className="text-teal-700 font-black mr-0.5">●</span>GI: <span className="font-black text-emerald-800">Low</span>
                             </div>
                           </div>
-                          <p className="hidden md:block text-[11px] text-neutral-500 leading-relaxed max-w-[210px]">
-                            {feature.desc}
-                          </p>
                         </div>
+                      )}
 
-                        {/* Right Side: Badge at Top-Right + Visual Widget Below */}
-                        <div className="flex flex-col items-end gap-1.5 sm:gap-2 shrink-0">
-                          {/* Badge Pill */}
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[7.5px] sm:text-[9px] font-black tracking-wider uppercase bg-[#0f4a2d] text-amber-300 border border-emerald-700/60 shadow-2xs">
-                            <span className="text-amber-400">{feature.badgeIcon}</span>
-                            <span>{feature.badge}</span>
-                          </span>
+                      {feature.widgetType === 'ble' && (
+                        <div className="w-full rounded-xl sm:rounded-2xl p-2 bg-gradient-to-r from-rose-50/70 to-stone-50/80 border border-stone-200/90 shadow-inner flex items-center justify-between">
+                          <div className="flex items-center gap-1 shrink-0">
+                            <Heart className="w-3.5 h-3.5 text-rose-600 fill-rose-600 animate-heartbeat-lubdub" />
+                            <span className="text-[10px] sm:text-xs font-black text-neutral-900 whitespace-nowrap">74 BPM</span>
+                          </div>
 
-                          {/* ══ 4. Plate AI Meal Scanner with FRESH SALAD BOWL IMAGE + METRICS ══ */}
-                          {feature.widgetType === 'scan' && (
-                            <div className="w-full sm:w-44 md:w-48 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 bg-gradient-to-r from-emerald-50/80 to-stone-50/80 border border-emerald-200/80 shadow-inner flex items-center gap-2">
-                              {/* Salad Bowl Photo with Reticle Viewfinder Brackets */}
-                              <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden shadow-xs border border-emerald-600/30 shrink-0 bg-stone-100">
-                                {/* Crisp SVG Salad Bowl Artwork matching reference photo */}
-                                <svg viewBox="0 0 60 60" className="w-full h-full object-cover">
-                                  <defs>
-                                    <radialGradient id="salad-bowl-bg" cx="50%" cy="50%" r="50%">
-                                      <stop offset="0%" stopColor="#86efac" />
-                                      <stop offset="60%" stopColor="#22c55e" />
-                                      <stop offset="100%" stopColor="#15803d" />
-                                    </radialGradient>
-                                  </defs>
-                                  <circle cx="30" cy="30" r="28" fill="#fef08a" stroke="#ca8a04" strokeWidth="1.5" />
-                                  <circle cx="30" cy="30" r="24" fill="url(#salad-bowl-bg)" />
-                                  {/* Salad vegetables, greens, tomatoes */}
-                                  <circle cx="24" cy="22" r="5" fill="#ef4444" />
-                                  <circle cx="36" cy="25" r="4.5" fill="#ef4444" />
-                                  <circle cx="30" cy="34" r="5.5" fill="#f97316" />
-                                  <ellipse cx="22" cy="32" rx="6" ry="3" fill="#15803d" transform="rotate(-20 22 32)" />
-                                  <ellipse cx="38" cy="33" rx="5" ry="3" fill="#16a34a" transform="rotate(30 38 33)" />
-                                  <circle cx="28" cy="27" r="3" fill="#ffffff" opacity="0.8" />
-                                  <circle cx="33" cy="21" r="2" fill="#ca8a04" />
-                                </svg>
-                                
-                                {/* 4 Green Viewfinder Corners */}
-                                <div className="absolute top-0.5 left-0.5 w-1.5 h-1.5 border-t-2 border-l-2 border-emerald-800" />
-                                <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 border-t-2 border-r-2 border-emerald-800" />
-                                <div className="absolute bottom-0.5 left-0.5 w-1.5 h-1.5 border-b-2 border-l-2 border-emerald-800" />
-                                <div className="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 border-b-2 border-r-2 border-emerald-800" />
-                                
-                                {/* Live Sweeping Laser Beam */}
-                                <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500/0 via-emerald-400 to-emerald-500/0 shadow-[0_0_6px_#22c55e] animate-laser-sweep" />
-                              </div>
+                          <div className="w-10 sm:w-14 h-5 flex items-center">
+                            <svg viewBox="0 0 80 20" className="w-full h-full overflow-visible">
+                              <path
+                                d="M 0 10 L 22 10 L 26 2 L 31 18 L 36 6 L 41 14 L 46 10 L 80 10"
+                                fill="none"
+                                stroke="#f43f5e"
+                                strokeWidth="2.2"
+                                strokeLinecap="round"
+                                className="animate-ecg-crawl"
+                              />
+                            </svg>
+                          </div>
 
-                              {/* Nutrients Breakdown List matching reference */}
-                              <div className="space-y-0.5 text-[8px] sm:text-[9.5px] leading-tight">
-                                <div className="font-bold text-neutral-600 whitespace-nowrap">
-                                  <span className="text-emerald-700 font-black mr-1">●</span>Calories <span className="font-black text-neutral-900 ml-1">420 kcal</span>
-                                </div>
-                                <div className="font-bold text-neutral-600 whitespace-nowrap">
-                                  <span className="text-amber-600 font-black mr-1">●</span>Net Carbs <span className="font-black text-neutral-900 ml-1">38 g</span>
-                                </div>
-                                <div className="font-bold text-neutral-600 whitespace-nowrap">
-                                  <span className="text-teal-700 font-black mr-1">●</span>GI (Est.) <span className="font-black text-emerald-800 ml-1">Low</span>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* ══ 5. Smartwatch BLE Sync Visual Widget with ECG & SpO2 ══ */}
-                          {feature.widgetType === 'ble' && (
-                            <div className="w-full sm:w-44 md:w-48 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 bg-gradient-to-r from-rose-50/70 to-stone-50/80 border border-stone-200/90 shadow-inner flex items-center justify-between">
-                              <div className="flex items-center gap-1 shrink-0">
-                                <Heart className="w-3.5 h-3.5 text-rose-600 fill-rose-600 animate-heartbeat-lubdub" />
-                                <span className="text-[10px] sm:text-xs font-black text-neutral-900 whitespace-nowrap">74 BPM</span>
-                              </div>
-
-                              {/* Animated ECG Waveform */}
-                              <div className="w-12 sm:w-16 h-5 flex items-center">
-                                <svg viewBox="0 0 80 20" className="w-full h-full overflow-visible">
-                                  <path
-                                    d="M 0 10 L 22 10 L 26 2 L 31 18 L 36 6 L 41 14 L 46 10 L 80 10"
-                                    fill="none"
-                                    stroke="#f43f5e"
-                                    strokeWidth="2.2"
-                                    strokeLinecap="round"
-                                    className="animate-ecg-crawl"
-                                  />
-                                </svg>
-                              </div>
-
-                              <div className="text-right shrink-0">
-                                <div className="text-[8px] text-neutral-400 uppercase font-bold">SpO2</div>
-                                <div className="text-[10px] sm:text-xs font-black text-neutral-900">98%</div>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* ══ 6. Care Community Visual Widget with 3 REAL HUMAN AVATARS + PLUS BUTTON ══ */}
-                          {feature.widgetType === 'community' && (
-                            <div className="w-full sm:w-44 md:w-48 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 bg-gradient-to-r from-emerald-50/80 to-amber-50/60 border border-emerald-200/80 shadow-inner flex items-center justify-center">
-                              <div className="flex items-center -space-x-1.5 sm:-space-x-2">
-                                {/* Real Avatar 1 (Woman) */}
-                                <img
-                                  src="/assets/blogs/author-ritu-verma.jpg"
-                                  alt="Community Member"
-                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-white shadow-xs"
-                                  onError={(e) => {
-                                    (e.target as HTMLElement).style.display = 'none';
-                                  }}
-                                />
-                                {/* Real Avatar 2 (Young Man) */}
-                                <img
-                                  src="/assets/blogs/rohan-verma.jpg"
-                                  alt="Community Member"
-                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-white shadow-xs"
-                                  onError={(e) => {
-                                    (e.target as HTMLElement).style.display = 'none';
-                                  }}
-                                />
-                                {/* Real Avatar 3 (Doctor) */}
-                                <img
-                                  src="/assets/blogs/dr-anita-deshmukh.jpg"
-                                  alt="Clinical Lead"
-                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-white shadow-xs"
-                                  onError={(e) => {
-                                    (e.target as HTMLElement).style.display = 'none';
-                                  }}
-                                />
-                                {/* Plus (+) Circular Action Button */}
-                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#0f4a2d] text-amber-300 font-black text-xs flex items-center justify-center border-2 border-white shadow-xs hover:scale-110 transition-transform">
-                                  <Plus className="w-3.5 h-3.5 stroke-[3]" />
-                                </div>
-                              </div>
-                            </div>
-                          )}
-
+                          <div className="text-right shrink-0">
+                            <div className="text-[7.5px] text-neutral-400 uppercase font-bold">SpO2</div>
+                            <div className="text-[10px] sm:text-xs font-black text-neutral-900">98%</div>
+                          </div>
                         </div>
-                      </div>
+                      )}
+
+                      {feature.widgetType === 'community' && (
+                        <div className="w-full rounded-xl sm:rounded-2xl p-2 bg-gradient-to-r from-emerald-50/80 to-amber-50/60 border border-emerald-200/80 shadow-inner flex items-center justify-center">
+                          <div className="flex items-center -space-x-1.5 sm:-space-x-2">
+                            <img
+                              src="/assets/blogs/author-ritu-verma.jpg"
+                              alt="Community Member"
+                              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-white shadow-xs"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                            <img
+                              src="/assets/blogs/rohan-verma.jpg"
+                              alt="Community Member"
+                              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-white shadow-xs"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                            <img
+                              src="/assets/blogs/dr-anita-deshmukh.jpg"
+                              alt="Clinical Lead"
+                              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-white shadow-xs"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#0f4a2d] text-amber-300 font-black text-xs flex items-center justify-center border-2 border-white shadow-xs hover:scale-110 transition-transform">
+                              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                     </div>
                   </div>
                 );
