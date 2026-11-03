@@ -3,7 +3,7 @@ import { Container } from '../../components/ui/Container';
 import {
   Activity, Camera, Watch, Footprints, BookOpen, Users,
   Sparkles, ArrowRight, Smartphone, ChevronLeft, ChevronRight,
-  Heart
+  Heart, Droplets, Flame, ShieldAlert
 } from 'lucide-react';
 import { PlayStoreModal } from '../../components/ui/PlayStoreModal';
 
@@ -119,6 +119,110 @@ interface PathData {
   cardAnchor: { x: number; y: number };
 }
 
+/* ── Injected Keyframe Animations for Feature Cards ── */
+const FEATURE_MOTION_STYLES = `
+/* 1. CGM Wave Flow Animation */
+@keyframes cgm-flow-wave {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-cgm-flow {
+  animation: cgm-flow-wave 4s linear infinite;
+}
+
+/* 2. AI Scanner Laser Sweep */
+@keyframes laser-sweep {
+  0% { top: 4px; opacity: 0.9; }
+  50% { top: calc(100% - 6px); opacity: 1; }
+  100% { top: 4px; opacity: 0.9; }
+}
+.animate-laser-sweep {
+  animation: laser-sweep 2.2s ease-in-out infinite;
+}
+
+/* 3. Footstep Walking Rhythm */
+@keyframes footstep-walk {
+  0%, 100% { transform: rotate(-8deg) translateY(0); }
+  50% { transform: rotate(10deg) translateY(-3px); }
+}
+.animate-footstep-walk {
+  animation: footstep-walk 1.1s ease-in-out infinite;
+}
+
+/* 4. Realistic Heartbeat (Lub-Dub) */
+@keyframes realistic-heartbeat {
+  0% { transform: scale(1); }
+  14% { transform: scale(1.28); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.18); }
+  70% { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+.animate-heartbeat-lubdub {
+  animation: realistic-heartbeat 1.35s ease-in-out infinite;
+}
+
+/* 5. ECG Wave Monitor Crawl */
+@keyframes ecg-crawl {
+  0% { stroke-dashoffset: 160; }
+  100% { stroke-dashoffset: 0; }
+}
+.animate-ecg-crawl {
+  stroke-dasharray: 160;
+  animation: ecg-crawl 2s linear infinite;
+}
+
+/* 6. Water Intake Bar Fluid Oscillation */
+@keyframes fluid-level-1 {
+  0%, 100% { height: 10px; }
+  50% { height: 16px; }
+}
+@keyframes fluid-level-2 {
+  0%, 100% { height: 16px; }
+  50% { height: 22px; }
+}
+@keyframes fluid-level-3 {
+  0%, 100% { height: 24px; }
+  50% { height: 18px; }
+}
+@keyframes fluid-level-4 {
+  0%, 100% { height: 18px; }
+  50% { height: 26px; }
+}
+.animate-fluid-1 { animation: fluid-level-1 2s ease-in-out infinite; }
+.animate-fluid-2 { animation: fluid-level-2 2.3s ease-in-out infinite 0.2s; }
+.animate-fluid-3 { animation: fluid-level-3 1.9s ease-in-out infinite 0.4s; }
+.animate-fluid-4 { animation: fluid-level-4 2.5s ease-in-out infinite 0.6s; }
+
+/* 7. Water Drop Bounce */
+@keyframes water-drip-bounce {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-3px) scale(1.15); }
+}
+.animate-water-drip {
+  animation: water-drip-bounce 1.6s ease-in-out infinite;
+}
+
+/* 8. Doctor SOS / Community Radar Ripple */
+@keyframes radar-sonar {
+  0% { transform: scale(0.85); opacity: 0.9; }
+  100% { transform: scale(1.75); opacity: 0; }
+}
+.animate-radar-sonar {
+  animation: radar-sonar 2.4s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+}
+
+/* 9. Card Border Pulse */
+@keyframes border-glow-pulse {
+  0% { box-shadow: 0 0 0 rgba(34,197,94,0); }
+  50% { box-shadow: 0 0 28px rgba(34,197,94,0.7), inset 0 0 14px rgba(34,197,94,0.3); }
+  100% { box-shadow: 0 0 0 rgba(34,197,94,0); }
+}
+.animate-card-glow {
+  animation: border-glow-pulse 0.9s ease-out forwards;
+}
+`;
+
 export const SmartCareSuite: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
@@ -157,30 +261,23 @@ export const SmartCareSuite: React.FC = () => {
       if (!cardEl) return;
       const cardRect = cardEl.getBoundingClientRect();
 
-      // Card anchor: middle of left or right edge
       let cx = 0;
       let cy = 0;
       let sx = 0;
       let sy = 0;
 
-      // Vertical offsets on the phone's left/right border to spread the 3 lines neatly
+      // Vertical offsets on the phone's left/right border
       const phoneVerticalOffsets = [0.28, 0.50, 0.72];
       const slotRatio = phoneVerticalOffsets[feature.slot] ?? 0.5;
 
       if (feature.side === 'left') {
-        // card's right edge
         cx = cardRect.right - containerRect.left;
         cy = cardRect.top + cardRect.height / 2 - containerRect.top;
-
-        // phone's left edge
         sx = phoneRect.left - containerRect.left + 4;
         sy = phoneRect.top + phoneRect.height * slotRatio - containerRect.top;
       } else {
-        // card's left edge
         cx = cardRect.left - containerRect.left;
         cy = cardRect.top + cardRect.height / 2 - containerRect.top;
-
-        // phone's right edge
         sx = phoneRect.right - containerRect.left - 4;
         sy = phoneRect.top + phoneRect.height * slotRatio - containerRect.top;
       }
@@ -194,14 +291,12 @@ export const SmartCareSuite: React.FC = () => {
 
       const d = `M ${sx.toFixed(1)} ${sy.toFixed(1)} C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${cx.toFixed(1)} ${cy.toFixed(1)}`;
 
-      // Calculate path length
       let length = 300;
       try {
         const tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         tempPath.setAttribute('d', d);
         length = tempPath.getTotalLength() || 300;
       } catch {
-        // Fallback
         const dist = Math.hypot(cx - sx, cy - sy);
         length = dist * 1.15;
       }
@@ -217,7 +312,6 @@ export const SmartCareSuite: React.FC = () => {
     setPaths(computed);
   }, []);
 
-  // Recalculate on window resize or load
   useEffect(() => {
     updateConnectorPaths();
     window.addEventListener('resize', updateConnectorPaths);
@@ -236,9 +330,9 @@ export const SmartCareSuite: React.FC = () => {
     let startTime: number | null = null;
     let currentIdx = 0;
 
-    const TRAVEL_DURATION = 1300; // ms for light to reach card
-    const GLOW_HOLD_DURATION = 650; // ms card border glows
-    const PAUSE_DURATION = 200; // ms before next card activates
+    const TRAVEL_DURATION = 1300;
+    const GLOW_HOLD_DURATION = 650;
+    const PAUSE_DURATION = 200;
 
     const step = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
@@ -248,14 +342,12 @@ export const SmartCareSuite: React.FC = () => {
       const pathEl = pathElsRef.current[currentIdx];
 
       if (elapsed <= TRAVEL_DURATION) {
-        // Traveling along the line
         const progress = elapsed / TRAVEL_DURATION;
         if (pathEl && pathData) {
           try {
             const pt = pathEl.getPointAtLength(progress * pathData.length);
             setParticlePos({ x: pt.x, y: pt.y, activeIdx: currentIdx });
           } catch {
-            // fallback
             const sx = pathData.phoneAnchor.x;
             const sy = pathData.phoneAnchor.y;
             const cx = pathData.cardAnchor.x;
@@ -268,7 +360,6 @@ export const SmartCareSuite: React.FC = () => {
           }
         }
       } else if (elapsed <= TRAVEL_DURATION + GLOW_HOLD_DURATION) {
-        // Particle arrived! Trigger card border glow
         setActiveGlowCard(currentIdx);
         if (pathData) {
           setParticlePos({
@@ -278,10 +369,8 @@ export const SmartCareSuite: React.FC = () => {
           });
         }
       } else if (elapsed <= TRAVEL_DURATION + GLOW_HOLD_DURATION + PAUSE_DURATION) {
-        // Fading out
         setParticlePos(null);
       } else {
-        // Advance to next card in sequence (0 to 5)
         setActiveGlowCard(null);
         setParticlePos(null);
         currentIdx = (currentIdx + 1) % 6;
@@ -323,6 +412,9 @@ export const SmartCareSuite: React.FC = () => {
       id="care-suite"
       className="py-16 md:py-24 bg-gradient-to-b from-[#f7faf8] via-[#eef7f1]/60 to-background border-y border-border relative overflow-hidden"
     >
+      {/* Inject feature motion keyframe styles */}
+      <style>{FEATURE_MOTION_STYLES}</style>
+
       {/* Background Soft Glow Orbs */}
       <div className="absolute top-1/4 -left-28 w-[450px] h-[450px] bg-emerald-400/12 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 -right-28 w-[500px] h-[500px] bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
@@ -367,7 +459,6 @@ export const SmartCareSuite: React.FC = () => {
           {/* SVG Overlay: Curved Connectors & Travelling Light Particle */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible">
             <defs>
-              {/* Soft neon filter for connector line */}
               <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
                 <feGaussianBlur stdDeviation="3.5" result="blur" />
                 <feMerge>
@@ -376,7 +467,6 @@ export const SmartCareSuite: React.FC = () => {
                 </feMerge>
               </filter>
 
-              {/* Intense glow for traveling particle */}
               <filter id="particle-bloom" x="-50%" y="-50%" width="200%" height="200%">
                 <feGaussianBlur stdDeviation="5" result="bloom" />
                 <feMerge>
@@ -385,7 +475,6 @@ export const SmartCareSuite: React.FC = () => {
                 </feMerge>
               </filter>
 
-              {/* Radial gradient for particle halo */}
               <radialGradient id="particle-halo" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor="#4ade80" stopOpacity="1" />
                 <stop offset="40%" stopColor="#22c55e" stopOpacity="0.8" />
@@ -475,7 +564,7 @@ export const SmartCareSuite: React.FC = () => {
                     onClick={() => openAppModal(feature.title, feature.featureDetails)}
                     className={`relative rounded-[26px] p-5.5 bg-white/95 backdrop-blur-md cursor-pointer transition-all duration-500 transform hover:-translate-y-1 hover:shadow-2xl border ${
                       isGlow
-                        ? 'border-emerald-500 shadow-[0_0_24px_rgba(34,197,94,0.65),0_10px_30px_rgba(34,197,94,0.18)] scale-[1.018]'
+                        ? 'border-emerald-500 shadow-[0_0_26px_rgba(34,197,94,0.7),inset_0_0_12px_rgba(34,197,94,0.22)] scale-[1.018]'
                         : 'border-emerald-950/10 shadow-lg shadow-emerald-950/5 hover:border-emerald-500/40'
                     }`}
                   >
@@ -516,32 +605,56 @@ export const SmartCareSuite: React.FC = () => {
                       {feature.desc}
                     </p>
 
-                    {/* Dedicated Feature Interactive Widget matching the Reference Image */}
+                    {/* ══ DYNAMIC FEATURE MOTION WIDGETS (LEFT) ══ */}
+                    {/* 1. GlucoRhythm Widget with LIVE CONTINUOUS FLOWING CGM WAVE */}
                     {feature.widgetType === 'gluco' && (
-                      <div className="rounded-2xl p-3 bg-gradient-to-r from-emerald-50/90 to-stone-50/80 border border-emerald-200/80 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                          <span className="text-xs font-black text-emerald-950">112 mg/dL</span>
+                      <div className="rounded-2xl p-3 bg-gradient-to-r from-emerald-50/90 via-teal-50/60 to-stone-50/80 border border-emerald-200/90 flex items-center justify-between overflow-hidden relative">
+                        <div className="flex items-center gap-2 z-10 shrink-0">
+                          <span className="relative flex h-2.5 w-2.5">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600" />
+                          </span>
+                          <div>
+                            <div className="text-[9px] uppercase font-bold text-neutral-500">Live CGM</div>
+                            <span className="text-xs font-black text-emerald-950">112 mg/dL</span>
+                          </div>
                         </div>
-                        {/* Smooth Green CGM Wave SVG */}
-                        <div className="w-32 h-7">
-                          <svg viewBox="0 0 120 28" className="w-full h-full overflow-visible">
-                            <path
-                              d="M 0 18 Q 20 6, 40 16 T 80 14 T 120 10"
-                              fill="none"
-                              stroke="#16a34a"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                            />
-                            <circle cx="120" cy="10" r="3" fill="#16a34a" />
-                          </svg>
+
+                        {/* Continuous Flowing CGM Waveform SVG Animation */}
+                        <div className="w-36 h-9 relative overflow-hidden flex items-center">
+                          <div className="flex w-[200%] animate-cgm-flow absolute left-0">
+                            {/* Seamless double wave */}
+                            <svg viewBox="0 0 160 32" className="w-1/2 h-8 shrink-0 overflow-visible">
+                              <path
+                                d="M 0 18 Q 15 6, 30 18 T 60 18 T 80 8 T 100 24 T 120 16 T 160 18"
+                                fill="none"
+                                stroke="#16a34a"
+                                strokeWidth="2.4"
+                                strokeLinecap="round"
+                              />
+                              <circle cx="80" cy="8" r="3.5" fill="#22c55e" className="animate-ping opacity-75" />
+                              <circle cx="80" cy="8" r="2.5" fill="#15803d" />
+                            </svg>
+                            <svg viewBox="0 0 160 32" className="w-1/2 h-8 shrink-0 overflow-visible">
+                              <path
+                                d="M 0 18 Q 15 6, 30 18 T 60 18 T 80 8 T 100 24 T 120 16 T 160 18"
+                                fill="none"
+                                stroke="#16a34a"
+                                strokeWidth="2.4"
+                                strokeLinecap="round"
+                              />
+                              <circle cx="80" cy="8" r="3.5" fill="#22c55e" className="animate-ping opacity-75" />
+                              <circle cx="80" cy="8" r="2.5" fill="#15803d" />
+                            </svg>
+                          </div>
                         </div>
                       </div>
                     )}
 
+                    {/* 2. Footstep Counter Widget with WALKING CADENCE & DYNAMIC ARC */}
                     {feature.widgetType === 'steps' && (
-                      <div className="rounded-2xl p-3 bg-gradient-to-r from-amber-50/70 via-stone-50/80 to-emerald-50/70 border border-stone-200 flex items-center justify-between">
-                        {/* Semi-circular step radial progress */}
+                      <div className="rounded-2xl p-3 bg-gradient-to-r from-amber-50/70 via-stone-50/80 to-emerald-50/70 border border-stone-200/90 flex items-center justify-between">
+                        {/* Semi-circular step radial progress with walking icon */}
                         <div className="relative w-14 h-12 flex items-center justify-center">
                           <svg viewBox="0 0 50 36" className="w-full h-full">
                             <path
@@ -552,34 +665,53 @@ export const SmartCareSuite: React.FC = () => {
                               strokeLinecap="round"
                             />
                             <path
-                              d="M 5 30 A 20 20 0 0 1 40 18"
+                              d="M 5 30 A 20 20 0 0 1 38 18"
                               fill="none"
                               stroke="#16a34a"
-                              strokeWidth="4"
+                              strokeWidth="4.5"
                               strokeLinecap="round"
                             />
+                            {/* Animated glowing tip */}
+                            <circle cx="38" cy="18" r="2.5" fill="#4ade80" className="animate-pulse" />
                           </svg>
-                          <Footprints className="w-4 h-4 text-emerald-800 absolute bottom-1" />
+                          {/* Animated Walking Sneaker / Footprint */}
+                          <div className="absolute bottom-1 animate-footstep-walk">
+                            <Footprints className="w-4 h-4 text-emerald-800" />
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-xs font-black text-neutral-900">6,420 Steps</div>
-                          <div className="text-[10px] font-bold text-neutral-500">320 kcal</div>
+
+                        <div className="text-right space-y-0.5">
+                          <div className="flex items-center justify-end gap-1 text-xs font-black text-neutral-900">
+                            <span>6,420 Steps</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                          </div>
+                          <div className="flex items-center justify-end gap-1 text-[10px] font-bold text-amber-700">
+                            <Flame className="w-3 h-3 text-amber-500 fill-amber-500 animate-bounce" />
+                            <span>320 kcal burned</span>
+                          </div>
                         </div>
                       </div>
                     )}
 
+                    {/* 3. Health Diary & Water Log Widget with ANIMATED FLUID OSCILLATION */}
                     {feature.widgetType === 'diary' && (
-                      <div className="rounded-2xl p-3 bg-gradient-to-r from-emerald-50/90 to-teal-50/80 border border-emerald-200/80 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-emerald-700 text-sm">💧</span>
-                          <span className="text-xs font-black text-emerald-950">+250 ml</span>
+                      <div className="rounded-2xl p-3 bg-gradient-to-r from-emerald-50/90 to-teal-50/80 border border-emerald-200/90 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded-xl bg-teal-100/90 flex items-center justify-center animate-water-drip">
+                            <Droplets className="w-4 h-4 text-teal-700" />
+                          </div>
+                          <div>
+                            <div className="text-[9px] uppercase font-bold text-neutral-500">Hydration Log</div>
+                            <span className="text-xs font-black text-emerald-950">+250 ml logged</span>
+                          </div>
                         </div>
-                        {/* 4 Green Water Intake Bars */}
-                        <div className="flex items-end gap-1.5 h-6">
-                          <div className="w-2.5 h-3 bg-emerald-300 rounded-sm" />
-                          <div className="w-2.5 h-4.5 bg-emerald-400 rounded-sm" />
-                          <div className="w-2.5 h-6 bg-emerald-600 rounded-sm" />
-                          <div className="w-2.5 h-5 bg-emerald-500 rounded-sm" />
+
+                        {/* Animated Fluid Volume Bars (Living Hydration equalizer) */}
+                        <div className="flex items-end gap-1.5 h-7 px-2 py-0.5 bg-white/70 rounded-xl border border-emerald-200/60 shadow-2xs">
+                          <div className="w-2.5 bg-gradient-to-t from-emerald-600 to-teal-400 rounded-sm animate-fluid-1" />
+                          <div className="w-2.5 bg-gradient-to-t from-emerald-600 to-teal-400 rounded-sm animate-fluid-2" />
+                          <div className="w-2.5 bg-gradient-to-t from-emerald-600 to-emerald-400 rounded-sm animate-fluid-3" />
+                          <div className="w-2.5 bg-gradient-to-t from-emerald-600 to-emerald-400 rounded-sm animate-fluid-4" />
                         </div>
                       </div>
                     )}
@@ -744,7 +876,7 @@ export const SmartCareSuite: React.FC = () => {
                     onClick={() => openAppModal(feature.title, feature.featureDetails)}
                     className={`relative rounded-[26px] p-5.5 bg-white/95 backdrop-blur-md cursor-pointer transition-all duration-500 transform hover:-translate-y-1 hover:shadow-2xl border ${
                       isGlow
-                        ? 'border-emerald-500 shadow-[0_0_24px_rgba(34,197,94,0.65),0_10px_30px_rgba(34,197,94,0.18)] scale-[1.018]'
+                        ? 'border-emerald-500 shadow-[0_0_26px_rgba(34,197,94,0.7),inset_0_0_12px_rgba(34,197,94,0.22)] scale-[1.018]'
                         : 'border-emerald-950/10 shadow-lg shadow-emerald-950/5 hover:border-emerald-500/40'
                     }`}
                   >
@@ -785,72 +917,111 @@ export const SmartCareSuite: React.FC = () => {
                       {feature.desc}
                     </p>
 
-                    {/* Dedicated Feature Interactive Widget matching the Reference Image */}
+                    {/* ══ DYNAMIC FEATURE MOTION WIDGETS (RIGHT) ══ */}
+                    {/* 4. Plate AI Meal Scanner with ACTIVE LASER SCANNING BEAM */}
                     {feature.widgetType === 'scan' && (
-                      <div className="rounded-2xl p-3 bg-gradient-to-r from-emerald-50/90 to-stone-50/80 border border-emerald-200/80 flex items-center justify-between">
-                        {/* Food Bowl Icon with Viewfinder Frame */}
-                        <div className="relative w-12 h-12 rounded-xl bg-amber-100/70 border border-amber-300/80 flex items-center justify-center text-2xl shadow-xs">
-                          🥗
-                          {/* 4 Corner scan brackets */}
+                      <div className="rounded-2xl p-3 bg-gradient-to-r from-emerald-50/90 to-stone-50/80 border border-emerald-200/90 flex items-center justify-between">
+                        {/* Food Bowl with Live Laser Sweeping Line */}
+                        <div className="relative w-12 h-12 rounded-xl bg-amber-100/80 border border-amber-300 flex items-center justify-center text-2xl shadow-xs overflow-hidden">
+                          <span>🥗</span>
+
+                          {/* 4 Corner scan reticle brackets */}
                           <div className="absolute top-0.5 left-0.5 w-2 h-2 border-t-2 border-l-2 border-emerald-700" />
                           <div className="absolute top-0.5 right-0.5 w-2 h-2 border-t-2 border-r-2 border-emerald-700" />
                           <div className="absolute bottom-0.5 left-0.5 w-2 h-2 border-b-2 border-l-2 border-emerald-700" />
                           <div className="absolute bottom-0.5 right-0.5 w-2 h-2 border-b-2 border-r-2 border-emerald-700" />
+
+                          {/* Moving Laser Beam Scanner */}
+                          <div className="absolute left-0 right-0 h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-400 to-emerald-500/0 shadow-[0_0_8px_#22c55e] animate-laser-sweep" />
                         </div>
-                        <div className="space-y-0.5 text-right">
-                          <div className="text-[10px] font-bold text-neutral-600">
-                            ● Calories: <span className="font-black text-neutral-900">420 kcal</span>
+
+                        <div className="space-y-0.5 text-right text-[10.5px]">
+                          <div className="font-bold text-neutral-600">
+                            <span className="text-emerald-700 font-extrabold mr-1">●</span>Calories: <span className="font-black text-neutral-900">420 kcal</span>
                           </div>
-                          <div className="text-[10px] font-bold text-neutral-600">
-                            ● Net Carbs: <span className="font-black text-neutral-900">38 g</span>
+                          <div className="font-bold text-neutral-600">
+                            <span className="text-amber-600 font-extrabold mr-1">●</span>Net Carbs: <span className="font-black text-neutral-900">38 g</span>
                           </div>
-                          <div className="text-[10px] font-bold text-neutral-600">
-                            ● GI (Est.): <span className="font-black text-emerald-800">Low</span>
+                          <div className="font-bold text-neutral-600">
+                            <span className="text-teal-600 font-extrabold mr-1">●</span>GI (Est.): <span className="font-black text-emerald-800">Low</span>
                           </div>
                         </div>
                       </div>
                     )}
 
+                    {/* 5. Smartwatch BLE Sync with CARDIAC PULSE & DRAWN ECG WAVE */}
                     {feature.widgetType === 'ble' && (
-                      <div className="rounded-2xl p-3 bg-gradient-to-r from-rose-50/80 via-stone-50/80 to-emerald-50/80 border border-stone-200 flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <Heart className="w-4 h-4 text-rose-600 fill-rose-600 animate-pulse" />
-                          <span className="text-xs font-black text-neutral-900">74 BPM</span>
+                      <div className="rounded-2xl p-3 bg-gradient-to-r from-rose-50/80 via-stone-50/80 to-emerald-50/80 border border-stone-200/90 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {/* Realistic Lub-Dub Heartbeat Animation */}
+                          <div className="w-8 h-8 rounded-xl bg-rose-100 flex items-center justify-center">
+                            <Heart className="w-4 h-4 text-rose-600 fill-rose-600 animate-heartbeat-lubdub" />
+                          </div>
+                          <div>
+                            <div className="text-[9px] uppercase font-bold text-neutral-500">Live Pulse</div>
+                            <span className="text-xs font-black text-neutral-900">74 BPM</span>
+                          </div>
                         </div>
-                        {/* Heartbeat ECG line */}
-                        <div className="w-20 h-5">
-                          <svg viewBox="0 0 80 20" className="w-full h-full">
+
+                        {/* Living Drawn ECG Wave Line */}
+                        <div className="w-20 h-5 flex items-center">
+                          <svg viewBox="0 0 80 20" className="w-full h-full overflow-visible">
                             <path
-                              d="M 0 10 L 25 10 L 30 2 L 35 18 L 40 6 L 45 14 L 50 10 L 80 10"
+                              d="M 0 10 L 22 10 L 26 2 L 31 18 L 36 6 L 41 14 L 46 10 L 80 10"
                               fill="none"
                               stroke="#f43f5e"
-                              strokeWidth="2"
+                              strokeWidth="2.2"
                               strokeLinecap="round"
+                              className="animate-ecg-crawl"
                             />
                           </svg>
                         </div>
+
                         <div className="text-right">
-                          <div className="text-[9px] uppercase font-bold text-neutral-400">SpO2</div>
-                          <div className="text-xs font-black text-emerald-800">98%</div>
+                          <div className="text-[9px] uppercase font-bold text-neutral-400">SpO2 Oxygen</div>
+                          <div className="text-xs font-black text-emerald-800 flex items-center justify-end gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                            <span>98%</span>
+                          </div>
                         </div>
                       </div>
                     )}
 
+                    {/* 6. Care Community & SOS with RADAR SONAR PULSE & ACTIVE BADGES */}
                     {feature.widgetType === 'community' && (
-                      <div className="rounded-2xl p-3 bg-gradient-to-r from-emerald-50/90 to-amber-50/70 border border-emerald-200/80 flex items-center justify-between">
-                        <span className="text-[10.5px] font-bold text-emerald-950">Active Circles</span>
-                        {/* Overlapping member avatars */}
+                      <div className="rounded-2xl p-3 bg-gradient-to-r from-emerald-50/90 via-teal-50/60 to-amber-50/70 border border-emerald-200/90 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <div className="relative flex items-center justify-center w-6 h-6">
+                            <div className="absolute inset-0 rounded-full bg-emerald-400 animate-radar-sonar" />
+                            <ShieldAlert className="w-4 h-4 text-emerald-800 relative z-10" />
+                          </div>
+                          <div>
+                            <div className="text-[9px] uppercase font-bold text-neutral-500">Care Network</div>
+                            <span className="text-[11px] font-black text-emerald-950">24/7 Peer SOS</span>
+                          </div>
+                        </div>
+
+                        {/* Overlapping member avatars with active glowing status */}
                         <div className="flex items-center -space-x-2">
-                          <div className="w-7 h-7 rounded-full bg-emerald-700 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
-                            AK
+                          <div className="relative">
+                            <div className="w-7 h-7 rounded-full bg-emerald-700 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
+                              AK
+                            </div>
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 absolute bottom-0 right-0 ring-1 ring-white" />
                           </div>
-                          <div className="w-7 h-7 rounded-full bg-amber-600 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
-                            RS
+                          <div className="relative">
+                            <div className="w-7 h-7 rounded-full bg-amber-600 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
+                              RS
+                            </div>
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 absolute bottom-0 right-0 ring-1 ring-white" />
                           </div>
-                          <div className="w-7 h-7 rounded-full bg-teal-700 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
-                            DR
+                          <div className="relative">
+                            <div className="w-7 h-7 rounded-full bg-teal-700 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
+                              DR
+                            </div>
+                            <span className="w-2 h-2 rounded-full bg-emerald-400 absolute bottom-0 right-0 ring-1 ring-white" />
                           </div>
-                          <div className="w-7 h-7 rounded-full bg-emerald-900 text-amber-300 text-[11px] font-black flex items-center justify-center border-2 border-white shadow-xs">
+                          <div className="w-7 h-7 rounded-full bg-emerald-900 text-amber-300 text-[11px] font-black flex items-center justify-center border-2 border-white shadow-xs hover:scale-110 transition-transform">
                             +
                           </div>
                         </div>
@@ -942,7 +1113,7 @@ export const SmartCareSuite: React.FC = () => {
             </div>
           </div>
 
-          {/* Horizontal Snap Scroll Cards */}
+          {/* Horizontal Snap Scroll Cards with the motion widgets */}
           <div
             ref={mobileScrollRef}
             onScroll={handleMobileScroll}
