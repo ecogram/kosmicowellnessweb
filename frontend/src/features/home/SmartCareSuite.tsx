@@ -3,7 +3,7 @@ import { Container } from '../../components/ui/Container';
 import {
   Activity, Camera, Watch, Footprints, BookOpen, Users,
   Sparkles, ArrowRight, Smartphone,
-  Heart, Droplets, Flame, ShieldAlert
+  Heart, Plus
 } from 'lucide-react';
 import { PlayStoreModal } from '../../components/ui/PlayStoreModal';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -29,13 +29,13 @@ const FEATURES: FeatureItem[] = [
     id: 'gluco',
     side: 'left',
     slot: 0,
-    title: 'GlucoRhythm Glucose Tracker',
+    title: 'GlucoRhythm\nGlucose Tracker',
     badge: 'APP EXCLUSIVE',
     badgeIcon: '⚡',
     desc: 'Continuous Glucose Monitoring (CGM) with real-time trends.',
     icon: Activity,
-    iconBg: 'bg-emerald-800',
-    iconColor: 'text-emerald-300',
+    iconBg: 'bg-[#0f4a2d]',
+    iconColor: 'text-[#4ade80]',
     featureDetails: 'Requires Kosmico App for continuous CGM sensor sync & background alerts.',
     widgetType: 'gluco',
   },
@@ -48,8 +48,8 @@ const FEATURES: FeatureItem[] = [
     badgeIcon: '⚡',
     desc: 'Real-time step tracking, active calorie burn, and daily activity goals.',
     icon: Footprints,
-    iconBg: 'bg-amber-500',
-    iconColor: 'text-neutral-950',
+    iconBg: 'bg-[#ea580c]',
+    iconColor: 'text-white',
     featureDetails: 'Requires native smartphone pedometer sensor & motion hardware on the Kosmico Mobile App.',
     widgetType: 'steps',
   },
@@ -57,13 +57,13 @@ const FEATURES: FeatureItem[] = [
     id: 'diary',
     side: 'left',
     slot: 2,
-    title: 'Health Diary & Water Log',
+    title: 'Health Diary &\nWater Log',
     badge: 'DAILY TRACKER',
     badgeIcon: '⚡',
     desc: 'Track daily water intake, workout logs, energy levels, and supplement reminders.',
     icon: BookOpen,
-    iconBg: 'bg-emerald-900',
-    iconColor: 'text-emerald-300',
+    iconBg: 'bg-[#064e3b]',
+    iconColor: 'text-[#34d399]',
     featureDetails: 'Requires Kosmico Mobile App for push notifications & daily log history.',
     widgetType: 'diary',
   },
@@ -73,13 +73,13 @@ const FEATURES: FeatureItem[] = [
     id: 'scan',
     side: 'right',
     slot: 0,
-    title: 'Plate AI Meal Scanner',
+    title: 'Plate AI\nMeal Scanner',
     badge: 'AI VISION SCAN',
     badgeIcon: '⚡',
     desc: 'AI Vision meal scanner estimating calories, net carbs, and Glycemic Index (GI).',
     icon: Camera,
-    iconBg: 'bg-emerald-800',
-    iconColor: 'text-emerald-300',
+    iconBg: 'bg-[#0f4a2d]',
+    iconColor: 'text-[#4ade80]',
     featureDetails: 'Requires Kosmico App camera integration & Gemini AI image recognition.',
     widgetType: 'scan',
   },
@@ -87,13 +87,13 @@ const FEATURES: FeatureItem[] = [
     id: 'ble',
     side: 'right',
     slot: 1,
-    title: 'Smartwatch BLE Sync',
+    title: 'Smartwatch\nBLE Sync',
     badge: 'LIVE BIOMETRICS',
     badgeIcon: '⚡',
     desc: 'Sync fitness bands to monitor heart rate, SpO2, and real-time biometrics.',
     icon: Watch,
-    iconBg: 'bg-amber-500',
-    iconColor: 'text-neutral-950',
+    iconBg: 'bg-[#ea580c]',
+    iconColor: 'text-white',
     featureDetails: 'Requires native Bluetooth LE hardware sensors available on the Kosmico Mobile App.',
     widgetType: 'ble',
   },
@@ -101,13 +101,13 @@ const FEATURES: FeatureItem[] = [
     id: 'community',
     side: 'right',
     slot: 2,
-    title: 'Care Community & SOS',
+    title: 'Care Community\n& SOS',
     badge: 'CARE NETWORK',
     badgeIcon: '⚡',
     desc: 'Connect with peer health groups, doctor SOS support, and share keto/diabetes recipes.',
     icon: Users,
-    iconBg: 'bg-emerald-900',
-    iconColor: 'text-emerald-300',
+    iconBg: 'bg-[#064e3b]',
+    iconColor: 'text-[#34d399]',
     featureDetails: 'Requires Kosmico Mobile App for family care circle sync & emergency doctor SOS.',
     widgetType: 'community',
   },
@@ -128,17 +128,17 @@ const FEATURE_MOTION_STYLES = `
   100% { transform: translateX(-50%); }
 }
 .animate-cgm-flow {
-  animation: cgm-flow-wave 4s linear infinite;
+  animation: cgm-flow-wave 3.5s linear infinite;
 }
 
 /* 2. AI Scanner Laser Sweep */
 @keyframes laser-sweep {
-  0% { top: 3px; opacity: 0.9; }
-  50% { top: calc(100% - 5px); opacity: 1; }
-  100% { top: 3px; opacity: 0.9; }
+  0% { top: 2px; opacity: 0.9; }
+  50% { top: calc(100% - 4px); opacity: 1; }
+  100% { top: 2px; opacity: 0.9; }
 }
 .animate-laser-sweep {
-  animation: laser-sweep 2.2s ease-in-out infinite;
+  animation: laser-sweep 2s ease-in-out infinite;
 }
 
 /* 3. Footstep Walking Rhythm */
@@ -165,52 +165,43 @@ const FEATURE_MOTION_STYLES = `
 
 /* 5. ECG Wave Monitor Crawl */
 @keyframes ecg-crawl {
-  0% { stroke-dashoffset: 160; }
+  0% { stroke-dashoffset: 140; }
   100% { stroke-dashoffset: 0; }
 }
 .animate-ecg-crawl {
-  stroke-dasharray: 160;
+  stroke-dasharray: 140;
   animation: ecg-crawl 2s linear infinite;
 }
 
 /* 6. Water Intake Bar Fluid Oscillation */
 @keyframes fluid-level-1 {
   0%, 100% { height: 8px; }
-  50% { height: 15px; }
+  50% { height: 14px; }
 }
 @keyframes fluid-level-2 {
   0%, 100% { height: 13px; }
-  50% { height: 20px; }
+  50% { height: 19px; }
 }
 @keyframes fluid-level-3 {
   0%, 100% { height: 22px; }
-  50% { height: 16px; }
+  50% { height: 17px; }
 }
 @keyframes fluid-level-4 {
-  0%, 100% { height: 16px; }
-  50% { height: 24px; }
+  0%, 100% { height: 17px; }
+  50% { height: 25px; }
 }
 .animate-fluid-1 { animation: fluid-level-1 2s ease-in-out infinite; }
 .animate-fluid-2 { animation: fluid-level-2 2.3s ease-in-out infinite 0.2s; }
 .animate-fluid-3 { animation: fluid-level-3 1.9s ease-in-out infinite 0.4s; }
 .animate-fluid-4 { animation: fluid-level-4 2.5s ease-in-out infinite 0.6s; }
 
-/* 7. Water Drop Bounce */
-@keyframes water-drip-bounce {
-  0%, 100% { transform: translateY(0) scale(1); }
-  50% { transform: translateY(-2.5px) scale(1.15); }
+/* 7. Golden Flare Underglow */
+@keyframes golden-flare-pulse {
+  0%, 100% { opacity: 0.6; transform: scaleX(0.95); }
+  50% { opacity: 1; transform: scaleX(1.05); }
 }
-.animate-water-drip {
-  animation: water-drip-bounce 1.6s ease-in-out infinite;
-}
-
-/* 8. Doctor SOS / Community Radar Ripple */
-@keyframes radar-sonar {
-  0% { transform: scale(0.85); opacity: 0.9; }
-  100% { transform: scale(1.75); opacity: 0; }
-}
-.animate-radar-sonar {
-  animation: radar-sonar 2.4s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+.animate-golden-flare {
+  animation: golden-flare-pulse 3s ease-in-out infinite;
 }
 `;
 
@@ -218,7 +209,7 @@ export const SmartCareSuite: React.FC = () => {
   const { user, isAuthenticated } = useAuthStore();
   const rawName = user?.name || user?.fullName || '';
   const firstName = rawName.trim().split(' ')[0];
-  const greetingName = isAuthenticated && firstName ? firstName : 'Wellness Seeker';
+  const greetingName = isAuthenticated && firstName ? firstName : 'Amit';
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
@@ -436,8 +427,7 @@ export const SmartCareSuite: React.FC = () => {
         </div>
 
         {/* ════════════════════════════════════════════════════════════
-            FULLY RESPONSIVE ECOSYSTEM (MOBILE, TABLET & DESKTOP)
-            Center Phone with 6 Connected Cards around it on ALL screens
+            EXACT 3-COLUMN ECOSYSTEM MATCHING REFERENCE IMAGE
         ═══════════════════════════════════════════════════════════ */}
         <div ref={hubContainerRef} className="relative py-2 sm:py-6 select-none w-full">
           {/* SVG Overlay: Curved Connectors & Travelling Light Particle */}
@@ -472,16 +462,14 @@ export const SmartCareSuite: React.FC = () => {
               const isActive = activeGlowCard === i || particlePos?.activeIdx === i;
               return (
                 <g key={i}>
-                  {/* Outer soft ambient glow line */}
                   <path
                     d={p.d}
                     fill="none"
-                    stroke={isActive ? 'rgba(34, 197, 94, 0.65)' : 'rgba(34, 197, 94, 0.22)'}
-                    strokeWidth={isActive ? 4 : 2}
+                    stroke={isActive ? 'rgba(34, 197, 94, 0.65)' : 'rgba(34, 197, 94, 0.25)'}
+                    strokeWidth={isActive ? 4 : 2.2}
                     filter="url(#neon-glow)"
                     className="transition-all duration-300"
                   />
-                  {/* Core crisp connector wire */}
                   <path
                     ref={(el) => {
                       pathElsRef.current[i] = el;
@@ -489,28 +477,24 @@ export const SmartCareSuite: React.FC = () => {
                     d={p.d}
                     fill="none"
                     stroke={isActive ? '#22c55e' : '#16a34a'}
-                    strokeWidth={isActive ? 2 : 1.4}
+                    strokeWidth={isActive ? 2.2 : 1.5}
                     strokeDasharray={isActive ? 'none' : '5 3'}
-                    opacity={isActive ? 0.95 : 0.65}
+                    opacity={isActive ? 0.95 : 0.7}
                     className="transition-all duration-300"
                   />
-
-                  {/* Phone edge terminal node */}
                   <circle
                     cx={p.phoneAnchor.x}
                     cy={p.phoneAnchor.y}
-                    r={isActive ? 4.5 : 3}
+                    r={isActive ? 4.5 : 3.2}
                     fill="#22c55e"
                     stroke="#ffffff"
                     strokeWidth="1.2"
                     className="transition-all duration-300"
                   />
-
-                  {/* Card edge terminal node */}
                   <circle
                     cx={p.cardAnchor.x}
                     cy={p.cardAnchor.y}
-                    r={isActive ? 5 : 3}
+                    r={isActive ? 5 : 3.2}
                     fill={isActive ? '#4ade80' : '#16a34a'}
                     stroke="#ffffff"
                     strokeWidth="1.2"
@@ -530,178 +514,184 @@ export const SmartCareSuite: React.FC = () => {
             )}
           </svg>
 
-          {/* 3-Column Ecosystem Layout: Responsive for ALL devices */}
-          <div className="grid grid-cols-[1fr_minmax(105px,140px)_1fr] sm:grid-cols-[1fr_minmax(160px,210px)_1fr] lg:grid-cols-[330px_1fr_330px] xl:grid-cols-[360px_1fr_360px] gap-2 sm:gap-4 md:gap-6 items-center w-full">
-            {/* ── LEFT COLUMN (3 Cards) ── */}
-            <div className="flex flex-col gap-2.5 sm:gap-4 md:gap-6 min-w-0">
+          {/* 3-Column Ecosystem Layout: Responsive across all devices */}
+          <div className="grid grid-cols-[1fr_minmax(105px,140px)_1fr] sm:grid-cols-[1fr_minmax(160px,210px)_1fr] lg:grid-cols-[380px_1fr_380px] xl:grid-cols-[430px_1fr_430px] gap-2.5 sm:gap-4 md:gap-7 items-center w-full">
+            
+            {/* ══════════════════════════════════════════════════════════
+                LEFT COLUMN (3 Cards: GlucoRhythm, Steps, Diary)
+            ═══════════════════════════════════════════════════════════ */}
+            <div className="flex flex-col gap-3 sm:gap-5 md:gap-7 min-w-0">
               {FEATURES.filter((f) => f.side === 'left').map((feature) => {
                 const globalIdx = FEATURES.findIndex((f) => f.id === feature.id);
                 const isGlow = activeGlowCard === globalIdx;
                 const IconComponent = feature.icon;
 
                 return (
-                  <div
-                    key={feature.id}
-                    ref={(el) => {
-                      cardRefs.current[globalIdx] = el;
-                    }}
-                    onClick={() => openAppModal(feature.title, feature.featureDetails)}
-                    className={`relative rounded-xl sm:rounded-2xl md:rounded-[26px] p-2 sm:p-3.5 md:p-5.5 bg-white/95 backdrop-blur-md cursor-pointer transition-all duration-500 transform hover:-translate-y-0.5 md:hover:-translate-y-1 hover:shadow-xl border ${
-                      isGlow
-                        ? 'border-emerald-500 shadow-[0_0_20px_rgba(34,197,94,0.7),inset_0_0_10px_rgba(34,197,94,0.22)] scale-[1.018]'
-                        : 'border-emerald-950/10 shadow-md sm:shadow-lg shadow-emerald-950/5 hover:border-emerald-500/40'
-                    }`}
-                  >
-                    {/* Glowing border trace effect */}
-                    <div
-                      className={`absolute inset-0 rounded-xl sm:rounded-2xl md:rounded-[26px] pointer-events-none transition-opacity duration-500 ${
-                        isGlow ? 'opacity-100 ring-2 ring-emerald-500' : 'opacity-0'
-                      }`}
-                      style={{
-                        boxShadow: isGlow ? 'inset 0 0 12px rgba(34, 197, 94, 0.25)' : 'none',
-                      }}
-                    />
+                  <div key={feature.id} className="relative group">
+                    {/* Golden Ambient Flare Underglow */}
+                    <div className="absolute -bottom-1.5 left-6 right-6 h-1.5 bg-gradient-to-r from-transparent via-amber-400/50 to-transparent blur-sm pointer-events-none animate-golden-flare" />
 
-                    {/* Top Row: Icon + Title + Badge */}
-                    <div className="flex items-start gap-1.5 sm:gap-3 mb-1 sm:mb-2">
+                    <div
+                      ref={(el) => {
+                        cardRefs.current[globalIdx] = el;
+                      }}
+                      onClick={() => openAppModal(feature.title.replace('\n', ' '), feature.featureDetails)}
+                      className={`relative rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 md:p-5 bg-white/95 backdrop-blur-md cursor-pointer transition-all duration-500 transform hover:-translate-y-0.5 md:hover:-translate-y-1 hover:shadow-2xl border ${
+                        isGlow
+                          ? 'border-emerald-500 shadow-[0_0_24px_rgba(34,197,94,0.7),inset_0_0_12px_rgba(34,197,94,0.22)] scale-[1.018]'
+                          : 'border-emerald-950/10 shadow-[0_10px_25px_rgba(0,0,0,0.05)] hover:border-emerald-500/40'
+                      }`}
+                    >
+                      {/* Glowing border trace effect */}
                       <div
-                        className={`w-7 h-7 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg sm:rounded-xl md:rounded-2xl ${feature.iconBg} ${feature.iconColor} flex items-center justify-center shrink-0 shadow-xs sm:shadow-md transition-transform duration-300 ${
-                          isGlow ? 'scale-110' : ''
+                        className={`absolute inset-0 rounded-2xl sm:rounded-3xl pointer-events-none transition-opacity duration-500 ${
+                          isGlow ? 'opacity-100 ring-2 ring-emerald-500' : 'opacity-0'
                         }`}
-                      >
-                        <IconComponent className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-6 md:h-6" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-[10px] sm:text-xs md:text-[15px] font-serif font-black text-neutral-900 leading-tight tracking-tight line-clamp-2 mb-0.5 sm:mb-1">
-                          {feature.title}
-                        </h3>
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[7px] sm:text-[8px] md:text-[9px] font-black tracking-wider uppercase bg-emerald-900 text-amber-300 border border-emerald-700/60 shadow-2xs">
-                          <span>{feature.badgeIcon}</span>
-                          <span className="truncate max-w-[70px] sm:max-w-none">{feature.badge}</span>
-                        </span>
+                        style={{
+                          boxShadow: isGlow ? 'inset 0 0 14px rgba(34, 197, 94, 0.25)' : 'none',
+                        }}
+                      />
+
+                      {/* Card Content: Split Layout (Left: Title + Desc | Right: Badge + Widget) */}
+                      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 sm:gap-3 items-center">
+                        
+                        {/* Left Side: Icon + Title + Description */}
+                        <div className="min-w-0">
+                          <div className="flex items-start gap-2 sm:gap-3 mb-1 sm:mb-2">
+                            <div
+                              className={`w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl ${feature.iconBg} ${feature.iconColor} flex items-center justify-center shrink-0 shadow-sm transition-transform duration-300 ${
+                                isGlow ? 'scale-110' : ''
+                              }`}
+                            >
+                              <IconComponent className="w-4 h-4 sm:w-6 sm:h-6" />
+                            </div>
+                            <div>
+                              <h3 className="text-[11px] sm:text-xs md:text-[15px] font-serif font-black text-neutral-900 leading-tight tracking-tight whitespace-pre-line">
+                                {feature.title}
+                              </h3>
+                            </div>
+                          </div>
+                          <p className="hidden md:block text-[11px] text-neutral-500 leading-relaxed max-w-[210px]">
+                            {feature.desc}
+                          </p>
+                        </div>
+
+                        {/* Right Side: Badge at Top-Right + Visual Widget Below */}
+                        <div className="flex flex-col items-end gap-1.5 sm:gap-2 shrink-0">
+                          {/* Badge Pill */}
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[7.5px] sm:text-[9px] font-black tracking-wider uppercase bg-[#0f4a2d] text-amber-300 border border-emerald-700/60 shadow-2xs">
+                            <span className="text-amber-400">{feature.badgeIcon}</span>
+                            <span>{feature.badge}</span>
+                          </span>
+
+                          {/* ══ 1. GlucoRhythm Visual Widget ══ */}
+                          {feature.widgetType === 'gluco' && (
+                            <div className="w-full sm:w-36 md:w-40 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 bg-gradient-to-r from-emerald-50/80 to-stone-50/80 border border-emerald-200/80 shadow-inner">
+                              <div className="flex items-center gap-1.5 mb-1 px-1">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-[10px] sm:text-xs font-black text-neutral-900">112 mg/dL</span>
+                              </div>
+                              <div className="w-full h-7 relative overflow-hidden flex items-center">
+                                <div className="flex w-[200%] animate-cgm-flow absolute left-0">
+                                  <svg viewBox="0 0 160 30" className="w-1/2 h-7 shrink-0 overflow-visible">
+                                    <path
+                                      d="M 0 18 Q 20 6, 40 18 T 80 16 T 105 8 T 125 22 T 160 14"
+                                      fill="none"
+                                      stroke="#16a34a"
+                                      strokeWidth="2.4"
+                                      strokeLinecap="round"
+                                    />
+                                    <circle cx="160" cy="14" r="3" fill="#16a34a" />
+                                  </svg>
+                                  <svg viewBox="0 0 160 30" className="w-1/2 h-7 shrink-0 overflow-visible">
+                                    <path
+                                      d="M 0 18 Q 20 6, 40 18 T 80 16 T 105 8 T 125 22 T 160 14"
+                                      fill="none"
+                                      stroke="#16a34a"
+                                      strokeWidth="2.4"
+                                      strokeLinecap="round"
+                                    />
+                                    <circle cx="160" cy="14" r="3" fill="#16a34a" />
+                                  </svg>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* ══ 2. Footstep Counter Visual Widget ══ */}
+                          {feature.widgetType === 'steps' && (
+                            <div className="w-full sm:w-36 md:w-40 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 bg-gradient-to-r from-amber-50/60 to-stone-50/80 border border-stone-200/90 shadow-inner flex items-center justify-between">
+                              <div className="relative w-10 h-9 sm:w-12 sm:h-11 flex items-center justify-center shrink-0">
+                                <svg viewBox="0 0 50 36" className="w-full h-full">
+                                  <path
+                                    d="M 6 30 A 19 19 0 0 1 44 30"
+                                    fill="none"
+                                    stroke="#e5e7eb"
+                                    strokeWidth="4"
+                                    strokeLinecap="round"
+                                  />
+                                  <path
+                                    d="M 6 30 A 19 19 0 0 1 38 17"
+                                    fill="none"
+                                    stroke="#16a34a"
+                                    strokeWidth="4.5"
+                                    strokeLinecap="round"
+                                  />
+                                </svg>
+                                <div className="absolute bottom-1 animate-footstep-walk">
+                                  <Footprints className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-800" />
+                                </div>
+                              </div>
+
+                              <div className="text-right">
+                                <div className="text-[10px] sm:text-xs font-black text-neutral-900 leading-tight">
+                                  6,420 Steps
+                                </div>
+                                <div className="text-[8.5px] sm:text-[10px] font-bold text-neutral-500">
+                                  320 kcal
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* ══ 3. Health Diary Visual Widget ══ */}
+                          {feature.widgetType === 'diary' && (
+                            <div className="w-full sm:w-36 md:w-40 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 bg-gradient-to-r from-emerald-50/80 to-stone-50/80 border border-emerald-200/80 shadow-inner flex items-center justify-between">
+                              <div className="flex items-center gap-1">
+                                <span className="text-sm">💧</span>
+                                <span className="text-[10px] sm:text-xs font-black text-neutral-900">+250 ml</span>
+                              </div>
+                              <div className="flex items-end gap-1 h-6 px-1">
+                                <div className="w-2 bg-emerald-400 rounded-xs animate-fluid-1" />
+                                <div className="w-2 bg-emerald-500 rounded-xs animate-fluid-2" />
+                                <div className="w-2 bg-emerald-600 rounded-xs animate-fluid-3" />
+                                <div className="w-2 bg-emerald-500 rounded-xs animate-fluid-4" />
+                              </div>
+                            </div>
+                          )}
+
+                        </div>
                       </div>
                     </div>
-
-                    {/* Subtitle description (compact on mobile, full on tablet/desktop) */}
-                    <p className="hidden md:block text-[11.5px] text-neutral-600 leading-relaxed mb-3.5">
-                      {feature.desc}
-                    </p>
-
-                    {/* ══ DYNAMIC FEATURE MOTION WIDGETS (LEFT) ══ */}
-                    {feature.widgetType === 'gluco' && (
-                      <div className="rounded-lg sm:rounded-xl md:rounded-2xl p-1.5 sm:p-2.5 md:p-3 bg-gradient-to-r from-emerald-50/90 via-teal-50/60 to-stone-50/80 border border-emerald-200/90 flex items-center justify-between overflow-hidden relative">
-                        <div className="flex items-center gap-1 sm:gap-2 z-10 shrink-0">
-                          <span className="relative flex h-1.5 w-1.5 sm:h-2 sm:w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-1.5 w-1.5 sm:h-2 sm:w-2 bg-emerald-600" />
-                          </span>
-                          <div>
-                            <div className="hidden sm:block text-[8px] sm:text-[9px] uppercase font-bold text-neutral-500">Live CGM</div>
-                            <span className="text-[9px] sm:text-xs font-black text-emerald-950 whitespace-nowrap">112 mg/dL</span>
-                          </div>
-                        </div>
-
-                        {/* Continuous Flowing CGM Waveform SVG Animation */}
-                        <div className="w-16 sm:w-28 md:w-36 h-6 sm:h-8 relative overflow-hidden flex items-center">
-                          <div className="flex w-[200%] animate-cgm-flow absolute left-0">
-                            <svg viewBox="0 0 160 32" className="w-1/2 h-6 sm:h-8 shrink-0 overflow-visible">
-                              <path
-                                d="M 0 18 Q 15 6, 30 18 T 60 18 T 80 8 T 100 24 T 120 16 T 160 18"
-                                fill="none"
-                                stroke="#16a34a"
-                                strokeWidth="2.2"
-                                strokeLinecap="round"
-                              />
-                              <circle cx="80" cy="8" r="2.5" fill="#15803d" />
-                            </svg>
-                            <svg viewBox="0 0 160 32" className="w-1/2 h-6 sm:h-8 shrink-0 overflow-visible">
-                              <path
-                                d="M 0 18 Q 15 6, 30 18 T 60 18 T 80 8 T 100 24 T 120 16 T 160 18"
-                                fill="none"
-                                stroke="#16a34a"
-                                strokeWidth="2.2"
-                                strokeLinecap="round"
-                              />
-                              <circle cx="80" cy="8" r="2.5" fill="#15803d" />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {feature.widgetType === 'steps' && (
-                      <div className="rounded-lg sm:rounded-xl md:rounded-2xl p-1.5 sm:p-2.5 md:p-3 bg-gradient-to-r from-amber-50/70 via-stone-50/80 to-emerald-50/70 border border-stone-200/90 flex items-center justify-between">
-                        <div className="relative w-8 h-8 sm:w-11 sm:h-10 md:w-14 md:h-12 flex items-center justify-center shrink-0">
-                          <svg viewBox="0 0 50 36" className="w-full h-full">
-                            <path
-                              d="M 5 30 A 20 20 0 0 1 45 30"
-                              fill="none"
-                              stroke="#e5e7eb"
-                              strokeWidth="3.5"
-                              strokeLinecap="round"
-                            />
-                            <path
-                              d="M 5 30 A 20 20 0 0 1 38 18"
-                              fill="none"
-                              stroke="#16a34a"
-                              strokeWidth="4"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                          <div className="absolute bottom-0.5 sm:bottom-1 animate-footstep-walk">
-                            <Footprints className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-emerald-800" />
-                          </div>
-                        </div>
-
-                        <div className="text-right space-y-0.5">
-                          <div className="text-[9px] sm:text-xs font-black text-neutral-900 whitespace-nowrap">
-                            6,420 Steps
-                          </div>
-                          <div className="flex items-center justify-end gap-0.5 text-[8px] sm:text-[10px] font-bold text-amber-700 whitespace-nowrap">
-                            <Flame className="w-2 h-2 sm:w-3 sm:h-3 text-amber-500 fill-amber-500 animate-bounce" />
-                            <span>320 kcal</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {feature.widgetType === 'diary' && (
-                      <div className="rounded-lg sm:rounded-xl md:rounded-2xl p-1.5 sm:p-2.5 md:p-3 bg-gradient-to-r from-emerald-50/90 to-teal-50/80 border border-emerald-200/90 flex items-center justify-between">
-                        <div className="flex items-center gap-1 sm:gap-2">
-                          <div className="w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-lg bg-teal-100/90 flex items-center justify-center animate-water-drip shrink-0">
-                            <Droplets className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-teal-700" />
-                          </div>
-                          <div>
-                            <div className="hidden sm:block text-[8px] sm:text-[9px] uppercase font-bold text-neutral-500">Hydration</div>
-                            <span className="text-[9px] sm:text-xs font-black text-emerald-950 whitespace-nowrap">+250 ml</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-end gap-1 h-5 sm:h-6 md:h-7 px-1.5 py-0.5 bg-white/70 rounded-lg sm:rounded-xl border border-emerald-200/60 shadow-2xs">
-                          <div className="w-1.5 sm:w-2 md:w-2.5 bg-gradient-to-t from-emerald-600 to-teal-400 rounded-xs animate-fluid-1" />
-                          <div className="w-1.5 sm:w-2 md:w-2.5 bg-gradient-to-t from-emerald-600 to-teal-400 rounded-xs animate-fluid-2" />
-                          <div className="w-1.5 sm:w-2 md:w-2.5 bg-gradient-to-t from-emerald-600 to-emerald-400 rounded-xs animate-fluid-3" />
-                          <div className="w-1.5 sm:w-2 md:w-2.5 bg-gradient-to-t from-emerald-600 to-emerald-400 rounded-xs animate-fluid-4" />
-                        </div>
-                      </div>
-                    )}
                   </div>
                 );
               })}
             </div>
 
-            {/* ── CENTER COLUMN (Phone Mockup + Pedestal Base) ── */}
+            {/* ══════════════════════════════════════════════════════════
+                CENTER COLUMN (Phone Mockup + Pedestal Stage)
+            ═══════════════════════════════════════════════════════════ */}
             <div className="flex flex-col items-center justify-center px-0.5 sm:px-2 md:px-4 min-w-0">
               {/* Phone Mockup */}
               <div
                 ref={phoneRef}
-                className="relative rounded-[22px] sm:rounded-[32px] md:rounded-[40px] p-1 sm:p-2 md:p-2.5 shadow-[0_12px_35px_rgba(16,185,129,0.22),0_6px_15px_rgba(0,0,0,0.15)] transition-all duration-500 w-full max-w-[130px] sm:max-w-[190px] md:max-w-[260px]"
+                className="relative rounded-[22px] sm:rounded-[32px] md:rounded-[40px] p-1 sm:p-2 md:p-2.5 shadow-[0_15px_45px_rgba(16,185,129,0.25),0_8px_20px_rgba(0,0,0,0.18)] transition-all duration-500 w-full max-w-[130px] sm:max-w-[190px] md:max-w-[260px]"
                 style={{
                   background: 'linear-gradient(145deg, #1f2937, #111827)',
                   border: '2px solid rgba(255, 255, 255, 0.25)',
                 }}
               >
-                {/* Subtle Phone Outer Glow */}
+                {/* Outer Glow */}
                 <div className="absolute -inset-1.5 rounded-[30px] bg-emerald-500/20 blur-md pointer-events-none animate-pulse" />
 
                 {/* Speaker pill notch */}
@@ -816,158 +806,200 @@ export const SmartCareSuite: React.FC = () => {
               </div>
             </div>
 
-            {/* ── RIGHT COLUMN (3 Cards) ── */}
-            <div className="flex flex-col gap-2.5 sm:gap-4 md:gap-6 min-w-0">
+            {/* ══════════════════════════════════════════════════════════
+                RIGHT COLUMN (3 Cards: Plate AI, Smartwatch, Care)
+            ═══════════════════════════════════════════════════════════ */}
+            <div className="flex flex-col gap-3 sm:gap-5 md:gap-7 min-w-0">
               {FEATURES.filter((f) => f.side === 'right').map((feature) => {
                 const globalIdx = FEATURES.findIndex((f) => f.id === feature.id);
                 const isGlow = activeGlowCard === globalIdx;
                 const IconComponent = feature.icon;
 
                 return (
-                  <div
-                    key={feature.id}
-                    ref={(el) => {
-                      cardRefs.current[globalIdx] = el;
-                    }}
-                    onClick={() => openAppModal(feature.title, feature.featureDetails)}
-                    className={`relative rounded-xl sm:rounded-2xl md:rounded-[26px] p-2 sm:p-3.5 md:p-5.5 bg-white/95 backdrop-blur-md cursor-pointer transition-all duration-500 transform hover:-translate-y-0.5 md:hover:-translate-y-1 hover:shadow-xl border ${
-                      isGlow
-                        ? 'border-emerald-500 shadow-[0_0_20px_rgba(34,197,94,0.7),inset_0_0_10px_rgba(34,197,94,0.22)] scale-[1.018]'
-                        : 'border-emerald-950/10 shadow-md sm:shadow-lg shadow-emerald-950/5 hover:border-emerald-500/40'
-                    }`}
-                  >
-                    {/* Glowing border trace effect */}
-                    <div
-                      className={`absolute inset-0 rounded-xl sm:rounded-2xl md:rounded-[26px] pointer-events-none transition-opacity duration-500 ${
-                        isGlow ? 'opacity-100 ring-2 ring-emerald-500' : 'opacity-0'
-                      }`}
-                      style={{
-                        boxShadow: isGlow ? 'inset 0 0 12px rgba(34, 197, 94, 0.25)' : 'none',
-                      }}
-                    />
+                  <div key={feature.id} className="relative group">
+                    {/* Golden Ambient Flare Underglow */}
+                    <div className="absolute -bottom-1.5 left-6 right-6 h-1.5 bg-gradient-to-r from-transparent via-amber-400/50 to-transparent blur-sm pointer-events-none animate-golden-flare" />
 
-                    {/* Top Row: Icon + Title + Badge */}
-                    <div className="flex items-start gap-1.5 sm:gap-3 mb-1 sm:mb-2">
+                    <div
+                      ref={(el) => {
+                        cardRefs.current[globalIdx] = el;
+                      }}
+                      onClick={() => openAppModal(feature.title.replace('\n', ' '), feature.featureDetails)}
+                      className={`relative rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 md:p-5 bg-white/95 backdrop-blur-md cursor-pointer transition-all duration-500 transform hover:-translate-y-0.5 md:hover:-translate-y-1 hover:shadow-2xl border ${
+                        isGlow
+                          ? 'border-emerald-500 shadow-[0_0_24px_rgba(34,197,94,0.7),inset_0_0_12px_rgba(34,197,94,0.22)] scale-[1.018]'
+                          : 'border-emerald-950/10 shadow-[0_10px_25px_rgba(0,0,0,0.05)] hover:border-emerald-500/40'
+                      }`}
+                    >
+                      {/* Glowing border trace effect */}
                       <div
-                        className={`w-7 h-7 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg sm:rounded-xl md:rounded-2xl ${feature.iconBg} ${feature.iconColor} flex items-center justify-center shrink-0 shadow-xs sm:shadow-md transition-transform duration-300 ${
-                          isGlow ? 'scale-110' : ''
+                        className={`absolute inset-0 rounded-2xl sm:rounded-3xl pointer-events-none transition-opacity duration-500 ${
+                          isGlow ? 'opacity-100 ring-2 ring-emerald-500' : 'opacity-0'
                         }`}
-                      >
-                        <IconComponent className="w-3.5 h-3.5 sm:w-5 sm:h-5 md:w-6 md:h-6" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-[10px] sm:text-xs md:text-[15px] font-serif font-black text-neutral-900 leading-tight tracking-tight line-clamp-2 mb-0.5 sm:mb-1">
-                          {feature.title}
-                        </h3>
-                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[7px] sm:text-[8px] md:text-[9px] font-black tracking-wider uppercase bg-emerald-900 text-amber-300 border border-emerald-700/60 shadow-2xs">
-                          <span>{feature.badgeIcon}</span>
-                          <span className="truncate max-w-[70px] sm:max-w-none">{feature.badge}</span>
-                        </span>
+                        style={{
+                          boxShadow: isGlow ? 'inset 0 0 14px rgba(34, 197, 94, 0.25)' : 'none',
+                        }}
+                      />
+
+                      {/* Card Content: Split Layout (Left: Title + Desc | Right: Badge + Widget) */}
+                      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 sm:gap-3 items-center">
+                        
+                        {/* Left Side: Icon + Title + Description */}
+                        <div className="min-w-0">
+                          <div className="flex items-start gap-2 sm:gap-3 mb-1 sm:mb-2">
+                            <div
+                              className={`w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl ${feature.iconBg} ${feature.iconColor} flex items-center justify-center shrink-0 shadow-sm transition-transform duration-300 ${
+                                isGlow ? 'scale-110' : ''
+                              }`}
+                            >
+                              <IconComponent className="w-4 h-4 sm:w-6 sm:h-6" />
+                            </div>
+                            <div>
+                              <h3 className="text-[11px] sm:text-xs md:text-[15px] font-serif font-black text-neutral-900 leading-tight tracking-tight whitespace-pre-line">
+                                {feature.title}
+                              </h3>
+                            </div>
+                          </div>
+                          <p className="hidden md:block text-[11px] text-neutral-500 leading-relaxed max-w-[210px]">
+                            {feature.desc}
+                          </p>
+                        </div>
+
+                        {/* Right Side: Badge at Top-Right + Visual Widget Below */}
+                        <div className="flex flex-col items-end gap-1.5 sm:gap-2 shrink-0">
+                          {/* Badge Pill */}
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[7.5px] sm:text-[9px] font-black tracking-wider uppercase bg-[#0f4a2d] text-amber-300 border border-emerald-700/60 shadow-2xs">
+                            <span className="text-amber-400">{feature.badgeIcon}</span>
+                            <span>{feature.badge}</span>
+                          </span>
+
+                          {/* ══ 4. Plate AI Meal Scanner with FRESH SALAD BOWL IMAGE + METRICS ══ */}
+                          {feature.widgetType === 'scan' && (
+                            <div className="w-full sm:w-44 md:w-48 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 bg-gradient-to-r from-emerald-50/80 to-stone-50/80 border border-emerald-200/80 shadow-inner flex items-center gap-2">
+                              {/* Salad Bowl Photo with Reticle Viewfinder Brackets */}
+                              <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-xl overflow-hidden shadow-xs border border-emerald-600/30 shrink-0 bg-stone-100">
+                                {/* Crisp SVG Salad Bowl Artwork matching reference photo */}
+                                <svg viewBox="0 0 60 60" className="w-full h-full object-cover">
+                                  <defs>
+                                    <radialGradient id="salad-bowl-bg" cx="50%" cy="50%" r="50%">
+                                      <stop offset="0%" stopColor="#86efac" />
+                                      <stop offset="60%" stopColor="#22c55e" />
+                                      <stop offset="100%" stopColor="#15803d" />
+                                    </radialGradient>
+                                  </defs>
+                                  <circle cx="30" cy="30" r="28" fill="#fef08a" stroke="#ca8a04" strokeWidth="1.5" />
+                                  <circle cx="30" cy="30" r="24" fill="url(#salad-bowl-bg)" />
+                                  {/* Salad vegetables, greens, tomatoes */}
+                                  <circle cx="24" cy="22" r="5" fill="#ef4444" />
+                                  <circle cx="36" cy="25" r="4.5" fill="#ef4444" />
+                                  <circle cx="30" cy="34" r="5.5" fill="#f97316" />
+                                  <ellipse cx="22" cy="32" rx="6" ry="3" fill="#15803d" transform="rotate(-20 22 32)" />
+                                  <ellipse cx="38" cy="33" rx="5" ry="3" fill="#16a34a" transform="rotate(30 38 33)" />
+                                  <circle cx="28" cy="27" r="3" fill="#ffffff" opacity="0.8" />
+                                  <circle cx="33" cy="21" r="2" fill="#ca8a04" />
+                                </svg>
+                                
+                                {/* 4 Green Viewfinder Corners */}
+                                <div className="absolute top-0.5 left-0.5 w-1.5 h-1.5 border-t-2 border-l-2 border-emerald-800" />
+                                <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 border-t-2 border-r-2 border-emerald-800" />
+                                <div className="absolute bottom-0.5 left-0.5 w-1.5 h-1.5 border-b-2 border-l-2 border-emerald-800" />
+                                <div className="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 border-b-2 border-r-2 border-emerald-800" />
+                                
+                                {/* Live Sweeping Laser Beam */}
+                                <div className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500/0 via-emerald-400 to-emerald-500/0 shadow-[0_0_6px_#22c55e] animate-laser-sweep" />
+                              </div>
+
+                              {/* Nutrients Breakdown List matching reference */}
+                              <div className="space-y-0.5 text-[8px] sm:text-[9.5px] leading-tight">
+                                <div className="font-bold text-neutral-600 whitespace-nowrap">
+                                  <span className="text-emerald-700 font-black mr-1">●</span>Calories <span className="font-black text-neutral-900 ml-1">420 kcal</span>
+                                </div>
+                                <div className="font-bold text-neutral-600 whitespace-nowrap">
+                                  <span className="text-amber-600 font-black mr-1">●</span>Net Carbs <span className="font-black text-neutral-900 ml-1">38 g</span>
+                                </div>
+                                <div className="font-bold text-neutral-600 whitespace-nowrap">
+                                  <span className="text-teal-700 font-black mr-1">●</span>GI (Est.) <span className="font-black text-emerald-800 ml-1">Low</span>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* ══ 5. Smartwatch BLE Sync Visual Widget with ECG & SpO2 ══ */}
+                          {feature.widgetType === 'ble' && (
+                            <div className="w-full sm:w-44 md:w-48 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 bg-gradient-to-r from-rose-50/70 to-stone-50/80 border border-stone-200/90 shadow-inner flex items-center justify-between">
+                              <div className="flex items-center gap-1 shrink-0">
+                                <Heart className="w-3.5 h-3.5 text-rose-600 fill-rose-600 animate-heartbeat-lubdub" />
+                                <span className="text-[10px] sm:text-xs font-black text-neutral-900 whitespace-nowrap">74 BPM</span>
+                              </div>
+
+                              {/* Animated ECG Waveform */}
+                              <div className="w-12 sm:w-16 h-5 flex items-center">
+                                <svg viewBox="0 0 80 20" className="w-full h-full overflow-visible">
+                                  <path
+                                    d="M 0 10 L 22 10 L 26 2 L 31 18 L 36 6 L 41 14 L 46 10 L 80 10"
+                                    fill="none"
+                                    stroke="#f43f5e"
+                                    strokeWidth="2.2"
+                                    strokeLinecap="round"
+                                    className="animate-ecg-crawl"
+                                  />
+                                </svg>
+                              </div>
+
+                              <div className="text-right shrink-0">
+                                <div className="text-[8px] text-neutral-400 uppercase font-bold">SpO2</div>
+                                <div className="text-[10px] sm:text-xs font-black text-neutral-900">98%</div>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* ══ 6. Care Community Visual Widget with 3 REAL HUMAN AVATARS + PLUS BUTTON ══ */}
+                          {feature.widgetType === 'community' && (
+                            <div className="w-full sm:w-44 md:w-48 rounded-xl sm:rounded-2xl p-1.5 sm:p-2 bg-gradient-to-r from-emerald-50/80 to-amber-50/60 border border-emerald-200/80 shadow-inner flex items-center justify-center">
+                              <div className="flex items-center -space-x-1.5 sm:-space-x-2">
+                                {/* Real Avatar 1 (Woman) */}
+                                <img
+                                  src="/assets/blogs/author-ritu-verma.jpg"
+                                  alt="Community Member"
+                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-white shadow-xs"
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = 'none';
+                                  }}
+                                />
+                                {/* Real Avatar 2 (Young Man) */}
+                                <img
+                                  src="/assets/blogs/rohan-verma.jpg"
+                                  alt="Community Member"
+                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-white shadow-xs"
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = 'none';
+                                  }}
+                                />
+                                {/* Real Avatar 3 (Doctor) */}
+                                <img
+                                  src="/assets/blogs/dr-anita-deshmukh.jpg"
+                                  alt="Clinical Lead"
+                                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-white shadow-xs"
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = 'none';
+                                  }}
+                                />
+                                {/* Plus (+) Circular Action Button */}
+                                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#0f4a2d] text-amber-300 font-black text-xs flex items-center justify-center border-2 border-white shadow-xs hover:scale-110 transition-transform">
+                                  <Plus className="w-3.5 h-3.5 stroke-[3]" />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                        </div>
                       </div>
                     </div>
-
-                    {/* Subtitle description (compact on mobile, full on tablet/desktop) */}
-                    <p className="hidden md:block text-[11.5px] text-neutral-600 leading-relaxed mb-3.5">
-                      {feature.desc}
-                    </p>
-
-                    {/* ══ DYNAMIC FEATURE MOTION WIDGETS (RIGHT) ══ */}
-                    {feature.widgetType === 'scan' && (
-                      <div className="rounded-lg sm:rounded-xl md:rounded-2xl p-1.5 sm:p-2.5 md:p-3 bg-gradient-to-r from-emerald-50/90 to-stone-50/80 border border-emerald-200/90 flex items-center justify-between">
-                        <div className="relative w-7 h-7 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-lg sm:rounded-xl bg-amber-100/80 border border-amber-300 flex items-center justify-center text-sm sm:text-xl md:text-2xl shadow-xs overflow-hidden shrink-0">
-                          <span>🥗</span>
-                          <div className="absolute top-0.5 left-0.5 w-1.5 h-1.5 border-t border-l border-emerald-700" />
-                          <div className="absolute top-0.5 right-0.5 w-1.5 h-1.5 border-t border-r border-emerald-700" />
-                          <div className="absolute bottom-0.5 left-0.5 w-1.5 h-1.5 border-b border-l border-emerald-700" />
-                          <div className="absolute bottom-0.5 right-0.5 w-1.5 h-1.5 border-b border-r border-emerald-700" />
-                          <div className="absolute left-0 right-0 h-0.5 sm:h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-400 to-emerald-500/0 shadow-[0_0_6px_#22c55e] animate-laser-sweep" />
-                        </div>
-
-                        <div className="space-y-0.5 text-right text-[8px] sm:text-[9px] md:text-[10.5px]">
-                          <div className="font-bold text-neutral-600 whitespace-nowrap">
-                            <span className="hidden sm:inline">Calories: </span><span className="font-black text-neutral-900">420 kcal</span>
-                          </div>
-                          <div className="font-bold text-neutral-600 whitespace-nowrap">
-                            <span className="hidden sm:inline">Carbs: </span><span className="font-black text-neutral-900">38 g</span>
-                          </div>
-                          <div className="font-bold text-neutral-600 whitespace-nowrap">
-                            <span className="hidden sm:inline">GI: </span><span className="font-black text-emerald-800">Low</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {feature.widgetType === 'ble' && (
-                      <div className="rounded-lg sm:rounded-xl md:rounded-2xl p-1.5 sm:p-2.5 md:p-3 bg-gradient-to-r from-rose-50/80 via-stone-50/80 to-emerald-50/80 border border-stone-200/90 flex items-center justify-between">
-                        <div className="flex items-center gap-1 sm:gap-2">
-                          <div className="w-5 h-5 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-lg sm:rounded-xl bg-rose-100 flex items-center justify-center shrink-0">
-                            <Heart className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 md:w-4 md:h-4 text-rose-600 fill-rose-600 animate-heartbeat-lubdub" />
-                          </div>
-                          <div>
-                            <div className="hidden sm:block text-[8px] sm:text-[9px] uppercase font-bold text-neutral-500">Pulse</div>
-                            <span className="text-[9px] sm:text-xs font-black text-neutral-900 whitespace-nowrap">74 BPM</span>
-                          </div>
-                        </div>
-
-                        <div className="w-10 sm:w-16 md:w-20 h-4 sm:h-5 flex items-center">
-                          <svg viewBox="0 0 80 20" className="w-full h-full overflow-visible">
-                            <path
-                              d="M 0 10 L 22 10 L 26 2 L 31 18 L 36 6 L 41 14 L 46 10 L 80 10"
-                              fill="none"
-                              stroke="#f43f5e"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              className="animate-ecg-crawl"
-                            />
-                          </svg>
-                        </div>
-
-                        <div className="text-right">
-                          <div className="hidden sm:block text-[8px] sm:text-[9px] uppercase font-bold text-neutral-400">SpO2</div>
-                          <div className="text-[9px] sm:text-xs font-black text-emerald-800 flex items-center justify-end gap-0.5">
-                            <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-500 animate-ping" />
-                            <span>98%</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    {feature.widgetType === 'community' && (
-                      <div className="rounded-lg sm:rounded-xl md:rounded-2xl p-1.5 sm:p-2.5 md:p-3 bg-gradient-to-r from-emerald-50/90 via-teal-50/60 to-amber-50/70 border border-emerald-200/90 flex items-center justify-between">
-                        <div className="flex items-center gap-1 sm:gap-1.5">
-                          <div className="relative flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 shrink-0">
-                            <div className="absolute inset-0 rounded-full bg-emerald-400 animate-radar-sonar" />
-                            <ShieldAlert className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-800 relative z-10" />
-                          </div>
-                          <div>
-                            <div className="hidden sm:block text-[8px] sm:text-[9px] uppercase font-bold text-neutral-500">Network</div>
-                            <span className="text-[9px] sm:text-[11px] font-black text-emerald-950 whitespace-nowrap">Peer SOS</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center -space-x-1.5 sm:-space-x-2">
-                          <div className="relative">
-                            <div className="w-4 h-4 sm:w-6 sm:h-6 md:w-7 md:h-7 rounded-full bg-emerald-700 text-white text-[7px] sm:text-[9px] font-bold flex items-center justify-center border-1.5 border-white shadow-xs">
-                              AK
-                            </div>
-                            <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-400 absolute bottom-0 right-0 ring-1 ring-white" />
-                          </div>
-                          <div className="relative">
-                            <div className="w-4 h-4 sm:w-6 sm:h-6 md:w-7 md:h-7 rounded-full bg-amber-600 text-white text-[7px] sm:text-[9px] font-bold flex items-center justify-center border-1.5 border-white shadow-xs">
-                              RS
-                            </div>
-                            <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-emerald-400 absolute bottom-0 right-0 ring-1 ring-white" />
-                          </div>
-                          <div className="w-4 h-4 sm:w-6 sm:h-6 md:w-7 md:h-7 rounded-full bg-emerald-900 text-amber-300 text-[8px] sm:text-[10px] font-black flex items-center justify-center border-1.5 border-white shadow-xs">
-                            +
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 );
               })}
             </div>
+
           </div>
         </div>
       </Container>
