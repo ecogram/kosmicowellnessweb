@@ -1,359 +1,336 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Container } from '../../components/ui/Container';
-import { Camera, Watch, BookOpen, Users, Sparkles, ArrowRight, Smartphone, Activity, Footprints, ShieldCheck, Zap, ChevronLeft, ChevronRight, Heart, Leaf } from 'lucide-react';
+import {
+  Activity, Camera, Watch, Footprints, BookOpen, Users,
+  Sparkles, ArrowRight, Smartphone, ChevronLeft, ChevronRight,
+  Heart
+} from 'lucide-react';
 import { PlayStoreModal } from '../../components/ui/PlayStoreModal';
 
-/* ─── Tiny CSS injected once ─────────────────────────────────────── */
-const HUB_STYLES = `
-@keyframes hub-pulse-ring {
-  0%   { transform: scale(1);   opacity: 0.7; }
-  50%  { transform: scale(1.08); opacity: 0.3; }
-  100% { transform: scale(1);   opacity: 0.7; }
+interface FeatureItem {
+  id: string;
+  side: 'left' | 'right';
+  slot: number; // 0, 1, 2
+  title: string;
+  badge: string;
+  badgeIcon: string;
+  desc: string;
+  icon: typeof Activity;
+  iconBg: string;
+  iconColor: string;
+  featureDetails: string;
+  widgetType: 'gluco' | 'steps' | 'diary' | 'scan' | 'ble' | 'community';
 }
-@keyframes hub-float {
-  0%,100% { transform: translateY(0px); }
-  50%      { transform: translateY(-8px); }
-}
-@keyframes dot-travel-right {
-  0%   { left: 0%;   opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { left: 100%; opacity: 0; }
-}
-@keyframes dot-travel-left {
-  0%   { right: 0%;   opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { right: 100%; opacity: 0; }
-}
-@keyframes dot-travel-down {
-  0%   { top: 0%;   opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { top: 100%;  opacity: 0; }
-}
-@keyframes dot-travel-up {
-  0%   { bottom: 0%;   opacity: 0; }
-  10%  { opacity: 1; }
-  90%  { opacity: 1; }
-  100% { bottom: 100%; opacity: 0; }
-}
-@keyframes line-draw-h {
-  from { width: 0%; }
-  to   { width: 100%; }
-}
-@keyframes line-draw-v {
-  from { height: 0%; }
-  to   { height: 100%; }
-}
-@keyframes card-fade-in {
-  from { opacity: 0; transform: translateY(24px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0)   scale(1); }
-}
-@keyframes hub-shimmer {
-  0%   { background-position: -200% center; }
-  100% { background-position:  200% center; }
-}
-@keyframes orb-drift {
-  0%,100% { transform: translate(0,0); }
-  33%      { transform: translate(20px,-15px); }
-  66%      { transform: translate(-10px,20px); }
-}
-.hub-card-animate  { animation: card-fade-in 0.6s ease both; }
-.hub-float-anim    { animation: hub-float 4s ease-in-out infinite; }
-.hub-pulse-ring    { animation: hub-pulse-ring 2.5s ease-in-out infinite; }
 
-/* travelling dots */
-.dot-right { position:absolute; top:50%; transform:translateY(-50%);
-             width:8px; height:8px; border-radius:50%; background:#16a34a;
-             box-shadow:0 0 6px #16a34a; animation: dot-travel-right 2s linear infinite; }
-.dot-left  { position:absolute; top:50%; transform:translateY(-50%);
-             width:8px; height:8px; border-radius:50%; background:#16a34a;
-             box-shadow:0 0 6px #16a34a; animation: dot-travel-left  2s linear infinite; }
-.dot-down  { position:absolute; left:50%; transform:translateX(-50%);
-             width:8px; height:8px; border-radius:50%; background:#16a34a;
-             box-shadow:0 0 6px #16a34a; animation: dot-travel-down  2s linear infinite; }
-.dot-up    { position:absolute; left:50%; transform:translateX(-50%);
-             width:8px; height:8px; border-radius:50%; background:#16a34a;
-             box-shadow:0 0 6px #16a34a; animation: dot-travel-up    2s linear infinite; }
-`;
-
-/* ─── Feature data ───────────────────────────────────────────────── */
-const careFeatures = [
+const FEATURES: FeatureItem[] = [
+  // LEFT COLUMN (3 cards)
   {
-    id: 'gluco', position: 'top' as const,
+    id: 'gluco',
+    side: 'left',
+    slot: 0,
     title: 'GlucoRhythm Glucose Tracker',
-    desc: 'Continuous Glucose Waveform (CGM), Time in Range (82%), Est A1C (5.8%), and real-time blood sugar trends.',
-    badge: 'APP EXCLUSIVE', stat: '112 mg/dL', statLabel: 'Steady & Stable',
-    icon: Activity, iconBg: 'bg-emerald-800 text-amber-300',
-    actionText: 'Get App to Track Glucose',
+    badge: 'APP EXCLUSIVE',
+    badgeIcon: '⚡',
+    desc: 'Continuous Glucose Monitoring (CGM) with real-time trends.',
+    icon: Activity,
+    iconBg: 'bg-emerald-800',
+    iconColor: 'text-emerald-300',
     featureDetails: 'Requires Kosmico App for continuous CGM sensor sync & background alerts.',
-    animDelay: '0s',
+    widgetType: 'gluco',
   },
   {
-    id: 'scan', position: 'left' as const,
-    title: 'Plate AI Meal Scanner',
-    desc: 'AI Vision meal photo scanner estimating calories, net carbs, and Glycemic Index (GI) impact before your first bite.',
-    badge: 'AI VISION SCAN', stat: 'Instant GI Analysis', statLabel: 'Gemini 1.5 Vision',
-    icon: Camera, iconBg: 'bg-emerald-800 text-amber-300',
-    actionText: 'Get App to Scan Meals',
-    featureDetails: 'Requires Kosmico App camera integration & Gemini AI image recognition.',
-    animDelay: '0.15s',
-  },
-  {
-    id: 'ble', position: 'right' as const,
-    title: 'Smartwatch BLE Sync',
-    desc: 'Sync Bluetooth LE fitness bands to monitor heart rate (HRV 52ms), SpO2 oxygen, and real-time biometrics.',
-    badge: 'LIVE BIOMETRICS', stat: '74 BPM • 98% SpO2', statLabel: 'Bluetooth LE Live',
-    icon: Watch, iconBg: 'bg-amber-500 text-neutral-950',
-    actionText: 'Get App for Smartwatch Sync',
-    featureDetails: 'Requires native Bluetooth LE hardware sensors available on the Kosmico Mobile App.',
-    animDelay: '0.3s',
-  },
-  {
-    id: 'steps', position: 'bottom' as const,
+    id: 'steps',
+    side: 'left',
+    slot: 1,
     title: 'Footstep Counter',
-    desc: 'Real-time step pedometer, active calorie burn tracking, smart hydration sync, and food vs burn balance.',
-    badge: 'LIVE STEPS', stat: '6,420 Steps • 320 kcal', statLabel: 'Live Step Pedometer',
-    icon: Footprints, iconBg: 'bg-amber-500 text-neutral-950',
-    actionText: 'Get App to Track Steps',
+    badge: 'LIVE STEPS',
+    badgeIcon: '⚡',
+    desc: 'Real-time step tracking, active calorie burn, and daily activity goals.',
+    icon: Footprints,
+    iconBg: 'bg-amber-500',
+    iconColor: 'text-neutral-950',
     featureDetails: 'Requires native smartphone pedometer sensor & motion hardware on the Kosmico Mobile App.',
-    animDelay: '0.45s',
+    widgetType: 'steps',
   },
-  // extra 2 for mobile carousel only
   {
-    id: 'diary', position: 'bottom' as const,
+    id: 'diary',
+    side: 'left',
+    slot: 2,
     title: 'Health Diary & Water Log',
-    desc: 'Track daily water intake (+250ml logger), stress levels, workout logs, energy scores, and supplement reminders.',
-    badge: 'DAILY TRACKER', stat: '+250ml Hydration', statLabel: 'Water & Mood Log',
-    icon: BookOpen, iconBg: 'bg-emerald-800 text-amber-300',
-    actionText: 'Get App for Health Log',
+    badge: 'DAILY TRACKER',
+    badgeIcon: '⚡',
+    desc: 'Track daily water intake, workout logs, energy levels, and supplement reminders.',
+    icon: BookOpen,
+    iconBg: 'bg-emerald-900',
+    iconColor: 'text-emerald-300',
     featureDetails: 'Requires Kosmico Mobile App for push notifications & daily log history.',
-    animDelay: '0.55s',
+    widgetType: 'diary',
+  },
+
+  // RIGHT COLUMN (3 cards)
+  {
+    id: 'scan',
+    side: 'right',
+    slot: 0,
+    title: 'Plate AI Meal Scanner',
+    badge: 'AI VISION SCAN',
+    badgeIcon: '⚡',
+    desc: 'AI Vision meal scanner estimating calories, net carbs, and Glycemic Index (GI).',
+    icon: Camera,
+    iconBg: 'bg-emerald-800',
+    iconColor: 'text-emerald-300',
+    featureDetails: 'Requires Kosmico App camera integration & Gemini AI image recognition.',
+    widgetType: 'scan',
   },
   {
-    id: 'community', position: 'bottom' as const,
+    id: 'ble',
+    side: 'right',
+    slot: 1,
+    title: 'Smartwatch BLE Sync',
+    badge: 'LIVE BIOMETRICS',
+    badgeIcon: '⚡',
+    desc: 'Sync fitness bands to monitor heart rate, SpO2, and real-time biometrics.',
+    icon: Watch,
+    iconBg: 'bg-amber-500',
+    iconColor: 'text-neutral-950',
+    featureDetails: 'Requires native Bluetooth LE hardware sensors available on the Kosmico Mobile App.',
+    widgetType: 'ble',
+  },
+  {
+    id: 'community',
+    side: 'right',
+    slot: 2,
     title: 'Care Community & SOS',
-    desc: 'Connect with peer health groups, doctor SOS support network, and share keto/diabetes friendly recipes.',
-    badge: 'CARE NETWORK', stat: 'Doctor SOS Network', statLabel: 'Peer Circles & Recipes',
-    icon: Users, iconBg: 'bg-emerald-800 text-amber-300',
-    actionText: 'Get App for Care Network',
+    badge: 'CARE NETWORK',
+    badgeIcon: '⚡',
+    desc: 'Connect with peer health groups, doctor SOS support, and share keto/diabetes recipes.',
+    icon: Users,
+    iconBg: 'bg-emerald-900',
+    iconColor: 'text-emerald-300',
     featureDetails: 'Requires Kosmico Mobile App for family care circle sync & emergency doctor SOS.',
-    animDelay: '0.65s',
+    widgetType: 'community',
   },
 ];
 
-/* ─── Mini feature card (hub layout) ────────────────────────────── */
-const HubFeatureCard: React.FC<{
-  item: typeof careFeatures[0];
-  isActive: boolean;
-  onEnter: () => void;
-  onLeave: () => void;
-  onClick: () => void;
-  animDelay: string;
-  visible: boolean;
-}> = ({ item, isActive, onEnter, onLeave, onClick, animDelay, visible }) => {
-  const Icon = item.icon;
-  return (
-    <div
-      onMouseEnter={onEnter}
-      onMouseLeave={onLeave}
-      onClick={onClick}
-      style={{
-        animationDelay: animDelay,
-        opacity: visible ? undefined : 0,
-        animationFillMode: 'both',
-      }}
-      className={`hub-card-animate group cursor-pointer rounded-3xl p-5 flex flex-col gap-3 transition-all duration-500 relative overflow-hidden select-none
-        ${isActive
-          ? 'bg-gradient-to-br from-emerald-50 via-white to-amber-50 border-2 border-emerald-600/60 shadow-2xl shadow-emerald-900/15 -translate-y-1 scale-[1.02]'
-          : 'bg-white/90 backdrop-blur-md border border-emerald-900/10 shadow-lg hover:border-emerald-500/40 hover:-translate-y-1 hover:shadow-xl'
-        }`}
-    >
-      {/* top accent bar */}
-      <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-700 via-amber-400 to-emerald-600 transition-opacity duration-500 ${isActive ? 'opacity-100' : 'opacity-50 group-hover:opacity-90'}`} />
+interface PathData {
+  d: string;
+  length: number;
+  phoneAnchor: { x: number; y: number };
+  cardAnchor: { x: number; y: number };
+}
 
-      {/* icon + badge */}
-      <div className="flex items-center justify-between">
-        <div className={`w-11 h-11 rounded-xl ${item.iconBg} flex items-center justify-center shadow-md transition-transform duration-300 ${isActive ? 'scale-110 rotate-3' : 'group-hover:scale-105'}`}>
-          <Icon className="w-5 h-5" />
-        </div>
-        <span className="text-[9px] font-black tracking-wider uppercase bg-gradient-to-r from-emerald-900 to-emerald-950 text-amber-300 px-2.5 py-1 rounded-full flex items-center gap-1 border border-emerald-700/50">
-          <Sparkles className="w-2.5 h-2.5 text-amber-400 fill-amber-400 animate-pulse" />
-          {item.badge}
-        </span>
-      </div>
-
-      {/* title + desc */}
-      <div>
-        <h3 className={`text-sm font-serif font-bold leading-snug mb-1 ${isActive ? 'text-emerald-950' : 'text-neutral-900 group-hover:text-emerald-800'}`}>
-          {item.title}
-        </h3>
-        <p className="text-[11px] text-neutral-500 leading-relaxed line-clamp-2">{item.desc}</p>
-      </div>
-
-      {/* live stat */}
-      <div className={`border rounded-xl p-2.5 flex justify-between items-center transition-colors ${isActive ? 'bg-white border-emerald-300' : 'bg-stone-50 border-stone-200 group-hover:border-emerald-200'}`}>
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2 w-2 shrink-0">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600" />
-          </span>
-          <div>
-            <div className="text-[9px] uppercase font-bold text-neutral-400">{item.statLabel}</div>
-            <div className="text-[11px] font-black text-emerald-900">{item.stat}</div>
-          </div>
-        </div>
-        <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
-      </div>
-
-      {/* action */}
-      <div className="flex items-center justify-between text-[11px] font-extrabold text-emerald-800 pt-1 border-t border-neutral-100">
-        <div className="flex items-center gap-1">
-          <Zap className="w-3 h-3 text-amber-500 fill-amber-500 animate-pulse" />
-          <span>{item.actionText}</span>
-        </div>
-        <div className={`w-6 h-6 rounded-full flex items-center justify-center shadow transition-all ${isActive ? 'bg-emerald-950 text-amber-300' : 'bg-emerald-800 text-white group-hover:bg-emerald-900'}`}>
-          <ArrowRight className="w-3 h-3 text-amber-400" />
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/* ─── Animated connection line ───────────────────────────────────── */
-const ConnLine: React.FC<{
-  dir: 'h' | 'v';
-  delay?: string;
-  visible: boolean;
-  glowing?: boolean;
-}> = ({ dir, delay = '0s', visible, glowing }) => {
-  const base = 'bg-gradient-to-r from-emerald-500/30 via-emerald-400/60 to-emerald-500/30 rounded-full relative overflow-hidden';
-  const glowCls = glowing ? 'shadow-[0_0_8px_2px_rgba(16,185,129,0.5)]' : '';
-
-  if (dir === 'h') return (
-    <div className={`w-full h-px ${base} ${glowCls}`} style={{ minWidth: 32 }}>
-      {visible && (
-        <>
-          <div className="dot-right" style={{ animationDelay: delay }} />
-          <div className="dot-right" style={{ animationDelay: `calc(${delay} + 0.7s)` }} />
-          <div
-            className="absolute inset-y-0 left-0 bg-gradient-to-r from-emerald-500/0 via-emerald-400 to-emerald-500/0 rounded-full"
-            style={{ animation: `line-draw-h 0.8s ease both`, animationDelay: delay }}
-          />
-        </>
-      )}
-    </div>
-  );
-
-  return (
-    <div className={`h-full w-px mx-auto ${base.replace('from-r', 'from-t')} ${glowCls}`} style={{ minHeight: 32 }}>
-      {visible && (
-        <>
-          <div className="dot-down" style={{ animationDelay: delay }} />
-          <div className="dot-down" style={{ animationDelay: `calc(${delay} + 0.7s)` }} />
-          <div
-            className="absolute inset-x-0 top-0 bg-gradient-to-b from-emerald-500/0 via-emerald-400 to-emerald-500/0 rounded-full"
-            style={{ animation: `line-draw-v 0.8s ease both`, animationDelay: delay }}
-          />
-        </>
-      )}
-    </div>
-  );
-};
-
-/* ─── Main Component ─────────────────────────────────────────────── */
 export const SmartCareSuite: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalDesc, setModalDesc] = useState('');
-  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [activeCycleIndex, setActiveCycleIndex] = useState<number>(0);
-  const [hubVisible, setHubVisible] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-  const hubRef = useRef<HTMLDivElement>(null);
+  const [activeGlowCard, setActiveGlowCard] = useState<number | null>(null);
+  const [paths, setPaths] = useState<PathData[]>([]);
+  const [particlePos, setParticlePos] = useState<{ x: number; y: number; activeIdx: number } | null>(null);
+
+  // Mobile carousel state
+  const [mobileActiveIdx, setMobileActiveIdx] = useState(0);
+  const mobileScrollRef = useRef<HTMLDivElement>(null);
+
+  // Container and element references
   const sectionRef = useRef<HTMLElement>(null);
+  const hubContainerRef = useRef<HTMLDivElement>(null);
+  const phoneRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const pathElsRef = useRef<(SVGPathElement | null)[]>([]);
 
   const openAppModal = (title: string, desc: string) => {
-    setModalTitle(title); setModalDesc(desc); setIsModalOpen(true);
+    setModalTitle(title);
+    setModalDesc(desc);
+    setIsModalOpen(true);
   };
 
-  /* scroll trigger */
-  useEffect(() => {
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) setHubVisible(true); }, { threshold: 0.15 });
-    if (hubRef.current) obs.observe(hubRef.current);
-    return () => obs.disconnect();
-  }, []);
+  // Recalculate SVG connector paths connecting phone to each card
+  const updateConnectorPaths = useCallback(() => {
+    if (!hubContainerRef.current || !phoneRef.current) return;
+    const containerRect = hubContainerRef.current.getBoundingClientRect();
+    const phoneRect = phoneRef.current.getBoundingClientRect();
 
-  /* auto-cycle (desktop only) */
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) return;
-    if (hoveredIndex !== null) return;
-    const t = setInterval(() => setActiveCycleIndex(p => (p + 1) % 4), 3200);
-    return () => clearInterval(t);
-  }, [hoveredIndex]);
+    const computed: PathData[] = [];
 
-  /* 3-D tilt on mouse move over section */
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-    const handler = (e: MouseEvent) => {
-      const rect = el.getBoundingClientRect();
-      setMousePos({
-        x: ((e.clientX - rect.left) / rect.width  - 0.5) * 6,
-        y: ((e.clientY - rect.top)  / rect.height - 0.5) * -4,
+    FEATURES.forEach((feature, i) => {
+      const cardEl = cardRefs.current[i];
+      if (!cardEl) return;
+      const cardRect = cardEl.getBoundingClientRect();
+
+      // Card anchor: middle of left or right edge
+      let cx = 0;
+      let cy = 0;
+      let sx = 0;
+      let sy = 0;
+
+      // Vertical offsets on the phone's left/right border to spread the 3 lines neatly
+      const phoneVerticalOffsets = [0.28, 0.50, 0.72];
+      const slotRatio = phoneVerticalOffsets[feature.slot] ?? 0.5;
+
+      if (feature.side === 'left') {
+        // card's right edge
+        cx = cardRect.right - containerRect.left;
+        cy = cardRect.top + cardRect.height / 2 - containerRect.top;
+
+        // phone's left edge
+        sx = phoneRect.left - containerRect.left + 4;
+        sy = phoneRect.top + phoneRect.height * slotRatio - containerRect.top;
+      } else {
+        // card's left edge
+        cx = cardRect.left - containerRect.left;
+        cy = cardRect.top + cardRect.height / 2 - containerRect.top;
+
+        // phone's right edge
+        sx = phoneRect.right - containerRect.left - 4;
+        sy = phoneRect.top + phoneRect.height * slotRatio - containerRect.top;
+      }
+
+      // Smooth curved S / cubic bezier curve
+      const dx = cx - sx;
+      const cp1x = sx + dx * 0.45;
+      const cp1y = sy;
+      const cp2x = sx + dx * 0.55;
+      const cp2y = cy;
+
+      const d = `M ${sx.toFixed(1)} ${sy.toFixed(1)} C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${cx.toFixed(1)} ${cy.toFixed(1)}`;
+
+      // Calculate path length
+      let length = 300;
+      try {
+        const tempPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        tempPath.setAttribute('d', d);
+        length = tempPath.getTotalLength() || 300;
+      } catch {
+        // Fallback
+        const dist = Math.hypot(cx - sx, cy - sy);
+        length = dist * 1.15;
+      }
+
+      computed.push({
+        d,
+        length,
+        phoneAnchor: { x: sx, y: sy },
+        cardAnchor: { x: cx, y: cy },
       });
-    };
-    el.addEventListener('mousemove', handler);
-    return () => el.removeEventListener('mousemove', handler);
+    });
+
+    setPaths(computed);
   }, []);
 
-  /* mobile swipe */
-  const scrollToIndex = (idx: number) => {
-    setActiveCycleIndex(idx);
-    if (containerRef.current) {
-      const card = containerRef.current.children[idx] as HTMLElement;
+  // Recalculate on window resize or load
+  useEffect(() => {
+    updateConnectorPaths();
+    window.addEventListener('resize', updateConnectorPaths);
+    const timeout = setTimeout(updateConnectorPaths, 400);
+    return () => {
+      window.removeEventListener('resize', updateConnectorPaths);
+      clearTimeout(timeout);
+    };
+  }, [updateConnectorPaths]);
+
+  // Animation Timeline: sequential light particle travel + card border pulse
+  useEffect(() => {
+    if (paths.length < 6) return;
+
+    let animId = 0;
+    let startTime: number | null = null;
+    let currentIdx = 0;
+
+    const TRAVEL_DURATION = 1300; // ms for light to reach card
+    const GLOW_HOLD_DURATION = 650; // ms card border glows
+    const PAUSE_DURATION = 200; // ms before next card activates
+
+    const step = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+
+      const pathData = paths[currentIdx];
+      const pathEl = pathElsRef.current[currentIdx];
+
+      if (elapsed <= TRAVEL_DURATION) {
+        // Traveling along the line
+        const progress = elapsed / TRAVEL_DURATION;
+        if (pathEl && pathData) {
+          try {
+            const pt = pathEl.getPointAtLength(progress * pathData.length);
+            setParticlePos({ x: pt.x, y: pt.y, activeIdx: currentIdx });
+          } catch {
+            // fallback
+            const sx = pathData.phoneAnchor.x;
+            const sy = pathData.phoneAnchor.y;
+            const cx = pathData.cardAnchor.x;
+            const cy = pathData.cardAnchor.y;
+            setParticlePos({
+              x: sx + (cx - sx) * progress,
+              y: sy + (cy - sy) * progress,
+              activeIdx: currentIdx,
+            });
+          }
+        }
+      } else if (elapsed <= TRAVEL_DURATION + GLOW_HOLD_DURATION) {
+        // Particle arrived! Trigger card border glow
+        setActiveGlowCard(currentIdx);
+        if (pathData) {
+          setParticlePos({
+            x: pathData.cardAnchor.x,
+            y: pathData.cardAnchor.y,
+            activeIdx: currentIdx,
+          });
+        }
+      } else if (elapsed <= TRAVEL_DURATION + GLOW_HOLD_DURATION + PAUSE_DURATION) {
+        // Fading out
+        setParticlePos(null);
+      } else {
+        // Advance to next card in sequence (0 to 5)
+        setActiveGlowCard(null);
+        setParticlePos(null);
+        currentIdx = (currentIdx + 1) % 6;
+        startTime = timestamp;
+      }
+
+      animId = requestAnimationFrame(step);
+    };
+
+    animId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(animId);
+  }, [paths]);
+
+  // Mobile carousel navigation
+  const scrollMobileTo = (idx: number) => {
+    setMobileActiveIdx(idx);
+    if (mobileScrollRef.current) {
+      const card = mobileScrollRef.current.children[idx] as HTMLElement;
       if (card) {
-        const tgt = card.offsetLeft - (containerRef.current.clientWidth - card.clientWidth) / 2;
-        containerRef.current.scrollTo({ left: Math.max(0, tgt), behavior: 'smooth' });
+        const targetScrollLeft = card.offsetLeft - (mobileScrollRef.current.clientWidth - card.clientWidth) / 2;
+        mobileScrollRef.current.scrollTo({ left: Math.max(0, targetScrollLeft), behavior: 'smooth' });
       }
     }
   };
-  const handleScroll = () => {
-    if (!containerRef.current || window.innerWidth >= 768) return;
-    const sl = containerRef.current.scrollLeft;
-    const cw = containerRef.current.children[0]?.clientWidth || 1;
-    const ni = Math.round(sl / cw);
-    if (ni >= 0 && ni < careFeatures.length && ni !== activeCycleIndex) setActiveCycleIndex(ni);
+
+  const handleMobileScroll = () => {
+    if (!mobileScrollRef.current) return;
+    const el = mobileScrollRef.current;
+    const cardWidth = (el.children[0] as HTMLElement)?.clientWidth || 1;
+    const newIdx = Math.round(el.scrollLeft / cardWidth);
+    if (newIdx !== mobileActiveIdx && newIdx >= 0 && newIdx < FEATURES.length) {
+      setMobileActiveIdx(newIdx);
+    }
   };
-  const handlePrev = () => scrollToIndex((activeCycleIndex - 1 + careFeatures.length) % careFeatures.length);
-  const handleNext = () => scrollToIndex((activeCycleIndex + 1) % careFeatures.length);
-
-  const activeIndex = hoveredIndex !== null ? hoveredIndex : activeCycleIndex;
-
-  /* hub card 3D style */
-  const hubStyle = hubVisible
-    ? { transform: `perspective(900px) rotateX(${mousePos.y}deg) rotateY(${mousePos.x}deg)` }
-    : {};
 
   return (
     <section
       ref={sectionRef}
       id="care-suite"
-      className="py-16 md:py-28 bg-gradient-to-b from-stone-50 via-emerald-50/40 to-background border-y border-border relative overflow-hidden"
+      className="py-16 md:py-24 bg-gradient-to-b from-[#f7faf8] via-[#eef7f1]/60 to-background border-y border-border relative overflow-hidden"
     >
-      {/* inject keyframe styles once */}
-      <style>{HUB_STYLES}</style>
+      {/* Background Soft Glow Orbs */}
+      <div className="absolute top-1/4 -left-28 w-[450px] h-[450px] bg-emerald-400/12 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 -right-28 w-[500px] h-[500px] bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-emerald-300/8 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Background orbs */}
-      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-emerald-400/10 rounded-full blur-3xl pointer-events-none" style={{ animation: 'orb-drift 12s ease-in-out infinite' }} />
-      <div className="absolute bottom-10 right-0 w-[500px] h-[500px] bg-amber-400/10 rounded-full blur-3xl pointer-events-none" style={{ animation: 'orb-drift 16s ease-in-out infinite reverse' }} />
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 40% at 50% 50%, rgba(16,185,129,0.05) 0%, transparent 70%)' }} />
-
-      <Container className="relative z-10">
-        {/* ── Section Header ── */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-16 gap-6">
+      <Container className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 md:mb-16 gap-6">
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-900/10 border border-emerald-900/20 text-emerald-900 text-xs font-extrabold uppercase tracking-wider backdrop-blur-md shadow-2xs">
               <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500 animate-pulse" />
@@ -366,9 +343,15 @@ export const SmartCareSuite: React.FC = () => {
               </span>
             </h2>
           </div>
+
           <button
-            onClick={() => openAppModal('Kosmico Mobile App Download', 'Download the official Kosmico Wellness mobile app on Google Play Store to unlock all premium health tools & biometrics.')}
-            className="inline-flex items-center gap-2.5 text-xs sm:text-sm font-extrabold text-white bg-gradient-to-r from-emerald-800 via-emerald-900 to-emerald-950 hover:from-emerald-900 hover:to-emerald-950 px-6 py-4 rounded-2xl shadow-xl shadow-emerald-900/20 hover:shadow-2xl hover:shadow-emerald-900/30 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 group border border-emerald-700/50 cursor-pointer"
+            onClick={() =>
+              openAppModal(
+                'Kosmico Mobile App Download',
+                'Download the official Kosmico Wellness mobile app on Google Play Store to unlock continuous glucose sync, BLE tracking, and AI meal scans.'
+              )
+            }
+            className="inline-flex items-center gap-2.5 text-xs sm:text-sm font-extrabold text-white bg-gradient-to-r from-emerald-800 via-emerald-900 to-emerald-950 hover:from-emerald-900 hover:to-emerald-950 px-6 py-4 rounded-2xl shadow-xl shadow-emerald-900/20 hover:shadow-2xl hover:shadow-emerald-900/30 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 group border border-emerald-700/50 cursor-pointer shrink-0"
           >
             <Smartphone className="w-4 h-4 text-amber-400" />
             <span>Download App on Google Play</span>
@@ -376,285 +359,650 @@ export const SmartCareSuite: React.FC = () => {
           </button>
         </div>
 
-        {/* ════════════════════════════════════════════════════════
-            DESKTOP — 3-D Hub Layout  (hidden on mobile)
-        ═══════════════════════════════════════════════════════ */}
-        <div
-          ref={hubRef}
-          className="hidden md:block"
-          style={{ transition: 'transform 0.1s ease-out', ...hubStyle }}
-        >
-          {/* ── Row 1: [empty] [TOP card] [empty] ── */}
-          <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-0 mb-0">
-            <div /> {/* left spacer */}
+        {/* ════════════════════════════════════════════════════════════
+            DESKTOP ECOSYSTEM (Phone in Center with 6 Connected Cards)
+            Visible on lg screens (>= 1024px)
+        ═══════════════════════════════════════════════════════════ */}
+        <div ref={hubContainerRef} className="hidden lg:block relative py-6 select-none">
+          {/* SVG Overlay: Curved Connectors & Travelling Light Particle */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible">
+            <defs>
+              {/* Soft neon filter for connector line */}
+              <filter id="neon-glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="3.5" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
 
-            {/* TOP card */}
-            <div className="flex justify-center" style={{ minWidth: 280 }}>
-              <div className="w-72">
-                <HubFeatureCard
-                  item={careFeatures[0]}
-                  isActive={activeIndex === 0}
-                  onEnter={() => setHoveredIndex(0)}
-                  onLeave={() => setHoveredIndex(null)}
-                  onClick={() => openAppModal(careFeatures[0].title, careFeatures[0].featureDetails)}
-                  animDelay={careFeatures[0].animDelay}
-                  visible={hubVisible}
-                />
-              </div>
+              {/* Intense glow for traveling particle */}
+              <filter id="particle-bloom" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="5" result="bloom" />
+                <feMerge>
+                  <feMergeNode in="bloom" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+
+              {/* Radial gradient for particle halo */}
+              <radialGradient id="particle-halo" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#4ade80" stopOpacity="1" />
+                <stop offset="40%" stopColor="#22c55e" stopOpacity="0.8" />
+                <stop offset="80%" stopColor="#16a34a" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#16a34a" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+
+            {/* 6 Curved Connecting Lines */}
+            {paths.map((p, i) => {
+              const isActive = activeGlowCard === i || particlePos?.activeIdx === i;
+              return (
+                <g key={i}>
+                  {/* Outer soft ambient glow line */}
+                  <path
+                    d={p.d}
+                    fill="none"
+                    stroke={isActive ? 'rgba(34, 197, 94, 0.55)' : 'rgba(34, 197, 94, 0.22)'}
+                    strokeWidth={isActive ? 6 : 3}
+                    filter="url(#neon-glow)"
+                    className="transition-all duration-300"
+                  />
+                  {/* Core crisp connector wire */}
+                  <path
+                    ref={(el) => {
+                      pathElsRef.current[i] = el;
+                    }}
+                    d={p.d}
+                    fill="none"
+                    stroke={isActive ? '#22c55e' : '#16a34a'}
+                    strokeWidth={isActive ? 2.5 : 1.8}
+                    strokeDasharray={isActive ? 'none' : '6 4'}
+                    opacity={isActive ? 0.95 : 0.65}
+                    className="transition-all duration-300"
+                  />
+
+                  {/* Phone edge terminal node */}
+                  <circle
+                    cx={p.phoneAnchor.x}
+                    cy={p.phoneAnchor.y}
+                    r={isActive ? 5.5 : 4}
+                    fill="#22c55e"
+                    stroke="#ffffff"
+                    strokeWidth="1.5"
+                    className="transition-all duration-300"
+                  />
+
+                  {/* Card edge terminal node */}
+                  <circle
+                    cx={p.cardAnchor.x}
+                    cy={p.cardAnchor.y}
+                    r={isActive ? 6 : 4}
+                    fill={isActive ? '#4ade80' : '#16a34a'}
+                    stroke="#ffffff"
+                    strokeWidth="1.5"
+                    className="transition-all duration-300"
+                  />
+                </g>
+              );
+            })}
+
+            {/* Travelling Light Particle */}
+            {particlePos && (
+              <g filter="url(#particle-bloom)">
+                <circle cx={particlePos.x} cy={particlePos.y} r={14} fill="url(#particle-halo)" />
+                <circle cx={particlePos.x} cy={particlePos.y} r={6.5} fill="#4ade80" />
+                <circle cx={particlePos.x} cy={particlePos.y} r={3} fill="#ffffff" />
+              </g>
+            )}
+          </svg>
+
+          {/* 3-Column Ecosystem Layout */}
+          <div className="grid grid-cols-[330px_1fr_330px] xl:grid-cols-[360px_1fr_360px] gap-6 items-center">
+            {/* ── LEFT COLUMN (3 Cards) ── */}
+            <div className="flex flex-col gap-6">
+              {FEATURES.filter((f) => f.side === 'left').map((feature) => {
+                const globalIdx = FEATURES.findIndex((f) => f.id === feature.id);
+                const isGlow = activeGlowCard === globalIdx;
+                const IconComponent = feature.icon;
+
+                return (
+                  <div
+                    key={feature.id}
+                    ref={(el) => {
+                      cardRefs.current[globalIdx] = el;
+                    }}
+                    onClick={() => openAppModal(feature.title, feature.featureDetails)}
+                    className={`relative rounded-[26px] p-5.5 bg-white/95 backdrop-blur-md cursor-pointer transition-all duration-500 transform hover:-translate-y-1 hover:shadow-2xl border ${
+                      isGlow
+                        ? 'border-emerald-500 shadow-[0_0_24px_rgba(34,197,94,0.65),0_10px_30px_rgba(34,197,94,0.18)] scale-[1.018]'
+                        : 'border-emerald-950/10 shadow-lg shadow-emerald-950/5 hover:border-emerald-500/40'
+                    }`}
+                  >
+                    {/* Glowing border trace effect */}
+                    <div
+                      className={`absolute inset-0 rounded-[26px] pointer-events-none transition-opacity duration-500 ${
+                        isGlow ? 'opacity-100 ring-2 ring-emerald-500 ring-offset-1' : 'opacity-0'
+                      }`}
+                      style={{
+                        boxShadow: isGlow ? 'inset 0 0 16px rgba(34, 197, 94, 0.25)' : 'none',
+                      }}
+                    />
+
+                    {/* Top Row: Icon + Title + App Exclusive Badge */}
+                    <div className="flex items-start gap-3.5 mb-2.5">
+                      <div
+                        className={`w-12 h-12 rounded-2xl ${feature.iconBg} ${feature.iconColor} flex items-center justify-center shrink-0 shadow-md shadow-emerald-950/10 transition-transform duration-300 ${
+                          isGlow ? 'scale-110' : ''
+                        }`}
+                      >
+                        <IconComponent className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <h3 className="text-[15px] font-serif font-black text-neutral-900 leading-snug tracking-tight">
+                            {feature.title}
+                          </h3>
+                        </div>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase bg-emerald-900 text-amber-300 border border-emerald-700/60 shadow-xs">
+                          <span>{feature.badgeIcon}</span>
+                          <span>{feature.badge}</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Subtitle description */}
+                    <p className="text-[11.5px] text-neutral-600 leading-relaxed mb-3.5">
+                      {feature.desc}
+                    </p>
+
+                    {/* Dedicated Feature Interactive Widget matching the Reference Image */}
+                    {feature.widgetType === 'gluco' && (
+                      <div className="rounded-2xl p-3 bg-gradient-to-r from-emerald-50/90 to-stone-50/80 border border-emerald-200/80 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                          <span className="text-xs font-black text-emerald-950">112 mg/dL</span>
+                        </div>
+                        {/* Smooth Green CGM Wave SVG */}
+                        <div className="w-32 h-7">
+                          <svg viewBox="0 0 120 28" className="w-full h-full overflow-visible">
+                            <path
+                              d="M 0 18 Q 20 6, 40 16 T 80 14 T 120 10"
+                              fill="none"
+                              stroke="#16a34a"
+                              strokeWidth="2.5"
+                              strokeLinecap="round"
+                            />
+                            <circle cx="120" cy="10" r="3" fill="#16a34a" />
+                          </svg>
+                        </div>
+                      </div>
+                    )}
+
+                    {feature.widgetType === 'steps' && (
+                      <div className="rounded-2xl p-3 bg-gradient-to-r from-amber-50/70 via-stone-50/80 to-emerald-50/70 border border-stone-200 flex items-center justify-between">
+                        {/* Semi-circular step radial progress */}
+                        <div className="relative w-14 h-12 flex items-center justify-center">
+                          <svg viewBox="0 0 50 36" className="w-full h-full">
+                            <path
+                              d="M 5 30 A 20 20 0 0 1 45 30"
+                              fill="none"
+                              stroke="#e5e7eb"
+                              strokeWidth="4"
+                              strokeLinecap="round"
+                            />
+                            <path
+                              d="M 5 30 A 20 20 0 0 1 40 18"
+                              fill="none"
+                              stroke="#16a34a"
+                              strokeWidth="4"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <Footprints className="w-4 h-4 text-emerald-800 absolute bottom-1" />
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xs font-black text-neutral-900">6,420 Steps</div>
+                          <div className="text-[10px] font-bold text-neutral-500">320 kcal</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {feature.widgetType === 'diary' && (
+                      <div className="rounded-2xl p-3 bg-gradient-to-r from-emerald-50/90 to-teal-50/80 border border-emerald-200/80 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-emerald-700 text-sm">💧</span>
+                          <span className="text-xs font-black text-emerald-950">+250 ml</span>
+                        </div>
+                        {/* 4 Green Water Intake Bars */}
+                        <div className="flex items-end gap-1.5 h-6">
+                          <div className="w-2.5 h-3 bg-emerald-300 rounded-sm" />
+                          <div className="w-2.5 h-4.5 bg-emerald-400 rounded-sm" />
+                          <div className="w-2.5 h-6 bg-emerald-600 rounded-sm" />
+                          <div className="w-2.5 h-5 bg-emerald-500 rounded-sm" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
-            <div /> {/* right spacer */}
-          </div>
+            {/* ── CENTER COLUMN (Phone Mockup + Pedestal Base) ── */}
+            <div className="flex flex-col items-center justify-center px-4">
+              {/* Phone Mockup */}
+              <div
+                ref={phoneRef}
+                className="relative rounded-[40px] p-2.5 shadow-[0_20px_50px_rgba(16,185,129,0.22),0_10px_25px_rgba(0,0,0,0.15)] transition-all duration-500 hover:scale-[1.015]"
+                style={{
+                  width: 260,
+                  background: 'linear-gradient(145deg, #1f2937, #111827)',
+                  border: '3px solid rgba(255, 255, 255, 0.25)',
+                }}
+              >
+                {/* Subtle Phone Outer Glow */}
+                <div className="absolute -inset-2 rounded-[46px] bg-emerald-500/20 blur-xl pointer-events-none animate-pulse" />
 
-          {/* vertical line top → center */}
-          <div className="grid grid-cols-[1fr_auto_1fr] gap-0">
-            <div />
-            <div className="flex justify-center" style={{ minWidth: 280 }}>
-              <div style={{ height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-                <div style={{ width: 2, height: '100%', position: 'relative' }}>
-                  <ConnLine dir="v" delay="0.2s" visible={hubVisible} glowing={activeIndex === 0} />
+                {/* Speaker pill notch */}
+                <div className="relative z-20 flex justify-center pb-2 pt-1">
+                  <div className="w-20 h-4.5 bg-black rounded-full flex items-center justify-end pr-2.5">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500/80 animate-ping" />
+                  </div>
+                </div>
+
+                {/* Phone Screen Display */}
+                <div className="relative rounded-[32px] overflow-hidden bg-gradient-to-b from-emerald-50/90 via-white to-[#eef7f1] p-4 text-center flex flex-col justify-between min-h-[440px] border border-white/60">
+                  {/* Status Bar */}
+                  <div className="flex items-center justify-between text-[11px] font-bold text-neutral-800 px-1 pt-0.5">
+                    <span>9:41</span>
+                    <div className="flex items-center gap-1.5 text-[10px]">
+                      <span>5G</span>
+                      <span>100%</span>
+                    </div>
+                  </div>
+
+                  {/* Brand Logo & User Greeting */}
+                  <div className="flex flex-col items-center mt-2 space-y-1">
+                    <img
+                      src="/kosmico-logo.png"
+                      alt="Kosmico"
+                      className="w-12 h-12 object-contain drop-shadow-sm"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                    <div className="text-xs font-black text-emerald-950 uppercase tracking-wider">
+                      Kosmico
+                    </div>
+                    <div className="text-[12px] font-bold text-neutral-700">Good Morning, Amit ☀️</div>
+                  </div>
+
+                  {/* Central Wellness Score Radial Ring */}
+                  <div className="relative w-36 h-36 mx-auto my-2 flex items-center justify-center">
+                    <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                      {/* Background track */}
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        fill="none"
+                        stroke="#e2e8f0"
+                        strokeWidth="7"
+                      />
+                      {/* Active Progress gradient ring */}
+                      <circle
+                        cx="50"
+                        cy="50"
+                        r="40"
+                        fill="none"
+                        stroke="url(#wellness-score-gradient)"
+                        strokeWidth="7"
+                        strokeDasharray="251.2"
+                        strokeDashoffset="32.6"
+                        strokeLinecap="round"
+                        className="transition-all duration-1000"
+                      />
+                      <defs>
+                        <linearGradient id="wellness-score-gradient" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stopColor="#10b981" />
+                          <stop offset="60%" stopColor="#059669" />
+                          <stop offset="100%" stopColor="#047857" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-tight">
+                        Wellness Score
+                      </span>
+                      <span className="text-3xl font-black text-emerald-950 leading-none my-0.5">
+                        87%
+                      </span>
+                      {/* Wave pulse icon */}
+                      <Activity className="w-3.5 h-3.5 text-emerald-600 animate-pulse mt-0.5" />
+                    </div>
+                  </div>
+
+                  {/* Soft Mountain Wave Illustration & Bottom Nav */}
+                  <div>
+                    {/* Mountain wave decoration */}
+                    <div className="h-10 w-full mb-1">
+                      <svg viewBox="0 0 200 40" className="w-full h-full text-emerald-600/20 fill-current">
+                        <path d="M 0 35 Q 50 15, 100 28 T 200 20 L 200 40 L 0 40 Z" />
+                        <path d="M 0 30 Q 60 10, 120 25 T 200 15 L 200 40 L 0 40 Z" opacity="0.5" />
+                      </svg>
+                    </div>
+
+                    {/* App Bottom Navigation Bar */}
+                    <div className="rounded-2xl bg-white/90 shadow-md p-2 flex items-center justify-around border border-emerald-900/10 text-neutral-600">
+                      <span className="text-emerald-800 text-[11px] font-bold">🏠</span>
+                      <span className="text-neutral-500 text-[11px]">❤️</span>
+                      <div className="w-7 h-7 rounded-full bg-emerald-800 text-white flex items-center justify-center font-bold text-xs shadow-md">
+                        +
+                      </div>
+                      <span className="text-neutral-500 text-[11px]">👥</span>
+                      <span className="text-neutral-500 text-[11px]">👤</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div />
-          </div>
 
-          {/* ── Row 2: [LEFT card] — [CENTER HUB] — [RIGHT card] ── */}
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-0">
-
-            {/* LEFT card */}
-            <div className="flex justify-end pr-0">
-              <div className="w-72">
-                <HubFeatureCard
-                  item={careFeatures[1]}
-                  isActive={activeIndex === 1}
-                  onEnter={() => setHoveredIndex(1)}
-                  onLeave={() => setHoveredIndex(null)}
-                  onClick={() => openAppModal(careFeatures[1].title, careFeatures[1].featureDetails)}
-                  animDelay={careFeatures[1].animDelay}
-                  visible={hubVisible}
-                />
-              </div>
-            </div>
-
-            {/* horizontal line LEFT → center */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-              <div style={{ width: 48, height: 2, position: 'relative', flexShrink: 0 }}>
-                <ConnLine dir="h" delay="0.3s" visible={hubVisible} glowing={activeIndex === 1} />
-              </div>
-
-              {/* ══ CENTER HUB CARD ══ */}
-              <div
-                className={`relative flex-shrink-0 rounded-3xl border-2 p-7 flex flex-col items-center text-center gap-3
-                  transition-all duration-700 cursor-default select-none
-                  ${hubVisible ? 'hub-card-animate' : 'opacity-0'}
-                  bg-gradient-to-br from-emerald-900 via-emerald-800 to-emerald-950
-                  border-emerald-500/60 shadow-2xl shadow-emerald-900/40`}
-                style={{ width: 240, minWidth: 240, animationDelay: '0.1s' }}
-              >
-                {/* outer glow ring */}
+              {/* 3D Tiered Pedestal Stage under Phone */}
+              <div className="relative mt-2 flex flex-col items-center">
+                {/* Upper gold/emerald ring */}
                 <div
-                  className="hub-pulse-ring absolute inset-0 rounded-3xl pointer-events-none"
-                  style={{ boxShadow: '0 0 0 8px rgba(16,185,129,0.18), 0 0 0 20px rgba(16,185,129,0.07)' }}
-                />
-                {/* rotating ring */}
-                <div
-                  className="absolute inset-[-10px] rounded-[36px] pointer-events-none"
+                  className="w-48 h-5 rounded-[50%] bg-gradient-to-r from-emerald-800 via-amber-400 to-emerald-900 shadow-md border border-amber-300/40 relative z-10"
                   style={{
-                    background: 'conic-gradient(from 0deg, transparent 70%, rgba(16,185,129,0.5) 100%)',
-                    animation: 'hub-shimmer 3s linear infinite',
-                    backgroundSize: '200% auto',
+                    boxShadow: '0 0 15px rgba(245, 158, 11, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.4)',
                   }}
                 />
+                {/* Lower tiered metallic green base */}
+                <div
+                  className="w-56 h-7 rounded-[50%] bg-gradient-to-b from-emerald-900 to-emerald-950 -mt-2.5 shadow-xl border border-emerald-700/50 relative z-0"
+                  style={{
+                    boxShadow: '0 12px 25px rgba(6, 78, 59, 0.45)',
+                  }}
+                />
+                {/* Floor glow halo */}
+                <div className="w-64 h-6 rounded-full bg-emerald-400/25 blur-lg -mt-3 pointer-events-none" />
+              </div>
+            </div>
 
-                {/* icon */}
-                <div className="hub-float-anim w-16 h-16 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center shadow-xl mb-1">
-                  <Leaf className="w-8 h-8 text-emerald-300" />
-                  <Heart className="w-4 h-4 text-amber-400 absolute -top-1 -right-1" />
-                </div>
+            {/* ── RIGHT COLUMN (3 Cards) ── */}
+            <div className="flex flex-col gap-6">
+              {FEATURES.filter((f) => f.side === 'right').map((feature) => {
+                const globalIdx = FEATURES.findIndex((f) => f.id === feature.id);
+                const isGlow = activeGlowCard === globalIdx;
+                const IconComponent = feature.icon;
 
-                {/* label */}
-                <div>
-                  <div className="text-[9px] font-black tracking-widest uppercase text-amber-400/80 mb-1">Connected Hub</div>
-                  <h3 className="text-base font-serif font-black text-white leading-tight">Kosmico Health<br />&amp; Wellness</h3>
-                </div>
+                return (
+                  <div
+                    key={feature.id}
+                    ref={(el) => {
+                      cardRefs.current[globalIdx] = el;
+                    }}
+                    onClick={() => openAppModal(feature.title, feature.featureDetails)}
+                    className={`relative rounded-[26px] p-5.5 bg-white/95 backdrop-blur-md cursor-pointer transition-all duration-500 transform hover:-translate-y-1 hover:shadow-2xl border ${
+                      isGlow
+                        ? 'border-emerald-500 shadow-[0_0_24px_rgba(34,197,94,0.65),0_10px_30px_rgba(34,197,94,0.18)] scale-[1.018]'
+                        : 'border-emerald-950/10 shadow-lg shadow-emerald-950/5 hover:border-emerald-500/40'
+                    }`}
+                  >
+                    {/* Glowing border trace effect */}
+                    <div
+                      className={`absolute inset-0 rounded-[26px] pointer-events-none transition-opacity duration-500 ${
+                        isGlow ? 'opacity-100 ring-2 ring-emerald-500 ring-offset-1' : 'opacity-0'
+                      }`}
+                      style={{
+                        boxShadow: isGlow ? 'inset 0 0 16px rgba(34, 197, 94, 0.25)' : 'none',
+                      }}
+                    />
 
-                {/* pills */}
-                <div className="flex flex-col gap-1.5 w-full mt-1">
-                  {['6 Smart Features','AI Powered','100% Natural'].map(t => (
-                    <div key={t} className="flex items-center gap-1.5 text-[10px] text-emerald-200 font-semibold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                      {t}
+                    {/* Top Row: Icon + Title + AI Scan Badge */}
+                    <div className="flex items-start gap-3.5 mb-2.5">
+                      <div
+                        className={`w-12 h-12 rounded-2xl ${feature.iconBg} ${feature.iconColor} flex items-center justify-center shrink-0 shadow-md shadow-emerald-950/10 transition-transform duration-300 ${
+                          isGlow ? 'scale-110' : ''
+                        }`}
+                      >
+                        <IconComponent className="w-6 h-6" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1 mb-1">
+                          <h3 className="text-[15px] font-serif font-black text-neutral-900 leading-snug tracking-tight">
+                            {feature.title}
+                          </h3>
+                        </div>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black tracking-wider uppercase bg-emerald-900 text-amber-300 border border-emerald-700/60 shadow-xs">
+                          <span>{feature.badgeIcon}</span>
+                          <span>{feature.badge}</span>
+                        </span>
+                      </div>
                     </div>
-                  ))}
-                </div>
 
-                {/* bottom badge */}
-                <div className="mt-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[9px] font-black text-amber-300 tracking-wider uppercase">
-                  ✦ Wellness Ecosystem
-                </div>
-              </div>
+                    {/* Subtitle description */}
+                    <p className="text-[11.5px] text-neutral-600 leading-relaxed mb-3.5">
+                      {feature.desc}
+                    </p>
 
-              {/* horizontal line center → RIGHT */}
-              <div style={{ width: 48, height: 2, position: 'relative', flexShrink: 0 }}>
-                <ConnLine dir="h" delay="0.3s" visible={hubVisible} glowing={activeIndex === 2} />
-              </div>
+                    {/* Dedicated Feature Interactive Widget matching the Reference Image */}
+                    {feature.widgetType === 'scan' && (
+                      <div className="rounded-2xl p-3 bg-gradient-to-r from-emerald-50/90 to-stone-50/80 border border-emerald-200/80 flex items-center justify-between">
+                        {/* Food Bowl Icon with Viewfinder Frame */}
+                        <div className="relative w-12 h-12 rounded-xl bg-amber-100/70 border border-amber-300/80 flex items-center justify-center text-2xl shadow-xs">
+                          🥗
+                          {/* 4 Corner scan brackets */}
+                          <div className="absolute top-0.5 left-0.5 w-2 h-2 border-t-2 border-l-2 border-emerald-700" />
+                          <div className="absolute top-0.5 right-0.5 w-2 h-2 border-t-2 border-r-2 border-emerald-700" />
+                          <div className="absolute bottom-0.5 left-0.5 w-2 h-2 border-b-2 border-l-2 border-emerald-700" />
+                          <div className="absolute bottom-0.5 right-0.5 w-2 h-2 border-b-2 border-r-2 border-emerald-700" />
+                        </div>
+                        <div className="space-y-0.5 text-right">
+                          <div className="text-[10px] font-bold text-neutral-600">
+                            ● Calories: <span className="font-black text-neutral-900">420 kcal</span>
+                          </div>
+                          <div className="text-[10px] font-bold text-neutral-600">
+                            ● Net Carbs: <span className="font-black text-neutral-900">38 g</span>
+                          </div>
+                          <div className="text-[10px] font-bold text-neutral-600">
+                            ● GI (Est.): <span className="font-black text-emerald-800">Low</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {feature.widgetType === 'ble' && (
+                      <div className="rounded-2xl p-3 bg-gradient-to-r from-rose-50/80 via-stone-50/80 to-emerald-50/80 border border-stone-200 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <Heart className="w-4 h-4 text-rose-600 fill-rose-600 animate-pulse" />
+                          <span className="text-xs font-black text-neutral-900">74 BPM</span>
+                        </div>
+                        {/* Heartbeat ECG line */}
+                        <div className="w-20 h-5">
+                          <svg viewBox="0 0 80 20" className="w-full h-full">
+                            <path
+                              d="M 0 10 L 25 10 L 30 2 L 35 18 L 40 6 L 45 14 L 50 10 L 80 10"
+                              fill="none"
+                              stroke="#f43f5e"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-[9px] uppercase font-bold text-neutral-400">SpO2</div>
+                          <div className="text-xs font-black text-emerald-800">98%</div>
+                        </div>
+                      </div>
+                    )}
+
+                    {feature.widgetType === 'community' && (
+                      <div className="rounded-2xl p-3 bg-gradient-to-r from-emerald-50/90 to-amber-50/70 border border-emerald-200/80 flex items-center justify-between">
+                        <span className="text-[10.5px] font-bold text-emerald-950">Active Circles</span>
+                        {/* Overlapping member avatars */}
+                        <div className="flex items-center -space-x-2">
+                          <div className="w-7 h-7 rounded-full bg-emerald-700 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
+                            AK
+                          </div>
+                          <div className="w-7 h-7 rounded-full bg-amber-600 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
+                            RS
+                          </div>
+                          <div className="w-7 h-7 rounded-full bg-teal-700 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white shadow-xs">
+                            DR
+                          </div>
+                          <div className="w-7 h-7 rounded-full bg-emerald-900 text-amber-300 text-[11px] font-black flex items-center justify-center border-2 border-white shadow-xs">
+                            +
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-
-            {/* RIGHT card */}
-            <div className="flex justify-start pl-0">
-              <div className="w-72">
-                <HubFeatureCard
-                  item={careFeatures[2]}
-                  isActive={activeIndex === 2}
-                  onEnter={() => setHoveredIndex(2)}
-                  onLeave={() => setHoveredIndex(null)}
-                  onClick={() => openAppModal(careFeatures[2].title, careFeatures[2].featureDetails)}
-                  animDelay={careFeatures[2].animDelay}
-                  visible={hubVisible}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* vertical line center → bottom */}
-          <div className="grid grid-cols-[1fr_auto_1fr] gap-0">
-            <div />
-            <div className="flex justify-center" style={{ minWidth: 240 }}>
-              <div style={{ height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-                <div style={{ width: 2, height: '100%', position: 'relative' }}>
-                  <ConnLine dir="v" delay="0.5s" visible={hubVisible} glowing={activeIndex === 3} />
-                </div>
-              </div>
-            </div>
-            <div />
-          </div>
-
-          {/* ── Row 3: [empty] [BOTTOM card] [empty] ── */}
-          <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-0">
-            <div />
-            <div className="flex justify-center" style={{ minWidth: 240 }}>
-              <div className="w-72">
-                <HubFeatureCard
-                  item={careFeatures[3]}
-                  isActive={activeIndex === 3}
-                  onEnter={() => setHoveredIndex(3)}
-                  onLeave={() => setHoveredIndex(null)}
-                  onClick={() => openAppModal(careFeatures[3].title, careFeatures[3].featureDetails)}
-                  animDelay={careFeatures[3].animDelay}
-                  visible={hubVisible}
-                />
-              </div>
-            </div>
-            <div />
-          </div>
-
-          {/* ── Extra 2 cards below in a 2-col row ── */}
-          <div className="mt-8 grid grid-cols-2 gap-6 max-w-2xl mx-auto">
-            {careFeatures.slice(4).map((item, i) => (
-              <HubFeatureCard
-                key={item.id}
-                item={item}
-                isActive={activeIndex === 4 + i}
-                onEnter={() => setHoveredIndex(4 + i)}
-                onLeave={() => setHoveredIndex(null)}
-                onClick={() => openAppModal(item.title, item.featureDetails)}
-                animDelay={item.animDelay}
-                visible={hubVisible}
-              />
-            ))}
           </div>
         </div>
 
-        {/* ════════════════════════════════════════════════════════
-            MOBILE — Swipe Carousel  (hidden on desktop)
-        ═══════════════════════════════════════════════════════ */}
-        <div className="md:hidden">
-          {/* swipe nav */}
+        {/* ════════════════════════════════════════════════════════════
+            MOBILE / TABLET CAROUSEL (Visible on < lg screens)
+        ═══════════════════════════════════════════════════════════ */}
+        <div className="lg:hidden">
+          {/* Mobile Central Phone Preview */}
+          <div className="flex flex-col items-center justify-center mb-8">
+            <div
+              className="relative rounded-[32px] p-2 shadow-2xl shadow-emerald-900/20"
+              style={{
+                width: 200,
+                background: 'linear-gradient(145deg, #1f2937, #111827)',
+                border: '2.5px solid rgba(255, 255, 255, 0.25)',
+              }}
+            >
+              <div className="rounded-[24px] overflow-hidden bg-gradient-to-b from-emerald-50 via-white to-[#eef7f1] p-3 text-center flex flex-col items-center">
+                <img
+                  src="/kosmico-logo.png"
+                  alt="Kosmico"
+                  className="w-9 h-9 object-contain mb-1"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                />
+                <span className="text-[10px] font-black text-emerald-950 uppercase">Kosmico</span>
+                <span className="text-[11px] font-bold text-neutral-700 mb-2">Good Morning, Amit ☀️</span>
+
+                {/* Score gauge */}
+                <div className="relative w-24 h-24 flex items-center justify-center mb-2">
+                  <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" strokeWidth="8" />
+                    <circle
+                      cx="50"
+                      cy="50"
+                      r="40"
+                      fill="none"
+                      stroke="#059669"
+                      strokeWidth="8"
+                      strokeDasharray="251.2"
+                      strokeDashoffset="32.6"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-xl font-black text-emerald-950">87%</span>
+                    <span className="text-[8px] font-bold text-neutral-500 uppercase">Wellness</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Pedestal */}
+            <div className="w-36 h-4 rounded-[50%] bg-gradient-to-r from-emerald-800 via-amber-400 to-emerald-900 shadow-md -mt-2" />
+          </div>
+
+          {/* Swipe navigation header */}
           <div className="flex items-center justify-between mb-4 px-1">
             <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-900">
               <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
               <span>Swipe features left / right</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <button onClick={handlePrev} className="p-2 rounded-full bg-white border border-emerald-900/15 shadow-xs text-neutral-800 hover:bg-emerald-50 active:scale-95 transition-all cursor-pointer" aria-label="Previous">
+              <button
+                onClick={() =>
+                  scrollMobileTo((mobileActiveIdx - 1 + FEATURES.length) % FEATURES.length)
+                }
+                className="p-2 rounded-full bg-white border border-emerald-900/15 shadow-xs text-neutral-800 hover:bg-emerald-50 active:scale-95 transition-all cursor-pointer"
+                aria-label="Previous feature"
+              >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <button onClick={handleNext} className="p-2 rounded-full bg-white border border-emerald-900/15 shadow-xs text-neutral-800 hover:bg-emerald-50 active:scale-95 transition-all cursor-pointer" aria-label="Next">
+              <button
+                onClick={() => scrollMobileTo((mobileActiveIdx + 1) % FEATURES.length)}
+                className="p-2 rounded-full bg-white border border-emerald-900/15 shadow-xs text-neutral-800 hover:bg-emerald-50 active:scale-95 transition-all cursor-pointer"
+                aria-label="Next feature"
+              >
                 <ChevronRight className="w-4 h-4" />
               </button>
             </div>
           </div>
 
+          {/* Horizontal Snap Scroll Cards */}
           <div
-            ref={containerRef}
-            onScroll={handleScroll}
+            ref={mobileScrollRef}
+            onScroll={handleMobileScroll}
             className="flex gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 scrollbar-none"
             style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
           >
-            {careFeatures.map((item, index) => {
-              const Icon = item.icon;
-              const isActive = activeIndex === index;
+            {FEATURES.map((feature, idx) => {
+              const IconComponent = feature.icon;
+              const isActive = mobileActiveIdx === idx;
+
               return (
                 <div
-                  key={item.id}
-                  onMouseEnter={() => setHoveredIndex(index)}
-                  onMouseLeave={() => setHoveredIndex(null)}
-                  onClick={() => { scrollToIndex(index); openAppModal(item.title, item.featureDetails); }}
-                  className={`w-[85vw] sm:w-[75vw] max-w-[340px] shrink-0 snap-center group cursor-pointer rounded-[32px] p-7 transition-all duration-500 flex flex-col justify-between relative overflow-hidden select-none ${
+                  key={feature.id}
+                  onClick={() => {
+                    scrollMobileTo(idx);
+                    openAppModal(feature.title, feature.featureDetails);
+                  }}
+                  className={`w-[85vw] sm:w-[75vw] max-w-[340px] shrink-0 snap-center rounded-[28px] p-6 transition-all duration-500 cursor-pointer select-none border ${
                     isActive
-                      ? 'bg-gradient-to-br from-emerald-500/10 via-emerald-50/70 to-amber-50/50 border-2 border-emerald-600/70 shadow-2xl -translate-y-2 scale-[1.02]'
-                      : 'bg-white/90 backdrop-blur-md border border-emerald-900/10 shadow-lg hover:border-emerald-600/40 hover:-translate-y-1'
+                      ? 'bg-white border-emerald-500 shadow-xl shadow-emerald-900/15 -translate-y-1'
+                      : 'bg-white/90 border-emerald-900/10 shadow-md'
                   }`}
                 >
-                  <div className={`absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-emerald-800 via-amber-400 to-emerald-600 transition-opacity duration-500 ${isActive ? 'opacity-100' : 'opacity-40 group-hover:opacity-80'}`} />
-                  <div>
-                    <div className="flex items-center justify-between mb-6">
-                      <div className={`w-14 h-14 rounded-2xl ${item.iconBg} flex items-center justify-center shadow-md transition-transform duration-500 ${isActive ? 'scale-110 rotate-3' : 'group-hover:scale-105'}`}>
-                        <Icon className="w-7 h-7" />
-                      </div>
-                      <span className="text-[10px] font-black tracking-wider uppercase bg-gradient-to-r from-emerald-900 to-emerald-950 text-amber-300 px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm border border-emerald-700/50">
-                        <Sparkles className="w-3 h-3 text-amber-400 fill-amber-400 animate-pulse" />
-                        {item.badge}
-                      </span>
+                  <div className="flex items-center justify-between mb-4">
+                    <div
+                      className={`w-12 h-12 rounded-2xl ${feature.iconBg} ${feature.iconColor} flex items-center justify-center shadow-md`}
+                    >
+                      <IconComponent className="w-6 h-6" />
                     </div>
-                    <h3 className={`text-xl font-serif font-bold mb-2 leading-snug ${isActive ? 'text-emerald-950 font-black' : 'text-neutral-900 group-hover:text-emerald-800'}`}>{item.title}</h3>
-                    <p className="text-xs text-neutral-600 leading-relaxed mb-6">{item.desc}</p>
-                    <div className={`border rounded-2xl p-3.5 mb-6 flex justify-between items-center ${isActive ? 'bg-white/90 border-emerald-300 shadow-xs' : 'bg-stone-50/90 border-stone-200/90 group-hover:border-emerald-200'}`}>
-                      <div className="flex items-center gap-2.5">
-                        <span className="relative flex h-2.5 w-2.5 shrink-0">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600" />
-                        </span>
-                        <div>
-                          <div className="text-[10px] uppercase font-bold text-neutral-400">{item.statLabel}</div>
-                          <div className="text-xs font-black text-emerald-900 mt-0.5">{item.stat}</div>
-                        </div>
-                      </div>
-                      <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                    </div>
+                    <span className="text-[10px] font-black tracking-wider uppercase bg-emerald-900 text-amber-300 px-3 py-1.5 rounded-full flex items-center gap-1 shadow-xs border border-emerald-700/50">
+                      <span>{feature.badgeIcon}</span>
+                      <span>{feature.badge}</span>
+                    </span>
                   </div>
-                  <div className="pt-4 border-t border-neutral-100 flex items-center justify-between text-xs font-extrabold text-emerald-800">
-                    <div className="flex items-center gap-1.5">
-                      <Zap className="w-3.5 h-3.5 text-amber-500 fill-amber-500 animate-pulse" />
-                      <span>{item.actionText}</span>
-                    </div>
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shadow-md transition-all ${isActive ? 'bg-emerald-950 scale-110 text-amber-300' : 'bg-emerald-800 text-white group-hover:bg-emerald-900 group-hover:scale-105'}`}>
-                      <ArrowRight className="w-4 h-4 text-amber-400" />
-                    </div>
+
+                  <h3 className="text-lg font-serif font-black text-neutral-900 mb-2 leading-snug">
+                    {feature.title}
+                  </h3>
+                  <p className="text-xs text-neutral-600 leading-relaxed mb-4">
+                    {feature.desc}
+                  </p>
+
+                  <div className="pt-3 border-t border-neutral-100 flex items-center justify-between text-xs font-extrabold text-emerald-800">
+                    <span>Tap to view app demo</span>
+                    <ArrowRight className="w-4 h-4 text-emerald-700" />
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* dot indicators */}
-          <div className="flex justify-center items-center gap-2 mt-6">
-            {careFeatures.map((_, dotIdx) => (
+          {/* Dots Indicator */}
+          <div className="flex justify-center items-center gap-2 mt-4">
+            {FEATURES.map((_, dotIdx) => (
               <button
                 key={dotIdx}
-                onClick={() => scrollToIndex(dotIdx)}
-                className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${activeIndex === dotIdx ? 'w-7 bg-emerald-800' : 'w-2 bg-emerald-800/25 hover:bg-emerald-800/50'}`}
+                onClick={() => scrollMobileTo(dotIdx)}
+                className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+                  mobileActiveIdx === dotIdx ? 'w-7 bg-emerald-800' : 'w-2 bg-emerald-800/25'
+                }`}
                 aria-label={`Go to feature ${dotIdx + 1}`}
               />
             ))}
@@ -662,6 +1010,7 @@ export const SmartCareSuite: React.FC = () => {
         </div>
       </Container>
 
+      {/* App Download Modal */}
       <PlayStoreModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
