@@ -6,6 +6,7 @@ import {
   Heart, Droplets, Flame, ShieldAlert
 } from 'lucide-react';
 import { PlayStoreModal } from '../../components/ui/PlayStoreModal';
+import { useAuthStore } from '../../store/useAuthStore';
 
 interface FeatureItem {
   id: string;
@@ -214,6 +215,11 @@ const FEATURE_MOTION_STYLES = `
 `;
 
 export const SmartCareSuite: React.FC = () => {
+  const { user, isAuthenticated } = useAuthStore();
+  const rawName = user?.name || user?.fullName || '';
+  const firstName = rawName.trim().split(' ')[0];
+  const greetingName = isAuthenticated && firstName ? firstName : 'Wellness Seeker';
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalDesc, setModalDesc] = useState('');
@@ -730,7 +736,7 @@ export const SmartCareSuite: React.FC = () => {
                       Kosmico
                     </div>
                     <div className="text-[7.5px] sm:text-[10px] md:text-[12px] font-bold text-neutral-700 whitespace-nowrap">
-                      Good Morning, Amit ☀️
+                      Good Morning, {greetingName} ☀️
                     </div>
                   </div>
 
