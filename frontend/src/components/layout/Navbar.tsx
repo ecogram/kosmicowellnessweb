@@ -107,7 +107,7 @@ export function Navbar() {
           <div className="flex items-center gap-2 sm:gap-3.5 md:gap-4 min-w-0 shrink-0">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="text-text-main w-10 h-10 rounded-xl flex items-center justify-center hover:bg-neutral-100 active:scale-95 md:hidden shrink-0 hover:text-primary transition-all cursor-pointer"
+            className="text-text-main w-10 h-10 rounded-xl flex items-center justify-center hover:bg-neutral-100 active:scale-95 xl:hidden shrink-0 hover:text-primary transition-all cursor-pointer"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -121,13 +121,13 @@ export function Navbar() {
               />
               <span className="font-serif font-black text-[15px] sm:text-xl md:text-2xl tracking-tight whitespace-nowrap flex items-center gap-1 leading-none select-none">
                 <span className="text-emerald-950 font-black">Kosmico</span>
-                <span className="text-[#0a7a40] font-extrabold">Wellness</span>
+                <span className="text-[#0a7a40] font-extrabold compact-brand-detail">Wellness</span>
               </span>
             </Link>
           </div>
 
-          {/* Center: Desktop Navigation (768px+) */}
-          <div className="hidden md:flex items-center space-x-1.5 lg:space-x-3 xl:space-x-4 shrink-0">
+          {/* Center: Desktop Navigation (1280px+) */}
+          <div className="hidden xl:flex items-center space-x-1.5 lg:space-x-3 xl:space-x-4 shrink-0">
             {navLinks.map((link) => {
               const isActive = link.path === '/'
                 ? location.pathname === '/'
@@ -164,7 +164,7 @@ export function Navbar() {
             {/* Wishlist Button */}
             <Link
               to="/wishlist"
-              className="text-text-main hover:text-rose-600 transition-all relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center hover:bg-neutral-100 active:scale-95"
+              className="text-text-main hover:text-rose-600 transition-all relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center hover:bg-neutral-100 active:scale-95 compact-nav-optional"
               title="My Wishlist"
               aria-label="Wishlist"
             >
@@ -179,7 +179,7 @@ export function Navbar() {
             {/* Notification Bell */}
             <Link
               to="/notifications"
-              className="text-text-main hover:text-primary transition-all relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center hover:bg-neutral-100 active:scale-95"
+              className="text-text-main hover:text-primary transition-all relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center hover:bg-neutral-100 active:scale-95 compact-nav-optional"
               title="Notifications"
               aria-label="Notifications"
             >
@@ -302,8 +302,12 @@ export function Navbar() {
 
           {/* Full-Height Mobile Drawer */}
           <div
-            className="fixed inset-y-0 left-0 z-[10000] w-[85vw] max-w-sm bg-white text-neutral-900 shadow-2xl border-r border-neutral-200 flex flex-col h-full max-h-screen overflow-hidden animate-slideInRight overscroll-contain"
-            style={{ backgroundColor: '#ffffff' }}
+            className="fixed inset-y-0 left-0 z-[10000] w-[85vw] max-w-sm bg-white text-neutral-900 shadow-2xl border-r border-neutral-200 flex flex-col h-[100dvh] max-h-[100dvh] overflow-hidden animate-slideInRight overscroll-contain"
+            style={{
+              backgroundColor: '#ffffff',
+              paddingTop: 'env(safe-area-inset-top)',
+              paddingBottom: 'env(safe-area-inset-bottom)',
+            }}
           >
             {/* Drawer Header */}
             <div className="flex items-center justify-between p-4 border-b border-neutral-200 bg-white text-neutral-900 shrink-0">
@@ -344,6 +348,23 @@ export function Navbar() {
                   </Link>
                 );
               })}
+
+              <div className="compact-nav-links hidden grid-cols-2 gap-2">
+                <Link
+                  to="/wishlist"
+                  className="px-3 py-3 rounded-xl border border-neutral-200 bg-neutral-50 text-neutral-800 font-semibold text-sm text-center"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Wishlist
+                </Link>
+                <Link
+                  to="/notifications"
+                  className="px-3 py-3 rounded-xl border border-neutral-200 bg-neutral-50 text-neutral-800 font-semibold text-sm text-center"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Notifications
+                </Link>
+              </div>
 
               <button
                 onClick={() => {

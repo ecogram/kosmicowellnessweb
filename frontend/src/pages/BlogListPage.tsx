@@ -90,8 +90,8 @@ export function BlogListPage() {
 
           {/* Language Toggle Pill in Banner */}
           <div className="pt-2 flex items-center justify-center gap-2">
-            <div className="inline-flex items-center p-1 bg-white rounded-2xl border border-border shadow-xs">
-              <div className="pl-3 pr-2 text-xs font-bold text-neutral-600 flex items-center gap-1.5">
+            <div className="inline-flex items-center p-1 bg-white rounded-2xl border border-border shadow-xs blog-language-toggle">
+              <div className="pl-3 pr-2 text-xs font-bold text-neutral-600 flex items-center gap-1.5 blog-language-label">
                 <Languages className="w-3.5 h-3.5 text-[#0a7a40]" />
                 <span>Language:</span>
               </div>

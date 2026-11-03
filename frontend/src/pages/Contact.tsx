@@ -111,7 +111,7 @@ export function Contact() {
                 <div className="w-10 h-10 rounded-xl bg-emerald-800/10 text-emerald-800 shrink-0 flex items-center justify-center font-bold mt-1">
                   <MapPin className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="font-bold text-neutral-900 mb-1">Main Office Address</h3>
                   <a
                     href="https://www.google.com/maps/search/?api=1&query=NX+One+Tower+Greater+Noida+West+201306"
@@ -129,7 +129,7 @@ export function Contact() {
                 <div className="w-10 h-10 rounded-xl bg-emerald-800/10 text-emerald-800 shrink-0 flex items-center justify-center font-bold">
                   <Headphones className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="font-bold text-neutral-900 mb-1">Customer Support Line</h3>
                   <a
                     href="https://wa.me/919795223355?text=Hello%20Kosmico%20Wellness%20Support"
@@ -147,14 +147,14 @@ export function Contact() {
                 <div className="w-10 h-10 rounded-xl bg-emerald-800/10 text-emerald-800 shrink-0 flex items-center justify-center font-bold">
                   <Mail className="w-5 h-5" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="font-bold text-neutral-900 mb-1">Official Email Support</h3>
                   <a
                     href="https://mail.google.com/mail/?view=cm&to=support@kosmicowellness.com&su=Inquiry%20regarding%20Kosmico%20Wellness"
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={handleEmailClick}
-                    className="text-sm font-bold text-emerald-800 hover:underline"
+                    className="text-sm font-bold text-emerald-800 hover:underline break-all"
                   >
                     support@kosmicowellness.com
                   </a>
@@ -165,7 +165,7 @@ export function Contact() {
                 <div className="w-10 h-10 rounded-xl bg-emerald-800/10 text-emerald-800 shrink-0 flex items-center justify-center font-bold">
                   <Clock className="w-5 h-5 text-amber-600" />
                 </div>
-                <div>
+                <div className="min-w-0 flex-1">
                   <h3 className="font-bold text-neutral-900 mb-1">Operating Hours</h3>
                   <p className="text-xs sm:text-sm text-neutral-600">
                     Mon - Sat: 11:00 AM - 7:00 PM <br />

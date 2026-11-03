@@ -104,8 +104,8 @@ export function HowItWorksPage() {
             {/* Card 1: Official Certificate of Analysis (COA) - Placed FIRST */}
             <div className="bg-[#fafcfa] rounded-3xl border border-emerald-800/20 p-6 sm:p-8 shadow-xl flex flex-col justify-between hover:shadow-2xl transition-all">
               <div>
-                <div className="flex items-start justify-between gap-3 mb-5 pb-4 border-b border-neutral-200">
-                  <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5 pb-4 border-b border-neutral-200">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-[#0a7a40] flex items-center justify-center font-bold shrink-0">
                       <ShieldCheck className="w-6 h-6" />
                     </div>
@@ -114,7 +114,7 @@ export function HowItWorksPage() {
                       <p className="text-xs text-neutral-500 mt-0.5">Official Quality Analysis &amp; Verification</p>
                     </div>
                   </div>
-                  <span className="bg-emerald-100 text-[#0a7a40] text-xs font-extrabold uppercase px-3 py-1 rounded-full shrink-0">
+                  <span className="self-start bg-emerald-100 text-[#0a7a40] text-xs font-extrabold uppercase px-3 py-1 rounded-full shrink-0">
                     Verified
                   </span>
                 </div>
@@ -179,8 +179,8 @@ export function HowItWorksPage() {
             {/* Card 2: Certified Nutrition Facts Label - Placed SECOND */}
             <div className="bg-[#fafcfa] rounded-3xl border border-neutral-200 p-6 sm:p-8 shadow-xl flex flex-col justify-between hover:shadow-2xl transition-all">
               <div>
-                <div className="flex items-start justify-between gap-3 mb-5 pb-4 border-b border-neutral-200">
-                  <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5 pb-4 border-b border-neutral-200">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold shrink-0">
                       <FileText className="w-6 h-6" />
                     </div>
@@ -189,7 +189,7 @@ export function HowItWorksPage() {
                       <p className="text-xs text-neutral-500 mt-0.5">Standard Dietary Declaration • 100g Serving</p>
                     </div>
                   </div>
-                  <span className="bg-amber-100 text-amber-900 text-xs font-extrabold uppercase px-3 py-1 rounded-full shrink-0">
+                  <span className="self-start bg-amber-100 text-amber-900 text-xs font-extrabold uppercase px-3 py-1 rounded-full shrink-0">
                     0.00 Calories
                   </span>
                 </div>

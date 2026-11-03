@@ -1416,7 +1416,10 @@ export const Checkout: React.FC = () => {
         </div>
 
         {/* 6. Sticky Bottom Button */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-neutral-200 p-4 z-40">
+        <div
+          className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md px-4 pt-4 z-40"
+          style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+        >
           <div className="max-w-xl mx-auto">
             <button
               onClick={handlePlaceOrder}

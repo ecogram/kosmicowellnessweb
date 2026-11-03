@@ -314,7 +314,7 @@ export function AiConsultantButton() {
         left: `${modalPosition.x}px`,
         top: `${modalPosition.y}px`,
         width: isMobile ? `min(calc(100vw - 16px), 420px)` : '380px',
-        maxHeight: isMobile ? 'min(520px, calc(100vh - 40px))' : 'min(520px, calc(100vh - 120px))',
+        maxHeight: isMobile ? 'min(520px, calc(100dvh - 40px))' : 'min(520px, calc(100dvh - 120px))',
         zIndex: 99999,
       };
     }
@@ -323,13 +323,13 @@ export function AiConsultantButton() {
     if (isMobile) {
       return {
         position: 'fixed',
-        left: '12px',
-        right: '12px',
-        bottom: '16px',
-        width: 'calc(100vw - 24px)',
+        left: 'max(12px, env(safe-area-inset-left))',
+        right: 'max(12px, env(safe-area-inset-right))',
+        bottom: 'max(16px, env(safe-area-inset-bottom))',
+        width: 'calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right))',
         maxWidth: '420px',
         margin: '0 auto',
-        maxHeight: 'min(520px, calc(100vh - 40px))',
+        maxHeight: 'min(520px, calc(100dvh - 40px))',
         zIndex: 99999,
       };
     }
@@ -341,7 +341,7 @@ export function AiConsultantButton() {
         bottom: '96px',
         right: '24px',
         width: '380px',
-        maxHeight: 'min(520px, calc(100vh - 120px))',
+        maxHeight: 'min(520px, calc(100dvh - 120px))',
         zIndex: 99999,
       };
     }
@@ -393,12 +393,17 @@ export function AiConsultantButton() {
         style={
           hasDragged
             ? { left: `${position.x}px`, top: `${position.y}px` }
-            : { bottom: '96px', right: '24px' }
+            : windowWidth < 640
+              ? {
+                  bottom: 'calc(max(1.5rem, env(safe-area-inset-bottom)) + 72px)',
+                  right: 'max(1.5rem, env(safe-area-inset-right))',
+                }
+              : { bottom: '96px', right: '24px' }
         }
       >
         {/* Tooltip / Chat Bubble */}
         {showTooltip && !isOpen && (
-          <div className="relative bg-white rounded-2xl shadow-2xl border border-neutral-200 p-3.5 max-w-[220px] animate-fade-in-up -translate-y-2">
+          <div className="relative hidden sm:block bg-white rounded-2xl shadow-2xl border border-neutral-200 p-3.5 max-w-[220px] animate-fade-in-up -translate-y-2">
             <button
               onClick={() => setShowTooltip(false)}
               className="absolute -top-2 -right-2 bg-neutral-200 hover:bg-neutral-300 rounded-full p-0.5 transition-colors"

@@ -100,9 +100,9 @@ export const CarePage: React.FC = () => {
         </div>
 
         {/* Header Title Matching App */}
-        <div className="flex items-center justify-between gap-4 mb-6 pb-4 border-b border-neutral-200">
-          <div>
-            <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-6 pb-4 border-b border-neutral-200">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="font-serif text-2xl sm:text-3xl font-bold text-[#14532d]">
                 GlucoRhythm
               </span>
@@ -117,7 +117,7 @@ export const CarePage: React.FC = () => {
 
           <button
             onClick={() => openAppStoreModal('Smartwatch & CGM Devices', 'Connect your smartwatches and CGMs via Bluetooth on the Kosmico Mobile App.')}
-            className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#16a34a] border border-[#16a34a]/30 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+            className="self-start sm:self-auto px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-[#16a34a] border border-[#16a34a]/30 font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
           >
             <Watch className="w-4 h-4" />
             <span>Devices</span>

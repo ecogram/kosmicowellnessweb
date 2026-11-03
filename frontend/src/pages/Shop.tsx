@@ -68,10 +68,10 @@ export const Shop = () => {
         schema={shopSchema}
       />
       <Container>
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4">
           <h1 className="font-serif text-4xl font-bold text-primary">All Products</h1>
           
-          <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap items-center gap-4 w-full lg:w-auto">
             <input
               type="text"
               placeholder="Search products..."

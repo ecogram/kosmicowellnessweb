@@ -139,17 +139,17 @@ export const AiConsultantPage: React.FC = () => {
       <Container className="flex-1 flex flex-col max-w-4xl mx-auto">
 
         {/* Top Title Bar */}
-        <div className="flex items-center justify-between pb-4 mb-4 border-b border-border">
-          <div className="flex items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 mb-4 border-b border-border">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Link to="/" className="p-2 rounded-xl bg-surface hover:bg-neutral-100 border border-border">
               <ArrowLeft className="w-5 h-5 text-neutral-700" />
             </Link>
             <div className="w-10 h-10 rounded-2xl bg-emerald-800 text-white flex items-center justify-center font-bold">
               <Bot className="w-5 h-5" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold font-serif text-neutral-900">Kosmico AI Health Consultant</h1>
+                <h1 className="text-base sm:text-lg font-bold font-serif text-neutral-900 break-words">Kosmico AI Health Consultant</h1>
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[10px] font-bold text-emerald-800 uppercase">Online</span>
               </div>
@@ -158,7 +158,7 @@ export const AiConsultantPage: React.FC = () => {
           </div>
 
           {/* Language Switcher Toggle Button */}
-          <div className="flex items-center bg-emerald-950/10 p-1 rounded-xl border border-emerald-800/20 text-xs font-bold gap-1">
+          <div className="self-end sm:self-auto flex items-center bg-emerald-950/10 p-1 rounded-xl border border-emerald-800/20 text-xs font-bold gap-1">
             <button
               type="button"
               onClick={() => handleLanguageChange('hinglish')}
