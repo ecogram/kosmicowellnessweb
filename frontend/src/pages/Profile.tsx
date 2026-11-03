@@ -1655,7 +1655,7 @@ export const Profile: React.FC = () => {
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {/* Call Us */}
                   <a
-                    href="tel:+919793170555"
+                    href="tel:+919795223355"
                     className="p-4 rounded-2xl bg-[#e8efe9] hover:bg-[#dfebe1] border border-transparent hover:border-[#0e7440]/20 text-center flex flex-col items-center justify-center transition-all group cursor-pointer"
                   >
                     <div className="w-11 h-11 rounded-full bg-[#d6e5d9] text-[#0e7440] flex items-center justify-center mb-2 group-hover:scale-105 transition-transform">
@@ -1731,7 +1731,7 @@ export const Profile: React.FC = () => {
 
                   {/* Customer Support Line */}
                   <a
-                    href="tel:+919793170555"
+                    href="tel:+919795223355"
                     className="p-3.5 rounded-2xl bg-[#e8efe9] hover:bg-[#dfebe1] flex items-start gap-3 transition-colors group cursor-pointer"
                   >
                     <div className="w-8 h-8 rounded-full bg-[#d6e5d9] text-[#0e7440] flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition-transform">
@@ -1740,7 +1740,7 @@ export const Profile: React.FC = () => {
                     <div className="min-w-0 flex-1">
                       <div className="text-[11px] font-semibold text-neutral-500">Customer Support Line</div>
                       <div className="text-xs font-bold text-neutral-900 group-hover:text-[#0e7440] transition-colors mt-0.5">
-                        +91 97931 70555
+                        +91 97952 23355
                       </div>
                     </div>
                   </a>

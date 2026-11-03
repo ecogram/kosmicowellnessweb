@@ -158,8 +158,8 @@ export function TermsOfService() {
             </li>
             <li>
               Phone / WhatsApp:{' '}
-              <a href="tel:+919793170555" className="text-primary hover:underline font-semibold">
-                +91 97931 70555
+              <a href="tel:+919795223355" className="text-primary hover:underline font-semibold">
+                +91 97952 23355
               </a>
             </li>
             <li>

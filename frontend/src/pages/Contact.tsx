@@ -9,7 +9,7 @@ const contactSchema = {
   mainEntity: {
     '@type': 'Organization',
     name: 'Kosmico Wellness Private Limited',
-    telephone: '+91-9793170555',
+    telephone: '+91-9795223355',
     email: 'support@kosmicowellness.com',
     url: 'https://www.kosmicowellness.com',
   },
@@ -18,7 +18,7 @@ const contactSchema = {
 export function Contact() {
   const handleCallClick = () => {
     if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      window.location.href = 'tel:+919793170555';
+      window.location.href = 'tel:+919795223355';
     }
   };
 
@@ -32,7 +32,7 @@ export function Contact() {
     <div className="py-16 md:py-24 bg-background">
       <SEO
         title="Contact Kosmico Wellness — Customer Support & WhatsApp Inquiries"
-        description="Connect with Kosmico Wellness Private Limited. WhatsApp & Phone support: +91-9793170555, Email: support@kosmicowellness.com. Fast response for orders and queries."
+        description="Connect with Kosmico Wellness Private Limited. WhatsApp & Phone support: +91-9795223355, Email: support@kosmicowellness.com. Fast response for orders and queries."
         keywords="contact Kosmico Wellness, Kosmico customer care, Kosmico phone number, Kosmico email support, Kosmico WhatsApp"
         canonicalUrl="https://www.kosmicowellness.com/contact"
         schema={contactSchema}
@@ -51,7 +51,7 @@ export function Contact() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
           {/* 1. Call Us */}
           <a
-            href="https://wa.me/919793170555?text=Hello%20Kosmico%20Wellness%2C%20I%20would%20like%20to%20connect%20with%20support."
+            href="https://wa.me/919795223355?text=Hello%20Kosmico%20Wellness%2C%20I%20would%20like%20to%20connect%20with%20support."
             target="_blank"
             rel="noopener noreferrer"
             onClick={handleCallClick}
@@ -62,7 +62,7 @@ export function Contact() {
             </div>
             <h3 className="font-bold text-sm text-neutral-900 group-hover:text-[#0a7a40] transition-colors">Call Us</h3>
             <p className="text-xs text-neutral-500">Mon-Sat 11AM - 7PM</p>
-            <div className="text-xs font-bold text-emerald-800 mt-2">+91 97931 70555</div>
+            <div className="text-xs font-bold text-emerald-800 mt-2">+91 97952 23355</div>
           </a>
 
           {/* 2. Email Us */}
@@ -132,13 +132,13 @@ export function Contact() {
                 <div>
                   <h3 className="font-bold text-neutral-900 mb-1">Customer Support Line</h3>
                   <a
-                    href="https://wa.me/919793170555?text=Hello%20Kosmico%20Wellness%20Support"
+                    href="https://wa.me/919795223355?text=Hello%20Kosmico%20Wellness%20Support"
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={handleCallClick}
                     className="text-sm font-bold text-emerald-800 hover:underline"
                   >
-                    +91 97931 70555
+                    +91 97952 23355
                   </a>
                 </div>
               </div>

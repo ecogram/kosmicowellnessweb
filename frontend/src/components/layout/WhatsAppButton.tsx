@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 
-const WHATSAPP_NUMBER = '919793170555'; // +91 97931 70555
+const WHATSAPP_NUMBER = '919795223355'; // +91 97952 23355
 const WHATSAPP_MESSAGE = encodeURIComponent(
   'Hello! I came across Kosmico Wellness and I\'m interested in learning more about Sweet Monk sweetener. Can you help me? 😊'
 );
