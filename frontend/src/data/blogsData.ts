@@ -88,8 +88,10 @@ import { NEW_BLOGS_OCT_26 } from './newBlogsOct26';
 import { NEW_BLOGS_OCT_24 } from './newBlogsOct24';
 import { NEW_BLOGS_OCT_29 } from './newBlogsOct29';
 import { NEW_BLOGS_NOV_02 } from './newBlogsNov02';
+import { NEW_BLOGS_NOV_17 } from './newBlogsNov17';
 
 export const BLOG_POSTS: BlogPost[] = [
+  ...NEW_BLOGS_NOV_17,
   ...NEW_BLOGS_NOV_02,
   ...NEW_BLOGS_OCT_29,
   ...NEW_BLOGS_OCT_26,

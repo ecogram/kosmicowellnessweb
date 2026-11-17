@@ -119,6 +119,31 @@ export const CommunityPage: React.FC = () => {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Compress image to max 1200px width / 80% quality for fast upload (like mobile app)
+  const compressImage = (file: File, maxWidth = 1200, quality = 0.8): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width;
+        let h = img.height;
+        if (w > maxWidth) {
+          h = Math.round((h * maxWidth) / w);
+          w = maxWidth;
+        }
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('Canvas not supported')); return; }
+        ctx.drawImage(img, 0, 0, w, h);
+        const base64 = canvas.toDataURL('image/jpeg', quality);
+        resolve(base64);
+      };
+      img.onerror = () => reject(new Error('Image load failed'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   // Open Edit Modal with existing post data
   const handleOpenEditPost = (post: CommunityPost) => {
     setEditingPost(post);
@@ -209,7 +234,7 @@ export const CommunityPage: React.FC = () => {
   }, [isAuthenticated]);
 
   // Handle Media File Selection (Photos only)
-  const handleMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMediaSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -233,11 +258,18 @@ export const CommunityPage: React.FC = () => {
     const previewUrl = URL.createObjectURL(file);
     setMediaPreview(previewUrl);
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setBase64Media(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    // Compress and convert to base64 for JSON upload (like mobile app)
+    try {
+      const compressed = await compressImage(file, 1200, 0.8);
+      setBase64Media(compressed);
+    } catch {
+      // Fallback: use raw FileReader if compression fails
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setBase64Media(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const removeSelectedMedia = () => {
@@ -275,43 +307,33 @@ export const CommunityPage: React.FC = () => {
     setIsSubmitting(true);
     setSubmitError(null);
 
+    // Helper: ensure compressed base64 image data is available before sending
+    const getImageBase64 = async (): Promise<string | null> => {
+      if (base64Media) return base64Media;
+      if (!mediaFile) return null;
+      try {
+        return await compressImage(mediaFile, 1200, 0.8);
+      } catch {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(mediaFile);
+        });
+      }
+    };
+
     // EDIT EXISTING POST MODE
     if (editingPost) {
       try {
-        if (mediaFile) {
-          const formData = new FormData();
-          formData.append('content', postContent.trim());
-          formData.append('privacyLevel', 'public');
-          if (postLocation.trim()) {
-            formData.append('location', postLocation.trim());
-          }
-          selectedTags.forEach((t) => formData.append('tags', t));
-          formData.append('media', mediaFile);
+        const imageData = await getImageBase64();
 
-          try {
-            await api.put(`/posts/${editingPost._id}`, formData);
-          } catch (err) {
-            if (base64Media) {
-              await api.put(`/posts/${editingPost._id}`, {
-                content: postContent.trim(),
-                privacyLevel: 'public',
-                location: postLocation.trim(),
-                tags: selectedTags,
-                mediaUrl: base64Media,
-              });
-            } else {
-              throw err;
-            }
-          }
-        } else {
-          await api.put(`/posts/${editingPost._id}`, {
-            content: postContent.trim(),
-            privacyLevel: 'public',
-            location: postLocation.trim(),
-            tags: selectedTags,
-            mediaUrl: mediaPreview || '',
-          });
-        }
+        await api.put(`/posts/${editingPost._id}`, {
+          content: postContent.trim(),
+          privacyLevel: 'public',
+          location: postLocation.trim(),
+          tags: selectedTags,
+          mediaUrl: imageData || mediaPreview || '',
+        });
 
         setPosts((prevPosts) =>
           prevPosts.map((p) => {
@@ -347,46 +369,22 @@ export const CommunityPage: React.FC = () => {
       return;
     }
 
-    // CREATE NEW POST MODE
+    // CREATE NEW POST MODE — Always send JSON (like the mobile app)
     try {
-      let res;
-      if (mediaFile) {
-        const formData = new FormData();
-        formData.append('content', postContent.trim());
-        formData.append('privacyLevel', 'public');
-        if (postLocation.trim()) {
-          formData.append('location', postLocation.trim());
-        }
-        selectedTags.forEach((t) => formData.append('tags', t));
-        formData.append('media', mediaFile);
+      const imageData = await getImageBase64();
 
-        try {
-          res = await api.post('/posts', formData);
-        } catch (formDataErr: any) {
-          // If multipart upload fails, fallback to Base64 JSON
-          if (base64Media) {
-            res = await api.post('/posts', {
-              content: postContent.trim(),
-              privacyLevel: 'public',
-              location: postLocation.trim(),
-              tags: selectedTags,
-              mediaUrls: [base64Media],
-            });
-          } else {
-            throw formDataErr;
-          }
-        }
-      } else {
-        // Text-only post - send clean JSON payload directly
-        res = await api.post('/posts', {
-          content: postContent.trim(),
-          privacyLevel: 'public',
-          location: postLocation.trim(),
-          tags: selectedTags,
-          mediaUrls: [],
-        });
+      const postPayload: Record<string, any> = {
+        content: postContent.trim(),
+        privacyLevel: 'public',
+        location: postLocation.trim(),
+        tags: selectedTags,
+      };
+
+      if (imageData) {
+        postPayload.mediaUrl = imageData;
       }
 
+      const res = await api.post('/posts', postPayload);
       const newPostData = res.data?.data?.post || res.data?.post || res.data;
       if (!newPostData?._id) {
         throw new Error('The server did not confirm that your post was saved. Please try again.');
