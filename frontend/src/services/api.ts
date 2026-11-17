@@ -12,7 +12,6 @@ const getBaseURL = (): string => {
 export const api = axios.create({
   baseURL: getBaseURL(),
   headers: {
-    'Content-Type': 'application/json',
     'Accept': 'application/json',
     'x-platform': 'web',
     'x-app-version': '1.0.3',
@@ -31,11 +30,19 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    // For FormData uploads, remove default application/json so Axios can auto-set multipart/form-data boundary
+    // For FormData uploads, omit default application/json so browser sets multipart/form-data with boundary
     if (config.data instanceof FormData) {
-      delete config.headers['Content-Type'];
-      if (config.headers && typeof (config.headers as any).delete === 'function') {
-        (config.headers as any).delete('Content-Type');
+      if (config.headers) {
+        delete config.headers['Content-Type'];
+        delete config.headers['content-type'];
+        if (typeof (config.headers as any).delete === 'function') {
+          (config.headers as any).delete('Content-Type');
+          (config.headers as any).delete('content-type');
+        }
+      }
+    } else {
+      if (config.headers && !config.headers['Content-Type'] && !config.headers['content-type']) {
+        config.headers['Content-Type'] = 'application/json';
       }
     }
     return config;

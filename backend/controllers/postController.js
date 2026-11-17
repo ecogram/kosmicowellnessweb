@@ -6,7 +6,21 @@ const User = require('../models/User');
 const { saveMediaFile } = require('../utils/profileStorage');
 
 const createPost = asyncHandler(async (req, res) => {
-  const { content, privacyLevel = 'public', tags = [], location = '' } = req.body;
+  const { content, privacyLevel = 'public', location = '' } = req.body;
+  const rawTags = req.body.tags || [];
+
+  let tags = [];
+  if (Array.isArray(rawTags)) {
+    tags = rawTags.map((t) => String(t).trim()).filter(Boolean);
+  } else if (typeof rawTags === 'string') {
+    try {
+      const parsed = JSON.parse(rawTags);
+      tags = Array.isArray(parsed) ? parsed : [rawTags];
+    } catch (e) {
+      tags = rawTags.split(',').map((t) => t.trim()).filter(Boolean);
+    }
+  }
+
   let mediaUrls = Array.isArray(req.body.mediaUrls)
     ? req.body.mediaUrls
     : (req.body.mediaUrl ? [req.body.mediaUrl] : []);
@@ -15,6 +29,13 @@ const createPost = asyncHandler(async (req, res) => {
   if (file) {
     const saved = saveMediaFile(file, 'postMedia');
     mediaUrls.push(saved);
+  } else if (mediaUrls.length > 0) {
+    mediaUrls = mediaUrls.map((url) => {
+      if (typeof url === 'string' && (url.startsWith('data:image/') || url.startsWith('data:video/'))) {
+        return saveMediaFile(url, 'postMedia');
+      }
+      return url;
+    });
   }
 
   if (!content || content.trim().length === 0) {
@@ -23,12 +44,12 @@ const createPost = asyncHandler(async (req, res) => {
 
   const post = await Post.create({
     user: req.user._id,
-    content,
+    content: content.trim(),
     privacyLevel,
     mediaUrl: mediaUrls[0] || '',
     mediaUrls,
-    tags: Array.isArray(tags) ? tags : [tags].filter(Boolean),
-    location,
+    tags,
+    location: (location || '').trim(),
   });
 
   const populated = await Post.findById(post._id).populate('user', 'name profilePicture email');

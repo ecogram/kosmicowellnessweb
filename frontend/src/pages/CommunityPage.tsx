@@ -74,6 +74,7 @@ export const CommunityPage: React.FC = () => {
   const [postLocation, setPostLocation] = useState('');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [base64Media, setBase64Media] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<'image' | 'video' | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -231,11 +232,18 @@ export const CommunityPage: React.FC = () => {
 
     const previewUrl = URL.createObjectURL(file);
     setMediaPreview(previewUrl);
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setBase64Media(reader.result as string);
+    };
+    reader.readAsDataURL(file);
   };
 
   const removeSelectedMedia = () => {
     setMediaFile(null);
     setMediaPreview(null);
+    setBase64Media(null);
     setMediaType(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -270,24 +278,39 @@ export const CommunityPage: React.FC = () => {
     // EDIT EXISTING POST MODE
     if (editingPost) {
       try {
-        const formData = new FormData();
-        formData.append('content', postContent.trim());
-        formData.append('privacyLevel', 'public');
-        if (postLocation.trim()) {
-          formData.append('location', postLocation.trim());
-        }
-        selectedTags.forEach((t) => formData.append('tags', t));
-
         if (mediaFile) {
+          const formData = new FormData();
+          formData.append('content', postContent.trim());
+          formData.append('privacyLevel', 'public');
+          if (postLocation.trim()) {
+            formData.append('location', postLocation.trim());
+          }
+          selectedTags.forEach((t) => formData.append('tags', t));
           formData.append('media', mediaFile);
-        } else if (mediaPreview) {
-          formData.append('mediaUrl', mediaPreview);
-        }
 
-        try {
-          await api.put(`/posts/${editingPost._id}`, formData);
-        } catch (apiErr: any) {
-          console.warn('Backend edit post warning:', apiErr);
+          try {
+            await api.put(`/posts/${editingPost._id}`, formData);
+          } catch (err) {
+            if (base64Media) {
+              await api.put(`/posts/${editingPost._id}`, {
+                content: postContent.trim(),
+                privacyLevel: 'public',
+                location: postLocation.trim(),
+                tags: selectedTags,
+                mediaUrl: base64Media,
+              });
+            } else {
+              throw err;
+            }
+          }
+        } else {
+          await api.put(`/posts/${editingPost._id}`, {
+            content: postContent.trim(),
+            privacyLevel: 'public',
+            location: postLocation.trim(),
+            tags: selectedTags,
+            mediaUrl: mediaPreview || '',
+          });
         }
 
         setPosts((prevPosts) =>
@@ -306,6 +329,7 @@ export const CommunityPage: React.FC = () => {
         );
 
         setSubmitSuccess(true);
+        fetchLiveFeed();
 
         setTimeout(() => {
           setIsCreateModalOpen(false);
@@ -316,7 +340,7 @@ export const CommunityPage: React.FC = () => {
           setSubmitSuccess(false);
         }, 700);
       } catch (err: any) {
-        setSubmitError(err?.message || 'Failed to update post. Please try again.');
+        setSubmitError(err?.response?.data?.message || err?.message || 'Failed to update post. Please try again.');
       } finally {
         setIsSubmitting(false);
       }
@@ -325,20 +349,45 @@ export const CommunityPage: React.FC = () => {
 
     // CREATE NEW POST MODE
     try {
-      const formData = new FormData();
-      formData.append('content', postContent.trim());
-      formData.append('privacyLevel', 'public');
-      if (postLocation.trim()) {
-        formData.append('location', postLocation.trim());
-      }
-      selectedTags.forEach((t) => formData.append('tags', t));
-
+      let res;
       if (mediaFile) {
+        const formData = new FormData();
+        formData.append('content', postContent.trim());
+        formData.append('privacyLevel', 'public');
+        if (postLocation.trim()) {
+          formData.append('location', postLocation.trim());
+        }
+        selectedTags.forEach((t) => formData.append('tags', t));
         formData.append('media', mediaFile);
+
+        try {
+          res = await api.post('/posts', formData);
+        } catch (formDataErr: any) {
+          // If multipart upload fails, fallback to Base64 JSON
+          if (base64Media) {
+            res = await api.post('/posts', {
+              content: postContent.trim(),
+              privacyLevel: 'public',
+              location: postLocation.trim(),
+              tags: selectedTags,
+              mediaUrls: [base64Media],
+            });
+          } else {
+            throw formDataErr;
+          }
+        }
+      } else {
+        // Text-only post - send clean JSON payload directly
+        res = await api.post('/posts', {
+          content: postContent.trim(),
+          privacyLevel: 'public',
+          location: postLocation.trim(),
+          tags: selectedTags,
+          mediaUrls: [],
+        });
       }
 
-      const res = await api.post('/posts', formData);
-      const newPostData = res.data?.data?.post || res.data?.post;
+      const newPostData = res.data?.data?.post || res.data?.post || res.data;
       if (!newPostData?._id) {
         throw new Error('The server did not confirm that your post was saved. Please try again.');
       }
@@ -346,6 +395,7 @@ export const CommunityPage: React.FC = () => {
       const resolvedServerMedia =
         newPostData?.mediaUrl ||
         (Array.isArray(newPostData?.mediaUrls) && newPostData.mediaUrls[0]) ||
+        mediaPreview ||
         '';
 
       const finalMediaUrl = resolvedServerMedia ? normalizeImageUrl(resolvedServerMedia) : '';
@@ -363,7 +413,7 @@ export const CommunityPage: React.FC = () => {
         },
         content: newPostData.content || postContent.trim(),
         mediaUrl: finalMediaUrl,
-        mediaUrls: Array.isArray(newPostData.mediaUrls)
+        mediaUrls: Array.isArray(newPostData.mediaUrls) && newPostData.mediaUrls.length > 0
           ? newPostData.mediaUrls.map((url: string) => normalizeImageUrl(url))
           : finalMediaUrl
             ? [finalMediaUrl]
@@ -379,6 +429,7 @@ export const CommunityPage: React.FC = () => {
 
       setPosts((prevPosts) => [createdPost, ...prevPosts]);
       setSubmitSuccess(true);
+      fetchLiveFeed();
 
       setTimeout(() => {
         setIsCreateModalOpen(false);
