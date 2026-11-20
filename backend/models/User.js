@@ -33,6 +33,17 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    source: {
+      type: String,
+      enum: ['web', 'app', 'admin'],
+      default: 'app',
+      index: true,
+    },
+    registeredPlatform: {
+      type: String,
+      enum: ['web', 'app'],
+      default: 'app',
+    },
     phoneNumber: {
       type: String,
       trim: true,

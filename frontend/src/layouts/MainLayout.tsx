@@ -6,6 +6,7 @@ import { Footer } from '../components/layout/Footer';
 import { WhatsAppButton } from '../components/layout/WhatsAppButton';
 import { AiConsultantButton } from '../components/layout/AiConsultantButton';
 import { CartDrawer } from '../components/cart/CartDrawer';
+import { LeadCapturePopup } from '../components/common/LeadCapturePopup';
 
 
 export function MainLayout() {
@@ -43,6 +44,7 @@ export function MainLayout() {
           <WhatsAppButton />
         </div>
         <CartDrawer />
+        <LeadCapturePopup />
       </div>
     </div>
   );

@@ -17,7 +17,8 @@ const sendOtp = asyncHandler(async (req, res) => {
 
 const verifyOtp = asyncHandler(async (req, res) => {
   const { email, otp, name, type } = req.body;
-  const { user, accessToken, refreshToken } = await authService.verifyEmailOtp(email, otp, name, req.ip, type || 'auto');
+  const platform = req.headers['x-platform'] === 'web' ? 'web' : (req.headers.origin ? 'web' : 'app');
+  const { user, accessToken, refreshToken } = await authService.verifyEmailOtp(email, otp, name, req.ip, type || 'auto', platform);
 
   res.cookie('jwt', refreshToken, cookieOptions);
 
@@ -56,6 +57,7 @@ const signupVerify = asyncHandler(async (req, res) => {
   if (!email && !phoneToUse) {
     throw new ApiError(400, 'Please provide an email or phone number');
   }
+  const platform = req.headers['x-platform'] === 'web' ? 'web' : (req.headers.origin ? 'web' : 'app');
   const { user, accessToken, refreshToken } = await authService.verifyOtp({
     email,
     phoneNumber: phoneToUse,
@@ -63,6 +65,7 @@ const signupVerify = asyncHandler(async (req, res) => {
     name: name ? name.trim() : undefined,
     ip: req.ip,
     type: 'register',
+    platform,
   });
 
   res.cookie('jwt', refreshToken, cookieOptions);
@@ -102,12 +105,14 @@ const loginVerify = asyncHandler(async (req, res) => {
   if (!email && !phoneToUse) {
     throw new ApiError(400, 'Please provide an email or phone number');
   }
+  const platform = req.headers['x-platform'] === 'web' ? 'web' : (req.headers.origin ? 'web' : 'app');
   const { user, accessToken, refreshToken } = await authService.verifyOtp({
     email,
     phoneNumber: phoneToUse,
     otp,
     ip: req.ip,
     type: 'login',
+    platform,
   });
 
   res.cookie('jwt', refreshToken, cookieOptions);

@@ -98,6 +98,7 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const subscriptionRoutes = require('./routes/subscriptionRoutes');
 const settingsRoutes = require('./routes/settingsRoutes');
+const leadRoutes = require('./routes/leadRoutes');
 
 // Helper to register routers on both /api and /api/v1 prefixes
 const registerRoutes = (prefix) => {
@@ -156,6 +157,9 @@ const registerRoutes = (prefix) => {
 
   // Notifications Management (/api/notifications/*)
   app.use(`${prefix}/notifications`, notificationRoutes);
+
+  // 9. Lead Capture & Visitor Tracking (/api/leads/*)
+  app.use(`${prefix}/leads`, leadRoutes);
 };
 
 // Mount both for App and Web clients

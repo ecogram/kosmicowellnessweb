@@ -87,11 +87,19 @@ const _deprecatedPlaceCodOrder = asyncHandler(async (req, res) => {
 
   const finalTotal = amount || Math.max(0, calculatedSubtotal - Number(discountAmount) + Number(deliveryFee) + Number(gstCharge));
 
+  const orderPlatform = req.headers['x-platform'] === 'web' ? 'web' : (req.headers.origin ? 'web' : 'app');
+
+  const orderPlatformOnline = req.headers['x-platform'] === 'web' ? 'web' : (req.headers.origin ? 'web' : 'app');
+
   const order = await Order.create({
     orderNumber: generateOrderNumber(),
     user: req.user._id,
     userName: req.user.name || (addressData && addressData.fullName) || 'Customer',
     userEmail: req.user.email ? req.user.email.toLowerCase().trim() : '',
+    source: orderPlatformOnline,
+    orderSource: orderPlatformOnline,
+    source: orderPlatform,
+    orderSource: orderPlatform,
     items: formattedItems,
     subtotal: calculatedSubtotal || finalTotal,
     discount: Number(discountAmount) || 0,
@@ -199,11 +207,15 @@ const createRazorpayOrder = asyncHandler(async (req, res) => {
   const finalTotal = req.body.total || amount || Math.max(0, calculatedSubtotal - Number(discountAmount) + Number(deliveryFee) + Number(gstCharge));
   const payableNow = upfrontAmount > 0 ? upfrontAmount : finalTotal;
 
+  const orderPlatformOnline = req.headers['x-platform'] === 'web' ? 'web' : (req.headers.origin ? 'web' : 'app');
+
   const order = await Order.create({
     orderNumber: generateOrderNumber(),
     user: req.user._id,
     userName: req.user.name || (addressData && addressData.fullName) || 'Customer',
     userEmail: req.user.email ? req.user.email.toLowerCase().trim() : '',
+    source: orderPlatformOnline,
+    orderSource: orderPlatformOnline,
     items: formattedItems,
     subtotal: calculatedSubtotal || finalTotal,
     discount: Number(discountAmount) || 0,
@@ -772,11 +784,14 @@ const verifyCodUpfrontPayment = asyncHandler(async (req, res) => {
 
   if (draft) {
     const payload = draft.orderPayload || {};
+    const draftPlatform = req.headers['x-platform'] === 'web' ? 'web' : (req.headers.origin ? 'web' : 'app');
     createdOrUpdatedOrder = await Order.create({
       orderNumber: generateOrderNumber(),
       user: req.user._id,
       userName: payload.userName || 'Customer',
       userEmail: payload.userEmail || req.user.email || '',
+      source: draftPlatform,
+      orderSource: draftPlatform,
       items: payload.items || [],
       subtotal: payload.subtotal,
       discount: payload.discount || 0,

@@ -70,6 +70,17 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: 'PENDING',
     },
+    source: {
+      type: String,
+      enum: ['web', 'app'],
+      default: 'web',
+      index: true,
+    },
+    orderSource: {
+      type: String,
+      enum: ['web', 'app'],
+      default: 'web',
+    },
     paymentStatus: {
       type: String,
       default: 'PENDING',

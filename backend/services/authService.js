@@ -153,7 +153,7 @@ class AuthService {
     return this.sendOtp({ email, type, name });
   }
 
-  async verifyOtp({ email, phoneNumber, otp, name, ip, type = 'auto' }) {
+  async verifyOtp({ email, phoneNumber, otp, name, ip, type = 'auto', platform = 'app' }) {
     const isMobile = Boolean(phoneNumber && phoneNumber.toString().trim().length > 0);
     const isEmail = Boolean(email && email.toString().trim().length > 0);
 
@@ -211,6 +211,8 @@ class AuthService {
           phone: normalizedPhone,
           role: 'user',
           isActive: true,
+          source: platform || 'app',
+          registeredPlatform: platform || 'app',
         });
       } else if (type === 'login') {
         if (!user) {
@@ -229,6 +231,8 @@ class AuthService {
             phone: normalizedPhone,
             role: 'user',
             isActive: true,
+            source: platform || 'app',
+            registeredPlatform: platform || 'app',
           });
         }
       }
@@ -268,6 +272,8 @@ class AuthService {
           email: normalizedEmail,
           role: 'user',
           isActive: true,
+          source: platform || 'app',
+          registeredPlatform: platform || 'app',
         });
       } else if (type === 'login') {
         if (!user) {
@@ -285,6 +291,8 @@ class AuthService {
             email: normalizedEmail,
             role: 'user',
             isActive: true,
+            source: platform || 'app',
+            registeredPlatform: platform || 'app',
           });
         } else if (name && name.trim().length > 0 && (!user.name || user.name === user.email.split('@')[0])) {
           user.name = name.trim();
@@ -394,8 +402,8 @@ class AuthService {
     return { user: safeUser, accessToken, refreshToken: refreshTokenString };
   }
 
-  async verifyEmailOtp(email, otp, name, ip, type = 'auto') {
-    return this.verifyOtp({ email, otp, name, ip, type });
+  async verifyEmailOtp(email, otp, name, ip, type = 'auto', platform = 'app') {
+    return this.verifyOtp({ email, otp, name, ip, type, platform });
   }
 
   async updateProfile(userId, { name, fullName, phoneNumber, phone, email, profilePicture, profileImage, avatar, removePhoto }) {
