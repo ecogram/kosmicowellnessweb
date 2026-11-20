@@ -95,16 +95,24 @@ export const LeadCapturePopup: React.FC = () => {
     setError(null);
 
     try {
-      await api.post('/leads/capture', {
+      // Backend API: POST /api/leads
+      // Accepts: { name, phoneNumber }
+      // Returns: { success, isDuplicate, message, lead: { id, name, phoneNumber, createdAt } }
+      const res = await api.post('/leads', {
         name: fullName.trim(),
         phoneNumber,
-        page: location.pathname,
-        source: 'web_popup',
       });
+
+      const isDuplicate = res.data?.isDuplicate ?? false;
 
       setSubmitted(true);
       localStorage.setItem(STORAGE_SUBMITTED_KEY, 'true');
-      toast.success('Details saved! Our team will contact you soon.');
+
+      if (isDuplicate) {
+        toast.success('Welcome back! Our team will contact you soon.');
+      } else {
+        toast.success('Details saved! Our team will contact you soon.');
+      }
     } catch (err: any) {
       console.warn('Lead capture fallback:', err?.message);
       // Show success message even if API fails (offline/error)
