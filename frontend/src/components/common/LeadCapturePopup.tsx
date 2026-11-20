@@ -141,7 +141,7 @@ export const LeadCapturePopup: React.FC = () => {
           {/* Badge */}
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/20 border border-amber-400/30 text-amber-300 text-xs font-bold uppercase tracking-wider mb-2.5">
             <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-            <span>Exclusive Web Offer</span>
+            <span>Exclusive Offer</span>
           </div>
 
           <h3 className="text-2xl sm:text-3xl font-serif font-black tracking-tight text-white leading-tight">
