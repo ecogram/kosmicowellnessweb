@@ -1,18 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { X, Sparkles, Check, ShieldCheck, Gift, Loader2, User, Phone, MessageCircleHeart } from 'lucide-react';
 import { api } from '../../services/api';
 import toast from 'react-hot-toast';
 
 const STORAGE_SUBMITTED_KEY = 'kosmico_lead_submitted_v1';
-const STORAGE_DISMISSED_KEY = 'kosmico_lead_dismissed_until';
+
+// Page-specific dismiss tracking:
+// Agar user ne '/shop' par cut (✖) kiya, toh sirf '/shop' dismiss hoga.
+// Jab user '/checkout' par jayega, toh wahan popup DUBARA khulega!
+// Page refresh (F5 / reload) hone par ye Set automatically reset ho jata hai.
+const dismissedPages = new Set<string>();
 
 export const LeadCapturePopup: React.FC = () => {
   const location = useLocation();
-
-  // Ref to ensure popup trigger runs only ONCE per page visit
-  // Prevents re-renders (e.g. from AuthInit API resolving) from resetting the timer
-  const hasTriggeredRef = useRef(false);
 
   const [isOpen, setIsOpen] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -21,13 +22,8 @@ export const LeadCapturePopup: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  // Only show on /shop page and /checkout page (NOT on Home '/')
+  // Target pages: /shop and /checkout
   const isTargetPage = location.pathname === '/shop' || location.pathname === '/checkout';
-
-  useEffect(() => {
-    // Reset trigger ref when route changes (e.g. guest navigates away and back)
-    hasTriggeredRef.current = false;
-  }, [location.pathname]);
 
   useEffect(() => {
     if (!isTargetPage) {
@@ -35,32 +31,40 @@ export const LeadCapturePopup: React.FC = () => {
       return;
     }
 
-    // Already triggered for this page visit — skip to avoid re-setting timer on re-renders
-    if (hasTriggeredRef.current) return;
-
-    // Check if user already submitted (any device — stored permanently in localStorage)
+    // Check if user already submitted lead (permanent across visits)
     const isSubmitted = localStorage.getItem(STORAGE_SUBMITTED_KEY);
-    if (isSubmitted === 'true') return;
+    if (isSubmitted === 'true') {
+      setIsOpen(false);
+      return;
+    }
 
-    // Check if user dismissed during this session (clears on page refresh)
-    const dismissedThisSession = sessionStorage.getItem(STORAGE_DISMISSED_KEY);
-    if (dismissedThisSession === 'true') return;
+    // Check if user dismissed on THIS SPECIFIC page during this page load
+    // (e.g. dismissed on '/shop' does NOT block '/checkout'!)
+    if (dismissedPages.has(location.pathname)) {
+      setIsOpen(false);
+      return;
+    }
 
-    // Mark as triggered so re-renders don't reset the timer
-    hasTriggeredRef.current = true;
+    // Checkout page par thoda fast trigger (2s) taaki user order place karne se pehle offer dekh sake,
+    // Shop page par 3.5 seconds
+    const delay = location.pathname === '/checkout' ? 2000 : 3500;
 
-    // Trigger after 4 seconds (works for both guests and logged-in users)
     const timer = setTimeout(() => {
-      setIsOpen(true);
-    }, 4000);
+      // Re-check before opening
+      if (!dismissedPages.has(location.pathname) && localStorage.getItem(STORAGE_SUBMITTED_KEY) !== 'true') {
+        setIsOpen(true);
+      }
+    }, delay);
 
-    // Also trigger if user scrolls past 25% of page
+    // Also trigger if user scrolls past 20% of page
     const handleScroll = () => {
       const pageHeight = document.documentElement.scrollHeight - window.innerHeight;
-      if (pageHeight <= 0) return; // prevent divide-by-zero on short pages
+      if (pageHeight <= 0) return;
       const scrollPercent = (window.scrollY / pageHeight) * 100;
-      if (scrollPercent > 25) {
-        setIsOpen(true);
+      if (scrollPercent > 20) {
+        if (!dismissedPages.has(location.pathname) && localStorage.getItem(STORAGE_SUBMITTED_KEY) !== 'true') {
+          setIsOpen(true);
+        }
         window.removeEventListener('scroll', handleScroll);
       }
     };
@@ -71,12 +75,16 @@ export const LeadCapturePopup: React.FC = () => {
       clearTimeout(timer);
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [isTargetPage]);
+  }, [location.pathname, isTargetPage]);
 
   const handleClose = () => {
     setIsOpen(false);
-    // Session-based snooze: popup won't reappear until page is refreshed
-    sessionStorage.setItem(STORAGE_DISMISSED_KEY, 'true');
+    // Sirf CURRENT PAGE ko dismiss list me add karo.
+    // Agar user doosre target page (e.g. /checkout) par jayega, toh wahan dubara aayega.
+    dismissedPages.add(location.pathname);
+    try {
+      sessionStorage.removeItem('kosmico_lead_dismissed_until');
+    } catch (_) {}
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
