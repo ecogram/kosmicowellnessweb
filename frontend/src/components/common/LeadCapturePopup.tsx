@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { X, Sparkles, Check, ShieldCheck, Gift, Loader2, User, Phone, MessageCircleHeart } from 'lucide-react';
 import { api } from '../../services/api';
@@ -9,6 +9,10 @@ const STORAGE_DISMISSED_KEY = 'kosmico_lead_dismissed_until';
 
 export const LeadCapturePopup: React.FC = () => {
   const location = useLocation();
+
+  // Ref to ensure popup trigger runs only ONCE per page visit
+  // Prevents re-renders (e.g. from AuthInit API resolving) from resetting the timer
+  const hasTriggeredRef = useRef(false);
 
   const [isOpen, setIsOpen] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -21,31 +25,41 @@ export const LeadCapturePopup: React.FC = () => {
   const isTargetPage = location.pathname === '/shop' || location.pathname === '/checkout';
 
   useEffect(() => {
+    // Reset trigger ref when route changes (e.g. guest navigates away and back)
+    hasTriggeredRef.current = false;
+  }, [location.pathname]);
+
+  useEffect(() => {
     if (!isTargetPage) {
       setIsOpen(false);
       return;
     }
 
-    // Check if user already submitted or recently dismissed
+    // Already triggered for this page visit — skip to avoid re-setting timer on re-renders
+    if (hasTriggeredRef.current) return;
+
+    // Check if user already submitted (any device — stored permanently in localStorage)
     const isSubmitted = localStorage.getItem(STORAGE_SUBMITTED_KEY);
-    if (isSubmitted === 'true') {
-      return;
-    }
+    if (isSubmitted === 'true') return;
 
+    // Check if user dismissed during this session (clears on page refresh)
     const dismissedThisSession = sessionStorage.getItem(STORAGE_DISMISSED_KEY);
-    if (dismissedThisSession === 'true') {
-      return;
-    }
+    if (dismissedThisSession === 'true') return;
 
-    // Trigger after 6 seconds
+    // Mark as triggered so re-renders don't reset the timer
+    hasTriggeredRef.current = true;
+
+    // Trigger after 4 seconds (works for both guests and logged-in users)
     const timer = setTimeout(() => {
       setIsOpen(true);
-    }, 6000);
+    }, 4000);
 
-    // Also trigger if user scrolls past 30% of page
+    // Also trigger if user scrolls past 25% of page
     const handleScroll = () => {
-      const scrollPercent = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
-      if (scrollPercent > 30) {
+      const pageHeight = document.documentElement.scrollHeight - window.innerHeight;
+      if (pageHeight <= 0) return; // prevent divide-by-zero on short pages
+      const scrollPercent = (window.scrollY / pageHeight) * 100;
+      if (scrollPercent > 25) {
         setIsOpen(true);
         window.removeEventListener('scroll', handleScroll);
       }
@@ -57,7 +71,7 @@ export const LeadCapturePopup: React.FC = () => {
       clearTimeout(timer);
       window.removeEventListener('scroll', handleScroll);
     };
-  }, [isTargetPage, location.pathname]);
+  }, [isTargetPage]);
 
   const handleClose = () => {
     setIsOpen(false);
@@ -95,24 +109,16 @@ export const LeadCapturePopup: React.FC = () => {
     setError(null);
 
     try {
-      // Backend API: POST /api/leads
-      // Accepts: { name, phoneNumber }
-      // Returns: { success, isDuplicate, message, lead: { id, name, phoneNumber, createdAt } }
-      const res = await api.post('/leads', {
+      await api.post('/leads/capture', {
         name: fullName.trim(),
         phoneNumber,
+        page: location.pathname,
+        source: 'web_popup',
       });
-
-      const isDuplicate = res.data?.isDuplicate ?? false;
 
       setSubmitted(true);
       localStorage.setItem(STORAGE_SUBMITTED_KEY, 'true');
-
-      if (isDuplicate) {
-        toast.success('Welcome back! Our team will contact you soon.');
-      } else {
-        toast.success('Details saved! Our team will contact you soon.');
-      }
+      toast.success('Details saved! Our team will contact you soon.');
     } catch (err: any) {
       console.warn('Lead capture fallback:', err?.message);
       // Show success message even if API fails (offline/error)
