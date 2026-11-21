@@ -22,8 +22,16 @@ export const LeadCapturePopup: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  // Target pages: /shop and /checkout
-  const isTargetPage = location.pathname === '/shop' || location.pathname === '/checkout';
+  // Target pages for guest lead capture:
+  // 1. /shop - Browsing products
+  // 2. /checkout - Checkout page
+  // 3. /cart - Cart page
+  // 4. /login - Guest users who clicked "Checkout" are redirected here by ProtectedRoute!
+  const isTargetPage =
+    location.pathname === '/shop' ||
+    location.pathname === '/checkout' ||
+    location.pathname === '/cart' ||
+    location.pathname === '/login';
 
   useEffect(() => {
     if (!isTargetPage) {
@@ -39,15 +47,19 @@ export const LeadCapturePopup: React.FC = () => {
     }
 
     // Check if user dismissed on THIS SPECIFIC page during this page load
-    // (e.g. dismissed on '/shop' does NOT block '/checkout'!)
+    // (e.g. dismissed on '/shop' does NOT block '/checkout' or '/login'!)
     if (dismissedPages.has(location.pathname)) {
       setIsOpen(false);
       return;
     }
 
-    // Checkout page par thoda fast trigger (2s) taaki user order place karne se pehle offer dekh sake,
-    // Shop page par 3.5 seconds
-    const delay = location.pathname === '/checkout' ? 2000 : 3500;
+    // Checkout / Cart / Login flow par fast trigger (1 second) taaki user ko turant offer dikhe,
+    // Shop browsing par 3.5 seconds
+    const isCheckoutFlow =
+      location.pathname === '/checkout' ||
+      location.pathname === '/login' ||
+      location.pathname === '/cart';
+    const delay = isCheckoutFlow ? 1000 : 3500;
 
     const timer = setTimeout(() => {
       // Re-check before opening
@@ -140,7 +152,7 @@ export const LeadCapturePopup: React.FC = () => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-300">
       <div
         className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-emerald-100 transition-all scale-100 animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
